@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"fmt"
 	"testing"
 
 	"github.com/MilesChou/typemd/core"
@@ -93,5 +94,24 @@ func TestClampCursor(t *testing.T) {
 	}
 	if c := clampCursor(3, 5); c != 3 {
 		t.Errorf("clampCursor(3, 5) = %d, want 3", c)
+	}
+}
+
+func TestBuildGroups_DefaultCollapse(t *testing.T) {
+	var objects []*core.Object
+	for i := 0; i < 25; i++ {
+		objects = append(objects, &core.Object{
+			ID: fmt.Sprintf("journal/%03d", i), Type: "journal", Filename: fmt.Sprintf("%03d", i),
+		})
+	}
+	objects = append(objects, &core.Object{ID: "book/x", Type: "book", Filename: "x"})
+	groups := buildGroups(objects)
+	for _, g := range groups {
+		if g.Name == "journal" && g.Expanded {
+			t.Error("expected journal (25 objects) to be collapsed by default")
+		}
+		if g.Name == "book" && !g.Expanded {
+			t.Error("expected book (1 object) to be expanded by default")
+		}
 	}
 }

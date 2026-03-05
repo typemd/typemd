@@ -29,7 +29,7 @@ func buildGroups(objects []*core.Object) []typeGroup {
 		groups = append(groups, typeGroup{
 			Name:     name,
 			Objects:  objs,
-			Expanded: true,
+			Expanded: len(objs) <= 20,
 		})
 	}
 	sort.Slice(groups, func(i, j int) bool {
