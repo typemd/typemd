@@ -24,3 +24,10 @@ jobs:
 
       - name: Vet
         run: go vet ./...
+
+      - name: Validate examples
+        run: |
+          for vault in examples/*/; do
+            echo "Validating ${vault}..."
+            go run . --vault "${vault}" validate
+          done
