@@ -274,3 +274,40 @@ func TestModel_TabCyclesThreePanels(t *testing.T) {
 		t.Errorf("after 3rd tab: focus = %d, want focusLeft(%d)", m.focus, focusLeft)
 	}
 }
+
+func TestModel_PropsWidthDefault(t *testing.T) {
+	m := setupTestModel(t)
+	msg := tea.WindowSizeMsg{Width: 120, Height: 40}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.propsWidth < 20 || updated.propsWidth > 40 {
+		t.Errorf("propsWidth = %d, want between 20 and 40", updated.propsWidth)
+	}
+}
+
+func TestModel_ThreePanelView_NotEmpty(t *testing.T) {
+	m := setupTestModel(t)
+	msg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(msg)
+	m = newM.(model)
+
+	view := m.View()
+	if view == "Loading..." {
+		t.Error("View should not be Loading after WindowSizeMsg")
+	}
+	if len(view) == 0 {
+		t.Error("View should not be empty")
+	}
+}
+
+func TestModel_AutoHidePropsNarrowTerminal(t *testing.T) {
+	m := setupTestModel(t)
+	msg := tea.WindowSizeMsg{Width: 50, Height: 24}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.propsVisible {
+		t.Error("propsVisible should be false on narrow terminal (width=50)")
+	}
+}
