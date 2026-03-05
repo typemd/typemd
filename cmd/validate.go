@@ -2,7 +2,7 @@ package cmd
 
 import (
 	"fmt"
-	"os"
+	"sort"
 
 	"github.com/MilesChou/typemd/core"
 	"github.com/spf13/cobra"
@@ -24,8 +24,13 @@ var validateCmd = &cobra.Command{
 		schemaErrs := core.ValidateAllSchemas(vault)
 		if len(schemaErrs) > 0 {
 			fmt.Println("Schema errors:")
-			for name, errs := range schemaErrs {
-				for _, e := range errs {
+			schemaNames := make([]string, 0, len(schemaErrs))
+			for name := range schemaErrs {
+				schemaNames = append(schemaNames, name)
+			}
+			sort.Strings(schemaNames)
+			for _, name := range schemaNames {
+				for _, e := range schemaErrs[name] {
 					fmt.Printf("  %s.yaml: %s\n", name, e)
 					totalErrors++
 				}
@@ -37,8 +42,13 @@ var validateCmd = &cobra.Command{
 		objectErrs := core.ValidateAllObjects(vault)
 		if len(objectErrs) > 0 {
 			fmt.Println("Object errors:")
-			for id, errs := range objectErrs {
-				for _, e := range errs {
+			objectIDs := make([]string, 0, len(objectErrs))
+			for id := range objectErrs {
+				objectIDs = append(objectIDs, id)
+			}
+			sort.Strings(objectIDs)
+			for _, id := range objectIDs {
+				for _, e := range objectErrs[id] {
 					fmt.Printf("  %s: %s\n", id, e)
 					totalErrors++
 				}
@@ -58,8 +68,7 @@ var validateCmd = &cobra.Command{
 		}
 
 		if totalErrors > 0 {
-			fmt.Printf("Found %d error(s).\n", totalErrors)
-			os.Exit(1)
+			return fmt.Errorf("found %d validation error(s)", totalErrors)
 		}
 
 		fmt.Println("Validation passed.")

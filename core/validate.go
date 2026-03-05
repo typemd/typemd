@@ -46,12 +46,14 @@ func ValidateRelations(v *Vault) []error {
 			continue
 		}
 		var count int
-		v.db.QueryRow("SELECT count(*) FROM objects WHERE id = ?", fromID).Scan(&count)
-		if count == 0 {
+		if err := v.db.QueryRow("SELECT count(*) FROM objects WHERE id = ?", fromID).Scan(&count); err != nil {
+			errs = append(errs, fmt.Errorf("check source %s: %w", fromID, err))
+		} else if count == 0 {
 			errs = append(errs, fmt.Errorf("%s -[%s]-> %s: source object not found", fromID, name, toID))
 		}
-		v.db.QueryRow("SELECT count(*) FROM objects WHERE id = ?", toID).Scan(&count)
-		if count == 0 {
+		if err := v.db.QueryRow("SELECT count(*) FROM objects WHERE id = ?", toID).Scan(&count); err != nil {
+			errs = append(errs, fmt.Errorf("check target %s: %w", toID, err))
+		} else if count == 0 {
 			errs = append(errs, fmt.Errorf("%s -[%s]-> %s: target object not found", fromID, name, toID))
 		}
 	}
