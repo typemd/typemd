@@ -18,13 +18,14 @@ func setupTestModel(t *testing.T) model {
 	}
 	groups := buildGroups(objects)
 	return model{
-		focus:       focusLeft,
-		groups:      groups,
-		cursor:      0,
-		selected:    groups[0].Objects[0],
-		searchInput: initSearchInput(),
-		width:       80,
-		height:      24,
+		focus:        focusLeft,
+		groups:       groups,
+		cursor:       0,
+		selected:     groups[0].Objects[0],
+		propsVisible: true,
+		searchInput:  initSearchInput(),
+		width:        120,
+		height:       24,
 	}
 }
 
@@ -44,8 +45,8 @@ func TestModel_TabSwitchFocus(t *testing.T) {
 	msg := tea.KeyMsg{Type: tea.KeyTab}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
-	if updated.focus != focusRight {
-		t.Errorf("focus = %d, want focusRight", updated.focus)
+	if updated.focus != focusBody {
+		t.Errorf("focus = %d, want focusBody(%d)", updated.focus, focusBody)
 	}
 }
 
@@ -245,5 +246,31 @@ func TestBuildGroups_DefaultCollapse(t *testing.T) {
 		if g.Expanded {
 			t.Errorf("expected %q to be collapsed by default", g.Name)
 		}
+	}
+}
+
+func TestModel_TabCyclesThreePanels(t *testing.T) {
+	m := setupTestModel(t)
+	tab := tea.KeyMsg{Type: tea.KeyTab}
+
+	// Left → Body
+	newM, _ := m.Update(tab)
+	m = newM.(model)
+	if m.focus != focusBody {
+		t.Errorf("after 1st tab: focus = %d, want focusBody(%d)", m.focus, focusBody)
+	}
+
+	// Body → Props
+	newM, _ = m.Update(tab)
+	m = newM.(model)
+	if m.focus != focusProps {
+		t.Errorf("after 2nd tab: focus = %d, want focusProps(%d)", m.focus, focusProps)
+	}
+
+	// Props → Left
+	newM, _ = m.Update(tab)
+	m = newM.(model)
+	if m.focus != focusLeft {
+		t.Errorf("after 3rd tab: focus = %d, want focusLeft(%d)", m.focus, focusLeft)
 	}
 }

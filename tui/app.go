@@ -16,7 +16,8 @@ type focusPanel int
 
 const (
 	focusLeft focusPanel = iota
-	focusRight
+	focusBody
+	focusProps
 )
 
 type typeGroup struct {
@@ -35,8 +36,15 @@ type model struct {
 	scrollOffset int
 	selected     *core.Object
 
-	// Right panel
-	viewport  viewport.Model
+	// Body panel (center)
+	bodyViewport viewport.Model
+
+	// Properties panel (right)
+	propsViewport viewport.Model
+	propsWidth    int  // adjustable width for properties panel
+	propsVisible  bool // toggle visibility
+
+	// Shared detail state
 	relations []core.Relation
 	schema    *core.TypeSchema
 
@@ -70,16 +78,29 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
 		m.height = msg.Height
-		rightWidth := m.width - m.leftWidth() - 4 // borders
-		contentHeight := m.height - 3              // help bar + borders
-		if rightWidth < 0 {
-			rightWidth = 0
-		}
+		contentHeight := m.height - 3 // help bar + borders
 		if contentHeight < 0 {
 			contentHeight = 0
 		}
-		m.viewport.Width = rightWidth
-		m.viewport.Height = contentHeight
+
+		// Initialize propsWidth if not set
+		if m.propsWidth == 0 {
+			m.propsWidth = m.defaultPropsWidth()
+		}
+
+		// Auto-hide on narrow terminals
+		if m.shouldAutoHideProps() {
+			m.propsVisible = false
+		}
+
+		// Update viewport sizes
+		m.bodyViewport.Width = m.bodyWidth()
+		m.bodyViewport.Height = contentHeight
+		if m.propsVisible {
+			m.propsViewport.Width = m.propsWidth
+			m.propsViewport.Height = contentHeight
+		}
+
 		m.updateDetail()
 		return m, nil
 
@@ -105,9 +126,16 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, textinput.Blink
 
 		case "tab":
-			if m.focus == focusLeft {
-				m.focus = focusRight
-			} else {
+			switch m.focus {
+			case focusLeft:
+				m.focus = focusBody
+			case focusBody:
+				if m.propsVisible {
+					m.focus = focusProps
+				} else {
+					m.focus = focusLeft
+				}
+			case focusProps:
 				m.focus = focusLeft
 			}
 			return m, nil
@@ -132,8 +160,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = clampCursor(m.cursor-1, len(rows))
 				m.adjustScroll()
 				m.selectCurrentRow()
-			} else {
-				m.viewport.LineUp(1)
+			} else if m.focus == focusBody {
+				m.bodyViewport.LineUp(1)
+			} else if m.focus == focusProps {
+				m.propsViewport.LineUp(1)
 			}
 			return m, nil
 
@@ -143,8 +173,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				m.cursor = clampCursor(m.cursor+1, len(rows))
 				m.adjustScroll()
 				m.selectCurrentRow()
-			} else {
-				m.viewport.LineDown(1)
+			} else if m.focus == focusBody {
+				m.bodyViewport.LineDown(1)
+			} else if m.focus == focusProps {
+				m.propsViewport.LineDown(1)
 			}
 			return m, nil
 
@@ -279,13 +311,19 @@ func softWrapLines(content string, width int) string {
 	return strings.Join(result, "\n")
 }
 
-// updateDetail refreshes the viewport content with current selected object.
+// updateDetail refreshes viewport contents with current selected object.
 func (m *model) updateDetail() {
-	content := renderDetail(m.selected, m.relations, m.schema)
-	if m.softWrap && m.viewport.Width > 0 {
-		content = softWrapLines(content, m.viewport.Width)
+	bodyContent := renderBody(m.selected)
+	if m.softWrap && m.bodyViewport.Width > 0 {
+		bodyContent = softWrapLines(bodyContent, m.bodyViewport.Width)
 	}
-	m.viewport.SetContent(content)
+	m.bodyViewport.SetContent(bodyContent)
+
+	propsContent := renderProperties(m.selected, m.relations, m.schema)
+	if m.softWrap && m.propsViewport.Width > 0 {
+		propsContent = softWrapLines(propsContent, m.propsViewport.Width)
+	}
+	m.propsViewport.SetContent(propsContent)
 }
 
 // leftWidth returns the width allocated for the left panel.
@@ -300,35 +338,65 @@ func (m model) leftWidth() int {
 	return w
 }
 
+// defaultPropsWidth calculates the default properties panel width.
+func (m model) defaultPropsWidth() int {
+	remaining := m.width - m.leftWidth() - 6 // 6 = borders for 3 panels
+	w := remaining * 3 / 10                   // 30% of remaining
+	if w < 20 {
+		w = 20
+	}
+	if w > 40 {
+		w = 40
+	}
+	return w
+}
+
+// bodyWidth calculates the body panel width from remaining space.
+func (m model) bodyWidth() int {
+	w := m.width - m.leftWidth() - 6 // borders for 3 panels
+	if m.propsVisible {
+		w -= m.propsWidth
+	}
+	if w < 10 {
+		w = 10
+	}
+	return w
+}
+
+// shouldAutoHideProps returns true if terminal is too narrow for three panels.
+func (m model) shouldAutoHideProps() bool {
+	minTotal := 20 + 10 + 20 + 6 // minLeft + minBody + minProps + borders
+	return m.width < minTotal
+}
+
 func (m model) View() string {
 	if m.width == 0 {
 		return "Loading..."
 	}
 
 	leftW := m.leftWidth()
-	rightW := m.width - leftW - 4 // account for borders
-	contentH := m.height - 3      // help bar + borders
+	bodyW := m.bodyWidth()
+	contentH := m.height - 3 // help bar + borders
 	if contentH < 0 {
 		contentH = 0
 	}
 
 	// Styles
-	leftBorder := lipgloss.RoundedBorder()
-	rightBorder := lipgloss.RoundedBorder()
-
 	leftStyle := lipgloss.NewStyle().
-		Border(leftBorder).
+		Border(lipgloss.RoundedBorder()).
 		Width(leftW).
 		Height(contentH)
-	rightStyle := lipgloss.NewStyle().
-		Border(rightBorder).
-		Width(rightW).
+	bodyStyle := lipgloss.NewStyle().
+		Border(lipgloss.RoundedBorder()).
+		Width(bodyW).
 		Height(contentH)
 
-	if m.focus == focusLeft {
+	// Focus highlighting
+	switch m.focus {
+	case focusLeft:
 		leftStyle = leftStyle.BorderForeground(lipgloss.Color("63"))
-	} else {
-		rightStyle = rightStyle.BorderForeground(lipgloss.Color("63"))
+	case focusBody:
+		bodyStyle = bodyStyle.BorderForeground(lipgloss.Color("63"))
 	}
 
 	// Left panel content
@@ -353,14 +421,26 @@ func (m model) View() string {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
 	}
 
-	// Right panel content
-	rightContent := m.viewport.View()
-
 	// Compose panels
 	panels := lipgloss.JoinHorizontal(lipgloss.Top,
 		leftStyle.Render(leftContent),
-		rightStyle.Render(rightContent),
+		bodyStyle.Render(m.bodyViewport.View()),
 	)
+
+	// Properties panel (optional)
+	if m.propsVisible {
+		propsStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(m.propsWidth).
+			Height(contentH)
+		if m.focus == focusProps {
+			propsStyle = propsStyle.BorderForeground(lipgloss.Color("63"))
+		}
+		panels = lipgloss.JoinHorizontal(lipgloss.Top,
+			panels,
+			propsStyle.Render(m.propsViewport.View()),
+		)
+	}
 
 	// Help bar
 	var helpBar string
@@ -373,7 +453,7 @@ func (m model) View() string {
 		if m.softWrap {
 			wrapLabel = "on"
 		}
-		helpBar = fmt.Sprintf("  ↑↓/jk: navigate  |  enter: toggle  |  tab: switch  |  /: search  |  w: wrap(%s)  |  q: quit", wrapLabel)
+		helpBar = fmt.Sprintf("  ↑↓/jk: navigate  |  tab: switch  |  []: resize  |  p: toggle props  |  /: search  |  w: wrap(%s)  |  q: quit", wrapLabel)
 	}
 
 	return panels + "\n" + helpBar
@@ -415,19 +495,23 @@ func Start(vaultPath string) error {
 		}
 	}
 
-	vp := viewport.New(0, 0)
-	vp.SetContent(renderDetail(selected, relations, schema))
+	bodyVP := viewport.New(0, 0)
+	bodyVP.SetContent(renderBody(selected))
+	propsVP := viewport.New(0, 0)
+	propsVP.SetContent(renderProperties(selected, relations, schema))
 
 	m := model{
-		vault:       v,
-		focus:       focusLeft,
-		groups:      groups,
-		cursor:      0,
-		selected:    selected,
-		viewport:    vp,
-		relations:   relations,
-		schema:      schema,
-		searchInput: initSearchInput(),
+		vault:         v,
+		focus:         focusLeft,
+		groups:        groups,
+		cursor:        0,
+		selected:      selected,
+		bodyViewport:  bodyVP,
+		propsViewport: propsVP,
+		propsVisible:  true,
+		relations:     relations,
+		schema:        schema,
+		searchInput:   initSearchInput(),
 	}
 
 	p := tea.NewProgram(m, tea.WithAltScreen())
