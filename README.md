@@ -62,6 +62,9 @@ tmd
 # Open TUI with specific vault path
 tmd --vault /path/to/vault
 
+# Create a new object
+tmd create book clean-code
+
 # Show object detail
 tmd show book/golang-in-action
 
