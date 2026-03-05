@@ -333,6 +333,42 @@ func TestModel_AutoHidePropsNarrowTerminal(t *testing.T) {
 	}
 }
 
+func TestModel_ResizeLeftPanel(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.focus = focusLeft
+
+	before := m.leftW
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if m.leftW != before+2 {
+		t.Errorf("leftW = %d, want %d (grew by 2)", m.leftW, before+2)
+	}
+}
+
+func TestModel_ResizeBodyPanel(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.focus = focusBody
+	m.propsVisible = true
+	m.propsWidth = 30
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	// Growing body shrinks props
+	if m.propsWidth != 28 {
+		t.Errorf("propsWidth = %d, want 28 (body grow shrinks props)", m.propsWidth)
+	}
+}
+
 func TestModel_ResizePanelGrow(t *testing.T) {
 	m := setupTestModel(t)
 	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}

@@ -35,6 +35,7 @@ type model struct {
 	cursor       int
 	scrollOffset int
 	selected     *core.Object
+	leftW        int // adjustable width for left panel (0 = use default)
 
 	// Body panel (center)
 	bodyViewport viewport.Model
@@ -83,7 +84,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			contentHeight = 0
 		}
 
-		// Initialize propsWidth if not set
+		// Initialize panel widths if not set
+		if m.leftW == 0 {
+			m.leftW = m.defaultLeftWidth()
+		}
 		if m.propsWidth == 0 {
 			m.propsWidth = m.defaultPropsWidth()
 		}
@@ -312,6 +316,34 @@ func (m *model) adjustScroll() {
 // resizePanel adjusts the focused panel width by delta characters.
 func (m *model) resizePanel(delta int) {
 	switch m.focus {
+	case focusLeft:
+		m.leftW += delta
+		if m.leftW < 20 {
+			m.leftW = 20
+		}
+		if m.leftW > 50 {
+			m.leftW = 50
+		}
+	case focusBody:
+		// Body has no dedicated width field; grow body = shrink props
+		if m.propsVisible {
+			m.propsWidth -= delta
+			if m.propsWidth < 20 {
+				m.propsWidth = 20
+			}
+			if m.propsWidth > 40 {
+				m.propsWidth = 40
+			}
+		} else {
+			// Props hidden; grow body = shrink left
+			m.leftW -= delta
+			if m.leftW < 20 {
+				m.leftW = 20
+			}
+			if m.leftW > 50 {
+				m.leftW = 50
+			}
+		}
 	case focusProps:
 		m.propsWidth += delta
 		if m.propsWidth < 20 {
@@ -366,8 +398,8 @@ func (m *model) updateDetail() {
 	m.propsViewport.SetContent(propsContent)
 }
 
-// leftWidth returns the width allocated for the left panel.
-func (m model) leftWidth() int {
+// defaultLeftWidth calculates the default left panel width.
+func (m model) defaultLeftWidth() int {
 	w := m.width * 2 / 5
 	if w < 20 {
 		w = 20
@@ -376,6 +408,14 @@ func (m model) leftWidth() int {
 		w = 50
 	}
 	return w
+}
+
+// leftWidth returns the current width for the left panel.
+func (m model) leftWidth() int {
+	if m.leftW > 0 {
+		return m.leftW
+	}
+	return m.defaultLeftWidth()
 }
 
 // defaultPropsWidth calculates the default properties panel width.
