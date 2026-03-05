@@ -1,3 +1,5 @@
+> 🌐 [English](README.md) | [繁體中文](README.zh-TW.md)
+
 <p align="center">
   <img src="docs/src/assets/icon.svg" width="120" alt="TypeMD icon">
 </p>
