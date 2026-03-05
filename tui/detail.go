@@ -84,32 +84,3 @@ func renderProperties(obj *core.Object, relations []core.Relation, schema *core.
 	return b.String()
 }
 
-// renderDetail builds the full detail text for an object (properties + relations + body).
-// Kept for backward compatibility during transition.
-func renderDetail(obj *core.Object, relations []core.Relation, schema *core.TypeSchema) string {
-	if obj == nil {
-		return "  Select an object to view details."
-	}
-
-	var b strings.Builder
-
-	// Title
-	b.WriteString(fmt.Sprintf(" %s\n\n", obj.ID))
-
-	// Properties section
-	b.WriteString(renderProperties(obj, relations, schema))
-
-	// Body section
-	b.WriteString("\n Body\n")
-	b.WriteString(" ────\n")
-	body := strings.TrimSpace(obj.Body)
-	if body == "" {
-		b.WriteString("   (empty)\n")
-	} else {
-		for _, line := range strings.Split(body, "\n") {
-			b.WriteString(fmt.Sprintf("   %s\n", line))
-		}
-	}
-
-	return b.String()
-}
