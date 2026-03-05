@@ -11,14 +11,31 @@ export default defineConfig({
 			social: [{ icon: 'github', label: 'GitHub', href: 'https://github.com/typemd/typemd' }],
 			sidebar: [
 				{
-					label: 'Guides',
+					label: 'Getting Started',
 					items: [
-						{ label: 'Example Guide', slug: 'guides/example' },
+						{ label: 'Introduction', slug: 'getting-started/introduction' },
+						{ label: 'Installation', slug: 'getting-started/installation' },
+						{ label: 'Quick Start', slug: 'getting-started/quick-start' },
 					],
 				},
 				{
-					label: 'Reference',
+					label: 'Guides',
+					items: [
+						{ label: 'Objects & Types', slug: 'guides/objects-and-types' },
+						{ label: 'Relations', slug: 'guides/relations' },
+						{ label: 'Type Schemas', slug: 'guides/type-schemas' },
+						{ label: 'Querying', slug: 'guides/querying' },
+					],
+				},
+				{
+					label: 'CLI Reference',
 					autogenerate: { directory: 'reference' },
+				},
+				{
+					label: 'Architecture',
+					items: [
+						{ label: 'Data Model', slug: 'architecture/data-model' },
+					],
 				},
 			],
 		}),

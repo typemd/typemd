@@ -1,40 +1,36 @@
 ---
-title: Welcome to Starlight
-description: Get started building your docs site with Starlight.
-template: splash # Remove or comment out this line to display the site sidebar on this page.
+title: TypeMD Documentation
+description: A local-first CLI knowledge management tool.
+template: splash
 hero:
-  tagline: Congrats on setting up a new Starlight project!
+  tagline: Think in Objects, not files. A local-first CLI knowledge management tool.
   image:
-    file: ../../assets/houston.webp
+    file: ../../assets/icon.svg
   actions:
-    - text: Example Guide
-      link: /guides/example/
+    - text: Get Started
+      link: /getting-started/introduction/
       icon: right-arrow
-    - text: Read the Starlight docs
-      link: https://starlight.astro.build
+    - text: GitHub
+      link: https://github.com/typemd/typemd
       icon: external
       variant: minimal
 ---
 
 import { Card, CardGrid } from '@astrojs/starlight/components';
 
-## Next steps
+## Highlights
 
 <CardGrid stagger>
-	<Card title="Update content" icon="pencil">
-		Edit `src/content/docs/index.mdx` to see this page change.
-	</Card>
-	<Card title="Change page layout" icon="document">
-		Delete `template: splash` in `src/content/docs/index.mdx` to display a
-		sidebar on this page.
-	</Card>
-	<Card title="Add new content" icon="add-document">
-		Add Markdown or MDX files to `src/content/docs` to create new pages.
-	</Card>
-	<Card title="Configure your site" icon="setting">
-		Edit your `sidebar` and other config in `astro.config.mjs`.
-	</Card>
-	<Card title="Read the docs" icon="open-book">
-		Learn more in [the Starlight Docs](https://starlight.astro.build/).
-	</Card>
+  <Card title="Local-first" icon="laptop">
+    Everything lives on your machine as plain Markdown files. No cloud, no lock-in.
+  </Card>
+  <Card title="Typed Objects" icon="document">
+    Define schemas for each type — Book, Person, Idea — with typed properties.
+  </Card>
+  <Card title="Relations" icon="random">
+    Connect objects with named, bidirectional links that auto-sync both sides.
+  </Card>
+  <Card title="Full-text Search" icon="magnifier">
+    SQLite FTS5 powers instant search and structured queries across your vault.
+  </Card>
 </CardGrid>
