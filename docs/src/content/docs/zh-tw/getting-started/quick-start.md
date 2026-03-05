@@ -1,0 +1,50 @@
+---
+title: 快速開始
+description: 不到一分鐘就能開始使用 TypeMD。
+sidebar:
+  order: 3
+---
+
+## 1. 初始化 Vault
+
+```bash
+tmd init
+```
+
+這會在目前目錄建立 `.typemd/` 目錄結構和 SQLite 資料庫。
+
+## 2. 開啟 TUI
+
+```bash
+tmd
+```
+
+這會啟動三欄介面來瀏覽你的 vault。
+
+## 3. 建立你的第一個 Object
+
+在 `objects/book/golang-in-action.md` 建立檔案：
+
+```markdown
+---
+title: Go in Action
+status: reading
+rating: 4.5
+---
+
+# Notes
+
+A great book about Go...
+```
+
+TUI 會自動偵測新檔案並顯示它。如果你 clone 了一個現有的 vault，資料庫會在首次開啟時自動建立——不需要手動執行 `tmd reindex`。
+
+## 4. 查詢與搜尋
+
+```bash
+# 依 Type 和屬性篩選
+tmd query "type=book status=reading"
+
+# 全文搜尋
+tmd search "concurrency"
+```
