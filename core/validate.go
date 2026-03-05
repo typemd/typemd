@@ -9,6 +9,27 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// ValidateAllObjects queries all objects and validates properties against their type schema.
+// Returns a map of object ID to validation errors.
+func ValidateAllObjects(v *Vault) map[string][]error {
+	result := make(map[string][]error)
+	objects, err := v.QueryObjects("")
+	if err != nil {
+		return result
+	}
+	for _, obj := range objects {
+		schema, err := v.LoadType(obj.Type)
+		if err != nil {
+			result[obj.ID] = []error{fmt.Errorf("load type %q: %w", obj.Type, err)}
+			continue
+		}
+		if errs := ValidateObject(obj.Properties, schema); len(errs) > 0 {
+			result[obj.ID] = errs
+		}
+	}
+	return result
+}
+
 // ValidateAllSchemas scans .typemd/types/*.yaml and validates each schema.
 // Returns a map of type name to validation errors.
 func ValidateAllSchemas(v *Vault) map[string][]error {
