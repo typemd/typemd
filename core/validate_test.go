@@ -119,6 +119,30 @@ func TestValidateRelations_OrphanedTarget(t *testing.T) {
 	}
 }
 
+func TestValidateRelations_OrphanedSource(t *testing.T) {
+	v := setupTestVault(t)
+	v.db.Exec("INSERT INTO relations (name, from_id, to_id) VALUES (?, ?, ?)",
+		"author", "book/ghost", "person/alice")
+	v.db.Exec("INSERT INTO objects (id, type, filename, properties, body) VALUES (?, ?, ?, ?, ?)",
+		"person/alice", "person", "alice", "{}", "")
+
+	errs := ValidateRelations(v)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateAllObjects_UnknownType(t *testing.T) {
+	v := setupTestVault(t)
+	v.db.Exec("INSERT INTO objects (id, type, filename, properties, body) VALUES (?, ?, ?, ?, ?)",
+		"unknown/test", "unknown", "test", "{}", "")
+
+	result := ValidateAllObjects(v)
+	if errs, ok := result["unknown/test"]; !ok || len(errs) == 0 {
+		t.Error("expected error for object with unknown type")
+	}
+}
+
 func TestValidateRelations_NoRelations(t *testing.T) {
 	v := setupTestVault(t)
 	errs := ValidateRelations(v)

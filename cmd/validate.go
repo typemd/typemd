@@ -12,7 +12,10 @@ var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate type schemas, objects, and relations",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := core.NewVault(".")
+		vault := core.NewVault(vaultPath)
+		if vaultPath == "" {
+			vault = core.NewVault(".")
+		}
 		if err := vault.Open(); err != nil {
 			return err
 		}
