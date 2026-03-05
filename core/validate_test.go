@@ -88,3 +88,41 @@ func TestValidateAllObjects_NoObjects(t *testing.T) {
 		t.Errorf("expected empty result, got %v", result)
 	}
 }
+
+func TestValidateRelations_Valid(t *testing.T) {
+	v := setupTestVault(t)
+	schema := []byte("name: book\nproperties:\n  - name: author\n    type: relation\n    target: person\n")
+	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), schema, 0644)
+	personSchema := []byte("name: person\nproperties:\n  - name: name\n    type: string\n")
+	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"), personSchema, 0644)
+
+	v.NewObject("book", "test-book")
+	v.NewObject("person", "alice")
+	v.LinkObjects("book/test-book", "author", "person/alice")
+
+	errs := ValidateRelations(v)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}
+
+func TestValidateRelations_OrphanedTarget(t *testing.T) {
+	v := setupTestVault(t)
+	v.db.Exec("INSERT INTO relations (name, from_id, to_id) VALUES (?, ?, ?)",
+		"author", "book/test-book", "person/ghost")
+	v.db.Exec("INSERT INTO objects (id, type, filename, properties, body) VALUES (?, ?, ?, ?, ?)",
+		"book/test-book", "book", "test-book", "{}", "")
+
+	errs := ValidateRelations(v)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateRelations_NoRelations(t *testing.T) {
+	v := setupTestVault(t)
+	errs := ValidateRelations(v)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}

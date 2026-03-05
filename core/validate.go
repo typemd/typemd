@@ -30,6 +30,37 @@ func ValidateAllObjects(v *Vault) map[string][]error {
 	return result
 }
 
+// ValidateRelations checks that all relation endpoints reference existing objects.
+func ValidateRelations(v *Vault) []error {
+	var errs []error
+	rows, err := v.db.Query("SELECT name, from_id, to_id FROM relations")
+	if err != nil {
+		return []error{fmt.Errorf("query relations: %w", err)}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name, fromID, toID string
+		if err := rows.Scan(&name, &fromID, &toID); err != nil {
+			errs = append(errs, fmt.Errorf("scan relation: %w", err))
+			continue
+		}
+		var count int
+		v.db.QueryRow("SELECT count(*) FROM objects WHERE id = ?", fromID).Scan(&count)
+		if count == 0 {
+			errs = append(errs, fmt.Errorf("%s -[%s]-> %s: source object not found", fromID, name, toID))
+		}
+		v.db.QueryRow("SELECT count(*) FROM objects WHERE id = ?", toID).Scan(&count)
+		if count == 0 {
+			errs = append(errs, fmt.Errorf("%s -[%s]-> %s: target object not found", fromID, name, toID))
+		}
+	}
+	if err := rows.Err(); err != nil {
+		errs = append(errs, fmt.Errorf("iterate relations: %w", err))
+	}
+	return errs
+}
+
 // ValidateAllSchemas scans .typemd/types/*.yaml and validates each schema.
 // Returns a map of type name to validation errors.
 func ValidateAllSchemas(v *Vault) map[string][]error {
