@@ -96,10 +96,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Update viewport sizes
 		m.bodyViewport.Width = m.bodyWidth()
 		m.bodyViewport.Height = contentHeight
-		if m.propsVisible {
-			m.propsViewport.Width = m.propsWidth
-			m.propsViewport.Height = contentHeight
-		}
+		m.propsViewport.Width = m.propsWidth
+		m.propsViewport.Height = contentHeight
 
 		m.updateDetail()
 		return m, nil
@@ -193,8 +191,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if !m.propsVisible && m.focus == focusProps {
 				m.focus = focusBody
 			}
-			// Recalculate body width
+			// Recalculate widths for both panels
+			contentHeight := m.height - 3
+			if contentHeight < 0 {
+				contentHeight = 0
+			}
 			m.bodyViewport.Width = m.bodyWidth()
+			m.propsViewport.Width = m.propsWidth
+			m.propsViewport.Height = contentHeight
 			m.updateDetail()
 			return m, nil
 
