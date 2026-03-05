@@ -311,3 +311,80 @@ func TestModel_AutoHidePropsNarrowTerminal(t *testing.T) {
 		t.Error("propsVisible should be false on narrow terminal (width=50)")
 	}
 }
+
+func TestModel_ResizePanelGrow(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.focus = focusProps
+
+	before := m.propsWidth
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if m.propsWidth != before+2 {
+		t.Errorf("propsWidth = %d, want %d (grew by 2)", m.propsWidth, before+2)
+	}
+}
+
+func TestModel_ResizePanelShrink(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.focus = focusProps
+	// Ensure propsWidth is above minimum so shrink has room
+	m.propsWidth = 30
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'['}}
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if m.propsWidth != 28 {
+		t.Errorf("propsWidth = %d, want 28 (shrunk by 2)", m.propsWidth)
+	}
+}
+
+func TestModel_ToggleProperties(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+
+	if !m.propsVisible {
+		t.Fatal("propsVisible should default to true")
+	}
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if m.propsVisible {
+		t.Error("propsVisible should be false after toggle")
+	}
+
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if !m.propsVisible {
+		t.Error("propsVisible should be true after second toggle")
+	}
+}
+
+func TestModel_ToggleProps_MovesFocusWhenHiding(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.focus = focusProps
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if m.focus == focusProps {
+		t.Error("focus should move away from focusProps when Properties is hidden")
+	}
+}

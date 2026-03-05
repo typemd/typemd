@@ -180,6 +180,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 
+		case "]":
+			m.resizePanel(+2)
+			return m, nil
+
+		case "[":
+			m.resizePanel(-2)
+			return m, nil
+
+		case "p":
+			m.propsVisible = !m.propsVisible
+			if !m.propsVisible && m.focus == focusProps {
+				m.focus = focusBody
+			}
+			// Recalculate body width
+			m.bodyViewport.Width = m.bodyWidth()
+			m.updateDetail()
+			return m, nil
+
 		case "enter", " ":
 			if m.focus == focusLeft {
 				rows := m.currentRows()
@@ -285,6 +303,24 @@ func (m *model) selectCurrentRow() {
 func (m *model) adjustScroll() {
 	contentH := m.height - 3
 	m.scrollOffset = adjustScrollOffset(m.cursor, m.scrollOffset, contentH)
+}
+
+// resizePanel adjusts the focused panel width by delta characters.
+func (m *model) resizePanel(delta int) {
+	switch m.focus {
+	case focusProps:
+		m.propsWidth += delta
+		if m.propsWidth < 20 {
+			m.propsWidth = 20
+		}
+		if m.propsWidth > 40 {
+			m.propsWidth = 40
+		}
+	}
+	// Recalculate dependent widths
+	m.bodyViewport.Width = m.bodyWidth()
+	m.propsViewport.Width = m.propsWidth
+	m.updateDetail()
 }
 
 // softWrapLines wraps each line individually, preserving leading indentation on continuation lines.
