@@ -545,6 +545,7 @@ func Start(vaultPath string) error {
 		bodyViewport:  bodyVP,
 		propsViewport: propsVP,
 		propsVisible:  false,
+		softWrap:      true,
 		relations:     relations,
 		schema:        schema,
 		searchInput:   initSearchInput(),
