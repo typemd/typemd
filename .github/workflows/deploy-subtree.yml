@@ -9,7 +9,6 @@ on:
 
 jobs:
   deploy-site:
-    if: contains(join(github.event.commits.*.modified, ','), 'site/') || contains(join(github.event.commits.*.added, ','), 'site/') || contains(join(github.event.commits.*.removed, ','), 'site/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -21,7 +20,6 @@ jobs:
           DEPLOY_TOKEN: ${{ secrets.SUBTREE_DEPLOY_TOKEN }}
 
   deploy-docs:
-    if: contains(join(github.event.commits.*.modified, ','), 'docs/') || contains(join(github.event.commits.*.added, ','), 'docs/') || contains(join(github.event.commits.*.removed, ','), 'docs/')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
