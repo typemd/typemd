@@ -23,10 +23,10 @@ func renderBody(obj *core.Object) string {
 	b.WriteString(" ────\n")
 	body := strings.TrimSpace(obj.Body)
 	if body == "" {
-		b.WriteString("   (empty)\n")
+		b.WriteString(" (empty)\n")
 	} else {
 		for _, line := range strings.Split(body, "\n") {
-			b.WriteString(fmt.Sprintf("   %s\n", line))
+			b.WriteString(fmt.Sprintf(" %s\n", line))
 		}
 	}
 
@@ -63,21 +63,21 @@ func renderProperties(obj *core.Object, relations []core.Relation, schema *core.
 	}
 
 	if len(obj.Properties) == 0 && len(reverseRels) == 0 {
-		b.WriteString("   (none)\n")
+		b.WriteString(" (none)\n")
 	} else {
 		propKeys := core.OrderedPropKeys(obj.Properties, schema)
 		for _, k := range propKeys {
 			v := obj.Properties[k]
 			if v == nil {
-				b.WriteString(fmt.Sprintf("   %s: (null)\n", k))
+				b.WriteString(fmt.Sprintf(" %s: (null)\n", k))
 			} else if relProps[k] {
-				b.WriteString(fmt.Sprintf("   %s: → %v\n", k, v))
+				b.WriteString(fmt.Sprintf(" %s: → %v\n", k, v))
 			} else {
-				b.WriteString(fmt.Sprintf("   %s: %v\n", k, v))
+				b.WriteString(fmt.Sprintf(" %s: %v\n", k, v))
 			}
 		}
 		for _, r := range reverseRels {
-			b.WriteString(fmt.Sprintf("   %s: ← %s\n", r.Name, r.FromID))
+			b.WriteString(fmt.Sprintf(" %s: ← %s\n", r.Name, r.FromID))
 		}
 	}
 
