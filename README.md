@@ -1,11 +1,15 @@
 <p align="center">
-  <img src="docs/icon.svg" width="120" alt="TypeMD icon">
+  <img src="docs/src/assets/icon.svg" width="120" alt="TypeMD icon">
 </p>
 
 <h1 align="center">TypeMD</h1>
 
 <p align="center">
   A local-first CLI knowledge management tool inspired by <a href="https://anytype.io">Anytype</a> and <a href="https://capacities.io">Capacities</a>.
+</p>
+
+<p align="center">
+  <a href="https://typemd.io">Website</a> · <a href="https://docs.typemd.io">Docs</a> · <a href="https://github.com/typemd/typemd">GitHub</a>
 </p>
 
 Your knowledge base is made of **Objects** — not files. Markdown is just the storage format.
@@ -190,7 +194,9 @@ typemd/
 ├── cmd/        # CLI commands (Cobra)
 ├── tui/        # Terminal UI (Bubble Tea)
 ├── mcp/        # MCP server for AI integration
-├── web/        # Web UI (planned)
+├── web/        # Web UI API (planned)
+├── site/       # Official website (Astro) → typemd.io
+├── docs/       # Documentation (Starlight) → docs.typemd.io
 └── app/        # Desktop app (planned)
 ```
 
