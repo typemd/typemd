@@ -30,6 +30,24 @@ func TestVault_Init(t *testing.T) {
 	}
 }
 
+func TestVault_Init_Gitignore(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+
+	if err := v.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	gitignore := filepath.Join(v.Dir(), ".gitignore")
+	data, err := os.ReadFile(gitignore)
+	if err != nil {
+		t.Fatalf("expected .gitignore to exist: %v", err)
+	}
+	if string(data) != "index.db\n" {
+		t.Errorf(".gitignore content = %q, want %q", string(data), "index.db\n")
+	}
+}
+
 func TestVault_Init_AlreadyInitialized(t *testing.T) {
 	dir := t.TempDir()
 	v := NewVault(dir)

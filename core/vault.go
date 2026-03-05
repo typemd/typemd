@@ -105,6 +105,12 @@ func (v *Vault) Init() error {
 		}
 	}
 
+	// Create .gitignore to exclude index.db
+	gitignore := filepath.Join(v.Dir(), ".gitignore")
+	if err := os.WriteFile(gitignore, []byte("index.db\n"), 0644); err != nil {
+		return fmt.Errorf("create .gitignore: %w", err)
+	}
+
 	// Initialize SQLite DB
 	db, err := sql.Open("sqlite", v.DBPath())
 	if err != nil {
