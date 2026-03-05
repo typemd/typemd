@@ -517,6 +517,11 @@ func Start(vaultPath string) error {
 
 	groups := buildGroups(objects)
 
+	// Expand first group so first object is visible and selectable
+	if len(groups) > 0 {
+		groups[0].Expanded = true
+	}
+
 	// Auto-select first object
 	var selected *core.Object
 	var relations []core.Relation
@@ -536,11 +541,20 @@ func Start(vaultPath string) error {
 	propsVP := viewport.New(0, 0)
 	propsVP.SetContent(renderProperties(selected, relations, schema))
 
+	// Set cursor to first object (skip header row)
+	initialCursor := 0
+	for i, row := range rows {
+		if !row.IsHeader && row.Object != nil {
+			initialCursor = i
+			break
+		}
+	}
+
 	m := model{
 		vault:         v,
 		focus:         focusLeft,
 		groups:        groups,
-		cursor:        0,
+		cursor:        initialCursor,
 		selected:      selected,
 		bodyViewport:  bodyVP,
 		propsViewport: propsVP,
