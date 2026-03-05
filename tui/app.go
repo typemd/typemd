@@ -30,9 +30,10 @@ type model struct {
 	focus focusPanel
 
 	// Left panel
-	groups   []typeGroup
-	cursor   int
-	selected *core.Object
+	groups       []typeGroup
+	cursor       int
+	scrollOffset int
+	selected     *core.Object
 
 	// Right panel
 	viewport  viewport.Model
@@ -121,6 +122,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusLeft {
 				rows := m.currentRows()
 				m.cursor = clampCursor(m.cursor-1, len(rows))
+				m.adjustScroll()
 				m.selectCurrentRow()
 			} else {
 				m.viewport.LineUp(1)
@@ -131,6 +133,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusLeft {
 				rows := m.currentRows()
 				m.cursor = clampCursor(m.cursor+1, len(rows))
+				m.adjustScroll()
 				m.selectCurrentRow()
 			} else {
 				m.viewport.LineDown(1)
@@ -147,6 +150,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 						// Re-clamp cursor after collapse
 						newRows := m.currentRows()
 						m.cursor = clampCursor(m.cursor, len(newRows))
+						m.adjustScroll()
 					}
 					m.selectCurrentRow()
 				}
@@ -237,6 +241,12 @@ func (m *model) selectCurrentRow() {
 	}
 }
 
+// adjustScroll updates scrollOffset so cursor is always visible.
+func (m *model) adjustScroll() {
+	contentH := m.height - 3
+	m.scrollOffset = adjustScrollOffset(m.cursor, m.scrollOffset, contentH)
+}
+
 // updateDetail refreshes the viewport content with current selected object.
 func (m *model) updateDetail() {
 	content := renderDetail(m.selected, m.relations, m.schema)
@@ -305,7 +315,7 @@ func (m model) View() string {
 			leftContent = strings.Join(lines, "\n")
 		}
 	} else {
-		leftContent = renderList(m.groups, m.cursor, m.focus == focusLeft, leftW, contentH)
+		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
 	}
 
 	// Right panel content

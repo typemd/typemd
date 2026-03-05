@@ -29,7 +29,7 @@ func buildGroups(objects []*core.Object) []typeGroup {
 		groups = append(groups, typeGroup{
 			Name:     name,
 			Objects:  objs,
-			Expanded: len(objs) <= 20,
+			Expanded: false,
 		})
 	}
 	sort.Slice(groups, func(i, j int) bool {
@@ -66,15 +66,39 @@ func clampCursor(cursor, totalRows int) int {
 	return cursor
 }
 
-// renderList renders the left panel list.
-func renderList(groups []typeGroup, cursor int, focused bool, width, height int) string {
+// adjustScrollOffset returns a new offset so that cursor is visible within viewHeight.
+func adjustScrollOffset(cursor, offset, viewHeight int) int {
+	if viewHeight <= 0 {
+		return 0
+	}
+	if cursor < offset {
+		return cursor
+	}
+	if cursor >= offset+viewHeight {
+		return cursor - viewHeight + 1
+	}
+	return offset
+}
+
+// renderList renders the left panel list with scroll offset support.
+func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, width, height int) string {
 	rows := visibleRows(groups)
 	if len(rows) == 0 {
 		return "  (no objects)"
 	}
 
+	end := scrollOffset + height
+	if end > len(rows) {
+		end = len(rows)
+	}
+	start := scrollOffset
+	if start > len(rows) {
+		start = len(rows)
+	}
+
 	var lines []string
-	for i, row := range rows {
+	for i := start; i < end; i++ {
+		row := rows[i]
 		var line string
 		if row.IsHeader {
 			g := groups[row.GroupIndex]
