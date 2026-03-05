@@ -32,5 +32,8 @@ dist/
 .claude/settings.local.json
 .mcp.json
 
+# Node.js
+node_modules/
+
 # Superpowers Skills
 docs/plans
