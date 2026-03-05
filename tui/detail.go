@@ -7,10 +7,8 @@ import (
 	"github.com/MilesChou/typemd/core"
 )
 
-
-// renderDetail builds the full detail text for an object (properties + relations + body).
-// schema is optional; when provided, properties are displayed in schema-defined order.
-func renderDetail(obj *core.Object, relations []core.Relation, schema *core.TypeSchema) string {
+// renderBody builds the body panel content: object title + markdown body.
+func renderBody(obj *core.Object) string {
 	if obj == nil {
 		return "  Select an object to view details."
 	}
@@ -20,7 +18,29 @@ func renderDetail(obj *core.Object, relations []core.Relation, schema *core.Type
 	// Title
 	b.WriteString(fmt.Sprintf(" %s\n\n", obj.ID))
 
-	// Properties & Relations section (merged)
+	// Body section
+	b.WriteString(" Body\n")
+	b.WriteString(" ────\n")
+	body := strings.TrimSpace(obj.Body)
+	if body == "" {
+		b.WriteString("   (empty)\n")
+	} else {
+		for _, line := range strings.Split(body, "\n") {
+			b.WriteString(fmt.Sprintf("   %s\n", line))
+		}
+	}
+
+	return b.String()
+}
+
+// renderProperties builds the properties panel content: YAML frontmatter fields + relations.
+func renderProperties(obj *core.Object, relations []core.Relation, schema *core.TypeSchema) string {
+	if obj == nil {
+		return ""
+	}
+
+	var b strings.Builder
+
 	b.WriteString(" Properties\n")
 	b.WriteString(" ──────────\n")
 
@@ -34,7 +54,7 @@ func renderDetail(obj *core.Object, relations []core.Relation, schema *core.Type
 		}
 	}
 
-	// Collect reverse relations (not represented as properties of this object)
+	// Collect reverse relations
 	var reverseRels []core.Relation
 	for _, r := range relations {
 		if r.ToID == obj.ID {
@@ -51,17 +71,33 @@ func renderDetail(obj *core.Object, relations []core.Relation, schema *core.Type
 			if v == nil {
 				b.WriteString(fmt.Sprintf("   %s: (null)\n", k))
 			} else if relProps[k] {
-				// Relation property: show with arrow
 				b.WriteString(fmt.Sprintf("   %s: → %v\n", k, v))
 			} else {
 				b.WriteString(fmt.Sprintf("   %s: %v\n", k, v))
 			}
 		}
-		// Append reverse relations
 		for _, r := range reverseRels {
 			b.WriteString(fmt.Sprintf("   %s: ← %s\n", r.Name, r.FromID))
 		}
 	}
+
+	return b.String()
+}
+
+// renderDetail builds the full detail text for an object (properties + relations + body).
+// Kept for backward compatibility during transition.
+func renderDetail(obj *core.Object, relations []core.Relation, schema *core.TypeSchema) string {
+	if obj == nil {
+		return "  Select an object to view details."
+	}
+
+	var b strings.Builder
+
+	// Title
+	b.WriteString(fmt.Sprintf(" %s\n\n", obj.ID))
+
+	// Properties section
+	b.WriteString(renderProperties(obj, relations, schema))
 
 	// Body section
 	b.WriteString("\n Body\n")

@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	"github.com/MilesChou/typemd/core"
@@ -139,6 +140,98 @@ func TestScrollOffset_CursorFollows(t *testing.T) {
 	contentH := m.height - 3
 	if m.scrollOffset > m.cursor || m.scrollOffset+contentH <= m.cursor {
 		t.Errorf("cursor %d not visible with scrollOffset %d and height %d", m.cursor, m.scrollOffset, contentH)
+	}
+}
+
+func TestRenderBody_WithContent(t *testing.T) {
+	obj := &core.Object{
+		ID:         "book/test",
+		Type:       "book",
+		Filename:   "test",
+		Properties: map[string]any{"title": "Test"},
+		Body:       "# Hello\nWorld",
+	}
+	result := renderBody(obj)
+	if !strings.Contains(result, "book/test") {
+		t.Error("renderBody should contain object ID as title")
+	}
+	if !strings.Contains(result, "# Hello") {
+		t.Error("renderBody should contain body content")
+	}
+	if strings.Contains(result, "title:") {
+		t.Error("renderBody should NOT contain properties")
+	}
+}
+
+func TestRenderBody_Nil(t *testing.T) {
+	result := renderBody(nil)
+	if !strings.Contains(result, "Select an object") {
+		t.Error("renderBody(nil) should show placeholder")
+	}
+}
+
+func TestRenderBody_EmptyBody(t *testing.T) {
+	obj := &core.Object{ID: "book/test", Body: ""}
+	result := renderBody(obj)
+	if !strings.Contains(result, "(empty)") {
+		t.Error("renderBody with empty body should show (empty)")
+	}
+}
+
+func TestRenderProperties_WithSchema(t *testing.T) {
+	obj := &core.Object{
+		ID:         "book/test",
+		Properties: map[string]any{"title": "Go", "status": "reading"},
+	}
+	schema := &core.TypeSchema{
+		Properties: []core.Property{
+			{Name: "title", Type: "string"},
+			{Name: "status", Type: "string"},
+		},
+	}
+	result := renderProperties(obj, nil, schema)
+	if !strings.Contains(result, "title: Go") {
+		t.Error("renderProperties should contain title property")
+	}
+	if !strings.Contains(result, "status: reading") {
+		t.Error("renderProperties should contain status property")
+	}
+}
+
+func TestRenderProperties_Nil(t *testing.T) {
+	result := renderProperties(nil, nil, nil)
+	if result != "" {
+		t.Errorf("renderProperties(nil) should return empty string, got %q", result)
+	}
+}
+
+func TestRenderProperties_WithRelation(t *testing.T) {
+	obj := &core.Object{
+		ID:         "book/test",
+		Properties: map[string]any{"author": "person/alan"},
+	}
+	schema := &core.TypeSchema{
+		Properties: []core.Property{
+			{Name: "author", Type: "relation"},
+		},
+	}
+	result := renderProperties(obj, nil, schema)
+	if !strings.Contains(result, "→") {
+		t.Error("renderProperties should show arrow for relation properties")
+	}
+}
+
+func TestRenderProperties_ReverseRelation(t *testing.T) {
+	obj := &core.Object{
+		ID:         "person/alan",
+		Properties: map[string]any{},
+	}
+	relations := []core.Relation{
+		{Name: "author", FromID: "book/test", ToID: "person/alan"},
+	}
+	result := renderProperties(obj, relations, nil)
+	if !strings.Contains(result, "←") {
+		t.Error("renderProperties should show reverse arrow for reverse relations")
 	}
 }
 
