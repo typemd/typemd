@@ -1,0 +1,36 @@
+---
+title: TypeMD 文件
+description: 一個本地優先的 CLI 知識管理工具。
+template: splash
+hero:
+  tagline: 用 Object 思考，而非檔案。一個本地優先的 CLI 知識管理工具。
+  image:
+    file: ../../../assets/icon.svg
+  actions:
+    - text: 快速開始
+      link: /zh-tw/getting-started/introduction/
+      icon: right-arrow
+    - text: GitHub
+      link: https://github.com/typemd/typemd
+      icon: external
+      variant: minimal
+---
+
+import { Card, CardGrid } from '@astrojs/starlight/components';
+
+## 特色
+
+<CardGrid stagger>
+  <Card title="本地優先" icon="laptop">
+    一切都在你的電腦上，以純 Markdown 檔案儲存。不需要雲端，不被鎖定。
+  </Card>
+  <Card title="型別化 Object" icon="document">
+    為每種 Type 定義 schema——書籍、人物、想法——搭配型別化的屬性。
+  </Card>
+  <Card title="Relation" icon="random">
+    用具名的雙向連結來連接 Object，自動同步兩端。
+  </Card>
+  <Card title="全文搜尋" icon="magnifier">
+    SQLite FTS5 驅動的即時搜尋和結構化查詢，橫跨你的整個 vault。
+  </Card>
+</CardGrid>
