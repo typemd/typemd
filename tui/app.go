@@ -544,7 +544,7 @@ func Start(vaultPath string) error {
 		selected:      selected,
 		bodyViewport:  bodyVP,
 		propsViewport: propsVP,
-		propsVisible:  true,
+		propsVisible:  false,
 		relations:     relations,
 		schema:        schema,
 		searchInput:   initSearchInput(),

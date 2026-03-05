@@ -22,7 +22,7 @@ func setupTestModel(t *testing.T) model {
 		groups:       groups,
 		cursor:       0,
 		selected:     groups[0].Objects[0],
-		propsVisible: true,
+		propsVisible: false,
 		searchInput:  initSearchInput(),
 		width:        120,
 		height:       24,
@@ -251,6 +251,7 @@ func TestBuildGroups_DefaultCollapse(t *testing.T) {
 
 func TestModel_TabCyclesThreePanels(t *testing.T) {
 	m := setupTestModel(t)
+	m.propsVisible = true // enable props for three-panel cycling
 	tab := tea.KeyMsg{Type: tea.KeyTab}
 
 	// Left → Body
@@ -272,6 +273,25 @@ func TestModel_TabCyclesThreePanels(t *testing.T) {
 	m = newM.(model)
 	if m.focus != focusLeft {
 		t.Errorf("after 3rd tab: focus = %d, want focusLeft(%d)", m.focus, focusLeft)
+	}
+}
+
+func TestModel_TabSkipsPropsWhenHidden(t *testing.T) {
+	m := setupTestModel(t) // propsVisible defaults to false
+	tab := tea.KeyMsg{Type: tea.KeyTab}
+
+	// Left → Body
+	newM, _ := m.Update(tab)
+	m = newM.(model)
+	if m.focus != focusBody {
+		t.Errorf("after 1st tab: focus = %d, want focusBody(%d)", m.focus, focusBody)
+	}
+
+	// Body → Left (skip Props)
+	newM, _ = m.Update(tab)
+	m = newM.(model)
+	if m.focus != focusLeft {
+		t.Errorf("after 2nd tab: focus = %d, want focusLeft(%d)", m.focus, focusLeft)
 	}
 }
 
@@ -303,12 +323,13 @@ func TestModel_ThreePanelView_NotEmpty(t *testing.T) {
 
 func TestModel_AutoHidePropsNarrowTerminal(t *testing.T) {
 	m := setupTestModel(t)
+	m.propsVisible = true // start with props visible
 	msg := tea.WindowSizeMsg{Width: 50, Height: 24}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
 	if updated.propsVisible {
-		t.Error("propsVisible should be false on narrow terminal (width=50)")
+		t.Error("propsVisible should be auto-hidden on narrow terminal (width=50)")
 	}
 }
 
@@ -353,23 +374,23 @@ func TestModel_ToggleProperties(t *testing.T) {
 	newM, _ := m.Update(sizeMsg)
 	m = newM.(model)
 
-	if !m.propsVisible {
-		t.Fatal("propsVisible should default to true")
+	if m.propsVisible {
+		t.Fatal("propsVisible should default to false")
 	}
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
-	if m.propsVisible {
-		t.Error("propsVisible should be false after toggle")
+	if !m.propsVisible {
+		t.Error("propsVisible should be true after first toggle")
 	}
 
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
-	if !m.propsVisible {
-		t.Error("propsVisible should be true after second toggle")
+	if m.propsVisible {
+		t.Error("propsVisible should be false after second toggle")
 	}
 }
 
@@ -378,6 +399,7 @@ func TestModel_ToggleProps_MovesFocusWhenHiding(t *testing.T) {
 	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
 	newM, _ := m.Update(sizeMsg)
 	m = newM.(model)
+	m.propsVisible = true
 	m.focus = focusProps
 
 	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
