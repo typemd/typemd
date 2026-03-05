@@ -1,0 +1,33 @@
+name: Deploy subtree to GitHub Pages repos
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "site/**"
+      - "docs/**"
+
+jobs:
+  deploy-site:
+    if: contains(join(github.event.commits.*.modified, ','), 'site/') || contains(join(github.event.commits.*.added, ','), 'site/') || contains(join(github.event.commits.*.removed, ','), 'site/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push site subtree
+        run: git push "https://x-access-token:${DEPLOY_TOKEN}@github.com/typemd/typemd.io.git" $(git subtree split --prefix=site):refs/heads/main --force
+        env:
+          DEPLOY_TOKEN: ${{ secrets.SUBTREE_DEPLOY_TOKEN }}
+
+  deploy-docs:
+    if: contains(join(github.event.commits.*.modified, ','), 'docs/') || contains(join(github.event.commits.*.added, ','), 'docs/') || contains(join(github.event.commits.*.removed, ','), 'docs/')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Push docs subtree
+        run: git push "https://x-access-token:${DEPLOY_TOKEN}@github.com/typemd/docs.git" $(git subtree split --prefix=docs):refs/heads/main --force
+        env:
+          DEPLOY_TOKEN: ${{ secrets.SUBTREE_DEPLOY_TOKEN }}
