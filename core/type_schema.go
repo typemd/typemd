@@ -107,6 +107,45 @@ func (v *Vault) LoadType(name string) (*TypeSchema, error) {
 	return nil, fmt.Errorf("unknown type: %s", name)
 }
 
+// validPropertyTypes lists allowed property types.
+var validPropertyTypes = map[string]bool{
+	"string": true, "number": true, "enum": true, "relation": true,
+}
+
+// ValidateSchema validates a type schema itself for correctness.
+func ValidateSchema(schema *TypeSchema) []error {
+	var errs []error
+	if schema.Name == "" {
+		errs = append(errs, fmt.Errorf("schema missing required field: name"))
+	}
+	seen := make(map[string]bool)
+	for i, prop := range schema.Properties {
+		if prop.Name == "" {
+			errs = append(errs, fmt.Errorf("property[%d]: missing required field: name", i))
+			continue
+		}
+		if seen[prop.Name] {
+			errs = append(errs, fmt.Errorf("property %q: duplicate property name", prop.Name))
+		}
+		seen[prop.Name] = true
+		if prop.Type == "" {
+			errs = append(errs, fmt.Errorf("property %q: missing required field: type", prop.Name))
+			continue
+		}
+		if !validPropertyTypes[prop.Type] {
+			errs = append(errs, fmt.Errorf("property %q: invalid type %q (valid: string, number, enum, relation)", prop.Name, prop.Type))
+			continue
+		}
+		if prop.Type == "enum" && len(prop.Values) == 0 {
+			errs = append(errs, fmt.Errorf("property %q: enum type requires non-empty values", prop.Name))
+		}
+		if prop.Type == "relation" && prop.Target == "" {
+			errs = append(errs, fmt.Errorf("property %q: relation type requires target", prop.Name))
+		}
+	}
+	return errs
+}
+
 // ValidateObject validates object properties against a type schema.
 // Lenient mode: only validates properties defined in schema, ignores extra properties.
 // Properties defined in schema but missing from props are also ignored.

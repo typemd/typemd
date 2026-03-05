@@ -331,3 +331,96 @@ properties:
 	}
 }
 
+func TestValidateSchema_Valid(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+			{Name: "status", Type: "enum", Values: []string{"to-read", "reading", "done"}},
+			{Name: "author", Type: "relation", Target: "person"},
+			{Name: "rating", Type: "number"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}
+
+func TestValidateSchema_MissingName(t *testing.T) {
+	schema := &TypeSchema{Properties: []Property{{Name: "title", Type: "string"}}}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateSchema_InvalidPropertyType(t *testing.T) {
+	schema := &TypeSchema{
+		Name:       "test",
+		Properties: []Property{{Name: "field", Type: "boolean"}},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateSchema_EnumWithoutValues(t *testing.T) {
+	schema := &TypeSchema{
+		Name:       "test",
+		Properties: []Property{{Name: "status", Type: "enum"}},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateSchema_RelationWithoutTarget(t *testing.T) {
+	schema := &TypeSchema{
+		Name:       "test",
+		Properties: []Property{{Name: "author", Type: "relation"}},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateSchema_DuplicatePropertyName(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "test",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+			{Name: "title", Type: "number"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateSchema_MissingPropertyName(t *testing.T) {
+	schema := &TypeSchema{
+		Name:       "test",
+		Properties: []Property{{Type: "string"}},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
+func TestValidateSchema_MissingPropertyType(t *testing.T) {
+	schema := &TypeSchema{
+		Name:       "test",
+		Properties: []Property{{Name: "title"}},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Errorf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+}
+
