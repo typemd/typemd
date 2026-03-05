@@ -191,6 +191,82 @@ func TestVault_FTSTrigger_InsertSync(t *testing.T) {
 	}
 }
 
+func TestVault_Open_AutoSyncEmptyIndex(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	// Create an object file on disk (simulating a fresh clone)
+	bookDir := filepath.Join(dir, "objects", "book")
+	if err := os.MkdirAll(bookDir, 0755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	content := "---\ntitle: Test Book\n---\nHello world\n"
+	if err := os.WriteFile(filepath.Join(bookDir, "test-book.md"), []byte(content), 0644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	// Open should auto-sync because index is empty
+	if err := v.Open(); err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer v.Close()
+
+	var count int
+	if err := v.db.QueryRow("SELECT COUNT(*) FROM objects").Scan(&count); err != nil {
+		t.Fatalf("count query error = %v", err)
+	}
+	if count != 1 {
+		t.Errorf("objects count = %d, want 1", count)
+	}
+}
+
+func TestVault_Open_SkipSyncWhenIndexPopulated(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	// Open and manually insert an object
+	if err := v.Open(); err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	_, err := v.db.Exec(`INSERT INTO objects (id, type, filename, properties, body) VALUES ('book/existing', 'book', 'existing', '{}', '')`)
+	if err != nil {
+		t.Fatalf("insert error = %v", err)
+	}
+	v.Close()
+
+	// Create a second object on disk that would be picked up by SyncIndex
+	bookDir := filepath.Join(dir, "objects", "book")
+	if err := os.MkdirAll(bookDir, 0755); err != nil {
+		t.Fatalf("MkdirAll() error = %v", err)
+	}
+	content := "---\ntitle: New Book\n---\nBody\n"
+	if err := os.WriteFile(filepath.Join(bookDir, "new-book.md"), []byte(content), 0644); err != nil {
+		t.Fatalf("WriteFile() error = %v", err)
+	}
+
+	// Re-open: index already has data, so auto-sync should NOT run
+	v2 := NewVault(dir)
+	if err := v2.Open(); err != nil {
+		t.Fatalf("Open() error = %v", err)
+	}
+	defer v2.Close()
+
+	var count int
+	if err := v2.db.QueryRow("SELECT COUNT(*) FROM objects").Scan(&count); err != nil {
+		t.Fatalf("count query error = %v", err)
+	}
+	// Should still be 1 (the manually inserted one), NOT 2
+	if count != 1 {
+		t.Errorf("objects count = %d, want 1 (auto-sync should not have run)", count)
+	}
+}
+
 // setupTestVault creates a temporary vault with Init + Open, auto-cleanup on test end.
 func setupTestVault(t *testing.T) *Vault {
 	t.Helper()

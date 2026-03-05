@@ -78,7 +78,7 @@ tmd link book/golang-in-action author person/alan-donovan
 # Unlink (with --both to remove inverse side too)
 tmd unlink book/golang-in-action author person/alan-donovan --both
 
-# Sync files to DB and rebuild search index
+# Sync files to DB and rebuild search index (only needed after manual edits)
 tmd reindex
 
 # Validate schemas, objects, and relations

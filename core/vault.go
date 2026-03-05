@@ -73,7 +73,31 @@ func (v *Vault) Open() error {
 		v.db = nil
 		return fmt.Errorf("ensure schema: %w", err)
 	}
+
+	sync, err := v.needsSync()
+	if err != nil {
+		v.db.Close()
+		v.db = nil
+		return fmt.Errorf("check index: %w", err)
+	}
+	if sync {
+		if err := v.SyncIndex(); err != nil {
+			v.db.Close()
+			v.db = nil
+			return fmt.Errorf("auto sync index: %w", err)
+		}
+	}
+
 	return nil
+}
+
+// needsSync returns true if the objects table has zero rows.
+func (v *Vault) needsSync() (bool, error) {
+	var count int
+	if err := v.db.QueryRow("SELECT COUNT(*) FROM objects").Scan(&count); err != nil {
+		return false, err
+	}
+	return count == 0, nil
 }
 
 // Close closes the SQLite database connection.
