@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/typemd/typemd/core"
 	"github.com/spf13/cobra"
 )
 
@@ -29,57 +28,31 @@ Examples:
 			return err
 		}
 
-		// Fill missing schema-defined properties
-		schema, _ := vault.LoadType(obj.Type)
-		if schema != nil {
-			for _, p := range schema.Properties {
-				if _, ok := obj.Properties[p.Name]; !ok {
-					obj.Properties[p.Name] = nil
-				}
-			}
+		props, err := vault.BuildDisplayProperties(obj)
+		if err != nil {
+			return fmt.Errorf("build display properties: %w", err)
 		}
-
-		relations, _ := vault.ListRelations(obj.ID)
 
 		// Title
 		fmt.Println(obj.ID)
 		fmt.Println()
 
-		// Properties & Relations (merged)
-		relProps := make(map[string]bool)
-		if schema != nil {
-			for _, p := range schema.Properties {
-				if p.Type == "relation" {
-					relProps[p.Name] = true
-				}
-			}
-		}
-
-		var reverseRels []core.Relation
-		for _, r := range relations {
-			if r.ToID == obj.ID {
-				reverseRels = append(reverseRels, r)
-			}
-		}
-
+		// Properties & Relations
 		fmt.Println("Properties")
 		fmt.Println("──────────")
-		if len(obj.Properties) == 0 && len(reverseRels) == 0 {
+		if len(props) == 0 {
 			fmt.Println("  (none)")
 		} else {
-			propKeys := core.OrderedPropKeys(obj.Properties, schema)
-			for _, k := range propKeys {
-				v := obj.Properties[k]
-				if v == nil {
-					fmt.Printf("  %s: (null)\n", k)
-				} else if relProps[k] {
-					fmt.Printf("  %s: → %v\n", k, v)
+			for _, p := range props {
+				if p.IsReverse {
+					fmt.Printf("  %s: ← %s\n", p.Key, p.FromID)
+				} else if p.Value == nil {
+					fmt.Printf("  %s: (null)\n", p.Key)
+				} else if p.IsRelation {
+					fmt.Printf("  %s: → %v\n", p.Key, p.Value)
 				} else {
-					fmt.Printf("  %s: %v\n", k, v)
+					fmt.Printf("  %s: %v\n", p.Key, p.Value)
 				}
-			}
-			for _, r := range reverseRels {
-				fmt.Printf("  %s: ← %s\n", r.Name, r.FromID)
 			}
 		}
 
