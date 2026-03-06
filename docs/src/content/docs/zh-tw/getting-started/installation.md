@@ -10,7 +10,7 @@ sidebar:
 確保你已安裝 [Go](https://go.dev/)，然後執行：
 
 ```bash
-go install github.com/typemd/typemd@latest
+go install github.com/typemd/typemd/cmd/tmd@latest
 ```
 
 ## 驗證安裝

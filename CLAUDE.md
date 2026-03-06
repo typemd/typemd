@@ -26,7 +26,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 ```bash
 go build ./...
 go test ./...
-go run . [command]
+go run ./cmd/tmd [command]
 ```
 
 ## Testing

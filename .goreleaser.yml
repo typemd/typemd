@@ -1,8 +1,8 @@
 version: 2
 
 builds:
-  - main: .
-    binary: typemd
+  - main: ./cmd/tmd
+    binary: tmd
     env:
       - CGO_ENABLED=0
     goos:
@@ -16,7 +16,7 @@ builds:
 archives:
   - formats:
       - tar.gz
-    name_template: "typemd-{{ .Os }}-{{ if eq .Arch \"amd64\" }}x64{{ else }}{{ .Arch }}{{ end }}"
+    name_template: "tmd-{{ .Os }}-{{ if eq .Arch \"amd64\" }}x64{{ else }}{{ .Arch }}{{ end }}"
     format_overrides:
       - goos: windows
         formats:
