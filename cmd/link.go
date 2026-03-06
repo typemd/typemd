@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/typemd/typemd/core"
 	"github.com/spf13/cobra"
 )
 
@@ -12,7 +11,7 @@ var linkCmd = &cobra.Command{
 	Short: "Link two objects with a relation",
 	Args:  cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := core.NewVault(".")
+		vault := resolveVault(vaultPath)
 		if err := vault.Open(); err != nil {
 			return err
 		}

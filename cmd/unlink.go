@@ -3,7 +3,6 @@ package cmd
 import (
 	"fmt"
 
-	"github.com/typemd/typemd/core"
 	"github.com/spf13/cobra"
 )
 
@@ -14,7 +13,7 @@ var unlinkCmd = &cobra.Command{
 	RunE: func(cmd *cobra.Command, args []string) error {
 		both, _ := cmd.Flags().GetBool("both")
 
-		vault := core.NewVault(".")
+		vault := resolveVault(vaultPath)
 		if err := vault.Open(); err != nil {
 			return err
 		}
