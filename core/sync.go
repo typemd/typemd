@@ -8,12 +8,29 @@ import (
 	"strings"
 )
 
+// OrphanedRelation represents a relation record that references a non-existent object.
+type OrphanedRelation struct {
+	Name   string
+	FromID string
+	ToID   string
+}
+
+// SyncResult holds statistics from a SyncIndex operation.
+type SyncResult struct {
+	Created  int
+	Updated  int
+	Deleted  int
+	Orphaned []OrphanedRelation
+}
+
 // SyncIndex scans the objects directory, upserts all found objects into the DB,
-// removes DB entries for deleted files, and rebuilds the FTS index.
-func (v *Vault) SyncIndex() error {
+// removes DB entries for deleted files, cleans up orphaned relations, and rebuilds the FTS index.
+func (v *Vault) SyncIndex() (*SyncResult, error) {
 	if v.db == nil {
-		return fmt.Errorf("vault not opened")
+		return nil, fmt.Errorf("vault not opened")
 	}
+
+	result := &SyncResult{}
 
 	// Collect all object IDs found on disk
 	diskIDs := make(map[string]bool)
@@ -23,9 +40,9 @@ func (v *Vault) SyncIndex() error {
 		// No objects directory — just clean DB and return
 		_, err := v.db.Exec("DELETE FROM objects")
 		if err != nil {
-			return fmt.Errorf("clean objects: %w", err)
+			return nil, fmt.Errorf("clean objects: %w", err)
 		}
-		return v.RebuildIndex()
+		return result, v.RebuildIndex()
 	}
 
 	// Walk objects/<type>/<name>.md
@@ -81,13 +98,13 @@ func (v *Vault) SyncIndex() error {
 		return nil
 	})
 	if err != nil {
-		return fmt.Errorf("walk objects: %w", err)
+		return nil, fmt.Errorf("walk objects: %w", err)
 	}
 
 	// Remove DB entries that no longer exist on disk
 	rows, err := v.db.Query("SELECT id FROM objects")
 	if err != nil {
-		return fmt.Errorf("list db objects: %w", err)
+		return nil, fmt.Errorf("list db objects: %w", err)
 	}
 	defer rows.Close()
 
@@ -95,21 +112,60 @@ func (v *Vault) SyncIndex() error {
 	for rows.Next() {
 		var id string
 		if err := rows.Scan(&id); err != nil {
-			return fmt.Errorf("scan id: %w", err)
+			return nil, fmt.Errorf("scan id: %w", err)
 		}
 		if !diskIDs[id] {
 			toDelete = append(toDelete, id)
 		}
 	}
 	if err := rows.Err(); err != nil {
-		return fmt.Errorf("iterate db objects: %w", err)
+		return nil, fmt.Errorf("iterate db objects: %w", err)
 	}
 
 	for _, id := range toDelete {
 		if _, err := v.db.Exec("DELETE FROM objects WHERE id = ?", id); err != nil {
-			return fmt.Errorf("delete stale object %s: %w", id, err)
+			return nil, fmt.Errorf("delete stale object %s: %w", id, err)
+		}
+	}
+	result.Deleted = len(toDelete)
+
+	// Detect and clean up orphaned relations
+	orphanRows, err := v.db.Query(`
+		SELECT r.name, r.from_id, r.to_id FROM relations r
+		LEFT JOIN objects o1 ON r.from_id = o1.id
+		LEFT JOIN objects o2 ON r.to_id = o2.id
+		WHERE o1.id IS NULL OR o2.id IS NULL
+	`)
+	if err != nil {
+		return nil, fmt.Errorf("detect orphaned relations: %w", err)
+	}
+	defer orphanRows.Close()
+
+	for orphanRows.Next() {
+		var o OrphanedRelation
+		if err := orphanRows.Scan(&o.Name, &o.FromID, &o.ToID); err != nil {
+			return nil, fmt.Errorf("scan orphaned relation: %w", err)
+		}
+		result.Orphaned = append(result.Orphaned, o)
+	}
+	if err := orphanRows.Err(); err != nil {
+		return nil, fmt.Errorf("iterate orphaned relations: %w", err)
+	}
+
+	// Delete orphaned relations from DB
+	if len(result.Orphaned) > 0 {
+		_, err := v.db.Exec(`
+			DELETE FROM relations WHERE id IN (
+				SELECT r.id FROM relations r
+				LEFT JOIN objects o1 ON r.from_id = o1.id
+				LEFT JOIN objects o2 ON r.to_id = o2.id
+				WHERE o1.id IS NULL OR o2.id IS NULL
+			)
+		`)
+		if err != nil {
+			return nil, fmt.Errorf("delete orphaned relations: %w", err)
 		}
 	}
 
-	return v.RebuildIndex()
+	return result, v.RebuildIndex()
 }

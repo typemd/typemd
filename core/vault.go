@@ -81,7 +81,7 @@ func (v *Vault) Open() error {
 		return fmt.Errorf("check index: %w", err)
 	}
 	if sync {
-		if err := v.SyncIndex(); err != nil {
+		if _, err := v.SyncIndex(); err != nil {
 			v.db.Close()
 			v.db = nil
 			return fmt.Errorf("auto sync index: %w", err)
