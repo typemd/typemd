@@ -4,7 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/typemd/typemd/core"
 	"github.com/spf13/cobra"
 )
 
@@ -21,10 +20,7 @@ Examples:
   tmd query "type=book status=reading" --json`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := core.NewVault(vaultPath)
-		if vaultPath == "" {
-			vault = core.NewVault(".")
-		}
+		vault := resolveVault(vaultPath)
 		if err := vault.Open(); err != nil {
 			return err
 		}

@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	"github.com/spf13/cobra"
-	"github.com/typemd/typemd/core"
 )
 
 var createCmd = &cobra.Command{
@@ -17,10 +16,7 @@ Examples:
   tmd create person robert-martin`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := core.NewVault(vaultPath)
-		if vaultPath == "" {
-			vault = core.NewVault(".")
-		}
+		vault := resolveVault(vaultPath)
 		if err := vault.Open(); err != nil {
 			return err
 		}
