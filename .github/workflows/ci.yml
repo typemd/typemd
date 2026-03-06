@@ -29,5 +29,5 @@ jobs:
         run: |
           for vault in examples/*/; do
             echo "Validating ${vault}..."
-            go run . --vault "${vault}" validate
+            go run ./cmd/tmd --vault "${vault}" validate
           done
