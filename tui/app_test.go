@@ -184,13 +184,11 @@ func TestRenderProperties_WithSchema(t *testing.T) {
 		ID:         "book/test",
 		Properties: map[string]any{"title": "Go", "status": "reading"},
 	}
-	schema := &core.TypeSchema{
-		Properties: []core.Property{
-			{Name: "title", Type: "string"},
-			{Name: "status", Type: "string"},
-		},
+	props := []core.DisplayProperty{
+		{Key: "title", Value: "Go"},
+		{Key: "status", Value: "reading"},
 	}
-	result := renderProperties(obj, nil, schema)
+	result := renderProperties(obj, props)
 	if !strings.Contains(result, "title: Go") {
 		t.Error("renderProperties should contain title property")
 	}
@@ -200,7 +198,7 @@ func TestRenderProperties_WithSchema(t *testing.T) {
 }
 
 func TestRenderProperties_Nil(t *testing.T) {
-	result := renderProperties(nil, nil, nil)
+	result := renderProperties(nil, nil)
 	if result != "" {
 		t.Errorf("renderProperties(nil) should return empty string, got %q", result)
 	}
@@ -211,12 +209,10 @@ func TestRenderProperties_WithRelation(t *testing.T) {
 		ID:         "book/test",
 		Properties: map[string]any{"author": "person/alan"},
 	}
-	schema := &core.TypeSchema{
-		Properties: []core.Property{
-			{Name: "author", Type: "relation"},
-		},
+	props := []core.DisplayProperty{
+		{Key: "author", Value: "person/alan", IsRelation: true},
 	}
-	result := renderProperties(obj, nil, schema)
+	result := renderProperties(obj, props)
 	if !strings.Contains(result, "→") {
 		t.Error("renderProperties should show arrow for relation properties")
 	}
@@ -227,10 +223,10 @@ func TestRenderProperties_ReverseRelation(t *testing.T) {
 		ID:         "person/alan",
 		Properties: map[string]any{},
 	}
-	relations := []core.Relation{
-		{Name: "author", FromID: "book/test", ToID: "person/alan"},
+	props := []core.DisplayProperty{
+		{Key: "author", Value: "book/test", IsReverse: true, FromID: "book/test"},
 	}
-	result := renderProperties(obj, relations, nil)
+	result := renderProperties(obj, props)
 	if !strings.Contains(result, "←") {
 		t.Error("renderProperties should show reverse arrow for reverse relations")
 	}

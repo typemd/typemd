@@ -33,8 +33,8 @@ func renderBody(obj *core.Object) string {
 	return b.String()
 }
 
-// renderProperties builds the properties panel content: YAML frontmatter fields + relations.
-func renderProperties(obj *core.Object, relations []core.Relation, schema *core.TypeSchema) string {
+// renderProperties builds the properties panel content using display properties.
+func renderProperties(obj *core.Object, displayProps []core.DisplayProperty) string {
 	if obj == nil {
 		return ""
 	}
@@ -44,40 +44,19 @@ func renderProperties(obj *core.Object, relations []core.Relation, schema *core.
 	b.WriteString(" Properties\n")
 	b.WriteString(" ──────────\n")
 
-	// Build a set of property names that are relation types
-	relProps := make(map[string]bool)
-	if schema != nil {
-		for _, p := range schema.Properties {
-			if p.Type == "relation" {
-				relProps[p.Name] = true
-			}
-		}
-	}
-
-	// Collect reverse relations
-	var reverseRels []core.Relation
-	for _, r := range relations {
-		if r.ToID == obj.ID {
-			reverseRels = append(reverseRels, r)
-		}
-	}
-
-	if len(obj.Properties) == 0 && len(reverseRels) == 0 {
+	if len(displayProps) == 0 {
 		b.WriteString(" (none)\n")
 	} else {
-		propKeys := core.OrderedPropKeys(obj.Properties, schema)
-		for _, k := range propKeys {
-			v := obj.Properties[k]
-			if v == nil {
-				b.WriteString(fmt.Sprintf(" %s: (null)\n", k))
-			} else if relProps[k] {
-				b.WriteString(fmt.Sprintf(" %s: → %v\n", k, v))
+		for _, p := range displayProps {
+			if p.IsReverse {
+				b.WriteString(fmt.Sprintf(" %s: ← %s\n", p.Key, p.FromID))
+			} else if p.Value == nil {
+				b.WriteString(fmt.Sprintf(" %s: (null)\n", p.Key))
+			} else if p.IsRelation {
+				b.WriteString(fmt.Sprintf(" %s: → %v\n", p.Key, p.Value))
 			} else {
-				b.WriteString(fmt.Sprintf(" %s: %v\n", k, v))
+				b.WriteString(fmt.Sprintf(" %s: %v\n", p.Key, p.Value))
 			}
-		}
-		for _, r := range reverseRels {
-			b.WriteString(fmt.Sprintf(" %s: ← %s\n", r.Name, r.FromID))
 		}
 	}
 

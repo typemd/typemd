@@ -46,8 +46,7 @@ type model struct {
 	propsVisible  bool // toggle visibility
 
 	// Shared detail state
-	relations []core.Relation
-	schema    *core.TypeSchema
+	displayProps []core.DisplayProperty
 
 	// Search
 	searchMode    bool
@@ -280,26 +279,15 @@ func (m *model) selectCurrentRow() {
 		if !row.IsHeader && row.Object != nil {
 			if m.vault != nil {
 				if obj, err := m.vault.GetObject(row.Object.ID); err == nil {
-					// Fill in missing schema-defined properties
-					if schema, err := m.vault.LoadType(obj.Type); err == nil {
-						for _, p := range schema.Properties {
-							if _, ok := obj.Properties[p.Name]; !ok {
-								obj.Properties[p.Name] = nil
-							}
-						}
-						m.schema = schema
-					} else {
-						m.schema = nil
-					}
 					m.selected = obj
+					m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
 				} else {
 					m.selected = row.Object
-					m.schema = nil
+					m.displayProps = nil
 				}
-				m.relations, _ = m.vault.ListRelations(m.selected.ID)
 			} else {
 				m.selected = row.Object
-				m.schema = nil
+				m.displayProps = nil
 			}
 			m.updateDetail()
 			return
@@ -391,7 +379,7 @@ func (m *model) updateDetail() {
 	}
 	m.bodyViewport.SetContent(bodyContent)
 
-	propsContent := renderProperties(m.selected, m.relations, m.schema)
+	propsContent := renderProperties(m.selected, m.displayProps)
 	if m.softWrap && m.propsViewport.Width > 0 {
 		propsContent = softWrapLines(propsContent, m.propsViewport.Width)
 	}
@@ -568,14 +556,12 @@ func Start(vaultPath string) error {
 
 	// Auto-select first object
 	var selected *core.Object
-	var relations []core.Relation
-	var schema *core.TypeSchema
+	var displayProps []core.DisplayProperty
 	rows := visibleRows(groups)
 	for _, row := range rows {
 		if !row.IsHeader && row.Object != nil {
 			selected = row.Object
-			relations, _ = v.ListRelations(selected.ID)
-			schema, _ = v.LoadType(selected.Type)
+			displayProps, _ = v.BuildDisplayProperties(selected)
 			break
 		}
 	}
@@ -583,7 +569,7 @@ func Start(vaultPath string) error {
 	bodyVP := viewport.New(0, 0)
 	bodyVP.SetContent(renderBody(selected))
 	propsVP := viewport.New(0, 0)
-	propsVP.SetContent(renderProperties(selected, relations, schema))
+	propsVP.SetContent(renderProperties(selected, displayProps))
 
 	// Set cursor to first object (skip header row)
 	initialCursor := 0
@@ -604,8 +590,7 @@ func Start(vaultPath string) error {
 		propsViewport: propsVP,
 		propsVisible:  false,
 		softWrap:      true,
-		relations:     relations,
-		schema:        schema,
+		displayProps: displayProps,
 		searchInput:   initSearchInput(),
 	}
 
