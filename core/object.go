@@ -21,7 +21,6 @@ type Object struct {
 }
 
 // writeFrontmatter writes properties and body as markdown with YAML frontmatter.
-// writeFrontmatter writes properties and body as markdown with YAML frontmatter.
 // keyOrder specifies the desired property output order. Properties not in keyOrder
 // are appended at the end. If keyOrder is nil, properties are written in map iteration order.
 func writeFrontmatter(props map[string]any, body string, keyOrder []string) ([]byte, error) {
