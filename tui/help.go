@@ -7,6 +7,12 @@ import (
 	"github.com/charmbracelet/lipgloss"
 )
 
+const (
+	helpDescWidth    = 20 // width reserved for description column
+	helpKeyPadding   = 4  // spacing between key and description columns
+	helpPopupPadding = 4  // horizontal padding from popup border + Padding(1,2)
+)
+
 // helpEntry represents a single keybinding shown in the help popup.
 type helpEntry struct {
 	Key  string
@@ -42,26 +48,23 @@ func renderHelp(width, height int) string {
 		}
 	}
 
+	contentW := maxKeyW + helpKeyPadding + helpDescWidth
+
 	// Build lines
 	var lines []string
 	lines = append(lines, "Keybindings")
-	lines = append(lines, strings.Repeat("─", maxKeyW+4+20))
+	lines = append(lines, strings.Repeat("─", contentW))
 	for _, e := range entries {
 		lines = append(lines, fmt.Sprintf("  %-*s   %s", maxKeyW, e.Key, e.Desc))
 	}
 	lines = append(lines, "")
-	lines = append(lines, "Press Esc or ? to close")
+	lines = append(lines, fmt.Sprintf("Press Esc or %s to close", keys.Help.Help().Key))
 
 	content := strings.Join(lines, "\n")
 
-	// Calculate popup dimensions
-	popupW := maxKeyW + 4 + 20 + 4 // padding
+	popupW := contentW + helpPopupPadding
 	if popupW > width-4 {
 		popupW = width - 4
-	}
-	popupH := len(lines) + 2 // border
-	if popupH > height-2 {
-		popupH = height - 2
 	}
 
 	popup := lipgloss.NewStyle().

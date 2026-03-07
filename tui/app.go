@@ -458,6 +458,11 @@ func (m model) View() string {
 		return "Loading..."
 	}
 
+	// Help overlay takes over the entire screen
+	if m.showHelp {
+		return renderHelp(m.width, m.height)
+	}
+
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
 	contentH := m.height - 3 // help bar + borders
@@ -528,9 +533,7 @@ func (m model) View() string {
 
 	// Help bar
 	var helpBar string
-	if m.showHelp {
-		helpBar = "  esc/?/h: close help"
-	} else if m.searchMode {
+	if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
 	} else if m.searchResults != nil {
 		helpBar = "  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit"
@@ -538,14 +541,7 @@ func (m model) View() string {
 		helpBar = "  ?/h: help  |  /: search  |  q: quit"
 	}
 
-	view := panels + "\n" + helpBar
-
-	// Help overlay
-	if m.showHelp {
-		view = renderHelp(m.width, m.height)
-	}
-
-	return view
+	return panels + "\n" + helpBar
 }
 
 func Start(vaultPath string) error {
