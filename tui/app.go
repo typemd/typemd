@@ -331,6 +331,17 @@ func (m *model) currentRows() []listRow {
 	return visibleRows(m.groups)
 }
 
+// applyLoadedObject sets the selected object and updates displayProps and loadedModTime.
+// Called after a successful GetObject to avoid duplicating this pattern.
+func (m *model) applyLoadedObject(obj *core.Object) {
+	m.selected = obj
+	m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
+	objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
+	if info, statErr := os.Stat(objPath); statErr == nil {
+		m.loadedModTime = info.ModTime()
+	}
+}
+
 // selectCurrentRow updates the selected object based on current cursor position.
 // Re-reads the object from disk to get the latest body and properties.
 func (m *model) selectCurrentRow() {
@@ -340,13 +351,7 @@ func (m *model) selectCurrentRow() {
 		if !row.IsHeader && row.Object != nil {
 			if m.vault != nil {
 				if obj, err := m.vault.GetObject(row.Object.ID); err == nil {
-					m.selected = obj
-					m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
-					// Track file mtime for concurrent edit detection
-					objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
-					if info, statErr := os.Stat(objPath); statErr == nil {
-						m.loadedModTime = info.ModTime()
-					}
+					m.applyLoadedObject(obj)
 				} else {
 					m.selected = row.Object
 					m.displayProps = nil
@@ -357,42 +362,16 @@ func (m *model) selectCurrentRow() {
 			}
 			m.dirty = false
 			m.saveErr = ""
+			m.saveConflict = false
 			m.updateDetail()
 			return
 		}
 	}
 }
 
-// saveObject attempts to save the selected object to disk.
-// Sets saveConflict if a concurrent external edit is detected.
-// Sets saveErr on failure. On success, clears dirty and sets skipNextReload.
-func (m *model) saveObject() {
-	if m.selected == nil || m.vault == nil {
-		return
-	}
-	obj := m.selected
-	objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
-	if info, err := os.Stat(objPath); err == nil {
-		if info.ModTime().After(m.loadedModTime) {
-			m.saveConflict = true
-			m.saveErr = "File changed externally. 'y' to overwrite · 'n' to reload · esc to cancel"
-			return
-		}
-	}
-	if err := m.vault.SaveObject(obj); err != nil {
-		m.saveErr = fmt.Sprintf("Save failed: %v", err)
-		return
-	}
-	m.dirty = false
-	m.saveErr = ""
-	m.skipNextReload = true
-}
-
-// forceSave saves the selected object ignoring concurrent edit detection.
-func (m *model) forceSave() {
-	if m.selected == nil || m.vault == nil {
-		return
-	}
+// doSave executes the actual vault write and resets save state on success.
+// Shared by saveObject and forceSave.
+func (m *model) doSave() {
 	if err := m.vault.SaveObject(m.selected); err != nil {
 		m.saveErr = fmt.Sprintf("Save failed: %v", err)
 		return
@@ -403,18 +382,39 @@ func (m *model) forceSave() {
 	m.skipNextReload = true
 }
 
+// saveObject attempts to save the selected object to disk.
+// Sets saveConflict if a concurrent external edit is detected.
+// Sets saveErr on failure. On success, clears dirty and sets skipNextReload.
+func (m *model) saveObject() {
+	if m.selected == nil || m.vault == nil {
+		return
+	}
+	objPath := m.vault.ObjectPath(m.selected.Type, m.selected.Filename)
+	if info, err := os.Stat(objPath); err == nil {
+		if info.ModTime().After(m.loadedModTime) {
+			m.saveConflict = true
+			m.saveErr = "File changed externally. 'y' to overwrite · 'n' to reload · esc to cancel"
+			return
+		}
+	}
+	m.doSave()
+}
+
+// forceSave saves the selected object ignoring concurrent edit detection.
+func (m *model) forceSave() {
+	if m.selected == nil || m.vault == nil {
+		return
+	}
+	m.doSave()
+}
+
 // reloadFromDisk reloads the selected object from disk, discarding local changes.
 func (m *model) reloadFromDisk() {
 	if m.selected == nil || m.vault == nil {
 		return
 	}
 	if obj, err := m.vault.GetObject(m.selected.ID); err == nil {
-		m.selected = obj
-		m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
-		objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
-		if info, statErr := os.Stat(objPath); statErr == nil {
-			m.loadedModTime = info.ModTime()
-		}
+		m.applyLoadedObject(obj)
 		m.updateDetail()
 	}
 	m.dirty = false
