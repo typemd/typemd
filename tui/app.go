@@ -52,7 +52,8 @@ type model struct {
 	displayProps []core.DisplayProperty
 
 	// Edit mode
-	editMode bool
+	editMode      bool
+	bodyEditStart string // textarea.Value() snapshot taken at edit entry (sanitized)
 
 	// Save state
 	dirty          bool      // unsaved in-memory changes
@@ -82,6 +83,7 @@ func newBodyTextarea() textarea.Model {
 	ta := textarea.New()
 	ta.ShowLineNumbers = false
 	ta.CharLimit = 0
+	ta.Prompt = " " // single-space indent matching view mode; must be set before SetWidth
 	// Remove textarea's own border — the panel border is provided by lipgloss
 	noBase := lipgloss.NewStyle()
 	ta.FocusedStyle.Base = noBase
@@ -90,8 +92,12 @@ func newBodyTextarea() textarea.Model {
 }
 
 // resizeBodyTextarea updates the body textarea dimensions to match the current layout.
+// In edit mode, 2 lines are reserved for the title + separator header above the textarea.
 func (m *model) resizeBodyTextarea() {
 	h := m.height - 3
+	if m.editMode {
+		h -= 2
+	}
 	if h < 0 {
 		h = 0
 	}
@@ -187,7 +193,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if msg.String() == "esc" {
 				if m.focus == focusBody && m.selected != nil {
 					newBody := m.bodyTextarea.Value()
-					if newBody != m.selected.Body {
+					if newBody != m.bodyEditStart {
 						m.selected.Body = newBody
 						m.dirty = true
 						m.updateDetail()
@@ -221,6 +227,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusBody && m.selected != nil {
 				m.editMode = true
 				m.bodyTextarea.SetValue(m.selected.Body)
+				m.bodyEditStart = m.bodyTextarea.Value() // snapshot after sanitization
 				m.resizeBodyTextarea()
 				m.bodyTextarea.CursorEnd()
 				return m, m.bodyTextarea.Focus()
@@ -330,6 +337,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			return m, nil
 		}
+	}
+	// Route remaining messages (e.g. cursor blink) to textarea when in body edit mode
+	if m.editMode && m.focus == focusBody {
+		var cmd tea.Cmd
+		m.bodyTextarea, cmd = m.bodyTextarea.Update(msg)
+		return m, cmd
 	}
 	return m, nil
 }
@@ -673,10 +686,10 @@ func (m model) View() string {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
 	}
 
-	// Body panel content: textarea in edit mode, viewport otherwise
+	// Body panel content: header + textarea in edit mode, viewport otherwise
 	var bodyPanelContent string
 	if m.editMode && m.focus == focusBody {
-		bodyPanelContent = m.bodyTextarea.View()
+		bodyPanelContent = renderBodyHeader(m.selected, bodyW) + m.bodyTextarea.View()
 	} else {
 		bodyPanelContent = m.bodyViewport.View()
 	}

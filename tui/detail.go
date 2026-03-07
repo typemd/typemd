@@ -12,6 +12,21 @@ func wikiLinkStyle(s string) string {
 	return wikiLinkStyleBase.Render(s)
 }
 
+// renderBodyHeader builds the title + separator for the body panel (2 lines).
+// Used in both view mode (via renderBody) and edit mode (above the textarea).
+func renderBodyHeader(obj *core.Object, width int) string {
+	if obj == nil {
+		return ""
+	}
+	title := obj.DisplayID()
+	maxWidth := width - 1 // 1 for leading space
+	if maxWidth > 0 {
+		title = runewidth.Truncate(title, maxWidth, "…")
+	}
+	titleWidth := runewidth.StringWidth(title)
+	return fmt.Sprintf(" %s\n %s\n", title, strings.Repeat("─", titleWidth))
+}
+
 // renderBody builds the body panel content: object title + markdown body.
 func renderBody(obj *core.Object, width int) string {
 	if obj == nil {
@@ -20,15 +35,7 @@ func renderBody(obj *core.Object, width int) string {
 
 	var b strings.Builder
 
-	// Title + separator (truncate to panel width, accounting for leading space)
-	title := obj.DisplayID()
-	maxWidth := width - 1 // 1 for leading space
-	if maxWidth > 0 {
-		title = runewidth.Truncate(title, maxWidth, "…")
-	}
-	titleWidth := runewidth.StringWidth(title)
-	b.WriteString(fmt.Sprintf(" %s\n", title))
-	b.WriteString(fmt.Sprintf(" %s\n", strings.Repeat("─", titleWidth)))
+	b.WriteString(renderBodyHeader(obj, width))
 
 	// Body section
 	body := strings.TrimSpace(obj.Body)
