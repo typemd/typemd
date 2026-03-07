@@ -176,9 +176,9 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 		}
 	}
 
-	// Extract and sync wiki-links from all objects on disk
+	// Sync wiki-links using in-memory diskIDs for target resolution
 	for id, body := range diskBodies {
-		if err := v.syncWikiLinks(id, body); err != nil {
+		if err := v.syncWikiLinks(id, body, diskIDs); err != nil {
 			return nil, fmt.Errorf("sync wikilinks for %s: %w", id, err)
 		}
 	}

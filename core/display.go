@@ -2,6 +2,9 @@ package core
 
 import "fmt"
 
+// BacklinksDisplayKey is the property key used for wiki-link backlinks.
+const BacklinksDisplayKey = "backlinks"
+
 // DisplayProperty represents a single property prepared for display.
 type DisplayProperty struct {
 	Key        string
@@ -87,7 +90,7 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 	backlinks, _ := v.ListBacklinks(obj.ID)
 	for _, bl := range backlinks {
 		result = append(result, DisplayProperty{
-			Key:        "backlinks",
+			Key:        BacklinksDisplayKey,
 			Value:      bl.FromID,
 			IsBacklink: true,
 			FromID:     bl.FromID,

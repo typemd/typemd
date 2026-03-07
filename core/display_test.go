@@ -154,8 +154,8 @@ func TestBuildDisplayPropertiesWithBacklinks(t *testing.T) {
 	for _, p := range props {
 		if p.IsBacklink {
 			foundBacklink = true
-			if p.Key != "backlinks" {
-				t.Errorf("backlink Key = %q, want %q", p.Key, "backlinks")
+			if p.Key != BacklinksDisplayKey {
+				t.Errorf("backlink Key = %q, want %q", p.Key, BacklinksDisplayKey)
 			}
 			if p.FromID != noteA.ID {
 				t.Errorf("backlink FromID = %q, want %q", p.FromID, noteA.ID)
@@ -189,7 +189,7 @@ func TestBuildDisplayPropertiesNoBacklinks(t *testing.T) {
 
 func TestBacklinkFormat(t *testing.T) {
 	p := DisplayProperty{
-		Key:        "backlinks",
+		Key:        BacklinksDisplayKey,
 		Value:      "note/alpha-01abc",
 		IsBacklink: true,
 		FromID:     "note/alpha-01abc",
