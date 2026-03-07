@@ -394,15 +394,20 @@ func (m *model) currentRows() []listRow {
 	return visibleRows(m.groups)
 }
 
+// refreshLoadedModTime updates loadedModTime from the file's current mtime.
+func (m *model) refreshLoadedModTime(obj *core.Object) {
+	objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
+	if info, err := os.Stat(objPath); err == nil {
+		m.loadedModTime = info.ModTime()
+	}
+}
+
 // applyLoadedObject sets the selected object and updates displayProps and loadedModTime.
 // Called after a successful GetObject to avoid duplicating this pattern.
 func (m *model) applyLoadedObject(obj *core.Object) {
 	m.selected = obj
 	m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
-	objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
-	if info, statErr := os.Stat(objPath); statErr == nil {
-		m.loadedModTime = info.ModTime()
-	}
+	m.refreshLoadedModTime(obj)
 }
 
 // selectCurrentRow updates the selected object based on current cursor position.
@@ -440,10 +445,7 @@ func (m *model) doSave() {
 		return
 	}
 	// Update loadedModTime so subsequent saves don't trigger a false conflict.
-	objPath := m.vault.ObjectPath(m.selected.Type, m.selected.Filename)
-	if info, err := os.Stat(objPath); err == nil {
-		m.loadedModTime = info.ModTime()
-	}
+	m.refreshLoadedModTime(m.selected)
 	m.dirty = false
 	m.saveErr = ""
 	m.saveConflict = false
