@@ -7,7 +7,9 @@ sidebar:
 
 ## Storage
 
-Objects are stored as Markdown files with YAML frontmatter under `objects/<type>/`. The full Object ID is `type/filename`, e.g. `book/golang-in-action`.
+Objects are stored as Markdown files with YAML frontmatter under `objects/<type>/`. The full Object ID is `type/<slug>-<ulid>`, e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`.
+
+When created via the CLI (`tmd create`), a 26-character lowercase ULID is automatically appended to the slug for uniqueness. Objects created manually (without the CLI) do not require a ULID — this is backward compatible.
 
 ```
 vault/
@@ -18,9 +20,9 @@ vault/
 │   └── index.db            # SQLite index (auto-updated)
 └── objects/
     ├── book/
-    │   └── golang-in-action.md
+    │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md
     └── person/
-        └── alan-donovan.md
+        └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
 ## Indexing

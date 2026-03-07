@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/typemd/typemd/core"
@@ -12,7 +13,8 @@ import (
 )
 
 // setupTestVault creates a temporary vault with a type schema and sample objects.
-func setupTestVault(t *testing.T) *core.Vault {
+// Returns the vault and the ID of the created sample object.
+func setupTestVault(t *testing.T) (*core.Vault, string) {
 	t.Helper()
 	dir := t.TempDir()
 	v := core.NewVault(dir)
@@ -33,15 +35,16 @@ func setupTestVault(t *testing.T) *core.Vault {
 	}
 
 	// Create sample object
-	if _, err := v.NewObject("book", "clean-code"); err != nil {
+	obj, err := v.NewObject("book", "clean-code")
+	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
-	return v
+	return v, obj.ID
 }
 
 func TestSearchHandler_HappyPath(t *testing.T) {
-	vault := setupTestVault(t)
+	vault, sampleID := setupTestVault(t)
 
 	handler := searchHandler(vault)
 	req := mcplib.CallToolRequest{}
@@ -66,13 +69,16 @@ func TestSearchHandler_HappyPath(t *testing.T) {
 	if len(summaries) != 1 {
 		t.Fatalf("expected 1 result, got %d", len(summaries))
 	}
-	if summaries[0].ID != "book/clean-code" {
-		t.Errorf("expected ID book/clean-code, got %s", summaries[0].ID)
+	if summaries[0].ID != sampleID {
+		t.Errorf("expected ID %s, got %s", sampleID, summaries[0].ID)
+	}
+	if !strings.HasPrefix(summaries[0].ID, "book/clean-code-") {
+		t.Errorf("expected ID to start with book/clean-code-, got %s", summaries[0].ID)
 	}
 }
 
 func TestSearchHandler_EmptyKeyword(t *testing.T) {
-	vault := setupTestVault(t)
+	vault, _ := setupTestVault(t)
 
 	handler := searchHandler(vault)
 	req := mcplib.CallToolRequest{}
@@ -96,7 +102,7 @@ func TestSearchHandler_EmptyKeyword(t *testing.T) {
 }
 
 func TestSearchHandler_NoResults(t *testing.T) {
-	vault := setupTestVault(t)
+	vault, _ := setupTestVault(t)
 
 	handler := searchHandler(vault)
 	req := mcplib.CallToolRequest{}
@@ -119,12 +125,12 @@ func TestSearchHandler_NoResults(t *testing.T) {
 }
 
 func TestGetObjectHandler_HappyPath(t *testing.T) {
-	vault := setupTestVault(t)
+	vault, sampleID := setupTestVault(t)
 
 	handler := getObjectHandler(vault)
 	req := mcplib.CallToolRequest{}
 	req.Params.Name = "get_object"
-	req.Params.Arguments = map[string]any{"id": "book/clean-code"}
+	req.Params.Arguments = map[string]any{"id": sampleID}
 
 	result, err := handler(context.Background(), req)
 	if err != nil {
@@ -140,8 +146,8 @@ func TestGetObjectHandler_HappyPath(t *testing.T) {
 		t.Fatalf("unmarshal result: %v", err)
 	}
 
-	if detail.ID != "book/clean-code" {
-		t.Errorf("expected ID book/clean-code, got %s", detail.ID)
+	if detail.ID != sampleID {
+		t.Errorf("expected ID %s, got %s", sampleID, detail.ID)
 	}
 	if detail.Type != "book" {
 		t.Errorf("expected type book, got %s", detail.Type)
@@ -149,7 +155,7 @@ func TestGetObjectHandler_HappyPath(t *testing.T) {
 }
 
 func TestGetObjectHandler_NotFound(t *testing.T) {
-	vault := setupTestVault(t)
+	vault, _ := setupTestVault(t)
 
 	handler := getObjectHandler(vault)
 	req := mcplib.CallToolRequest{}
@@ -166,7 +172,7 @@ func TestGetObjectHandler_NotFound(t *testing.T) {
 }
 
 func TestGetObjectHandler_InvalidID(t *testing.T) {
-	vault := setupTestVault(t)
+	vault, _ := setupTestVault(t)
 
 	handler := getObjectHandler(vault)
 	req := mcplib.CallToolRequest{}

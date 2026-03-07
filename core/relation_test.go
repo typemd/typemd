@@ -42,39 +42,39 @@ properties:
 func TestVault_LinkObjects_SingleValue(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "golang-in-action")
-	v.NewObject("person", "alan-donovan")
+	book, _ := v.NewObject("book", "golang-in-action")
+	person, _ := v.NewObject("person", "alan-donovan")
 
-	err := v.LinkObjects("book/golang-in-action", "author", "person/alan-donovan")
+	err := v.LinkObjects(book.ID, "author", person.ID)
 	if err != nil {
 		t.Fatalf("LinkObjects() error = %v", err)
 	}
 
 	// Verify source frontmatter
-	book, _ := v.GetObject("book/golang-in-action")
-	if book.Properties["author"] != "person/alan-donovan" {
-		t.Errorf("author = %v, want %q", book.Properties["author"], "person/alan-donovan")
+	bookObj, _ := v.GetObject(book.ID)
+	if bookObj.Properties["author"] != person.ID {
+		t.Errorf("author = %v, want %q", bookObj.Properties["author"], person.ID)
 	}
 
 	// Verify inverse (person.books should be array with one entry)
-	person, _ := v.GetObject("person/alan-donovan")
-	books, ok := person.Properties["books"].([]any)
+	personObj, _ := v.GetObject(person.ID)
+	books, ok := personObj.Properties["books"].([]any)
 	if !ok {
-		t.Fatalf("books type = %T, want []any", person.Properties["books"])
+		t.Fatalf("books type = %T, want []any", personObj.Properties["books"])
 	}
-	if len(books) != 1 || books[0] != "book/golang-in-action" {
-		t.Errorf("books = %v, want [book/golang-in-action]", books)
+	if len(books) != 1 || books[0] != book.ID {
+		t.Errorf("books = %v, want [%s]", books, book.ID)
 	}
 
 	// Verify relations table
 	var count int
 	v.db.QueryRow("SELECT COUNT(*) FROM relations WHERE from_id = ? AND name = ?",
-		"book/golang-in-action", "author").Scan(&count)
+		book.ID, "author").Scan(&count)
 	if count != 1 {
 		t.Errorf("relations count (forward) = %d, want 1", count)
 	}
 	v.db.QueryRow("SELECT COUNT(*) FROM relations WHERE from_id = ? AND name = ?",
-		"person/alan-donovan", "books").Scan(&count)
+		person.ID, "books").Scan(&count)
 	if count != 1 {
 		t.Errorf("relations count (inverse) = %d, want 1", count)
 	}
@@ -83,18 +83,18 @@ func TestVault_LinkObjects_SingleValue(t *testing.T) {
 func TestVault_LinkObjects_MultipleValue(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "book-a")
-	v.NewObject("book", "book-b")
-	v.NewObject("person", "alan")
+	bookA, _ := v.NewObject("book", "book-a")
+	bookB, _ := v.NewObject("book", "book-b")
+	person, _ := v.NewObject("person", "alan")
 
 	// Link two books to person via inverse (person.books is multiple)
-	v.LinkObjects("book/book-a", "author", "person/alan")
-	v.LinkObjects("book/book-b", "author", "person/alan")
+	v.LinkObjects(bookA.ID, "author", person.ID)
+	v.LinkObjects(bookB.ID, "author", person.ID)
 
-	person, _ := v.GetObject("person/alan")
-	books, ok := person.Properties["books"].([]any)
+	personObj, _ := v.GetObject(person.ID)
+	books, ok := personObj.Properties["books"].([]any)
 	if !ok {
-		t.Fatalf("books type = %T, want []any", person.Properties["books"])
+		t.Fatalf("books type = %T, want []any", personObj.Properties["books"])
 	}
 	if len(books) != 2 {
 		t.Errorf("len(books) = %d, want 2", len(books))
@@ -103,9 +103,9 @@ func TestVault_LinkObjects_MultipleValue(t *testing.T) {
 
 func TestVault_LinkObjects_TargetNotFound(t *testing.T) {
 	v := setupRelationTestVault(t)
-	v.NewObject("book", "test")
+	book, _ := v.NewObject("book", "test")
 
-	err := v.LinkObjects("book/test", "author", "person/nonexistent")
+	err := v.LinkObjects(book.ID, "author", "person/nonexistent")
 	if err == nil {
 		t.Fatal("expected error for nonexistent target, got nil")
 	}
@@ -113,10 +113,10 @@ func TestVault_LinkObjects_TargetNotFound(t *testing.T) {
 
 func TestVault_LinkObjects_RelationNotFound(t *testing.T) {
 	v := setupRelationTestVault(t)
-	v.NewObject("book", "test")
-	v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test")
+	person, _ := v.NewObject("person", "alan")
 
-	err := v.LinkObjects("book/test", "nonexistent", "person/alan")
+	err := v.LinkObjects(book.ID, "nonexistent", person.ID)
 	if err == nil {
 		t.Fatal("expected error for unknown relation, got nil")
 	}
@@ -124,11 +124,11 @@ func TestVault_LinkObjects_RelationNotFound(t *testing.T) {
 
 func TestVault_LinkObjects_TypeMismatch(t *testing.T) {
 	v := setupRelationTestVault(t)
-	v.NewObject("book", "book-a")
-	v.NewObject("book", "book-b")
+	bookA, _ := v.NewObject("book", "book-a")
+	bookB, _ := v.NewObject("book", "book-b")
 
 	// author targets person, not book
-	err := v.LinkObjects("book/book-a", "author", "book/book-b")
+	err := v.LinkObjects(bookA.ID, "author", bookB.ID)
 	if err == nil {
 		t.Fatal("expected error for type mismatch, got nil")
 	}
@@ -148,36 +148,36 @@ func TestVault_LinkObjects_DBNotOpen(t *testing.T) {
 func TestVault_LinkObjects_SingleValueOverwrite(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "test")
-	v.NewObject("person", "alan")
-	v.NewObject("person", "brian")
+	book, _ := v.NewObject("book", "test")
+	alan, _ := v.NewObject("person", "alan")
+	brian, _ := v.NewObject("person", "brian")
 
 	// Link to alan first
-	v.LinkObjects("book/test", "author", "person/alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// Link to brian (should overwrite since author is single-value)
-	err := v.LinkObjects("book/test", "author", "person/brian")
+	err := v.LinkObjects(book.ID, "author", brian.ID)
 	if err != nil {
 		t.Fatalf("LinkObjects() overwrite error = %v", err)
 	}
 
-	book, _ := v.GetObject("book/test")
-	if book.Properties["author"] != "person/brian" {
-		t.Errorf("author = %v, want %q", book.Properties["author"], "person/brian")
+	bookObj, _ := v.GetObject(book.ID)
+	if bookObj.Properties["author"] != brian.ID {
+		t.Errorf("author = %v, want %q", bookObj.Properties["author"], brian.ID)
 	}
 }
 
 func TestVault_LinkObjects_DuplicateMultiple(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "test")
-	v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test")
+	alan, _ := v.NewObject("person", "alan")
 
-	v.LinkObjects("book/test", "author", "person/alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// person.books is multiple, linking same book again should error
 	// because the inverse side already has this entry
-	err := v.LinkObjects("book/test", "author", "person/alan")
+	err := v.LinkObjects(book.ID, "author", alan.ID)
 	// Note: single-value overwrite on book side is fine,
 	// but inverse side should detect duplicate
 	_ = err
@@ -186,49 +186,49 @@ func TestVault_LinkObjects_DuplicateMultiple(t *testing.T) {
 func TestVault_UnlinkObjects_SingleValue(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "test")
-	v.NewObject("person", "alan")
-	v.LinkObjects("book/test", "author", "person/alan")
+	book, _ := v.NewObject("book", "test")
+	alan, _ := v.NewObject("person", "alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// Unlink without --both: only remove from book
-	err := v.UnlinkObjects("book/test", "author", "person/alan", false)
+	err := v.UnlinkObjects(book.ID, "author", alan.ID, false)
 	if err != nil {
 		t.Fatalf("UnlinkObjects() error = %v", err)
 	}
 
-	book, _ := v.GetObject("book/test")
-	if book.Properties["author"] != nil {
-		t.Errorf("author = %v, want nil", book.Properties["author"])
+	bookObj, _ := v.GetObject(book.ID)
+	if bookObj.Properties["author"] != nil {
+		t.Errorf("author = %v, want nil", bookObj.Properties["author"])
 	}
 
 	// person.books should still have the entry
-	person, _ := v.GetObject("person/alan")
-	books, ok := person.Properties["books"].([]any)
+	personObj, _ := v.GetObject(alan.ID)
+	books, ok := personObj.Properties["books"].([]any)
 	if !ok || len(books) != 1 {
-		t.Errorf("books = %v, expected still linked", person.Properties["books"])
+		t.Errorf("books = %v, expected still linked", personObj.Properties["books"])
 	}
 }
 
 func TestVault_UnlinkObjects_Both(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "test")
-	v.NewObject("person", "alan")
-	v.LinkObjects("book/test", "author", "person/alan")
+	book, _ := v.NewObject("book", "test")
+	alan, _ := v.NewObject("person", "alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
-	err := v.UnlinkObjects("book/test", "author", "person/alan", true)
+	err := v.UnlinkObjects(book.ID, "author", alan.ID, true)
 	if err != nil {
 		t.Fatalf("UnlinkObjects() error = %v", err)
 	}
 
-	book, _ := v.GetObject("book/test")
-	if book.Properties["author"] != nil {
-		t.Errorf("author = %v, want nil", book.Properties["author"])
+	bookObj, _ := v.GetObject(book.ID)
+	if bookObj.Properties["author"] != nil {
+		t.Errorf("author = %v, want nil", bookObj.Properties["author"])
 	}
 
-	person, _ := v.GetObject("person/alan")
-	if person.Properties["books"] != nil {
-		t.Errorf("books = %v, want nil", person.Properties["books"])
+	personObj, _ := v.GetObject(alan.ID)
+	if personObj.Properties["books"] != nil {
+		t.Errorf("books = %v, want nil", personObj.Properties["books"])
 	}
 
 	// Verify relations table is clean
@@ -242,27 +242,27 @@ func TestVault_UnlinkObjects_Both(t *testing.T) {
 func TestVault_UnlinkObjects_MultipleRemoveOne(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "book-a")
-	v.NewObject("book", "book-b")
-	v.NewObject("person", "alan")
+	bookA, _ := v.NewObject("book", "book-a")
+	bookB, _ := v.NewObject("book", "book-b")
+	alan, _ := v.NewObject("person", "alan")
 
-	v.LinkObjects("book/book-a", "author", "person/alan")
-	v.LinkObjects("book/book-b", "author", "person/alan")
+	v.LinkObjects(bookA.ID, "author", alan.ID)
+	v.LinkObjects(bookB.ID, "author", alan.ID)
 
 	// Unlink one book with --both
-	err := v.UnlinkObjects("book/book-a", "author", "person/alan", true)
+	err := v.UnlinkObjects(bookA.ID, "author", alan.ID, true)
 	if err != nil {
 		t.Fatalf("UnlinkObjects() error = %v", err)
 	}
 
 	// person.books should still have book-b
-	person, _ := v.GetObject("person/alan")
-	books, ok := person.Properties["books"].([]any)
+	personObj, _ := v.GetObject(alan.ID)
+	books, ok := personObj.Properties["books"].([]any)
 	if !ok || len(books) != 1 {
-		t.Fatalf("books = %v, want [book/book-b]", person.Properties["books"])
+		t.Fatalf("books = %v, want [%s]", personObj.Properties["books"], bookB.ID)
 	}
-	if books[0] != "book/book-b" {
-		t.Errorf("books[0] = %v, want %q", books[0], "book/book-b")
+	if books[0] != bookB.ID {
+		t.Errorf("books[0] = %v, want %q", books[0], bookB.ID)
 	}
 }
 

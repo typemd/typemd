@@ -23,7 +23,14 @@ This launches the three-panel interface for browsing your vault.
 
 ## 3. Create Your First Object
 
-Create a file at `objects/book/golang-in-action.md`:
+Use the CLI to create an object:
+
+```bash
+tmd create book golang-in-action
+# Created: book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+```
+
+The CLI automatically appends a ULID to the slug for uniqueness. Alternatively, you can create a file manually at `objects/book/golang-in-action.md` — manual files do not require a ULID and are backward compatible.
 
 ```markdown
 ---

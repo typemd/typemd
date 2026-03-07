@@ -43,14 +43,14 @@ vault/
 │   └── index.db            # SQLite 索引（自動更新）
 └── objects/
     ├── book/
-    │   └── golang-in-action.md
+    │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md
     └── person/
-        └── alan-donovan.md
+        └── alan-donovan-01jqr3k8yznw2a4dbx6t7c9fpq.md
 ```
 
-Object 以 Markdown 檔案搭配 YAML frontmatter 儲存。`objects/` 底下的每個目錄是一個 **Type 命名空間**——不同 Type 可以共用相同的檔名。
+Object 以 Markdown 檔案搭配 YAML frontmatter 儲存。`objects/` 底下的每個目錄是一個 **Type 命名空間**——不同 Type 可以共用相同的 slug。
 
-完整的 Object ID 為 `type/filename`，例如 `book/golang-in-action`。
+完整的 Object ID 為 `type/<slug>-<ulid>`，例如 `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`。CLI 建立物件時會自動附加 [ULID](https://github.com/ulid/spec) 以保證唯一性。
 
 ## 使用方式
 
@@ -64,8 +64,12 @@ tmd
 # 開啟 TUI（指定 vault 路徑）
 tmd --vault /path/to/vault
 
-# 顯示 Object 詳情
-tmd show book/golang-in-action
+# 建立新的 Object（ULID 會自動附加）
+tmd create book clean-code
+# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+
+# 顯示 Object 詳情（使用 create 輸出的完整 ID）
+tmd show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
 # 依 Type 和屬性查詢
 tmd query "type=book status=reading"
@@ -74,11 +78,11 @@ tmd query "type=book" --json
 # 全文搜尋
 tmd search "concurrency"
 
-# 連結兩個 Object
-tmd link book/golang-in-action author person/alan-donovan
+# 連結兩個 Object（使用完整 ID）
+tmd link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
 
 # 取消連結（使用 --both 同時移除反向端）
-tmd unlink book/golang-in-action author person/alan-donovan --both
+tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
 
 # 同步檔案到資料庫並重建搜尋索引（只在手動編輯後需要）
 tmd reindex
@@ -94,14 +98,14 @@ tmd mcp --vault /path/to/vault
 ### `tmd show` 輸出
 
 ```
-book/golang-in-action
+book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 
 Properties
 ──────────
   title: Go in Action
   status: reading
   rating: 4.5
-  author: → person/alan-donovan
+  author: → person/alan-donovan-01jqr3k8yznw2a4dbx6t7c9fpq
 
 Body
 ────
@@ -185,7 +189,7 @@ properties:
     inverse: author
 ```
 
-當 `bidirectional: true` 時，執行 `tmd link book/golang-in-action author person/alan-donovan` 會自動更新書的 `author` 和人物的 `books` 屬性。
+當 `bidirectional: true` 時，透過 `author` 連結書籍和人物會自動更新書的 `author` 和人物的 `books` 屬性。
 
 ## MCP Server
 

@@ -19,7 +19,7 @@ TypeMD lets you think in **Objects** — books, people, ideas, meetings — conn
 
 An Object is the basic unit of TypeMD. Each object is a Markdown file with YAML frontmatter (properties) and body content.
 
-Object IDs follow the format `type/filename`, e.g. `book/golang-in-action`.
+Object IDs follow the format `type/<slug>-<ulid>`, e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`. When created via the CLI, a 26-character ULID is automatically appended to the slug for uniqueness.
 
 ```markdown
 ---

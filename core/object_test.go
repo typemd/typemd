@@ -157,15 +157,23 @@ func TestVault_NewObject(t *testing.T) {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
-	if obj.ID != "book/golang-in-action" {
-		t.Errorf("ID = %q, want %q", obj.ID, "book/golang-in-action")
+	// Filename should have ULID suffix
+	if !strings.HasPrefix(obj.Filename, "golang-in-action-") {
+		t.Errorf("Filename should start with 'golang-in-action-', got %q", obj.Filename)
+	}
+	ulidPart := strings.TrimPrefix(obj.Filename, "golang-in-action-")
+	if len(ulidPart) != 26 {
+		t.Errorf("ULID part length = %d, want 26", len(ulidPart))
+	}
+	if obj.ID != "book/"+obj.Filename {
+		t.Errorf("ID = %q, want %q", obj.ID, "book/"+obj.Filename)
 	}
 	if obj.Type != "book" {
 		t.Errorf("Type = %q, want %q", obj.Type, "book")
 	}
 
 	// .md 檔存在
-	if _, err := os.Stat(v.ObjectPath("book", "golang-in-action")); os.IsNotExist(err) {
+	if _, err := os.Stat(v.ObjectPath(obj.Type, obj.Filename)); os.IsNotExist(err) {
 		t.Error("expected .md file to exist")
 	}
 
@@ -175,16 +183,24 @@ func TestVault_NewObject(t *testing.T) {
 	}
 }
 
-func TestVault_NewObject_Duplicate(t *testing.T) {
+func TestVault_NewObject_SameNameDifferentULID(t *testing.T) {
 	v := setupTestVault(t)
 
-	if _, err := v.NewObject("book", "test"); err != nil {
+	obj1, err := v.NewObject("book", "test")
+	if err != nil {
 		t.Fatalf("first NewObject() error = %v", err)
 	}
 
-	_, err := v.NewObject("book", "test")
-	if err == nil {
-		t.Fatal("expected error on duplicate NewObject(), got nil")
+	obj2, err := v.NewObject("book", "test")
+	if err != nil {
+		t.Fatalf("second NewObject() should succeed with ULID, error = %v", err)
+	}
+
+	if obj1.ID == obj2.ID {
+		t.Errorf("two objects with same name should have different IDs, both got %q", obj1.ID)
+	}
+	if obj1.Filename == obj2.Filename {
+		t.Errorf("two objects with same name should have different filenames, both got %q", obj1.Filename)
 	}
 }
 
@@ -233,6 +249,11 @@ properties:
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
+	// Filename should have ULID suffix
+	if !strings.HasPrefix(obj.Filename, "my-task-") {
+		t.Errorf("Filename should start with 'my-task-', got %q", obj.Filename)
+	}
+
 	// title 沒有 default → nil
 	if obj.Properties["title"] != nil {
 		t.Errorf("title = %v, want nil", obj.Properties["title"])
@@ -247,24 +268,24 @@ properties:
 func TestVault_GetObject(t *testing.T) {
 	v := setupTestVault(t)
 
-	_, err := v.NewObject("book", "golang-in-action")
+	created, err := v.NewObject("book", "golang-in-action")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
-	obj, err := v.GetObject("book/golang-in-action")
+	obj, err := v.GetObject(created.ID)
 	if err != nil {
 		t.Fatalf("GetObject() error = %v", err)
 	}
 
-	if obj.ID != "book/golang-in-action" {
-		t.Errorf("ID = %q, want %q", obj.ID, "book/golang-in-action")
+	if obj.ID != created.ID {
+		t.Errorf("ID = %q, want %q", obj.ID, created.ID)
 	}
 	if obj.Type != "book" {
 		t.Errorf("Type = %q, want %q", obj.Type, "book")
 	}
-	if obj.Filename != "golang-in-action" {
-		t.Errorf("Filename = %q, want %q", obj.Filename, "golang-in-action")
+	if obj.Filename != created.Filename {
+		t.Errorf("Filename = %q, want %q", obj.Filename, created.Filename)
 	}
 }
 
@@ -289,16 +310,17 @@ func TestVault_GetObject_InvalidID(t *testing.T) {
 func TestVault_SetProperty(t *testing.T) {
 	v := setupTestVault(t)
 
-	if _, err := v.NewObject("book", "test"); err != nil {
+	created, err := v.NewObject("book", "test")
+	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
-	if err := v.SetProperty("book/test", "title", "Go in Action"); err != nil {
+	if err := v.SetProperty(created.ID, "title", "Go in Action"); err != nil {
 		t.Fatalf("SetProperty() error = %v", err)
 	}
 
 	// 重新讀取驗證
-	obj, err := v.GetObject("book/test")
+	obj, err := v.GetObject(created.ID)
 	if err != nil {
 		t.Fatalf("GetObject() error = %v", err)
 	}
@@ -310,12 +332,13 @@ func TestVault_SetProperty(t *testing.T) {
 func TestVault_SetProperty_ValidationError(t *testing.T) {
 	v := setupTestVault(t)
 
-	if _, err := v.NewObject("book", "test"); err != nil {
+	created, err := v.NewObject("book", "test")
+	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
 	// rating 應該是 number，給 string 應該報錯
-	err := v.SetProperty("book/test", "rating", "not-a-number")
+	err = v.SetProperty(created.ID, "rating", "not-a-number")
 	if err == nil {
 		t.Fatal("expected validation error, got nil")
 	}
@@ -324,16 +347,17 @@ func TestVault_SetProperty_ValidationError(t *testing.T) {
 func TestVault_SetProperty_ExtraKey(t *testing.T) {
 	v := setupTestVault(t)
 
-	if _, err := v.NewObject("book", "test"); err != nil {
+	created, err := v.NewObject("book", "test")
+	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
 	// custom_field 不在 schema 中，寬鬆模式允許寫入
-	if err := v.SetProperty("book/test", "custom_field", "anything"); err != nil {
+	if err := v.SetProperty(created.ID, "custom_field", "anything"); err != nil {
 		t.Fatalf("SetProperty() error = %v", err)
 	}
 
-	obj, err := v.GetObject("book/test")
+	obj, err := v.GetObject(created.ID)
 	if err != nil {
 		t.Fatalf("GetObject() error = %v", err)
 	}

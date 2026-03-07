@@ -23,7 +23,16 @@ tmd
 
 ## 3. 建立你的第一個 Object
 
-在 `objects/book/golang-in-action.md` 建立檔案：
+透過 CLI 建立 Object：
+
+```bash
+tmd create book golang-in-action
+# 建立 book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+```
+
+CLI 會自動在檔名後附加 ULID 以確保唯一性，產生的檔案路徑為 `objects/book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md`。
+
+你也可以直接手動建立檔案（不需要 ULID），例如在 `objects/book/golang-in-action.md` 建立：
 
 ```markdown
 ---

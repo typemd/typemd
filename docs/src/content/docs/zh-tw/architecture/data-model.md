@@ -7,7 +7,7 @@ sidebar:
 
 ## 儲存
 
-Object 以 Markdown 檔案搭配 YAML frontmatter 儲存在 `objects/<type>/` 底下。完整的 Object ID 為 `type/filename`，例如 `book/golang-in-action`。
+Object 以 Markdown 檔案搭配 YAML frontmatter 儲存在 `objects/<type>/` 底下。完整的 Object ID 格式為 `type/<slug>-<ulid>`，例如 `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`。透過 CLI 建立的 Object，檔名會自動附加 ULID（26 位小寫字元）以確保唯一性。
 
 ```
 vault/
@@ -18,9 +18,9 @@ vault/
 │   └── index.db            # SQLite 索引（自動更新）
 └── objects/
     ├── book/
-    │   └── golang-in-action.md
+    │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md
     └── person/
-        └── alan-donovan.md
+        └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
 ## 索引

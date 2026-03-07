@@ -43,14 +43,14 @@ vault/
 │   └── index.db            # SQLite index (auto-updated)
 └── objects/
     ├── book/
-    │   └── golang-in-action.md
+    │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md
     └── person/
-        └── alan-donovan.md
+        └── alan-donovan-01jqr3k8yznw2a4dbx6t7c9fpq.md
 ```
 
-Objects are stored as Markdown files with YAML frontmatter. Each directory under `objects/` is a **type namespace** — different types can share the same filename.
+Objects are stored as Markdown files with YAML frontmatter. Each directory under `objects/` is a **type namespace** — different types can share the same slug.
 
-The full Object ID is `type/filename`, e.g. `book/golang-in-action`.
+The full Object ID is `type/<slug>-<ulid>`, e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`. A [ULID](https://github.com/ulid/spec) is automatically appended to every new object to guarantee uniqueness.
 
 ## Usage
 
@@ -64,11 +64,12 @@ tmd
 # Open TUI with specific vault path
 tmd --vault /path/to/vault
 
-# Create a new object
+# Create a new object (ULID is appended automatically)
 tmd create book clean-code
+# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
-# Show object detail
-tmd show book/golang-in-action
+# Show object detail (use the full ID from create output)
+tmd show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
 # Query by type and property
 tmd query "type=book status=reading"
@@ -77,11 +78,11 @@ tmd query "type=book" --json
 # Full-text search
 tmd search "concurrency"
 
-# Link two objects
-tmd link book/golang-in-action author person/alan-donovan
+# Link two objects (use full IDs)
+tmd link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
 
 # Unlink (with --both to remove inverse side too)
-tmd unlink book/golang-in-action author person/alan-donovan --both
+tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
 
 # Sync files to DB and rebuild search index (only needed after manual edits)
 tmd reindex
@@ -97,14 +98,14 @@ tmd mcp --vault /path/to/vault
 ### `tmd show` Output
 
 ```
-book/golang-in-action
+book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 
 Properties
 ──────────
   title: Go in Action
   status: reading
   rating: 4.5
-  author: → person/alan-donovan
+  author: → person/alan-donovan-01jqr3k8yznw2a4dbx6t7c9fpq
 
 Body
 ────
@@ -188,7 +189,7 @@ properties:
     inverse: author
 ```
 
-When `bidirectional: true`, linking `book/golang-in-action author person/alan-donovan` automatically updates both the book's `author` and the person's `books` property.
+When `bidirectional: true`, linking a book to a person via `author` automatically updates both the book's `author` and the person's `books` property.
 
 ## MCP Server
 

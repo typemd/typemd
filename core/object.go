@@ -101,9 +101,11 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		return nil, fmt.Errorf("load type: %w", err)
 	}
 
+	// Append ULID to filename for uniqueness
+	filename = filename + "-" + GenerateULID()
 	id := typeName + "/" + filename
 
-	// Check duplicate
+	// Check duplicate (safety net — ULID should guarantee uniqueness)
 	objPath := v.ObjectPath(typeName, filename)
 	if _, err := os.Stat(objPath); err == nil {
 		return nil, fmt.Errorf("object already exists: %s", id)

@@ -4,9 +4,9 @@ import "testing"
 
 func TestVault_ListRelations_Empty(t *testing.T) {
 	v := setupRelationTestVault(t)
-	v.NewObject("book", "test")
+	book, _ := v.NewObject("book", "test")
 
-	rels, err := v.ListRelations("book/test")
+	rels, err := v.ListRelations(book.ID)
 	if err != nil {
 		t.Fatalf("ListRelations() error = %v", err)
 	}
@@ -17,13 +17,13 @@ func TestVault_ListRelations_Empty(t *testing.T) {
 
 func TestVault_ListRelations_Forward(t *testing.T) {
 	v := setupRelationTestVault(t)
-	v.NewObject("book", "test")
-	v.NewObject("person", "alan")
-	v.LinkObjects("book/test", "author", "person/alan")
+	book, _ := v.NewObject("book", "test")
+	alan, _ := v.NewObject("person", "alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// Bidirectional link creates 2 DB rows: forward (author) + inverse (books)
-	// ListRelations returns both since book/test is from_id on forward and to_id on inverse
-	rels, err := v.ListRelations("book/test")
+	// ListRelations returns both since book is from_id on forward and to_id on inverse
+	rels, err := v.ListRelations(book.ID)
 	if err != nil {
 		t.Fatalf("ListRelations() error = %v", err)
 	}
@@ -34,23 +34,23 @@ func TestVault_ListRelations_Forward(t *testing.T) {
 	// Verify forward relation exists
 	found := false
 	for _, r := range rels {
-		if r.Name == "author" && r.FromID == "book/test" && r.ToID == "person/alan" {
+		if r.Name == "author" && r.FromID == book.ID && r.ToID == alan.ID {
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("expected forward relation {author, book/test, person/alan} in %+v", rels)
+		t.Errorf("expected forward relation {author, %s, %s} in %+v", book.ID, alan.ID, rels)
 	}
 }
 
 func TestVault_ListRelations_BothDirections(t *testing.T) {
 	v := setupRelationTestVault(t)
-	v.NewObject("book", "test")
-	v.NewObject("person", "alan")
-	v.LinkObjects("book/test", "author", "person/alan")
+	book, _ := v.NewObject("book", "test")
+	alan, _ := v.NewObject("person", "alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// person/alan should have both: inverse (books, from_id=person/alan) + forward (author, to_id=person/alan)
-	rels, err := v.ListRelations("person/alan")
+	rels, err := v.ListRelations(alan.ID)
 	if err != nil {
 		t.Fatalf("ListRelations() error = %v", err)
 	}
@@ -61,12 +61,12 @@ func TestVault_ListRelations_BothDirections(t *testing.T) {
 	// Verify inverse relation exists
 	found := false
 	for _, r := range rels {
-		if r.Name == "books" && r.FromID == "person/alan" && r.ToID == "book/test" {
+		if r.Name == "books" && r.FromID == alan.ID && r.ToID == book.ID {
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("expected inverse relation {books, person/alan, book/test} in %+v", rels)
+		t.Errorf("expected inverse relation {books, %s, %s} in %+v", alan.ID, book.ID, rels)
 	}
 }
 

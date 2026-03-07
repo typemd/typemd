@@ -2,6 +2,7 @@ package core
 
 import (
 	"database/sql"
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -176,13 +177,15 @@ func TestVault_FTSTrigger_InsertSync(t *testing.T) {
 	v := setupTestVault(t)
 
 	// NewObject INSERT should auto-sync FTS via trigger
-	if _, err := v.NewObject("book", "golang-in-action"); err != nil {
+	obj, err := v.NewObject("book", "golang-in-action")
+	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 
 	var count int
-	// FTS5 requires double quotes around terms with special characters
-	err := v.db.QueryRow(`SELECT count(*) FROM objects_fts WHERE objects_fts MATCH '"golang-in-action"'`).Scan(&count)
+	// FTS5 search by the actual filename (includes ULID suffix)
+	query := fmt.Sprintf(`SELECT count(*) FROM objects_fts WHERE objects_fts MATCH '"%s"'`, obj.Filename)
+	err = v.db.QueryRow(query).Scan(&count)
 	if err != nil {
 		t.Fatalf("FTS query error = %v", err)
 	}

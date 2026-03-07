@@ -21,10 +21,10 @@ func registerTools(s *server.MCPServer, vault *core.Vault) {
 	s.AddTool(searchTool, searchHandler(vault))
 
 	getObjectTool := mcplib.NewTool("get_object",
-		mcplib.WithDescription("Get an object by its ID (e.g. book/clean-code)"),
+		mcplib.WithDescription("Get an object by its ID (e.g. book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz)"),
 		mcplib.WithString("id",
 			mcplib.Required(),
-			mcplib.Description("Object ID in type/filename format"),
+			mcplib.Description("Object ID in type/slug-ulid format"),
 		),
 	)
 	s.AddTool(getObjectTool, getObjectHandler(vault))

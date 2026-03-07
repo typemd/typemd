@@ -15,7 +15,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 
 ## Data Model
 
-- Objects identified by `type/filename` (e.g. `book/golang-in-action`)
+- Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
 - Type schemas: `.typemd/types/*.yaml`
 - Relations defined as properties in type schemas
 - SQLite index: `.typemd/index.db`

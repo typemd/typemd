@@ -26,8 +26,8 @@ func TestVault_MigrateObjects_AddProperty(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
 	// Create objects with original schema
-	v.NewObject("book", "book-a")
-	v.NewObject("book", "book-b")
+	objA, _ := v.NewObject("book", "book-a")
+	objB, _ := v.NewObject("book", "book-b")
 
 	// Update schema: add isbn with default
 	newSchema := []byte(`name: book
@@ -52,13 +52,13 @@ properties:
 	}
 
 	// Verify both objects now have isbn
-	for _, name := range []string{"book-a", "book-b"} {
-		obj, err := v.GetObject("book/" + name)
+	for _, id := range []string{objA.ID, objB.ID} {
+		obj, err := v.GetObject(id)
 		if err != nil {
-			t.Fatalf("GetObject(%s) error = %v", name, err)
+			t.Fatalf("GetObject(%s) error = %v", id, err)
 		}
 		if obj.Properties["isbn"] != "unknown" {
-			t.Errorf("%s isbn = %v, want %q", name, obj.Properties["isbn"], "unknown")
+			t.Errorf("%s isbn = %v, want %q", id, obj.Properties["isbn"], "unknown")
 		}
 	}
 }
@@ -66,7 +66,7 @@ properties:
 func TestVault_MigrateObjects_RemoveProperty(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
-	v.NewObject("book", "test")
+	created, _ := v.NewObject("book", "test")
 
 	// Update schema: remove status
 	newSchema := []byte(`name: book
@@ -88,7 +88,7 @@ properties:
 		t.Errorf("Removed = %v, want [status]", result.Changes[0].Removed)
 	}
 
-	obj, _ := v.GetObject("book/test")
+	obj, _ := v.GetObject(created.ID)
 	if _, exists := obj.Properties["status"]; exists {
 		t.Error("status property should have been removed")
 	}
@@ -97,8 +97,8 @@ properties:
 func TestVault_MigrateObjects_RenameProperty(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
-	obj, _ := v.NewObject("book", "test")
-	v.SetProperty(obj.ID, "status", "reading")
+	created, _ := v.NewObject("book", "test")
+	v.SetProperty(created.ID, "status", "reading")
 
 	// Update schema: rename status -> reading_status
 	newSchema := []byte(`name: book
@@ -124,7 +124,7 @@ properties:
 		t.Errorf("Renamed = %v, want status->reading_status", result.Changes[0].Renamed)
 	}
 
-	updated, _ := v.GetObject("book/test")
+	updated, _ := v.GetObject(created.ID)
 	if updated.Properties["reading_status"] != "reading" {
 		t.Errorf("reading_status = %v, want %q", updated.Properties["reading_status"], "reading")
 	}
@@ -136,7 +136,7 @@ properties:
 func TestVault_MigrateObjects_DryRun(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
-	v.NewObject("book", "test")
+	created, _ := v.NewObject("book", "test")
 
 	// Update schema: add isbn
 	newSchema := []byte(`name: book
@@ -161,7 +161,7 @@ properties:
 	}
 
 	// Verify file was NOT modified
-	obj, _ := v.GetObject("book/test")
+	obj, _ := v.GetObject(created.ID)
 	if _, exists := obj.Properties["isbn"]; exists {
 		t.Error("dry-run should not modify files")
 	}

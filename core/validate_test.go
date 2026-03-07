@@ -96,9 +96,9 @@ func TestValidateRelations_Valid(t *testing.T) {
 	personSchema := []byte("name: person\nproperties:\n  - name: name\n    type: string\n")
 	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"), personSchema, 0644)
 
-	v.NewObject("book", "test-book")
-	v.NewObject("person", "alice")
-	v.LinkObjects("book/test-book", "author", "person/alice")
+	book, _ := v.NewObject("book", "test-book")
+	alice, _ := v.NewObject("person", "alice")
+	v.LinkObjects(book.ID, "author", alice.ID)
 
 	errs := ValidateRelations(v)
 	if len(errs) != 0 {

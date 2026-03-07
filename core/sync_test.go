@@ -41,10 +41,10 @@ func TestVault_SyncIndex_UpdatedFile(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
 	// Create via API (body is empty in DB)
-	v.NewObject("book", "test-book")
+	obj, _ := v.NewObject("book", "test-book")
 
 	// Manually edit the file to add body
-	objPath := v.ObjectPath("book", "test-book")
+	objPath := v.ObjectPath(obj.Type, obj.Filename)
 	os.WriteFile(objPath, []byte("---\ntitle: Updated\n---\n\nNew body content.\n"), 0644)
 
 	if _, err := v.SyncIndex(); err != nil {
@@ -69,10 +69,10 @@ func TestVault_SyncIndex_DeletedFile(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
 	// Create via API
-	v.NewObject("book", "test-book")
+	obj, _ := v.NewObject("book", "test-book")
 
 	// Delete the file
-	os.Remove(v.ObjectPath("book", "test-book"))
+	os.Remove(v.ObjectPath(obj.Type, obj.Filename))
 
 	result, err := v.SyncIndex()
 	if err != nil {
@@ -106,9 +106,9 @@ func TestVault_SyncIndex_OrphanedRelations(t *testing.T) {
 	v := setupRelationTestVault(t)
 
 	// Create two objects and link them
-	v.NewObject("book", "golang-in-action")
-	v.NewObject("person", "alan-donovan")
-	v.LinkObjects("book/golang-in-action", "author", "person/alan-donovan")
+	book, _ := v.NewObject("book", "golang-in-action")
+	person, _ := v.NewObject("person", "alan-donovan")
+	v.LinkObjects(book.ID, "author", person.ID)
 
 	// Verify relations exist
 	var count int
@@ -118,7 +118,7 @@ func TestVault_SyncIndex_OrphanedRelations(t *testing.T) {
 	}
 
 	// Delete the person file from disk (simulating user deletion)
-	os.Remove(v.ObjectPath("person", "alan-donovan"))
+	os.Remove(v.ObjectPath(person.Type, person.Filename))
 
 	// SyncIndex should detect and clean orphaned relations
 	result, err := v.SyncIndex()
@@ -133,12 +133,12 @@ func TestVault_SyncIndex_OrphanedRelations(t *testing.T) {
 	// Verify orphaned relations contain the right data
 	found := false
 	for _, o := range result.Orphaned {
-		if o.ToID == "person/alan-donovan" || o.FromID == "person/alan-donovan" {
+		if o.ToID == person.ID || o.FromID == person.ID {
 			found = true
 		}
 	}
 	if !found {
-		t.Errorf("expected orphan referencing person/alan-donovan, got %+v", result.Orphaned)
+		t.Errorf("expected orphan referencing %s, got %+v", person.ID, result.Orphaned)
 	}
 
 	// Verify relations table is now clean
@@ -151,9 +151,9 @@ func TestVault_SyncIndex_OrphanedRelations(t *testing.T) {
 func TestVault_SyncIndex_NoOrphansWhenAllExist(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "test-book")
-	v.NewObject("person", "alan")
-	v.LinkObjects("book/test-book", "author", "person/alan")
+	book, _ := v.NewObject("book", "test-book")
+	alan, _ := v.NewObject("person", "alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
 	result, err := v.SyncIndex()
 	if err != nil {
@@ -175,12 +175,12 @@ func TestVault_SyncIndex_NoOrphansWhenAllExist(t *testing.T) {
 func TestVault_SyncIndex_OrphanFromSourceDeletion(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	v.NewObject("book", "test-book")
-	v.NewObject("person", "alan")
-	v.LinkObjects("book/test-book", "author", "person/alan")
+	book, _ := v.NewObject("book", "test-book")
+	alan, _ := v.NewObject("person", "alan")
+	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// Delete the source (book) instead of the target
-	os.Remove(v.ObjectPath("book", "test-book"))
+	os.Remove(v.ObjectPath(book.Type, book.Filename))
 
 	result, err := v.SyncIndex()
 	if err != nil {

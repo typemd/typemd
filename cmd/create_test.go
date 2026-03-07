@@ -1,7 +1,6 @@
 package cmd
 
 import (
-	"os"
 	"path/filepath"
 	"testing"
 
@@ -31,10 +30,10 @@ func TestCreateCmd_Success(t *testing.T) {
 		t.Fatalf("Execute() error = %v", err)
 	}
 
-	// Verify file was created
-	objPath := filepath.Join(dir, "objects", "book", "clean-code.md")
-	if _, err := os.Stat(objPath); os.IsNotExist(err) {
-		t.Error("expected object file to exist")
+	// Verify file matching pattern was created (filename includes ULID suffix)
+	matches, _ := filepath.Glob(filepath.Join(dir, "objects", "book", "clean-code-*.md"))
+	if len(matches) != 1 {
+		t.Errorf("expected 1 matching file, got %d", len(matches))
 	}
 }
 
@@ -49,7 +48,7 @@ func TestCreateCmd_UnknownType(t *testing.T) {
 	}
 }
 
-func TestCreateCmd_Duplicate(t *testing.T) {
+func TestCreateCmd_SameNameTwice(t *testing.T) {
 	dir := setupTestVaultDir(t)
 
 	vaultPath = dir
@@ -60,10 +59,14 @@ func TestCreateCmd_Duplicate(t *testing.T) {
 		t.Fatalf("first create error = %v", err)
 	}
 
-	// Create duplicate
+	// Create with same name — should succeed because ULID guarantees uniqueness
 	rootCmd.SetArgs([]string{"create", "book", "duplicate"})
-	err := rootCmd.Execute()
-	if err == nil {
-		t.Fatal("expected error for duplicate object")
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("second create should succeed with ULID, error = %v", err)
+	}
+
+	matches, _ := filepath.Glob(filepath.Join(dir, "objects", "book", "duplicate-*.md"))
+	if len(matches) != 2 {
+		t.Errorf("expected 2 matching files, got %d", len(matches))
 	}
 }

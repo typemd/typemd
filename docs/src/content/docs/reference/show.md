@@ -8,20 +8,20 @@ sidebar:
 Displays an object's full information: properties (including relations) and body.
 
 ```bash
-tmd show book/golang-in-action
+tmd show book/golang-in-action-01jqr3k5mp...
 ```
 
 Example output:
 
 ```
-book/golang-in-action
+book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 
 Properties
 ──────────
   title: Go in Action
   status: reading
   rating: 4.5
-  author: → person/alan-donovan
+  author: → person/alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz
 
 Body
 ────

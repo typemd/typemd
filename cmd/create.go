@@ -10,6 +10,7 @@ var createCmd = &cobra.Command{
 	Use:   "create <type> <name>",
 	Short: "Create a new object from a type schema",
 	Long: `Create a new object file (Markdown + YAML frontmatter) based on the type schema.
+A ULID is automatically appended to the filename for uniqueness.
 
 Examples:
   tmd create book clean-code
