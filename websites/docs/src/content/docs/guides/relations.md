@@ -50,7 +50,7 @@ properties:
 ### Create a Link
 
 ```bash
-tmd link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k5mp...
+tmd link book/golang-in-action author person/alan-donovan
 ```
 
 When `bidirectional: true`, this automatically updates both the book's `author` and the person's `books` property.
@@ -58,7 +58,7 @@ When `bidirectional: true`, this automatically updates both the book's `author` 
 ### Remove a Link
 
 ```bash
-tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k5mp... --both
+tmd unlink book/golang-in-action author person/alan-donovan --both
 ```
 
 Use `--both` to remove the inverse side as well. This only takes effect when the relation property has `bidirectional: true` and an `inverse` field defined in the schema.

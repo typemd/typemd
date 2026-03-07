@@ -38,7 +38,7 @@ Examples:
 			fmt.Println(string(data))
 		} else {
 			for _, obj := range results {
-				fmt.Println(obj.ID)
+				fmt.Println(obj.DisplayID())
 			}
 		}
 

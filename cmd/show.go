@@ -34,7 +34,7 @@ Examples:
 		}
 
 		// Title
-		fmt.Println(obj.ID)
+		fmt.Println(obj.DisplayID())
 		fmt.Println()
 
 		// Properties & Relations

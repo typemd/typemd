@@ -36,8 +36,8 @@ tmd migrate book --rename old_field:new_field
 
 ```bash
 tmd migrate book
-#   book/clean-code-01jqr3k5mp...: added [isbn]
-#   book/effective-go-01jqr3k5mp...: added [isbn]
+#   book/clean-code: added [isbn]
+#   book/effective-go: added [isbn]
 # Migration complete: 2 object(s) updated.
 ```
 

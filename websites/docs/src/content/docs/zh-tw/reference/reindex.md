@@ -19,8 +19,8 @@ tmd reindex
 
 ```
 Warning: Found 2 orphaned relation(s):
-  book/golang-in-action-01jqr3k5mp... -> person/deleted-author-01jqr3k5mp... (relation: "author")
-  person/deleted-author-01jqr3k5mp... -> book/golang-in-action-01jqr3k5mp... (relation: "books")
+  book/golang-in-action -> person/deleted-author (relation: "author")
+  person/deleted-author -> book/golang-in-action (relation: "books")
 Orphaned relations have been removed from the index.
 ```
 

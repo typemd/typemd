@@ -19,8 +19,8 @@ When an object is deleted from disk, any relations pointing to or from that obje
 
 ```
 Warning: Found 2 orphaned relation(s):
-  book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz -> person/deleted-author-01jqr3k5mpbvn8e0f2g7h9txyz (relation: "author")
-  person/deleted-author-01jqr3k5mpbvn8e0f2g7h9txyz -> book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz (relation: "books")
+  book/golang-in-action -> person/deleted-author (relation: "author")
+  person/deleted-author -> book/golang-in-action (relation: "books")
 Orphaned relations have been removed from the index.
 ```
 

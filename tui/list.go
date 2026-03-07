@@ -108,7 +108,7 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 			}
 			line = fmt.Sprintf(" %s %s (%d)", arrow, g.Name, len(g.Objects))
 		} else {
-			line = fmt.Sprintf("   %s", row.Object.Filename)
+			line = fmt.Sprintf("   %s", row.Object.DisplayName())
 		}
 
 		if i == cursor {

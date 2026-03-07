@@ -27,7 +27,7 @@ tmd
 
 ```bash
 tmd create book golang-in-action
-# 建立 book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+# 建立 book/golang-in-action
 ```
 
 CLI 會自動在檔名後附加 ULID 以確保唯一性，產生的檔案路徑為 `objects/book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md`。

@@ -8,7 +8,7 @@ sidebar:
 Removes a relation. Use `--both` to remove the inverse side as well.
 
 ```bash
-tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k5mp... --both
+tmd unlink book/golang-in-action author person/alan-donovan --both
 ```
 
 ## Options

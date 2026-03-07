@@ -8,7 +8,7 @@ sidebar:
 移除 Relation。使用 `--both` 來同時移除反向端。
 
 ```bash
-tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k5mp... --both
+tmd unlink book/golang-in-action author person/alan-donovan --both
 ```
 
 ## 選項

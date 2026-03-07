@@ -476,7 +476,7 @@ func (m model) View() string {
 		} else {
 			var lines []string
 			for i, row := range rows {
-				line := fmt.Sprintf("   %s/%s", row.Object.Type, row.Object.Filename)
+				line := fmt.Sprintf("   %s", row.Object.DisplayID())
 				if i == m.cursor {
 					style := lipgloss.NewStyle().Bold(true).Reverse(true)
 					line = style.Render(line)

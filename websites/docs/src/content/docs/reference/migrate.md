@@ -36,8 +36,8 @@ Add a new `isbn` property to all books after updating the schema:
 
 ```bash
 tmd migrate book
-#   book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz: added [isbn]
-#   book/effective-go-01jqr3k5mpbvn8e0f2g7h9txyz: added [isbn]
+#   book/clean-code: added [isbn]
+#   book/effective-go: added [isbn]
 # Migration complete: 2 object(s) updated.
 ```
 

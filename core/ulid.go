@@ -3,6 +3,7 @@ package core
 import (
 	"crypto/rand"
 	"fmt"
+	"regexp"
 	"strings"
 	"time"
 
@@ -16,4 +17,12 @@ func GenerateULID() (string, error) {
 		return "", fmt.Errorf("generate ulid: %w", err)
 	}
 	return strings.ToLower(id.String()), nil
+}
+
+var ulidSuffixPattern = regexp.MustCompile(`-[0-9a-hjkmnp-tv-z]{26}$`)
+
+// StripULID removes the ULID suffix from a filename if present.
+// ULID suffix pattern: hyphen followed by exactly 26 Crockford's Base32 characters.
+func StripULID(filename string) string {
+	return ulidSuffixPattern.ReplaceAllString(filename, "")
 }

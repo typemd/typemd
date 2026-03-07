@@ -50,7 +50,7 @@ properties:
 ### 建立連結
 
 ```bash
-tmd link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k5mp...
+tmd link book/golang-in-action author person/alan-donovan
 ```
 
 當 `bidirectional: true` 時，這會自動更新書的 `author` 和人物的 `books` 屬性。
@@ -58,7 +58,7 @@ tmd link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k5
 ### 移除連結
 
 ```bash
-tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k5mp... --both
+tmd unlink book/golang-in-action author person/alan-donovan --both
 ```
 
 使用 `--both` 來同時移除反向端。這只在 schema 中定義了 `bidirectional: true` 和 `inverse` 欄位時才有效。

@@ -20,6 +20,16 @@ type Object struct {
 	Body       string
 }
 
+// DisplayName returns the filename with ULID suffix stripped.
+func (o *Object) DisplayName() string {
+	return StripULID(o.Filename)
+}
+
+// DisplayID returns the object ID with ULID suffix stripped from the filename part.
+func (o *Object) DisplayID() string {
+	return o.Type + "/" + o.DisplayName()
+}
+
 // writeFrontmatter writes properties and body as markdown with YAML frontmatter.
 // keyOrder specifies the desired property output order. Properties not in keyOrder
 // are appended at the end. If keyOrder is nil, properties are written in map iteration order.
