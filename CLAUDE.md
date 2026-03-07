@@ -12,6 +12,8 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **mcp/** — MCP server
 - **web/** — Web UI (future)
 - **app/** — Desktop app via Wails (future)
+- **websites/** — Non-Go websites (site, docs, blog)
+- **marketplace/** — Claude Marketplace plugins (future)
 
 ## Data Model
 
