@@ -75,7 +75,7 @@ func TestValidateAllObjects_Invalid(t *testing.T) {
 		t.Fatalf("NewObject error = %v", err)
 	}
 	obj.Properties["rating"] = "not-a-number"
-	v.writeObjectProperties(obj)
+	v.saveObjectFile(obj)
 
 	result := ValidateAllObjects(v)
 	if errs, ok := result[obj.ID]; !ok || len(errs) == 0 {

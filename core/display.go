@@ -39,6 +39,8 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 		return nil, nil
 	}
 
+	// LoadType may fail for unknown types; nil schema is safe here because
+	// the code below skips schema-dependent logic when schema is nil.
 	schema, _ := v.LoadType(obj.Type)
 
 	// Build merged properties map (original + schema defaults) without mutating obj
@@ -61,7 +63,10 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 	}
 
 	// Get relations
-	relations, _ := v.ListRelations(obj.ID)
+	relations, err := v.ListRelations(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("list relations: %w", err)
+	}
 
 	// Build ordered properties
 	propKeys := OrderedPropKeys(merged, schema)
@@ -87,7 +92,10 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 	}
 
 	// Append backlinks (wiki-links pointing to this object)
-	backlinks, _ := v.ListBacklinks(obj.ID)
+	backlinks, err := v.ListBacklinks(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("list backlinks: %w", err)
+	}
 	for _, bl := range backlinks {
 		result = append(result, DisplayProperty{
 			Key:        BacklinksDisplayKey,

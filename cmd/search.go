@@ -1,9 +1,6 @@
 package cmd
 
 import (
-	"encoding/json"
-	"fmt"
-
 	"github.com/spf13/cobra"
 )
 
@@ -30,19 +27,7 @@ Examples:
 			return err
 		}
 
-		if searchJSON {
-			data, err := json.MarshalIndent(results, "", "  ")
-			if err != nil {
-				return fmt.Errorf("marshal JSON: %w", err)
-			}
-			fmt.Println(string(data))
-		} else {
-			for _, obj := range results {
-				fmt.Println(obj.DisplayID())
-			}
-		}
-
-		return nil
+		return printObjects(results, searchJSON)
 	},
 }
 

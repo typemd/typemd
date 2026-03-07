@@ -1,6 +1,12 @@
 package core
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+// errDuplicateRelation is returned when appending a value that already exists.
+var errDuplicateRelation = errors.New("duplicate relation value")
 
 // Relation represents a relationship record between two objects.
 type Relation struct {
@@ -33,6 +39,59 @@ func (v *Vault) ListRelations(objectID string) ([]Relation, error) {
 		rels = append(rels, r)
 	}
 	return rels, rows.Err()
+}
+
+// getRelationSlice extracts the existing []any from a property value.
+func getRelationSlice(props map[string]any, name string) []any {
+	existing, _ := props[name]
+	if existing == nil {
+		return nil
+	}
+	if arr, ok := existing.([]any); ok {
+		return arr
+	}
+	return nil
+}
+
+// appendRelationValue adds a value to a relation property.
+// For multiple relations, it appends to the existing array.
+// Returns an error if the value already exists in a multiple relation.
+func appendRelationValue(props map[string]any, name, value string, multiple bool) error {
+	if !multiple {
+		props[name] = value
+		return nil
+	}
+	arr := getRelationSlice(props, name)
+	for _, item := range arr {
+		if item == value {
+			return errDuplicateRelation
+		}
+	}
+	props[name] = append(arr, any(value))
+	return nil
+}
+
+// removeRelationValue removes a value from a relation property.
+// For multiple relations, it filters the value out of the existing array.
+func removeRelationValue(props map[string]any, name, value string, multiple bool) {
+	if !multiple {
+		if props[name] == value {
+			props[name] = nil
+		}
+		return
+	}
+	arr := getRelationSlice(props, name)
+	var newArr []any
+	for _, item := range arr {
+		if item != value {
+			newArr = append(newArr, item)
+		}
+	}
+	if len(newArr) == 0 {
+		props[name] = nil
+	} else {
+		props[name] = newArr
+	}
 }
 
 // findRelationProperty finds a relation property by name in a type schema.
@@ -77,26 +136,11 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 	}
 
 	// Update source frontmatter
-	if relProp.Multiple {
-		existing, _ := fromObj.Properties[relName]
-		var arr []any
-		if existing != nil {
-			if existArr, ok := existing.([]any); ok {
-				arr = existArr
-			}
-		}
-		for _, item := range arr {
-			if item == toID {
-				return fmt.Errorf("relation already exists: %s -[%s]-> %s", fromID, relName, toID)
-			}
-		}
-		arr = append(arr, toID)
-		fromObj.Properties[relName] = arr
-	} else {
-		fromObj.Properties[relName] = toID
+	if err := appendRelationValue(fromObj.Properties, relName, toID, relProp.Multiple); err != nil {
+		return fmt.Errorf("relation already exists: %s -[%s]-> %s", fromID, relName, toID)
 	}
 
-	if err := v.writeObjectProperties(fromObj); err != nil {
+	if err := v.saveObjectFile(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
 
@@ -121,21 +165,12 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
 		}
 
-		if inverseProp.Multiple {
-			existing, _ := toObj.Properties[relProp.Inverse]
-			var arr []any
-			if existing != nil {
-				if existArr, ok := existing.([]any); ok {
-					arr = existArr
-				}
-			}
-			arr = append(arr, fromID)
-			toObj.Properties[relProp.Inverse] = arr
-		} else {
-			toObj.Properties[relProp.Inverse] = fromID
+		// Duplicate on inverse side is not an error (idempotent)
+		if err := appendRelationValue(toObj.Properties, relProp.Inverse, fromID, inverseProp.Multiple); err != nil && !errors.Is(err, errDuplicateRelation) {
+			return fmt.Errorf("set inverse relation: %w", err)
 		}
 
-		if err := v.writeObjectProperties(toObj); err != nil {
+		if err := v.saveObjectFile(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}
 
@@ -175,26 +210,9 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 	}
 
 	// Remove from source frontmatter
-	if relProp.Multiple {
-		existing, _ := fromObj.Properties[relName]
-		if existArr, ok := existing.([]any); ok {
-			var newArr []any
-			for _, item := range existArr {
-				if item != toID {
-					newArr = append(newArr, item)
-				}
-			}
-			if len(newArr) == 0 {
-				fromObj.Properties[relName] = nil
-			} else {
-				fromObj.Properties[relName] = newArr
-			}
-		}
-	} else {
-		fromObj.Properties[relName] = nil
-	}
+	removeRelationValue(fromObj.Properties, relName, toID, relProp.Multiple)
 
-	if err := v.writeObjectProperties(fromObj); err != nil {
+	if err := v.saveObjectFile(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
 
@@ -224,26 +242,9 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
 		}
 
-		if inverseProp.Multiple {
-			existing, _ := toObj.Properties[relProp.Inverse]
-			if existArr, ok := existing.([]any); ok {
-				var newArr []any
-				for _, item := range existArr {
-					if item != fromID {
-						newArr = append(newArr, item)
-					}
-				}
-				if len(newArr) == 0 {
-					toObj.Properties[relProp.Inverse] = nil
-				} else {
-					toObj.Properties[relProp.Inverse] = newArr
-				}
-			}
-		} else {
-			toObj.Properties[relProp.Inverse] = nil
-		}
+		removeRelationValue(toObj.Properties, relProp.Inverse, fromID, inverseProp.Multiple)
 
-		if err := v.writeObjectProperties(toObj); err != nil {
+		if err := v.saveObjectFile(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}
 

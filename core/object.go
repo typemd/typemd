@@ -91,15 +91,6 @@ func parseFrontmatter(data []byte) (map[string]any, string, error) {
 	return props, body, nil
 }
 
-// schemaKeyOrder returns property names in schema-defined order.
-func schemaKeyOrder(schema *TypeSchema) []string {
-	keys := make([]string, len(schema.Properties))
-	for i, p := range schema.Properties {
-		keys[i] = p.Name
-	}
-	return keys
-}
-
 // NewObject creates a new object with the given type and filename.
 func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	if v.db == nil {
@@ -136,7 +127,7 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	}
 
 	// Write .md file (O_EXCL ensures atomic uniqueness check)
-	data, err := writeFrontmatter(props, "", schemaKeyOrder(schema))
+	data, err := writeFrontmatter(props, "", OrderedPropKeys(props, schema))
 	if err != nil {
 		return nil, fmt.Errorf("write frontmatter: %w", err)
 	}
@@ -177,13 +168,10 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	}, nil
 }
 
-// writeObjectProperties writes object properties to both .md file and SQLite.
-func (v *Vault) writeObjectProperties(obj *Object) error {
-	var keyOrder []string
-	if schema, err := v.LoadType(obj.Type); err == nil {
-		keyOrder = schemaKeyOrder(schema)
-	}
-	data, err := writeFrontmatter(obj.Properties, obj.Body, keyOrder)
+// saveObjectFile writes object properties to both .md file and SQLite.
+func (v *Vault) saveObjectFile(obj *Object) error {
+	schema, _ := v.LoadType(obj.Type)
+	data, err := writeFrontmatter(obj.Properties, obj.Body, OrderedPropKeys(obj.Properties, schema))
 	if err != nil {
 		return fmt.Errorf("write frontmatter: %w", err)
 	}
@@ -230,7 +218,7 @@ func (v *Vault) SetProperty(id, key string, value any) error {
 
 	obj.Properties[key] = value
 
-	return v.writeObjectProperties(obj)
+	return v.saveObjectFile(obj)
 }
 
 // GetObject reads an object from its Markdown file.
@@ -266,6 +254,6 @@ func (v *Vault) SaveObject(obj *Object) error {
 	if v.db == nil {
 		return fmt.Errorf("vault not opened")
 	}
-	return v.writeObjectProperties(obj)
+	return v.saveObjectFile(obj)
 }
 
