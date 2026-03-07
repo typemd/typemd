@@ -12,7 +12,7 @@ tmd
 tmd --vault /path/to/vault
 ```
 
-The properties panel is hidden by default and can be toggled with `p`. On narrow terminals (< 56 columns), it auto-hides.
+The properties panel is hidden by default and can be toggled with `p`. On narrow terminals (< 56 columns), it auto-hides. The panel displays schema properties, relations, and wiki-link backlinks.
 
 ## Keyboard Shortcuts
 

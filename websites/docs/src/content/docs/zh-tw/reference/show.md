@@ -5,7 +5,7 @@ sidebar:
   order: 3
 ---
 
-顯示 Object 的完整資訊：屬性（包含 Relation）和內文。
+顯示 Object 的完整資訊：屬性（包含 Relation 和反向連結）和內文。
 
 ```bash
 tmd show book/golang-in-action
@@ -22,6 +22,7 @@ Properties
   status: reading
   rating: 4.5
   author: → person/alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz
+  backlinks: ⟵ note/reading-list-01jqr4a2bcdef0123456789xyz
 
 Body
 ────
@@ -29,4 +30,4 @@ Body
   A great book about Go...
 ```
 
-屬性依 schema 定義的順序顯示。Relation 屬性使用 `→` 表示正向連結，`←` 表示反向連結。
+屬性依 schema 定義的順序顯示。Relation 屬性使用 `→` 表示正向連結，`←` 表示反向連結。Wiki-link 反向連結使用 `⟵` 表示其他 Object 的引用。
