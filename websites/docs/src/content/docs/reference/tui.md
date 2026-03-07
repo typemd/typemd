@@ -33,7 +33,13 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 
 ## Edit Mode
 
-Pressing `e` when the body or properties panel is focused switches to edit mode. The status bar shows `[EDIT]` and the active panel border changes to orange. All navigation keys (`j`/`k`, `Tab`) are intercepted — they do not switch panels while editing. Press `Esc` to return to view mode (`[VIEW]`).
+Pressing `e` when the **body panel** is focused switches to in-place edit mode: the read-only viewport is replaced with a textarea pre-filled with the current object's body content. You can type, delete, and navigate freely using standard text-editing keys. The status bar shows `[EDIT]` and the panel border changes to orange.
+
+All global navigation keys (`j`/`k`, `Tab`) are intercepted while editing — they do not switch panels. Press `Esc` to exit edit mode: changes are **auto-saved** to disk and the view returns to `[VIEW]`.
+
+If the file was modified externally between when it was loaded and when you saved, a **conflict warning** appears in the status bar. Press `y` to overwrite, `n` to reload from disk, or `Esc` to cancel.
+
+Pressing `e` on the properties panel also enters edit mode (visual indicator only; property editing is not yet supported).
 
 ## Auto-refresh
 

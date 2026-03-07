@@ -24,6 +24,7 @@ func setupTestModel(t *testing.T) model {
 		groups:       groups,
 		cursor:       0,
 		selected:     groups[0].Objects[0],
+		bodyTextarea: newBodyTextarea(),
 		propsVisible: false,
 		searchInput:  initSearchInput(),
 		width:        120,
@@ -708,6 +709,7 @@ func setupTestModelWithVault(t *testing.T) (model, *core.Object) {
 		groups:        groups,
 		cursor:        1,
 		selected:      obj,
+		bodyTextarea:  newBodyTextarea(),
 		propsVisible:  false,
 		searchInput:   initSearchInput(),
 		width:         120,
@@ -721,6 +723,8 @@ func TestModel_ExitEditMode_NoSaveWhenNotDirty(t *testing.T) {
 	m, _ := setupTestModelWithVault(t)
 	m.editMode = true
 	m.dirty = false
+	// Textarea holds same content as body — no change, no save
+	m.bodyTextarea.SetValue(m.selected.Body)
 
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	newM, _ := m.Update(msg)
@@ -737,8 +741,8 @@ func TestModel_ExitEditMode_NoSaveWhenNotDirty(t *testing.T) {
 func TestModel_ExitEditMode_SavesWhenDirty(t *testing.T) {
 	m, obj := setupTestModelWithVault(t)
 	m.editMode = true
-	m.dirty = true
-	m.selected.Body = "Updated body"
+	// Textarea holds new content — differs from current body, triggers dirty + save
+	m.bodyTextarea.SetValue("Updated body")
 
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	newM, _ := m.Update(msg)
@@ -803,8 +807,8 @@ func TestModel_ConcurrentEdit_DetectedBeforeSave(t *testing.T) {
 	// Set loadedModTime to the past so the file's real mtime is "newer"
 	m.loadedModTime = m.loadedModTime.Add(-2 * time.Second)
 	m.editMode = true
-	m.dirty = true
-	m.selected.Body = "Local changes"
+	// Textarea holds new content — triggers dirty check, then conflict on save
+	m.bodyTextarea.SetValue("Local changes")
 
 	msg := tea.KeyMsg{Type: tea.KeyEsc}
 	newM, _ := m.Update(msg)
