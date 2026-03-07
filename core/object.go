@@ -261,3 +261,11 @@ func (v *Vault) GetObject(id string) (*Object, error) {
 	}, nil
 }
 
+// SaveObject persists an object's properties and body to the .md file and updates SQLite.
+func (v *Vault) SaveObject(obj *Object) error {
+	if v.db == nil {
+		return fmt.Errorf("vault not opened")
+	}
+	return v.writeObjectProperties(obj)
+}
+

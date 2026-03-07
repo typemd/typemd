@@ -2,8 +2,10 @@ package tui
 
 import (
 	"fmt"
+	"os"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/typemd/typemd/core"
 	tea "github.com/charmbracelet/bubbletea"
@@ -667,4 +669,208 @@ func TestHelpEntries_NotEmpty(t *testing.T) {
 			t.Error("helpEntry Desc should not be empty")
 		}
 	}
+}
+
+// setupTestModelWithVault creates a model backed by a real temporary vault with one book object.
+func setupTestModelWithVault(t *testing.T) (model, *core.Object) {
+	t.Helper()
+	dir := t.TempDir()
+	v := core.NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("vault Init() error = %v", err)
+	}
+	if err := v.Open(); err != nil {
+		t.Fatalf("vault Open() error = %v", err)
+	}
+	t.Cleanup(func() { v.Close() })
+
+	obj, err := v.NewObject("book", "test-save")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+	obj.Properties["title"] = "Original Title"
+	obj.Body = "Original body"
+	if err := v.SaveObject(obj); err != nil {
+		t.Fatalf("SaveObject() error = %v", err)
+	}
+
+	// Get file mtime so loadedModTime is correctly initialized
+	var loadedMod time.Time
+	if info, err := os.Stat(v.ObjectPath(obj.Type, obj.Filename)); err == nil {
+		loadedMod = info.ModTime()
+	}
+
+	groups := buildGroups([]*core.Object{obj})
+	groups[0].Expanded = true
+	m := model{
+		vault:         v,
+		focus:         focusBody,
+		groups:        groups,
+		cursor:        1,
+		selected:      obj,
+		propsVisible:  false,
+		searchInput:   initSearchInput(),
+		width:         120,
+		height:        24,
+		loadedModTime: loadedMod,
+	}
+	return m, obj
+}
+
+func TestModel_ExitEditMode_NoSaveWhenNotDirty(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+	m.editMode = true
+	m.dirty = false
+
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.editMode {
+		t.Error("editMode should be false after esc")
+	}
+	if updated.dirty {
+		t.Error("dirty should remain false when nothing changed")
+	}
+}
+
+func TestModel_ExitEditMode_SavesWhenDirty(t *testing.T) {
+	m, obj := setupTestModelWithVault(t)
+	m.editMode = true
+	m.dirty = true
+	m.selected.Body = "Updated body"
+
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.editMode {
+		t.Error("editMode should be false after esc")
+	}
+	if updated.dirty {
+		t.Error("dirty should be false after successful save")
+	}
+	if updated.saveErr != "" {
+		t.Errorf("saveErr should be empty after successful save, got %q", updated.saveErr)
+	}
+
+	// Verify file was actually updated
+	reloaded, err := m.vault.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject() error = %v", err)
+	}
+	if reloaded.Body != "Updated body" {
+		t.Errorf("body = %q, want %q", reloaded.Body, "Updated body")
+	}
+}
+
+func TestModel_SaveError_ShowsInStatusBar(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+	m.saveErr = "Save failed: disk full"
+	m.width = 120
+	m.height = 24
+
+	view := m.View()
+	if !strings.Contains(view, "Save failed") {
+		t.Error("View should contain save error message when saveErr is set")
+	}
+}
+
+func TestModel_SkipNextReload_SuppressesRefresh(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+	m.skipNextReload = true
+
+	originalSelected := m.selected
+
+	newM, cmd := m.Update(fileChangedMsg{})
+	updated := newM.(model)
+
+	if updated.skipNextReload {
+		t.Error("skipNextReload should be cleared after fileChangedMsg")
+	}
+	if updated.selected != originalSelected {
+		t.Error("selected should not change when skipNextReload suppresses reload")
+	}
+	if cmd == nil {
+		t.Error("should restart watcher (non-nil cmd) after suppressed reload")
+	}
+}
+
+func TestModel_ConcurrentEdit_DetectedBeforeSave(t *testing.T) {
+	m, obj := setupTestModelWithVault(t)
+
+	// Simulate: file was modified externally after we loaded it
+	// Set loadedModTime to the past so the file's real mtime is "newer"
+	m.loadedModTime = m.loadedModTime.Add(-2 * time.Second)
+	m.editMode = true
+	m.dirty = true
+	m.selected.Body = "Local changes"
+
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if !updated.saveConflict {
+		t.Error("saveConflict should be true when external edit detected")
+	}
+	if updated.saveErr == "" {
+		t.Error("saveErr should explain the conflict")
+	}
+	if updated.dirty {
+		// dirty stays true because save was blocked
+	}
+
+	// File should NOT be overwritten
+	reloaded, _ := m.vault.GetObject(obj.ID)
+	if reloaded.Body == "Local changes" {
+		t.Error("file should NOT be overwritten when conflict detected")
+	}
+}
+
+func TestModel_ConcurrentEdit_OverwriteWithY(t *testing.T) {
+	m, obj := setupTestModelWithVault(t)
+	m.loadedModTime = m.loadedModTime.Add(-2 * time.Second)
+	m.saveConflict = true
+	m.dirty = true
+	m.selected.Body = "Force saved body"
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.saveConflict {
+		t.Error("saveConflict should be cleared after y")
+	}
+	if updated.dirty {
+		t.Error("dirty should be false after force save")
+	}
+
+	reloaded, _ := m.vault.GetObject(obj.ID)
+	if reloaded.Body != "Force saved body" {
+		t.Errorf("body = %q, want %q", reloaded.Body, "Force saved body")
+	}
+}
+
+func TestModel_ConcurrentEdit_ReloadWithN(t *testing.T) {
+	m, obj := setupTestModelWithVault(t)
+	m.saveConflict = true
+	m.dirty = true
+	m.selected.Body = "Discarded local changes"
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.saveConflict {
+		t.Error("saveConflict should be cleared after n")
+	}
+	if updated.dirty {
+		t.Error("dirty should be false after reload")
+	}
+
+	// selected should reflect what's on disk (original body, not local changes)
+	if updated.selected != nil && updated.selected.Body == "Discarded local changes" {
+		t.Error("selected body should be reloaded from disk, not local changes")
+	}
+	_ = obj
 }

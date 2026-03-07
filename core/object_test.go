@@ -388,3 +388,49 @@ func TestVault_SetProperty_DBNotOpen(t *testing.T) {
 	}
 }
 
+
+func TestVault_SaveObject_WritesFileAndUpdatesDB(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "test-book")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	obj.Body = "New body content"
+	obj.Properties["title"] = "Updated Title"
+
+	if err := v.SaveObject(obj); err != nil {
+		t.Fatalf("SaveObject() error = %v", err)
+	}
+
+	// File should contain updated content
+	data, err := os.ReadFile(v.ObjectPath(obj.Type, obj.Filename))
+	if err != nil {
+		t.Fatalf("ReadFile() error = %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "Updated Title") {
+		t.Error("file should contain updated title")
+	}
+	if !strings.Contains(content, "New body content") {
+		t.Error("file should contain updated body")
+	}
+
+	// DB should be updated
+	reloaded, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject() error = %v", err)
+	}
+	if reloaded.Body != "New body content" {
+		t.Errorf("GetObject().Body = %q, want %q", reloaded.Body, "New body content")
+	}
+}
+
+func TestVault_SaveObject_ErrorWhenNotOpened(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	obj := &Object{ID: "book/test", Type: "book", Filename: "test"}
+	if err := v.SaveObject(obj); err == nil {
+		t.Fatal("expected error when vault not opened, got nil")
+	}
+}

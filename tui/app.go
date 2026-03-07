@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/typemd/typemd/core"
 	"github.com/charmbracelet/bubbles/textinput"
@@ -51,6 +52,13 @@ type model struct {
 	// Edit mode
 	editMode bool
 
+	// Save state
+	dirty          bool      // unsaved in-memory changes
+	saveErr        string    // last save error (shown in status bar)
+	skipNextReload bool      // suppress next fileChangedMsg (triggered by our own save)
+	loadedModTime  time.Time // file mtime when object was last loaded
+	saveConflict   bool      // concurrent external edit detected; awaiting user decision
+
 	// Search
 	searchMode    bool
 	searchInput   textinput.Model
@@ -77,8 +85,11 @@ func (m model) Init() tea.Cmd {
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case fileChangedMsg:
+		if m.skipNextReload {
+			m.skipNextReload = false
+			return m, watchObjects(m.vault.ObjectsDir())
+		}
 		m.refreshData()
-		// Restart watcher for next change
 		return m, watchObjects(m.vault.ObjectsDir())
 
 	case tea.WindowSizeMsg:
@@ -132,10 +143,27 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		}
 
+		// Conflict resolution intercepts y/n/esc
+		if m.saveConflict {
+			switch msg.String() {
+			case "y":
+				m.forceSave()
+			case "n":
+				m.reloadFromDisk()
+			case "esc":
+				m.saveConflict = false
+				m.saveErr = ""
+			}
+			return m, nil
+		}
+
 		// Edit mode intercepts all keys except Esc
 		if m.editMode {
 			if msg.String() == "esc" {
 				m.editMode = false
+				if m.dirty {
+					m.saveObject()
+				}
 			}
 			return m, nil
 		}
@@ -314,6 +342,11 @@ func (m *model) selectCurrentRow() {
 				if obj, err := m.vault.GetObject(row.Object.ID); err == nil {
 					m.selected = obj
 					m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
+					// Track file mtime for concurrent edit detection
+					objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
+					if info, statErr := os.Stat(objPath); statErr == nil {
+						m.loadedModTime = info.ModTime()
+					}
 				} else {
 					m.selected = row.Object
 					m.displayProps = nil
@@ -322,10 +355,71 @@ func (m *model) selectCurrentRow() {
 				m.selected = row.Object
 				m.displayProps = nil
 			}
+			m.dirty = false
+			m.saveErr = ""
 			m.updateDetail()
 			return
 		}
 	}
+}
+
+// saveObject attempts to save the selected object to disk.
+// Sets saveConflict if a concurrent external edit is detected.
+// Sets saveErr on failure. On success, clears dirty and sets skipNextReload.
+func (m *model) saveObject() {
+	if m.selected == nil || m.vault == nil {
+		return
+	}
+	obj := m.selected
+	objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
+	if info, err := os.Stat(objPath); err == nil {
+		if info.ModTime().After(m.loadedModTime) {
+			m.saveConflict = true
+			m.saveErr = "File changed externally. 'y' to overwrite · 'n' to reload · esc to cancel"
+			return
+		}
+	}
+	if err := m.vault.SaveObject(obj); err != nil {
+		m.saveErr = fmt.Sprintf("Save failed: %v", err)
+		return
+	}
+	m.dirty = false
+	m.saveErr = ""
+	m.skipNextReload = true
+}
+
+// forceSave saves the selected object ignoring concurrent edit detection.
+func (m *model) forceSave() {
+	if m.selected == nil || m.vault == nil {
+		return
+	}
+	if err := m.vault.SaveObject(m.selected); err != nil {
+		m.saveErr = fmt.Sprintf("Save failed: %v", err)
+		return
+	}
+	m.dirty = false
+	m.saveErr = ""
+	m.saveConflict = false
+	m.skipNextReload = true
+}
+
+// reloadFromDisk reloads the selected object from disk, discarding local changes.
+func (m *model) reloadFromDisk() {
+	if m.selected == nil || m.vault == nil {
+		return
+	}
+	if obj, err := m.vault.GetObject(m.selected.ID); err == nil {
+		m.selected = obj
+		m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
+		objPath := m.vault.ObjectPath(obj.Type, obj.Filename)
+		if info, statErr := os.Stat(objPath); statErr == nil {
+			m.loadedModTime = info.ModTime()
+		}
+		m.updateDetail()
+	}
+	m.dirty = false
+	m.saveErr = ""
+	m.saveConflict = false
 }
 
 // adjustScroll updates scrollOffset so cursor is always visible.
@@ -556,6 +650,10 @@ func (m model) View() string {
 	var helpBar string
 	if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
+	} else if m.saveConflict {
+		helpBar = "  [CONFLICT]  " + m.saveErr
+	} else if m.saveErr != "" {
+		helpBar = "  [ERROR]  " + m.saveErr
 	} else if m.editMode {
 		helpBar = "  [EDIT]  esc: exit edit mode"
 	} else if m.searchResults != nil {

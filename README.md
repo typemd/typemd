@@ -140,7 +140,7 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `Tab` | Cycle focus between panels |
 | `e` | Enter edit mode (body or properties panel) |
 | `/` | Search (FTS5 full-text search) |
-| `Esc` | Exit edit mode / Clear search results |
+| `Esc` | Exit edit mode (auto-saves if changed) / Clear search results |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |
 | `[`/`]` | Shrink/grow focused panel |
@@ -148,6 +148,8 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `q`/`Ctrl+C` | Quit |
 
 The status bar shows the current mode: `[VIEW]` for normal navigation and `[EDIT]` when editing is active.
+
+When exiting edit mode, changes are automatically saved to the `.md` file and the SQLite index is updated. If the file was modified externally while editing, a `[CONFLICT]` prompt appears — press `y` to overwrite, `n` to reload from disk, or `Esc` to cancel.
 
 The TUI automatically watches the `objects/` directory and refreshes when files are created, modified, or deleted.
 
