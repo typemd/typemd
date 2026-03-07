@@ -102,14 +102,13 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	}
 
 	// Append ULID to filename for uniqueness
-	filename = filename + "-" + GenerateULID()
-	id := typeName + "/" + filename
-
-	// Check duplicate (safety net — ULID should guarantee uniqueness)
-	objPath := v.ObjectPath(typeName, filename)
-	if _, err := os.Stat(objPath); err == nil {
-		return nil, fmt.Errorf("object already exists: %s", id)
+	ulidStr, err := GenerateULID()
+	if err != nil {
+		return nil, err
 	}
+	filename = filename + "-" + ulidStr
+	id := typeName + "/" + filename
+	objPath := v.ObjectPath(typeName, filename)
 
 	// Create type directory
 	if err := os.MkdirAll(v.ObjectDir(typeName), 0755); err != nil {
@@ -126,13 +125,24 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		}
 	}
 
-	// Write .md file
+	// Write .md file (O_EXCL ensures atomic uniqueness check)
 	data, err := writeFrontmatter(props, "", schemaKeyOrder(schema))
 	if err != nil {
 		return nil, fmt.Errorf("write frontmatter: %w", err)
 	}
-	if err := os.WriteFile(objPath, data, 0644); err != nil {
+	f, err := os.OpenFile(objPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
+	if err != nil {
+		if os.IsExist(err) {
+			return nil, fmt.Errorf("object already exists: %s", id)
+		}
+		return nil, fmt.Errorf("create file: %w", err)
+	}
+	if _, err := f.Write(data); err != nil {
+		f.Close()
 		return nil, fmt.Errorf("write file: %w", err)
+	}
+	if err := f.Close(); err != nil {
+		return nil, fmt.Errorf("close file: %w", err)
 	}
 
 	// Insert into SQLite

@@ -2,6 +2,7 @@ package core
 
 import (
 	"crypto/rand"
+	"fmt"
 	"strings"
 	"time"
 
@@ -9,6 +10,10 @@ import (
 )
 
 // GenerateULID returns a new lowercase ULID string.
-func GenerateULID() string {
-	return strings.ToLower(ulid.MustNew(ulid.Timestamp(time.Now()), rand.Reader).String())
+func GenerateULID() (string, error) {
+	id, err := ulid.New(ulid.Timestamp(time.Now()), rand.Reader)
+	if err != nil {
+		return "", fmt.Errorf("generate ulid: %w", err)
+	}
+	return strings.ToLower(id.String()), nil
 }

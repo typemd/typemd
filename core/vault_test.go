@@ -2,7 +2,6 @@ package core
 
 import (
 	"database/sql"
-	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -184,8 +183,10 @@ func TestVault_FTSTrigger_InsertSync(t *testing.T) {
 
 	var count int
 	// FTS5 search by the actual filename (includes ULID suffix)
-	query := fmt.Sprintf(`SELECT count(*) FROM objects_fts WHERE objects_fts MATCH '"%s"'`, obj.Filename)
-	err = v.db.QueryRow(query).Scan(&count)
+	err = v.db.QueryRow(
+		`SELECT count(*) FROM objects_fts WHERE objects_fts MATCH ?`,
+		`"`+obj.Filename+`"`,
+	).Scan(&count)
 	if err != nil {
 		t.Fatalf("FTS query error = %v", err)
 	}
