@@ -878,3 +878,45 @@ func TestModel_ConcurrentEdit_ReloadWithN(t *testing.T) {
 	}
 	_ = obj
 }
+
+// TestModel_FirstSave_NoConflict verifies that when loadedModTime is properly
+// initialized (as Start() does), the very first save does not trigger a conflict.
+func TestModel_FirstSave_NoConflict(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+	// loadedModTime is set by setupTestModelWithVault — mimics Start() behaviour
+
+	m.editMode = true
+	m.bodyTextarea.SetValue("First edit content")
+	m.bodyEditStart = m.bodyTextarea.Value()
+
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.saveConflict {
+		t.Error("first save should not trigger conflict when loadedModTime is initialized")
+	}
+	if updated.dirty {
+		t.Error("dirty should be false after successful first save")
+	}
+}
+
+// TestModel_FirstSave_ZeroModTime_Conflict documents the regression: when
+// loadedModTime is zero (as it was before the fix), the first save triggers
+// a false conflict because any real file mtime is after time.Time{}.
+func TestModel_FirstSave_ZeroModTime_Conflict(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+	m.loadedModTime = time.Time{} // simulate Start() before the fix
+
+	m.editMode = true
+	m.bodyTextarea.SetValue("First edit content")
+	m.bodyEditStart = "original body" // differs from textarea → triggers dirty → save attempted
+
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if !updated.saveConflict {
+		t.Error("zero loadedModTime should trigger conflict (regression guard)")
+	}
+}
