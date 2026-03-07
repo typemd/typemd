@@ -89,6 +89,16 @@ func newBodyTextarea() textarea.Model {
 	return ta
 }
 
+// resizeBodyTextarea updates the body textarea dimensions to match the current layout.
+func (m *model) resizeBodyTextarea() {
+	h := m.height - 3
+	if h < 0 {
+		h = 0
+	}
+	m.bodyTextarea.SetWidth(m.bodyWidth())
+	m.bodyTextarea.SetHeight(h)
+}
+
 func (m model) Init() tea.Cmd {
 	if m.vault != nil {
 		return watchObjects(m.vault.ObjectsDir())
@@ -132,8 +142,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.bodyViewport.Height = contentHeight
 		m.propsViewport.Width = m.propsWidth
 		m.propsViewport.Height = contentHeight
-		m.bodyTextarea.SetWidth(m.bodyWidth())
-		m.bodyTextarea.SetHeight(contentHeight)
+		m.resizeBodyTextarea()
 
 		m.updateDetail()
 		return m, nil
@@ -181,11 +190,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 					if newBody != m.selected.Body {
 						m.selected.Body = newBody
 						m.dirty = true
+						m.updateDetail()
 					}
 					m.bodyTextarea.Blur()
 				}
 				m.editMode = false
-				m.updateDetail()
 				if m.dirty {
 					m.saveObject()
 				}
@@ -212,8 +221,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			if m.focus == focusBody && m.selected != nil {
 				m.editMode = true
 				m.bodyTextarea.SetValue(m.selected.Body)
-				m.bodyTextarea.SetWidth(m.bodyWidth())
-				m.bodyTextarea.SetHeight(m.height - 3)
+				m.resizeBodyTextarea()
 				m.bodyTextarea.CursorEnd()
 				return m, m.bodyTextarea.Focus()
 			}
