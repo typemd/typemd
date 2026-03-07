@@ -498,20 +498,15 @@ func (m model) View() string {
 		Height(contentH)
 
 	// Focus highlighting (edit mode uses distinct border color)
+	activeBorderColor := colorFocusBorder
 	if m.editMode {
-		switch m.focus {
-		case focusBody:
-			bodyStyle = bodyStyle.BorderForeground(colorEditBorder)
-		case focusProps:
-			// props style is created below; store flag for later
-		}
-	} else {
-		switch m.focus {
-		case focusLeft:
-			leftStyle = leftStyle.BorderForeground(colorFocusBorder)
-		case focusBody:
-			bodyStyle = bodyStyle.BorderForeground(colorFocusBorder)
-		}
+		activeBorderColor = colorEditBorder
+	}
+	switch m.focus {
+	case focusLeft:
+		leftStyle = leftStyle.BorderForeground(activeBorderColor)
+	case focusBody:
+		bodyStyle = bodyStyle.BorderForeground(activeBorderColor)
 	}
 
 	// Left panel content
@@ -549,11 +544,7 @@ func (m model) View() string {
 			Width(m.propsWidth).
 			Height(contentH)
 		if m.focus == focusProps {
-			if m.editMode {
-				propsStyle = propsStyle.BorderForeground(colorEditBorder)
-			} else {
-				propsStyle = propsStyle.BorderForeground(colorFocusBorder)
-			}
+			propsStyle = propsStyle.BorderForeground(activeBorderColor)
 		}
 		panels = lipgloss.JoinHorizontal(lipgloss.Top,
 			panels,
