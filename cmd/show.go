@@ -44,15 +44,7 @@ Examples:
 			fmt.Println("  (none)")
 		} else {
 			for _, p := range props {
-				if p.IsReverse {
-					fmt.Printf("  %s: ← %s\n", p.Key, p.FromID)
-				} else if p.Value == nil {
-					fmt.Printf("  %s: (null)\n", p.Key)
-				} else if p.IsRelation {
-					fmt.Printf("  %s: → %v\n", p.Key, p.Value)
-				} else {
-					fmt.Printf("  %s: %v\n", p.Key, p.Value)
-				}
+				fmt.Printf("  %s\n", p.Format())
 			}
 		}
 

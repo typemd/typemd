@@ -1,5 +1,7 @@
 package core
 
+import "fmt"
+
 // DisplayProperty represents a single property prepared for display.
 type DisplayProperty struct {
 	Key        string
@@ -7,6 +9,20 @@ type DisplayProperty struct {
 	IsRelation bool
 	IsReverse  bool
 	FromID     string // populated only for reverse relations
+}
+
+// Format returns a human-readable string for this property.
+func (p DisplayProperty) Format() string {
+	if p.IsReverse {
+		return fmt.Sprintf("%s: ← %s", p.Key, p.FromID)
+	}
+	if p.Value == nil {
+		return fmt.Sprintf("%s: (null)", p.Key)
+	}
+	if p.IsRelation {
+		return fmt.Sprintf("%s: → %v", p.Key, p.Value)
+	}
+	return fmt.Sprintf("%s: %v", p.Key, p.Value)
 }
 
 // BuildDisplayProperties assembles an ordered list of display-ready properties
@@ -18,19 +34,19 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 
 	schema, _ := v.LoadType(obj.Type)
 
-	// Fill missing schema-defined properties
-	if schema != nil {
-		for _, p := range schema.Properties {
-			if _, ok := obj.Properties[p.Name]; !ok {
-				obj.Properties[p.Name] = nil
-			}
-		}
+	// Build merged properties map (original + schema defaults) without mutating obj
+	merged := make(map[string]any, len(obj.Properties))
+	for k, v := range obj.Properties {
+		merged[k] = v
 	}
 
-	// Build relation property set
+	// Single pass over schema: fill missing properties + build relation set
 	relProps := make(map[string]bool)
 	if schema != nil {
 		for _, p := range schema.Properties {
+			if _, ok := merged[p.Name]; !ok {
+				merged[p.Name] = nil
+			}
 			if p.Type == "relation" {
 				relProps[p.Name] = true
 			}
@@ -41,12 +57,12 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 	relations, _ := v.ListRelations(obj.ID)
 
 	// Build ordered properties
-	propKeys := OrderedPropKeys(obj.Properties, schema)
+	propKeys := OrderedPropKeys(merged, schema)
 	var result []DisplayProperty
 	for _, k := range propKeys {
 		result = append(result, DisplayProperty{
 			Key:        k,
-			Value:      obj.Properties[k],
+			Value:      merged[k],
 			IsRelation: relProps[k],
 		})
 	}

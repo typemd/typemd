@@ -48,15 +48,7 @@ func renderProperties(obj *core.Object, displayProps []core.DisplayProperty) str
 		b.WriteString(" (none)\n")
 	} else {
 		for _, p := range displayProps {
-			if p.IsReverse {
-				b.WriteString(fmt.Sprintf(" %s: ← %s\n", p.Key, p.FromID))
-			} else if p.Value == nil {
-				b.WriteString(fmt.Sprintf(" %s: (null)\n", p.Key))
-			} else if p.IsRelation {
-				b.WriteString(fmt.Sprintf(" %s: → %v\n", p.Key, p.Value))
-			} else {
-				b.WriteString(fmt.Sprintf(" %s: %v\n", p.Key, p.Value))
-			}
+			b.WriteString(fmt.Sprintf(" %s\n", p.Format()))
 		}
 	}
 
