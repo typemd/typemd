@@ -53,6 +53,9 @@ type model struct {
 	searchInput   textinput.Model
 	searchResults []*core.Object
 
+	// Help
+	showHelp bool
+
 	// Settings
 	softWrap bool
 
@@ -106,6 +109,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyMsg:
+		// Help mode gets top priority
+		if m.showHelp {
+			switch msg.String() {
+			case "esc", "?", "h":
+				m.showHelp = false
+			}
+			return m, nil
+		}
+
 		// Search mode gets priority
 		if m.searchMode {
 			var cmd tea.Cmd
@@ -203,6 +215,10 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.propsViewport.Width = m.propsWidth
 			m.propsViewport.Height = contentHeight
 			m.updateDetail()
+			return m, nil
+
+		case "?", "h":
+			m.showHelp = true
 			return m, nil
 
 		case "enter", " ":
@@ -512,19 +528,24 @@ func (m model) View() string {
 
 	// Help bar
 	var helpBar string
-	if m.searchMode {
+	if m.showHelp {
+		helpBar = "  esc/?/h: close help"
+	} else if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
 	} else if m.searchResults != nil {
 		helpBar = "  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit"
 	} else {
-		wrapLabel := "off"
-		if m.softWrap {
-			wrapLabel = "on"
-		}
-		helpBar = fmt.Sprintf("  ↑↓/jk: navigate  |  tab: switch  |  []: resize  |  p: toggle props  |  /: search  |  w: wrap(%s)  |  q: quit", wrapLabel)
+		helpBar = "  ?/h: help  |  /: search  |  q: quit"
 	}
 
-	return panels + "\n" + helpBar
+	view := panels + "\n" + helpBar
+
+	// Help overlay
+	if m.showHelp {
+		view = renderHelp(m.width, m.height)
+	}
+
+	return view
 }
 
 func Start(vaultPath string) error {

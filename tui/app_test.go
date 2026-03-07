@@ -442,3 +442,115 @@ func TestModel_ToggleProps_MovesFocusWhenHiding(t *testing.T) {
 		t.Error("focus should move away from focusProps when Properties is hidden")
 	}
 }
+
+func TestModel_HelpToggle(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+
+	// Press ? to open help
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}}
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if !m.showHelp {
+		t.Error("showHelp should be true after pressing ?")
+	}
+
+	// Press ? again to close
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if m.showHelp {
+		t.Error("showHelp should be false after pressing ? again")
+	}
+}
+
+func TestModel_HelpToggle_H(t *testing.T) {
+	m := setupTestModel(t)
+
+	// Press h to open help
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}}
+	newM, _ := m.Update(msg)
+	m = newM.(model)
+
+	if !m.showHelp {
+		t.Error("showHelp should be true after pressing h")
+	}
+
+	// Press h again to close
+	newM, _ = m.Update(msg)
+	m = newM.(model)
+
+	if m.showHelp {
+		t.Error("showHelp should be false after pressing h again")
+	}
+}
+
+func TestModel_HelpEscClose(t *testing.T) {
+	m := setupTestModel(t)
+
+	// Open help
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}}
+	newM, _ := m.Update(msg)
+	m = newM.(model)
+
+	// Press Esc to close
+	esc := tea.KeyMsg{Type: tea.KeyEscape}
+	newM, _ = m.Update(esc)
+	m = newM.(model)
+
+	if m.showHelp {
+		t.Error("showHelp should be false after pressing Esc")
+	}
+}
+
+func TestModel_HelpInterceptsKeys(t *testing.T) {
+	m := setupTestModel(t)
+	m.showHelp = true
+	originalCursor := m.cursor
+
+	// Press j (should be intercepted, cursor should not move)
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	newM, _ := m.Update(msg)
+	m = newM.(model)
+
+	if m.cursor != originalCursor {
+		t.Errorf("cursor = %d, want %d (help should intercept navigation keys)", m.cursor, originalCursor)
+	}
+	if !m.showHelp {
+		t.Error("showHelp should still be true after pressing j")
+	}
+}
+
+func TestModel_HelpView(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.showHelp = true
+
+	view := m.View()
+	if !strings.Contains(view, "Keybindings") {
+		t.Error("help view should contain 'Keybindings' title")
+	}
+	if !strings.Contains(view, "help") {
+		t.Error("help view should contain help entry")
+	}
+}
+
+func TestHelpEntries_NotEmpty(t *testing.T) {
+	entries := helpEntries()
+	if len(entries) == 0 {
+		t.Error("helpEntries should return at least one entry")
+	}
+	for _, e := range entries {
+		if e.Key == "" {
+			t.Error("helpEntry Key should not be empty")
+		}
+		if e.Desc == "" {
+			t.Error("helpEntry Desc should not be empty")
+		}
+	}
+}

@@ -12,6 +12,8 @@ type keyMap struct {
 	GrowPanel   key.Binding
 	ShrinkPanel key.Binding
 	ToggleProps key.Binding
+	ToggleWrap  key.Binding
+	Help        key.Binding
 }
 
 var keys = keyMap{
@@ -24,4 +26,6 @@ var keys = keyMap{
 	GrowPanel:   key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "grow panel")),
 	ShrinkPanel: key.NewBinding(key.WithKeys("["), key.WithHelp("[", "shrink panel")),
 	ToggleProps: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "toggle properties")),
+	ToggleWrap:  key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "toggle wrap")),
+	Help:        key.NewBinding(key.WithKeys("?", "h"), key.WithHelp("?/h", "help")),
 }

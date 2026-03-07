@@ -143,6 +143,7 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |
 | `[`/`]` | Shrink/grow focused panel |
+| `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
 
 The TUI automatically watches the `objects/` directory and refreshes when files are created, modified, or deleted.
