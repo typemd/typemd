@@ -91,12 +91,15 @@ func newBodyTextarea() textarea.Model {
 	return ta
 }
 
+// bodyEditHeaderLines is the number of lines renderBodyHeader() occupies above the textarea.
+const bodyEditHeaderLines = 2
+
 // resizeBodyTextarea updates the body textarea dimensions to match the current layout.
-// In edit mode, 2 lines are reserved for the title + separator header above the textarea.
+// In edit mode, bodyEditHeaderLines are reserved for the title + separator above the textarea.
 func (m *model) resizeBodyTextarea() {
 	h := m.height - 3
 	if m.editMode {
-		h -= 2
+		h -= bodyEditHeaderLines
 	}
 	if h < 0 {
 		h = 0
@@ -435,6 +438,11 @@ func (m *model) doSave() {
 	if err := m.vault.SaveObject(m.selected); err != nil {
 		m.saveErr = fmt.Sprintf("Save failed: %v", err)
 		return
+	}
+	// Update loadedModTime so subsequent saves don't trigger a false conflict.
+	objPath := m.vault.ObjectPath(m.selected.Type, m.selected.Filename)
+	if info, err := os.Stat(objPath); err == nil {
+		m.loadedModTime = info.ModTime()
 	}
 	m.dirty = false
 	m.saveErr = ""
