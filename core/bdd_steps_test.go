@@ -20,20 +20,17 @@ func mustULID() string {
 
 // domainContext holds shared state across steps within a single scenario.
 type domainContext struct {
-	rootDir string
-	vault   *Vault
-	objects map[string]*Object // keyed by slug (e.g. "golang-in-action")
-	lastErr error
-
-	// for "create another" pattern
-	prevObject *Object
+	rootDir       string
+	vault         *Vault
+	objects       map[string]*Object // keyed by slug (e.g. "golang-in-action")
+	currentObject *Object            // the most recently created/referenced object
+	retrieved     *Object            // result of GetObject-by-ID
+	prevObject    *Object            // for "create another" pattern
+	lastErr       error
 
 	// query/search results
 	queryResults  []*Object
 	searchResults []*Object
-
-	// relation results
-	relations []Relation
 
 	// validation results
 	schemaErrors   map[string][]error
@@ -42,7 +39,6 @@ type domainContext struct {
 
 	// wikilink results
 	wikiLinks []StoredWikiLink
-	backlinks []StoredWikiLink
 }
 
 func newDomainContext() *domainContext {
@@ -53,17 +49,19 @@ func newDomainContext() *domainContext {
 
 // ── Vault steps ─────────────────────────────────────────────────────────────
 
-func (dc *domainContext) iInitializeANewVault() {
-	dc.rootDir = os.TempDir() + "/typemd-bdd-" + mustULID()
+func (dc *domainContext) setupVaultDir() {
+	dc.rootDir = filepath.Join(os.TempDir(), "typemd-bdd-"+mustULID())
 	os.MkdirAll(dc.rootDir, 0755)
 	dc.vault = NewVault(dc.rootDir)
+}
+
+func (dc *domainContext) iInitializeANewVault() {
+	dc.setupVaultDir()
 	dc.lastErr = dc.vault.Init()
 }
 
 func (dc *domainContext) aVaultIsInitialized() {
-	dc.rootDir = os.TempDir() + "/typemd-bdd-" + mustULID()
-	os.MkdirAll(dc.rootDir, 0755)
-	dc.vault = NewVault(dc.rootDir)
+	dc.setupVaultDir()
 	if err := dc.vault.Init(); err != nil {
 		panic(fmt.Sprintf("vault init failed: %v", err))
 	}
@@ -111,9 +109,7 @@ func (dc *domainContext) iCloseTheVault() {
 }
 
 func (dc *domainContext) iOpenAnUninitializedVault() {
-	dc.rootDir = os.TempDir() + "/typemd-bdd-" + mustULID()
-	os.MkdirAll(dc.rootDir, 0755)
-	dc.vault = NewVault(dc.rootDir)
+	dc.setupVaultDir()
 	dc.lastErr = dc.vault.Open()
 }
 
@@ -149,17 +145,17 @@ func (dc *domainContext) iCreateAObjectNamed(typeName, name string) {
 	dc.lastErr = err
 	if err == nil {
 		dc.objects[name] = obj
+		dc.currentObject = obj
 	}
 }
 
 func (dc *domainContext) iCreateAnotherObjectNamed(typeName, name string) {
-	if existing, ok := dc.objects[name]; ok {
-		dc.prevObject = existing
-	}
+	dc.prevObject = dc.currentObject
 	obj, err := dc.vault.NewObject(typeName, name)
 	dc.lastErr = err
 	if err == nil {
 		dc.objects[name+"_2"] = obj
+		dc.currentObject = obj
 	}
 }
 
@@ -226,150 +222,91 @@ func (dc *domainContext) aObjectNamedExists(typeName, name string) {
 		panic(fmt.Sprintf("create object %s/%s failed: %v", typeName, name, err))
 	}
 	dc.objects[name] = obj
+	dc.prevObject = dc.currentObject
+	dc.currentObject = obj
 }
 
 func (dc *domainContext) iGetTheObjectByItsID() {
-	// Get the first (or only) object
-	for _, obj := range dc.objects {
-		got, err := dc.vault.GetObject(obj.ID)
-		dc.lastErr = err
-		if err == nil {
-			dc.objects["_retrieved"] = got
-		}
-		return
+	got, err := dc.vault.GetObject(dc.currentObject.ID)
+	dc.lastErr = err
+	if err == nil {
+		dc.retrieved = got
 	}
 }
 
 func (dc *domainContext) theRetrievedObjectShouldMatchTheCreatedOne() error {
-	retrieved, ok := dc.objects["_retrieved"]
-	if !ok {
+	if dc.retrieved == nil {
 		return fmt.Errorf("no retrieved object found")
 	}
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		if retrieved.ID != obj.ID {
-			return fmt.Errorf("retrieved ID = %q, want %q", retrieved.ID, obj.ID)
-		}
-		return nil
+	if dc.retrieved.ID != dc.currentObject.ID {
+		return fmt.Errorf("retrieved ID = %q, want %q", dc.retrieved.ID, dc.currentObject.ID)
 	}
-	return fmt.Errorf("no original object to compare")
+	return nil
 }
 
 func (dc *domainContext) iSetPropertyToOnTheObject(key, value string) {
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		dc.lastErr = dc.vault.SetProperty(obj.ID, key, value)
-		return
-	}
+	dc.lastErr = dc.vault.SetProperty(dc.currentObject.ID, key, value)
 }
 
 func (dc *domainContext) theObjectPropertyShouldBe(key, expected string) error {
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		got, err := dc.vault.GetObject(obj.ID)
-		if err != nil {
-			return fmt.Errorf("GetObject error: %v", err)
-		}
-		val := fmt.Sprintf("%v", got.Properties[key])
-		if val != expected {
-			return fmt.Errorf("property %q = %q, want %q", key, val, expected)
-		}
-		return nil
+	got, err := dc.vault.GetObject(dc.currentObject.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
 	}
-	return fmt.Errorf("no object to check")
+	val := fmt.Sprintf("%v", got.Properties[key])
+	if val != expected {
+		return fmt.Errorf("property %q = %q, want %q", key, val, expected)
+	}
+	return nil
 }
 
 func (dc *domainContext) iUpdateTheObjectBodyTo(body string) {
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		obj.Body = body
-		return
-	}
+	dc.currentObject.Body = body
 }
 
 func (dc *domainContext) iUpdateTheObjectTitleTo(title string) {
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		obj.Properties["title"] = title
-		return
-	}
+	dc.currentObject.Properties["title"] = title
 }
 
 func (dc *domainContext) iSaveTheObject() {
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		dc.lastErr = dc.vault.SaveObject(obj)
-		return
-	}
+	dc.lastErr = dc.vault.SaveObject(dc.currentObject)
 }
 
 func (dc *domainContext) theObjectFileShouldContain(expected string) error {
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		data, err := os.ReadFile(dc.vault.ObjectPath(obj.Type, obj.Filename))
-		if err != nil {
-			return fmt.Errorf("ReadFile error: %v", err)
-		}
-		if !strings.Contains(string(data), expected) {
-			return fmt.Errorf("file does not contain %q", expected)
-		}
-		return nil
+	data, err := os.ReadFile(dc.vault.ObjectPath(dc.currentObject.Type, dc.currentObject.Filename))
+	if err != nil {
+		return fmt.Errorf("ReadFile error: %v", err)
 	}
-	return fmt.Errorf("no object to check")
+	if !strings.Contains(string(data), expected) {
+		return fmt.Errorf("file does not contain %q", expected)
+	}
+	return nil
 }
 
 func (dc *domainContext) gettingTheObjectByIDShouldReturnBody(expected string) error {
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		got, err := dc.vault.GetObject(obj.ID)
-		if err != nil {
-			return fmt.Errorf("GetObject error: %v", err)
-		}
-		if got.Body != expected {
-			return fmt.Errorf("body = %q, want %q", got.Body, expected)
-		}
-		return nil
+	got, err := dc.vault.GetObject(dc.currentObject.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
 	}
-	return fmt.Errorf("no object to check")
+	if got.Body != expected {
+		return fmt.Errorf("body = %q, want %q", got.Body, expected)
+	}
+	return nil
 }
 
 // ── Object with property/body setup steps ───────────────────────────────────
 
 func (dc *domainContext) aObjectNamedExistsWithPropertySetTo(typeName, name, prop, value string) {
-	obj, err := dc.vault.NewObject(typeName, name)
-	if err != nil {
-		panic(fmt.Sprintf("create object failed: %v", err))
-	}
-	dc.objects[name] = obj
-	if err := dc.vault.SetProperty(obj.ID, prop, value); err != nil {
+	dc.aObjectNamedExists(typeName, name)
+	if err := dc.vault.SetProperty(dc.currentObject.ID, prop, value); err != nil {
 		panic(fmt.Sprintf("SetProperty failed: %v", err))
 	}
 }
 
 func (dc *domainContext) aObjectNamedExistsWithBody(typeName, name, body string) {
-	obj, err := dc.vault.NewObject(typeName, name)
-	if err != nil {
-		panic(fmt.Sprintf("create object failed: %v", err))
-	}
-	dc.objects[name] = obj
-	obj.Body = body
-	if err := dc.vault.saveObjectFile(obj); err != nil {
+	dc.aObjectNamedExists(typeName, name)
+	dc.currentObject.Body = body
+	if err := dc.vault.saveObjectFile(dc.currentObject); err != nil {
 		panic(fmt.Sprintf("saveObjectFile failed: %v", err))
 	}
 }
@@ -416,18 +353,11 @@ func (dc *domainContext) iLinkToVia(sourceName, targetName, relation string) {
 }
 
 func (dc *domainContext) iLinkTheFirstBookToTheSecondBookVia(relation string) {
-	var books []*Object
-	for name, obj := range dc.objects {
-		if name == "_retrieved" {
-			continue
-		}
-		books = append(books, obj)
-	}
-	if len(books) < 2 {
+	if dc.prevObject == nil || dc.currentObject == nil {
 		dc.lastErr = fmt.Errorf("need at least 2 objects")
 		return
 	}
-	dc.lastErr = dc.vault.LinkObjects(books[0].ID, relation, books[1].ID)
+	dc.lastErr = dc.vault.LinkObjects(dc.prevObject.ID, relation, dc.currentObject.ID)
 }
 
 func (dc *domainContext) thePropertyOfShouldReference(prop, ownerName, targetName string) error {
@@ -671,15 +601,6 @@ func (dc *domainContext) bodyContainsAWikiLinkTo(sourceName, targetName string) 
 		targetID = target.ID
 	}
 	body := fmt.Sprintf("---\ntitle: %s\n---\n\nSee [[%s]].\n", sourceName, targetID)
-	os.WriteFile(dc.vault.ObjectPath(source.Type, source.Filename), []byte(body), 0644)
-}
-
-func (dc *domainContext) bodyContainsAWikiLinkToRawID(sourceName, rawID string) {
-	source := dc.objects[sourceName]
-	if source == nil {
-		panic(fmt.Sprintf("object %q not found", sourceName))
-	}
-	body := fmt.Sprintf("---\ntitle: %s\n---\n\nSee [[%s]].\n", sourceName, rawID)
 	os.WriteFile(dc.vault.ObjectPath(source.Type, source.Filename), []byte(body), 0644)
 }
 
