@@ -770,14 +770,19 @@ func Start(vaultPath string) error {
 		groups[0].Expanded = true
 	}
 
-	// Auto-select first object
+	// Auto-select first object and capture its mtime for conflict detection
 	var selected *core.Object
 	var displayProps []core.DisplayProperty
+	var initialModTime time.Time
 	rows := visibleRows(groups)
 	for _, row := range rows {
 		if !row.IsHeader && row.Object != nil {
 			selected = row.Object
 			displayProps, _ = v.BuildDisplayProperties(selected)
+			objPath := v.ObjectPath(selected.Type, selected.Filename)
+			if info, err := os.Stat(objPath); err == nil {
+				initialModTime = info.ModTime()
+			}
 			break
 		}
 	}
@@ -810,6 +815,7 @@ func Start(vaultPath string) error {
 		propsVisible:  false,
 		softWrap:      true,
 		displayProps:  displayProps,
+		loadedModTime: initialModTime,
 		searchInput:   initSearchInput(),
 	}
 
