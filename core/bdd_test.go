@@ -113,6 +113,9 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	ctx.Step(`^I parse the frontmatter$`, fc.iParseTheFrontmatter)
 	ctx.Step(`^the parsed property "([^"]*)" should be "([^"]*)"$`, fc.theParsedPropertyShouldBe)
 	ctx.Step(`^the parsed body should be "([^"]*)"$`, fc.theParsedBodyShouldBe)
+
+	// Domain steps (vault, object, relation, query, validate, wikilink)
+	initDomainSteps(ctx)
 }
 
 func TestFeatures(t *testing.T) {

@@ -37,3 +37,5 @@ go run ./cmd/tmd [command]
 - Tests live in the same package as implementation
 - Use `t.TempDir()` for isolation
 - Cover happy path and error/edge cases
+- BDD tests use Godog (Cucumber for Go) with Gherkin `.feature` files in `core/features/`
+- Business-logic scenarios use BDD style; pure unit tests remain traditional
