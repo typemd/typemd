@@ -26,6 +26,7 @@ func helpEntries() []helpEntry {
 		{keys.Down.Help().Key, keys.Down.Help().Desc},
 		{keys.Enter.Help().Key, keys.Enter.Help().Desc},
 		{keys.Tab.Help().Key, keys.Tab.Help().Desc},
+		{keys.EnterEdit.Help().Key, keys.EnterEdit.Help().Desc},
 		{keys.Search.Help().Key, keys.Search.Help().Desc},
 		{keys.GrowPanel.Help().Key, keys.GrowPanel.Help().Desc},
 		{keys.ShrinkPanel.Help().Key, keys.ShrinkPanel.Help().Desc},
