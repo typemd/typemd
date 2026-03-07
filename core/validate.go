@@ -63,6 +63,29 @@ func ValidateRelations(v *Vault) []error {
 	return errs
 }
 
+// ValidateWikiLinks checks for broken wiki-links (targets that don't resolve to existing objects).
+func ValidateWikiLinks(v *Vault) []error {
+	var errs []error
+	rows, err := v.db.Query("SELECT from_id, target FROM wikilinks WHERE to_id = ''")
+	if err != nil {
+		return []error{fmt.Errorf("query broken wikilinks: %w", err)}
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var fromID, target string
+		if err := rows.Scan(&fromID, &target); err != nil {
+			errs = append(errs, fmt.Errorf("scan wikilink: %w", err))
+			continue
+		}
+		errs = append(errs, fmt.Errorf("%s: broken wiki-link [[%s]]", fromID, target))
+	}
+	if err := rows.Err(); err != nil {
+		errs = append(errs, fmt.Errorf("iterate wikilinks: %w", err))
+	}
+	return errs
+}
+
 // ValidateAllSchemas scans .typemd/types/*.yaml and validates each schema.
 // Returns a map of type name to validation errors.
 func ValidateAllSchemas(v *Vault) map[string][]error {

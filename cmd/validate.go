@@ -67,6 +67,17 @@ var validateCmd = &cobra.Command{
 			fmt.Println()
 		}
 
+		// Phase 4: Wiki-link validation
+		wikiLinkErrs := core.ValidateWikiLinks(vault)
+		if len(wikiLinkErrs) > 0 {
+			fmt.Println("Wiki-link errors:")
+			for _, e := range wikiLinkErrs {
+				fmt.Printf("  %s\n", e)
+				totalErrors++
+			}
+			fmt.Println()
+		}
+
 		if totalErrors > 0 {
 			return fmt.Errorf("found %d validation error(s)", totalErrors)
 		}

@@ -8,11 +8,15 @@ type DisplayProperty struct {
 	Value      any
 	IsRelation bool
 	IsReverse  bool
-	FromID     string // populated only for reverse relations
+	IsBacklink bool
+	FromID     string // populated for reverse relations and backlinks
 }
 
 // Format returns a human-readable string for this property.
 func (p DisplayProperty) Format() string {
+	if p.IsBacklink {
+		return fmt.Sprintf("%s: ⟵ %s", p.Key, p.FromID)
+	}
 	if p.IsReverse {
 		return fmt.Sprintf("%s: ← %s", p.Key, p.FromID)
 	}
@@ -77,6 +81,17 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 				FromID:    r.FromID,
 			})
 		}
+	}
+
+	// Append backlinks (wiki-links pointing to this object)
+	backlinks, _ := v.ListBacklinks(obj.ID)
+	for _, bl := range backlinks {
+		result = append(result, DisplayProperty{
+			Key:        "backlinks",
+			Value:      bl.FromID,
+			IsBacklink: true,
+			FromID:     bl.FromID,
+		})
 	}
 
 	return result, nil

@@ -1,11 +1,11 @@
 ---
 title: tmd validate
-description: 驗證 Type schema、Object 和 Relation。
+description: 驗證 Type schema、Object、Relation 和 Wiki-link。
 sidebar:
   order: 10
 ---
 
-驗證 vault 的 Type schema、Object 和 Relation。依序執行三個階段：
+驗證 vault 的 Type schema、Object、Relation 和 Wiki-link。依序執行四個階段：
 
 ```bash
 tmd validate
@@ -34,6 +34,10 @@ tmd validate
 
 檢查所有已儲存的 Relation，確保來源和目標 Object 都存在。
 
+### 階段 4：Wiki-link 驗證
+
+偵測壞掉的 wiki-link——Object 內文中的 `[[target]]` 參照，但目標 Object 不存在。
+
 ## 輸出
 
 成功時：
@@ -54,5 +58,8 @@ Object errors:
 Relation errors:
   book/example author person/missing: target object not found
 
-found 3 validation error(s)
+Wiki-link errors:
+  book/example: broken wiki-link [[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]]
+
+found 4 validation error(s)
 ```

@@ -26,6 +26,7 @@ TypeMD 讓你用 **Object** 來思考——書籍、人物、想法、會議—�
 
 - **型別化 Object** — 為每種 Type 定義 schema（Book、Person、Idea 等）
 - **結構化 Relation** — 用具名的連結連接 Object，支援雙向自動同步
+- **Wiki-links 和反向連結** — 在內文中用 `[[type/name]]` 語法連結 Object，自動追蹤反向連結
 - **全文搜尋** — 在你的 vault 中搜尋任何內容
 - **結構化查詢** — 依 Type、屬性或 Relation 篩選 Object
 - **TUI** — 由 [Bubble Tea](https://github.com/charmbracelet/bubbletea) 驅動的三欄介面，支援檔案變更自動重新整理

@@ -176,6 +176,18 @@ CREATE INDEX IF NOT EXISTS idx_objects_type ON objects(type);
 CREATE INDEX IF NOT EXISTS idx_relations_from ON relations(from_id);
 CREATE INDEX IF NOT EXISTS idx_relations_to   ON relations(to_id);
 
+CREATE TABLE IF NOT EXISTS wikilinks (
+    id           INTEGER PRIMARY KEY AUTOINCREMENT,
+    from_id      TEXT NOT NULL,
+    to_id        TEXT NOT NULL DEFAULT '',
+    target       TEXT NOT NULL,
+    display_text TEXT NOT NULL DEFAULT '',
+    FOREIGN KEY (from_id) REFERENCES objects(id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_wikilinks_from ON wikilinks(from_id);
+CREATE INDEX IF NOT EXISTS idx_wikilinks_to   ON wikilinks(to_id);
+
 CREATE VIRTUAL TABLE IF NOT EXISTS objects_fts USING fts5(
     filename,
     properties,

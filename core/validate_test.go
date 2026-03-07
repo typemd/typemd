@@ -1,8 +1,10 @@
 package core
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -146,6 +148,57 @@ func TestValidateAllObjects_UnknownType(t *testing.T) {
 func TestValidateRelations_NoRelations(t *testing.T) {
 	v := setupTestVault(t)
 	errs := ValidateRelations(v)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}
+
+func TestValidateWikiLinks_NoBrokenLinks(t *testing.T) {
+	v := setupTestVault(t)
+
+	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+
+	noteA, _ := v.NewObject("note", "alpha")
+	noteB, _ := v.NewObject("note", "beta")
+
+	body := fmt.Sprintf("---\ntitle: Alpha\n---\n\nSee [[%s]].\n", noteB.ID)
+	os.WriteFile(v.ObjectPath(noteA.Type, noteA.Filename), []byte(body), 0644)
+	v.SyncIndex()
+
+	errs := ValidateWikiLinks(v)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}
+
+func TestValidateWikiLinks_BrokenLink(t *testing.T) {
+	v := setupTestVault(t)
+
+	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+
+	note, _ := v.NewObject("note", "alpha")
+
+	body := "---\ntitle: Alpha\n---\n\nSee [[note/nonexistent-01jjjjjjjjjjjjjjjjjjjjjjjj]].\n"
+	os.WriteFile(v.ObjectPath(note.Type, note.Filename), []byte(body), 0644)
+	v.SyncIndex()
+
+	errs := ValidateWikiLinks(v)
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error, got %d: %v", len(errs), errs)
+	}
+	if !strings.Contains(errs[0].Error(), "broken wiki-link") {
+		t.Errorf("error = %q, want it to contain 'broken wiki-link'", errs[0])
+	}
+	if !strings.Contains(errs[0].Error(), "note/nonexistent") {
+		t.Errorf("error = %q, want it to contain target", errs[0])
+	}
+}
+
+func TestValidateWikiLinks_NoWikiLinks(t *testing.T) {
+	v := setupTestVault(t)
+	errs := ValidateWikiLinks(v)
 	if len(errs) != 0 {
 		t.Errorf("expected no errors, got %v", errs)
 	}

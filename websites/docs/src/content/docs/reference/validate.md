@@ -1,11 +1,11 @@
 ---
 title: tmd validate
-description: Validate type schemas, objects, and relations.
+description: Validate type schemas, objects, relations, and wiki-links.
 sidebar:
   order: 10
 ---
 
-Validates the vault's type schemas, objects, and relations. Runs three phases in order:
+Validates the vault's type schemas, objects, relations, and wiki-links. Runs four phases in order:
 
 ```bash
 tmd validate
@@ -34,6 +34,10 @@ Validates all object properties against their type schema:
 
 Checks all stored relations to ensure both the source and target objects exist.
 
+### Phase 4: Wiki-link Validation
+
+Detects broken wiki-links — `[[target]]` references in object body content where the target object does not exist.
+
 ## Output
 
 On success:
@@ -54,5 +58,8 @@ Object errors:
 Relation errors:
   book/example author person/missing: target object not found
 
-found 3 validation error(s)
+Wiki-link errors:
+  book/example: broken wiki-link [[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]]
+
+found 4 validation error(s)
 ```

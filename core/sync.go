@@ -32,8 +32,9 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 
 	result := &SyncResult{}
 
-	// Collect all object IDs found on disk
+	// Collect all object IDs found on disk, along with their bodies for wiki-link extraction
 	diskIDs := make(map[string]bool)
+	diskBodies := make(map[string]string)
 
 	objsDir := v.ObjectsDir()
 	if _, err := os.Stat(objsDir); os.IsNotExist(err) {
@@ -95,6 +96,7 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 		}
 
 		diskIDs[id] = true
+		diskBodies[id] = body
 		return nil
 	})
 	if err != nil {
@@ -164,6 +166,20 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 		`)
 		if err != nil {
 			return nil, fmt.Errorf("delete orphaned relations: %w", err)
+		}
+	}
+
+	// Clean up wikilinks for deleted objects
+	for _, id := range toDelete {
+		if _, err := v.db.Exec("DELETE FROM wikilinks WHERE from_id = ?", id); err != nil {
+			return nil, fmt.Errorf("delete wikilinks for %s: %w", id, err)
+		}
+	}
+
+	// Extract and sync wiki-links from all objects on disk
+	for id, body := range diskBodies {
+		if err := v.syncWikiLinks(id, body); err != nil {
+			return nil, fmt.Errorf("sync wikilinks for %s: %w", id, err)
 		}
 	}
 

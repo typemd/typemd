@@ -1,6 +1,7 @@
 package core
 
 import (
+	"fmt"
 	"os"
 	"path/filepath"
 	"testing"
@@ -126,4 +127,76 @@ properties:
 			t.Error("expected reverse relation 'author' on person")
 		}
 	})
+}
+
+func TestBuildDisplayPropertiesWithBacklinks(t *testing.T) {
+	v := setupTestVault(t)
+
+	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+
+	noteA, _ := v.NewObject("note", "alpha")
+	noteB, _ := v.NewObject("note", "beta")
+
+	// noteA links to noteB via wiki-link
+	bodyA := fmt.Sprintf("---\ntitle: Alpha\n---\n\nSee [[%s]].\n", noteB.ID)
+	os.WriteFile(v.ObjectPath(noteA.Type, noteA.Filename), []byte(bodyA), 0644)
+	v.SyncIndex()
+
+	// noteB should have a backlink from noteA
+	noteB, _ = v.GetObject(noteB.ID)
+	props, err := v.BuildDisplayProperties(noteB)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	foundBacklink := false
+	for _, p := range props {
+		if p.IsBacklink {
+			foundBacklink = true
+			if p.Key != "backlinks" {
+				t.Errorf("backlink Key = %q, want %q", p.Key, "backlinks")
+			}
+			if p.FromID != noteA.ID {
+				t.Errorf("backlink FromID = %q, want %q", p.FromID, noteA.ID)
+			}
+		}
+	}
+	if !foundBacklink {
+		t.Error("expected backlink property on noteB")
+	}
+}
+
+func TestBuildDisplayPropertiesNoBacklinks(t *testing.T) {
+	v := setupTestVault(t)
+
+	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+
+	note, _ := v.NewObject("note", "lonely")
+
+	props, err := v.BuildDisplayProperties(note)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	for _, p := range props {
+		if p.IsBacklink {
+			t.Error("expected no backlinks for object with no incoming wiki-links")
+		}
+	}
+}
+
+func TestBacklinkFormat(t *testing.T) {
+	p := DisplayProperty{
+		Key:        "backlinks",
+		Value:      "note/alpha-01abc",
+		IsBacklink: true,
+		FromID:     "note/alpha-01abc",
+	}
+	got := p.Format()
+	expected := "backlinks: ⟵ note/alpha-01abc"
+	if got != expected {
+		t.Errorf("Format() = %q, want %q", got, expected)
+	}
 }
