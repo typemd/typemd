@@ -14,6 +14,8 @@ type keyMap struct {
 	ToggleProps key.Binding
 	ToggleWrap  key.Binding
 	Help        key.Binding
+	EnterEdit   key.Binding
+	ExitEdit    key.Binding
 }
 
 var keys = keyMap{
@@ -28,4 +30,6 @@ var keys = keyMap{
 	ToggleProps: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "toggle properties")),
 	ToggleWrap:  key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "toggle wrap")),
 	Help:        key.NewBinding(key.WithKeys("?", "h"), key.WithHelp("?/h", "help")),
+	EnterEdit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
+	ExitEdit:    key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "exit edit")),
 }

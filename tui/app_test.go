@@ -443,6 +443,120 @@ func TestModel_ToggleProps_MovesFocusWhenHiding(t *testing.T) {
 	}
 }
 
+func TestModel_EnterEditMode_Body(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusBody
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if !updated.editMode {
+		t.Error("editMode should be true after pressing 'e' when focused on body")
+	}
+}
+
+func TestModel_EnterEditMode_Props(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusProps
+	m.propsVisible = true
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if !updated.editMode {
+		t.Error("editMode should be true after pressing 'e' when focused on props")
+	}
+}
+
+func TestModel_NoEditMode_WhenFocusLeft(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusLeft
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.editMode {
+		t.Error("editMode should NOT enter when focused on left panel")
+	}
+}
+
+func TestModel_ExitEditMode_Esc(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusBody
+	m.editMode = true
+
+	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.editMode {
+		t.Error("editMode should be false after pressing Esc")
+	}
+}
+
+func TestModel_EditMode_TabDoesNotSwitchPanel(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusBody
+	m.editMode = true
+
+	msg := tea.KeyMsg{Type: tea.KeyTab}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.focus != focusBody {
+		t.Errorf("focus should remain focusBody in edit mode, got %d", updated.focus)
+	}
+	if !updated.editMode {
+		t.Error("editMode should remain true after pressing Tab in edit mode")
+	}
+}
+
+func TestModel_EditMode_NavKeysDoNotScrollLeft(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusBody
+	m.editMode = true
+	initialCursor := m.cursor
+
+	msg := tea.KeyMsg{Type: tea.KeyDown}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	// In edit mode focused on body, 'j' should not move left panel cursor
+	if updated.cursor != initialCursor {
+		t.Errorf("cursor should not change in edit mode, got %d want %d", updated.cursor, initialCursor)
+	}
+}
+
+func TestModel_View_ShowsEditModeIndicator(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.focus = focusBody
+	m.editMode = true
+
+	view := m.View()
+	if !strings.Contains(view, "EDIT") {
+		t.Error("View should contain 'EDIT' mode indicator when editMode is true")
+	}
+}
+
+func TestModel_View_ShowsViewModeIndicator(t *testing.T) {
+	m := setupTestModel(t)
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+	m.editMode = false
+
+	view := m.View()
+	if !strings.Contains(view, "VIEW") {
+		t.Error("View should contain 'VIEW' mode indicator when editMode is false")
+	}
+}
+
 func TestModel_HelpToggle(t *testing.T) {
 	m := setupTestModel(t)
 	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}

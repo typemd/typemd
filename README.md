@@ -138,13 +138,16 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `↑`/`k`, `↓`/`j` | Navigate object list |
 | `Enter`/`Space` | Select object / Toggle group |
 | `Tab` | Cycle focus between panels |
+| `e` | Enter edit mode (body or properties panel) |
 | `/` | Search (FTS5 full-text search) |
-| `Esc` | Clear search results |
+| `Esc` | Exit edit mode / Clear search results |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |
 | `[`/`]` | Shrink/grow focused panel |
 | `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
+
+The status bar shows the current mode: `[VIEW]` for normal navigation and `[EDIT]` when editing is active.
 
 The TUI automatically watches the `objects/` directory and refreshes when files are created, modified, or deleted.
 

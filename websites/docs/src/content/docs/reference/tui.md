@@ -22,13 +22,18 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `↓` / `j` | Move down (navigate list / scroll detail) |
 | `Enter` / `Space` | Select object / Toggle group |
 | `Tab` | Cycle focus between panels |
+| `e` | Enter edit mode (body or properties panel) |
 | `/` | Enter search mode |
-| `Esc` | Exit search / Clear results |
+| `Esc` | Exit edit mode / Exit search / Clear results |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |
 | `[` / `]` | Shrink / grow focused panel |
 | `?` / `h` | Open help popup |
 | `q` / `Ctrl+C` | Quit |
+
+## Edit Mode
+
+Pressing `e` when the body or properties panel is focused switches to edit mode. The status bar shows `[EDIT]` and the active panel border changes to orange. All navigation keys (`j`/`k`, `Tab`) are intercepted — they do not switch panels while editing. Press `Esc` to return to view mode (`[VIEW]`).
 
 ## Auto-refresh
 

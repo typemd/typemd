@@ -22,12 +22,14 @@ type tuiConfig struct {
 // Default color values.
 const (
 	defaultColorFocusBorder = "63"
+	defaultColorEditBorder  = "214"
 	defaultColorWikiLink    = "33"
 )
 
 // Theme colors and styles.
 var (
 	colorFocusBorder  = lipgloss.Color(defaultColorFocusBorder)
+	colorEditBorder   = lipgloss.Color(defaultColorEditBorder)
 	colorWikiLink     = lipgloss.Color(defaultColorWikiLink)
 	wikiLinkStyleBase = lipgloss.NewStyle().Foreground(colorWikiLink)
 )
@@ -59,6 +61,7 @@ func loadTheme(vaultRoot string) {
 // resetThemeDefaults restores all theme state to defaults. Used by tests.
 func resetThemeDefaults() {
 	colorFocusBorder = lipgloss.Color(defaultColorFocusBorder)
+	colorEditBorder = lipgloss.Color(defaultColorEditBorder)
 	colorWikiLink = lipgloss.Color(defaultColorWikiLink)
 	wikiLinkStyleBase = lipgloss.NewStyle().Foreground(colorWikiLink)
 }
