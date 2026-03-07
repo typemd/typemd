@@ -1,5 +1,5 @@
 ---
-author: person/gene-kim
+author: person/gene-kim-01kk39c30y4001qp772vqzspjm
 rating: 4
 status: reading
 title: 鳳凰專案：看 IT 部門如何讓公司從谷底翻身

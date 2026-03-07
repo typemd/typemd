@@ -1,6 +1,6 @@
 ---
 books:
-    - book/the-phoenix-project
+    - book/the-phoenix-project-01kk39c30yx20m5n2wqys1dk02
 name: Gene Kim
 ---
 
