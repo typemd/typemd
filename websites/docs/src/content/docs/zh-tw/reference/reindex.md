@@ -1,16 +1,23 @@
 ---
-title: tmd reindex
+title: --reindex
 description: 重建 SQLite 索引和搜尋資料庫。
 sidebar:
   order: 8
 ---
 
-掃描 `objects/` 目錄，將所有檔案同步到資料庫，清理孤立的 relation，並重建全文搜尋索引。在 TypeMD 外部手動編輯檔案後使用。
+`--reindex` flag 會強制將 `objects/` 目錄完整同步到資料庫，清理孤立的 relation，並重建全文搜尋索引。可以與任何指令組合使用。
 
-> **注意：** 開啟 vault 時，TypeMD 會在索引為空或缺失時自動同步。只有在 vault 未開啟期間編輯了檔案，才需要執行 `tmd reindex`。
+> **注意：** 開啟 vault 時，TypeMD 會在索引為空或缺失時自動同步。只有在 vault 未開啟期間編輯了檔案，才需要使用 `--reindex`。
 
 ```bash
-tmd reindex
+# 重建索引並啟動 TUI
+tmd --reindex
+
+# 重建索引並啟動 MCP server
+tmd mcp --reindex
+
+# 重建索引並執行查詢
+tmd query "type=book" --reindex
 ```
 
 ## 孤立 relation 清理

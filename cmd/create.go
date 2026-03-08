@@ -17,8 +17,8 @@ Examples:
   tmd object create person robert-martin`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := resolveVault(vaultPath)
-		if err := vault.Open(); err != nil {
+		vault, err := openVault(vaultPath, reindex)
+		if err != nil {
 			return err
 		}
 		defer vault.Close()

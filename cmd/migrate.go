@@ -24,8 +24,8 @@ Examples:
   tmd migrate book --rename old_field:new_field`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := resolveVault(vaultPath)
-		if err := vault.Open(); err != nil {
+		vault, err := openVault(vaultPath, reindex)
+		if err != nil {
 			return err
 		}
 		defer vault.Close()

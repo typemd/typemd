@@ -1,16 +1,23 @@
 ---
-title: tmd reindex
+title: --reindex
 description: Rebuild the SQLite index and search database.
 sidebar:
   order: 8
 ---
 
-Scans the `objects/` directory, syncs all files to the database, cleans up orphaned relations, and rebuilds the full-text search index. Use after manually editing files outside of TypeMD.
+The `--reindex` flag forces a full sync of the `objects/` directory to the database, cleans up orphaned relations, and rebuilds the full-text search index. It can be combined with any command.
 
-> **Note:** When opening a vault, TypeMD automatically syncs the index if it is empty or missing. You only need `tmd reindex` when files have been edited while the vault was not open.
+> **Note:** When opening a vault, TypeMD automatically syncs the index if it is empty or missing. You only need `--reindex` when files have been edited while the vault was not open.
 
 ```bash
-tmd reindex
+# Reindex and launch TUI
+tmd --reindex
+
+# Reindex and start MCP server
+tmd mcp --reindex
+
+# Reindex and run a query
+tmd query "type=book" --reindex
 ```
 
 ## Orphaned relation cleanup

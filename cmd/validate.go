@@ -12,8 +12,8 @@ var validateCmd = &cobra.Command{
 	Use:   "validate",
 	Short: "Validate type schemas, objects, and relations",
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := resolveVault(vaultPath)
-		if err := vault.Open(); err != nil {
+		vault, err := openVault(vaultPath, reindex)
+		if err != nil {
 			return err
 		}
 		defer vault.Close()

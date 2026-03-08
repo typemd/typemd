@@ -90,7 +90,7 @@ tmd relation link book/golang-in-action author person/alan-donovan
 tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 # 同步檔案到資料庫並重建搜尋索引（只在手動編輯後需要）
-tmd reindex
+tmd --reindex
 
 # 驗證 schema、Object 和 Relation
 tmd type validate

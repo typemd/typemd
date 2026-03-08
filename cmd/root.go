@@ -10,6 +10,7 @@ import (
 var (
 	vaultPath string
 	readOnly  bool
+	reindex   bool
 
 	// Version is set at build time via ldflags.
 	Version = "dev"
@@ -21,12 +22,13 @@ var rootCmd = &cobra.Command{
 	Version: Version,
 	// 不帶子指令時啟動 TUI
 	RunE: func(cmd *cobra.Command, args []string) error {
-		return tui.Start(vaultPath, readOnly)
+		return tui.Start(vaultPath, readOnly, reindex)
 	},
 }
 
 func init() {
 	rootCmd.PersistentFlags().StringVar(&vaultPath, "vault", "", "path to vault directory (default: current directory)")
+	rootCmd.PersistentFlags().BoolVar(&reindex, "reindex", false, "force reindex before running")
 	rootCmd.Flags().BoolVar(&readOnly, "readonly", false, "open vault in read-only mode")
 }
 

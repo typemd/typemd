@@ -757,7 +757,7 @@ func (m model) View() string {
 	return panels + "\n" + helpBar
 }
 
-func Start(vaultPath string, readOnly bool) error {
+func Start(vaultPath string, readOnly bool, reindex bool) error {
 	if vaultPath == "" {
 		var err error
 		vaultPath, err = os.Getwd()
@@ -772,6 +772,12 @@ func Start(vaultPath string, readOnly bool) error {
 		return fmt.Errorf("open vault: %w", err)
 	}
 	defer v.Close()
+
+	if reindex {
+		if _, err := v.SyncIndex(); err != nil {
+			return fmt.Errorf("reindex: %w", err)
+		}
+	}
 
 	objects, err := v.QueryObjects("")
 	if err != nil {

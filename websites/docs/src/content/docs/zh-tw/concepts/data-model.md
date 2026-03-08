@@ -31,7 +31,7 @@ TypeMD 使用 SQLite 搭配 FTS5 進行索引。索引儲存在 `.typemd/index.d
 - 從 Object 內文提取的 Wiki-link 記錄（用於反向連結追蹤）
 - 涵蓋檔名、屬性和內文的全文搜尋索引
 
-開啟 vault 時，若資料庫為空或缺失（例如 clone 後首次開啟），索引會自動同步。使用 TUI 或 CLI 指令時也會保持更新。在 TypeMD 外部手動編輯檔案後，使用 `tmd reindex` 重建。
+開啟 vault 時，若資料庫為空或缺失（例如 clone 後首次開啟），索引會自動同步。使用 TUI 或 CLI 指令時也會保持更新。在 TypeMD 外部手動編輯檔案後，使用 `tmd --reindex` 重建。
 
 ## 查詢
 

@@ -93,7 +93,7 @@ tmd relation link book/golang-in-action author person/alan-donovan
 tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 # Sync files to DB and rebuild search index (only needed after manual edits)
-tmd reindex
+tmd --reindex
 
 # Validate schemas, objects, and relations
 tmd type validate

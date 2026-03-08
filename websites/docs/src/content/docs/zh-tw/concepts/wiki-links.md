@@ -32,7 +32,7 @@ See [[note/go-concurrency-patterns-01jqr5n8oqdxp0g4h1i2kuvabc|Go Concurrency Pat
 
 ## 運作方式
 
-1. 當索引同步時（`tmd reindex` 或自動同步），indexer 會從每個 Object 的內文解析 `[[...]]` 模式
+1. 當索引同步時（`tmd --reindex` 或自動同步），indexer 會從每個 Object 的內文解析 `[[...]]` 模式
 2. 目標會與資料庫中的現有 Object 進行比對
 3. Wiki-link 記錄儲存在 SQLite 索引中，以便快速查詢反向連結
 4. 重新同步時，已從內文中移除的 wiki-link 會自動清理——對應的反向連結也會一併移除

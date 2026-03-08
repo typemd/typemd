@@ -19,8 +19,8 @@ Examples:
   tmd relation link book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz author person/robert-martin-01jqr3k8yznw2a4dbx6t7c9fpq`,
 	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault := resolveVault(vaultPath)
-		if err := vault.Open(); err != nil {
+		vault, err := openVault(vaultPath, reindex)
+		if err != nil {
 			return err
 		}
 		defer vault.Close()

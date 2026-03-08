@@ -33,7 +33,7 @@ TypeMD uses SQLite with FTS5 for indexing. The index is stored at `.typemd/index
 - Wiki-link records extracted from object body content (for backlink tracking)
 - Full-text search index over filenames, properties, and body content
 
-The index is automatically synced when opening a vault with an empty or missing database (e.g. after a fresh clone). It is also kept up-to-date when using the TUI or CLI commands. Use `tmd reindex` to rebuild after manual file edits outside of TypeMD.
+The index is automatically synced when opening a vault with an empty or missing database (e.g. after a fresh clone). It is also kept up-to-date when using the TUI or CLI commands. Use `tmd --reindex` to rebuild after manual file edits outside of TypeMD.
 
 ## Querying
 

@@ -45,7 +45,7 @@ rating: 4.5
 A great book about Go...
 ```
 
-The TUI will automatically detect the new file and display it. If you cloned an existing vault, the database is populated automatically on first open — no manual `tmd reindex` needed.
+The TUI will automatically detect the new file and display it. If you cloned an existing vault, the database is populated automatically on first open — no manual `tmd --reindex` needed.
 
 ## 4. Query and Search
 

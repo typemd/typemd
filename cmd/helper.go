@@ -15,6 +15,22 @@ func resolveVault(path string) *core.Vault {
 	return core.NewVault(path)
 }
 
+// openVault creates, opens, and optionally reindexes a vault.
+// The caller must defer vault.Close().
+func openVault(path string, reindex bool) (*core.Vault, error) {
+	vault := resolveVault(path)
+	if err := vault.Open(); err != nil {
+		return nil, err
+	}
+	if reindex {
+		if _, err := vault.SyncIndex(); err != nil {
+			vault.Close()
+			return nil, fmt.Errorf("reindex: %w", err)
+		}
+	}
+	return vault, nil
+}
+
 // printObjects prints objects as JSON or one DisplayID per line.
 func printObjects(objects []*core.Object, asJSON bool) error {
 	if asJSON {
