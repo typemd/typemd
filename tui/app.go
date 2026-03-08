@@ -742,16 +742,16 @@ func (m model) View() string {
 		helpBar = "  [ERROR]  " + m.saveErr
 	} else if m.editMode {
 		helpBar = "  [EDIT]  esc: exit edit mode"
-	} else if m.readOnly {
-		if m.searchResults != nil {
-			helpBar = "  [READONLY]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit"
-		} else {
-			helpBar = "  [READONLY]  ?/h: help  |  /: search  |  q: quit"
-		}
-	} else if m.searchResults != nil {
-		helpBar = "  [VIEW]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit"
 	} else {
-		helpBar = "  [VIEW]  ?/h: help  |  /: search  |  q: quit"
+		modeLabel := "VIEW"
+		if m.readOnly {
+			modeLabel = "READONLY"
+		}
+		if m.searchResults != nil {
+			helpBar = fmt.Sprintf("  [%s]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit", modeLabel)
+		} else {
+			helpBar = fmt.Sprintf("  [%s]  ?/h: help  |  /: search  |  q: quit", modeLabel)
+		}
 	}
 
 	return panels + "\n" + helpBar
