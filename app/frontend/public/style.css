@@ -1,0 +1,154 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    background: #fafafa;
+    color: #1a1a1a;
+    line-height: 1.6;
+}
+
+#app {
+    max-width: 800px;
+    margin: 0 auto;
+    padding: 2rem;
+}
+
+header {
+    margin-bottom: 2rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid #e0e0e0;
+    -webkit-app-region: drag;
+}
+
+header h1 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: #333;
+}
+
+.loading, .empty, .error {
+    padding: 2rem;
+    text-align: center;
+    color: #888;
+}
+
+.error {
+    color: #d32f2f;
+}
+
+.type-group {
+    margin-bottom: 1.5rem;
+}
+
+.type-group h2 {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #555;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #eee;
+    margin-bottom: 0.5rem;
+}
+
+.type-group .count {
+    font-weight: 400;
+    color: #999;
+}
+
+.type-group ul {
+    list-style: none;
+}
+
+.object-item {
+    padding: 0.5rem 0.75rem;
+    cursor: pointer;
+    border-radius: 4px;
+    transition: background 0.15s;
+}
+
+.object-item:hover {
+    background: #f0f0f0;
+}
+
+#object-detail {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: 360px;
+    height: 100vh;
+    background: white;
+    border-left: 1px solid #e0e0e0;
+    padding: 1.5rem;
+    overflow-y: auto;
+    box-shadow: -2px 0 8px rgba(0, 0, 0, 0.08);
+}
+
+.detail-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid #eee;
+}
+
+.detail-header h2 {
+    font-size: 1.1rem;
+    flex: 1;
+}
+
+.detail-type {
+    font-size: 0.75rem;
+    color: #888;
+    background: #f0f0f0;
+    padding: 0.15rem 0.5rem;
+    border-radius: 3px;
+}
+
+.close-btn {
+    background: none;
+    border: none;
+    font-size: 1rem;
+    cursor: pointer;
+    color: #999;
+    padding: 0.25rem;
+}
+
+.close-btn:hover {
+    color: #333;
+}
+
+.props-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 1rem;
+}
+
+.props-table td {
+    padding: 0.35rem 0;
+    font-size: 0.85rem;
+    border-bottom: 1px solid #f5f5f5;
+}
+
+.prop-key {
+    color: #888;
+    width: 35%;
+    vertical-align: top;
+}
+
+.prop-value {
+    color: #333;
+}
+
+.body-content {
+    font-size: 0.85rem;
+    color: #555;
+    white-space: pre-wrap;
+    padding: 0.75rem;
+    background: #fafafa;
+    border-radius: 4px;
+    border: 1px solid #eee;
+}

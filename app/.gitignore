@@ -1,0 +1,8 @@
+# Build output
+bin/
+app
+
+# Frontend build artifacts
+frontend/dist/
+frontend/bindings/
+frontend/node_modules/
