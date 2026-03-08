@@ -1,4 +1,5 @@
 name: person
+emoji: 👤
 properties:
   - name: name
     type: string

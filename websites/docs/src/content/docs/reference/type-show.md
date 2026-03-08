@@ -14,7 +14,7 @@ tmd type show book
 Example output:
 
 ```
-book
+Type: 📚 book
 
 Properties
 ──────────

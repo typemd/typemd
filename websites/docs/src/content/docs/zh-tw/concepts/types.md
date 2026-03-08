@@ -16,6 +16,7 @@ Type 以 YAML schema 檔案定義，放在 `.typemd/types/`：
 ```yaml
 # .typemd/types/book.yaml
 name: book
+emoji: 📚
 properties:
   - name: title
     type: string
@@ -26,6 +27,8 @@ properties:
   - name: rating
     type: number
 ```
+
+可選的 `emoji` 欄位為 Type 提供視覺圖示，顯示在 CLI 和 TUI 的輸出中。
 
 ## 為什麼需要 Type
 
@@ -41,9 +44,9 @@ TypeMD 內建三種 Type 讓你快速開始：
 
 | Type | 屬性 |
 |------|------|
-| `book` | title (string)、status (enum: to-read/reading/done)、rating (number) |
-| `person` | name (string)、role (string) |
-| `note` | title (string)、tags (string) |
+| 📚 `book` | title (string)、status (enum: to-read/reading/done)、rating (number) |
+| 👤 `person` | name (string)、role (string) |
+| 📝 `note` | title (string)、tags (string) |
 
 你可以修改這些內建 Type，或建立自己的 Type 來符合你的知識領域。
 

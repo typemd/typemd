@@ -18,7 +18,12 @@ Examples:
 
 		types := vault.ListTypes()
 		for _, name := range types {
-			fmt.Println(name)
+			schema, err := vault.LoadType(name)
+			if err == nil && schema.Emoji != "" {
+				fmt.Printf("%s %s\n", schema.Emoji, name)
+			} else {
+				fmt.Println(name)
+			}
 		}
 
 		return nil

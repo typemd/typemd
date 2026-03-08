@@ -193,6 +193,7 @@ Define your own types in `.typemd/types/`:
 ```yaml
 # .typemd/types/book.yaml
 name: book
+emoji: 📚
 properties:
   - name: title
     type: string
@@ -209,7 +210,7 @@ properties:
     type: number
 ```
 
-Properties support an optional `default` field to specify a default value.
+Types support an optional `emoji` field for visual identification in CLI and TUI output. Properties support an optional `default` field to specify a default value.
 
 ## Relations
 

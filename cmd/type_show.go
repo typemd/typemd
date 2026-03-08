@@ -24,7 +24,11 @@ Examples:
 			return err
 		}
 
-		fmt.Printf("Type: %s\n", schema.Name)
+		if schema.Emoji != "" {
+			fmt.Printf("Type: %s %s\n", schema.Emoji, schema.Name)
+		} else {
+			fmt.Printf("Type: %s\n", schema.Name)
+		}
 		fmt.Println()
 		fmt.Println("Properties")
 		fmt.Println("──────────")

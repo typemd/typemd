@@ -424,3 +424,86 @@ func TestValidateSchema_MissingPropertyType(t *testing.T) {
 	}
 }
 
+func TestTypeSchema_EmojiField(t *testing.T) {
+	data := []byte(`
+name: book
+emoji: 📚
+properties:
+  - name: title
+    type: string
+`)
+
+	var schema TypeSchema
+	if err := yaml.Unmarshal(data, &schema); err != nil {
+		t.Fatalf("Unmarshal error = %v", err)
+	}
+
+	if schema.Emoji != "📚" {
+		t.Errorf("Emoji = %q, want %q", schema.Emoji, "📚")
+	}
+}
+
+func TestTypeSchema_EmojiFieldOmitted(t *testing.T) {
+	data := []byte(`
+name: book
+properties:
+  - name: title
+    type: string
+`)
+
+	var schema TypeSchema
+	if err := yaml.Unmarshal(data, &schema); err != nil {
+		t.Fatalf("Unmarshal error = %v", err)
+	}
+
+	if schema.Emoji != "" {
+		t.Errorf("Emoji = %q, want empty string", schema.Emoji)
+	}
+}
+
+func TestDefaultTypes_HaveEmoji(t *testing.T) {
+	expected := map[string]string{
+		"book":   "📚",
+		"person": "👤",
+		"note":   "📝",
+	}
+
+	for name, wantEmoji := range expected {
+		schema, ok := defaultTypes[name]
+		if !ok {
+			t.Errorf("defaultTypes missing %q", name)
+			continue
+		}
+		if schema.Emoji != wantEmoji {
+			t.Errorf("defaultTypes[%q].Emoji = %q, want %q", name, schema.Emoji, wantEmoji)
+		}
+	}
+}
+
+func TestVault_LoadType_CustomEmojiOverride(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	yamlContent := []byte(`name: book
+emoji: 📖
+properties:
+  - name: title
+    type: string
+`)
+	if err := os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), yamlContent, 0644); err != nil {
+		t.Fatalf("WriteFile error = %v", err)
+	}
+
+	schema, err := v.LoadType("book")
+	if err != nil {
+		t.Fatalf("LoadType() error = %v", err)
+	}
+
+	if schema.Emoji != "📖" {
+		t.Errorf("Emoji = %q, want %q", schema.Emoji, "📖")
+	}
+}
+

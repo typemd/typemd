@@ -14,7 +14,7 @@ tmd type list
 Example output:
 
 ```
-book
-person
-note
+📚 book
+👤 person
+📝 note
 ```

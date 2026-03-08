@@ -43,6 +43,7 @@ func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
 // TypeSchema defines the schema for a type.
 type TypeSchema struct {
 	Name       string     `yaml:"name"`
+	Emoji      string     `yaml:"emoji,omitempty"`
 	Properties []Property `yaml:"properties"`
 }
 
@@ -62,7 +63,8 @@ type Property struct {
 // defaultTypes contains built-in type schemas.
 var defaultTypes = map[string]TypeSchema{
 	"book": {
-		Name: "book",
+		Name:  "book",
+		Emoji: "📚",
 		Properties: []Property{
 			{Name: "title", Type: "string"},
 			{Name: "status", Type: "enum", Values: []string{"to-read", "reading", "done"}},
@@ -70,14 +72,16 @@ var defaultTypes = map[string]TypeSchema{
 		},
 	},
 	"person": {
-		Name: "person",
+		Name:  "person",
+		Emoji: "👤",
 		Properties: []Property{
 			{Name: "name", Type: "string"},
 			{Name: "role", Type: "string"},
 		},
 	},
 	"note": {
-		Name: "note",
+		Name:  "note",
+		Emoji: "📝",
 		Properties: []Property{
 			{Name: "title", Type: "string"},
 			{Name: "tags", Type: "string"},

@@ -1,4 +1,5 @@
 name: book
+emoji: 📚
 properties:
   - name: title
     type: string

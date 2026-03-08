@@ -16,6 +16,7 @@ Types are defined as YAML schema files in `.typemd/types/`:
 ```yaml
 # .typemd/types/book.yaml
 name: book
+emoji: 📚
 properties:
   - name: title
     type: string
@@ -26,6 +27,8 @@ properties:
   - name: rating
     type: number
 ```
+
+The optional `emoji` field provides a visual icon for the type in CLI and TUI output.
 
 ## Why Types matter
 
@@ -41,9 +44,9 @@ TypeMD ships with three built-in Types to get you started:
 
 | Type | Properties |
 |------|------------|
-| `book` | title (string), status (enum: to-read/reading/done), rating (number) |
-| `person` | name (string), role (string) |
-| `note` | title (string), tags (string) |
+| 📚 `book` | title (string), status (enum: to-read/reading/done), rating (number) |
+| 👤 `person` | name (string), role (string) |
+| 📝 `note` | title (string), tags (string) |
 
 You can modify these or create your own Types to fit your knowledge domain.
 

@@ -14,9 +14,9 @@ tmd type list
 輸出範例：
 
 ```
-book
-person
-note
+📚 book
+👤 person
+📝 note
 ```
 
 Type schema 定義於 `.typemd/types/*.yaml`，每個檔案對應一個 Type。
