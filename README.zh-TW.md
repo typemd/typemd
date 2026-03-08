@@ -66,11 +66,15 @@ tmd
 tmd --vault /path/to/vault
 
 # 建立新的 Object（ULID 會自動附加）
-tmd create book clean-code
+tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
 # 顯示 Object 詳情（使用 create 輸出的完整 ID）
-tmd show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+tmd object show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+
+# 列出所有 Object
+tmd object list
+tmd object list --json
 
 # 依 Type 和屬性查詢
 tmd query "type=book status=reading"
@@ -80,23 +84,29 @@ tmd query "type=book" --json
 tmd search "concurrency"
 
 # 連結兩個 Object（使用完整 ID）
-tmd link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
+tmd relation link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
 
 # 取消連結（使用 --both 同時移除反向端）
-tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
+tmd relation unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
 
 # 同步檔案到資料庫並重建搜尋索引（只在手動編輯後需要）
 tmd reindex
 
 # 驗證 schema、Object 和 Relation
-tmd validate
+tmd type validate
+
+# 顯示 Type schema 詳情
+tmd type show book
+
+# 列出所有可用的 Type
+tmd type list
 
 # 啟動 MCP server 以整合 AI
 tmd mcp
 tmd mcp --vault /path/to/vault
 ```
 
-### `tmd show` 輸出
+### `tmd object show` 輸出
 
 ```
 book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz

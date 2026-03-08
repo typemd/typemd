@@ -36,7 +36,7 @@ The target must be a full Object ID (including the ULID suffix).
 2. Targets are resolved against existing Objects in the database
 3. Wiki-link records are stored in the SQLite index for fast backlink lookups
 4. On re-sync, wiki-links that have been removed from the body are automatically cleaned up — their backlinks are also removed
-5. Unresolvable targets are stored as broken links (detectable via `tmd validate`)
+5. Unresolvable targets are stored as broken links (detectable via `tmd type validate`)
 
 ## Backlinks
 
@@ -66,4 +66,4 @@ TypeMD has two ways to connect Objects. They serve different purposes:
 
 ## Validation
 
-`tmd validate` includes a wiki-link validation phase that detects broken links — references to Objects that do not exist.
+`tmd type validate` includes a wiki-link validation phase that detects broken links — references to Objects that do not exist.

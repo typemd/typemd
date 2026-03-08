@@ -26,7 +26,7 @@ This launches the three-panel interface for browsing your vault.
 Use the CLI to create an object:
 
 ```bash
-tmd create book golang-in-action
+tmd object create book golang-in-action
 # Created: book/golang-in-action
 ```
 

@@ -13,8 +13,8 @@ var createCmd = &cobra.Command{
 A ULID is automatically appended to the filename for uniqueness.
 
 Examples:
-  tmd create book clean-code
-  tmd create person robert-martin`,
+  tmd object create book clean-code
+  tmd object create person robert-martin`,
 	Args: cobra.ExactArgs(2),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vault := resolveVault(vaultPath)
@@ -34,5 +34,5 @@ Examples:
 }
 
 func init() {
-	rootCmd.AddCommand(createCmd)
+	objectCmd.AddCommand(createCmd)
 }

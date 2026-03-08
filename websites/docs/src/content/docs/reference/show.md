@@ -1,5 +1,5 @@
 ---
-title: tmd show
+title: tmd object show
 description: Display an object's full information.
 sidebar:
   order: 3
@@ -8,7 +8,7 @@ sidebar:
 Displays an object's full information: properties (including relations and backlinks) and body.
 
 ```bash
-tmd show book/golang-in-action
+tmd object show book/golang-in-action
 ```
 
 Example output:

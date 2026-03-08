@@ -50,8 +50,8 @@ Pre-built binaries for macOS, Linux, and Windows are available below.
 
 ### Added
 
-- Objects & Types — define typed schemas in YAML, create objects with `tmd create`
-- Relations — bidirectional links via `tmd link` / `tmd unlink`
+- Objects & Types — define typed schemas in YAML, create objects with `tmd object create`
+- Relations — bidirectional links via `tmd relation link` / `tmd relation unlink`
 - ...
 
 ### Changed
@@ -104,8 +104,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
-- Objects & Types — define typed schemas in YAML, create objects with `tmd create` (#18)
-- Relations — bidirectional links via `tmd link` / `tmd unlink` (#XX)
+- Objects & Types — define typed schemas in YAML, create objects with `tmd object create` (#18)
+- Relations — bidirectional links via `tmd relation link` / `tmd relation unlink` (#XX)
 - Wiki-links & Backlinks — `[[target]]` syntax with automatic backlink tracking (#10)
 - ...
 

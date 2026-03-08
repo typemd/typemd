@@ -8,12 +8,12 @@
 
 ### 新增
 
-- 物件與型別 — 在 YAML 中定義型別 schema，透過 `tmd create` 建立 Markdown 物件檔案 (#18)
+- 物件與型別 — 在 YAML 中定義型別 schema，透過 `tmd object create` 建立 Markdown 物件檔案 (#18)
 - ULID 檔名 — 唯一的 ULID 後綴，避免物件命名衝突 (#48)
-- Relation — 透過 `tmd link` / `tmd unlink` 建立雙向連結，支援單值覆寫與多值附加
+- Relation — 透過 `tmd relation link` / `tmd relation unlink` 建立雙向連結，支援單值覆寫與多值附加
 - Wiki-links 與反向連結 — 在 Markdown 內文中使用 `[[target]]` 語法，自動追蹤反向連結 (#10)
 - 查詢 — `tmd query` 依型別與屬性篩選，`tmd search` 全文搜尋，皆支援 `--json` 輸出
-- 驗證 — `tmd validate` 檢查 schema 完整性、屬性型別、孤立 relation 與壞掉的 wiki-links (#20)
+- 驗證 — `tmd type validate` 檢查 schema 完整性、屬性型別、孤立 relation 與壞掉的 wiki-links (#20)
 - 遷移 — `tmd migrate` 在 schema 演進時更新既有物件 (#22)
 - 自動重建索引 — SQLite 索引為空或遺失時自動重建 (#41)
 - 孤立清理 — 重新索引時偵測並移除過期的 relation (#21)

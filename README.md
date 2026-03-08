@@ -66,11 +66,15 @@ tmd
 tmd --vault /path/to/vault
 
 # Create a new object (ULID is appended automatically)
-tmd create book clean-code
+tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
 # Show object detail (use the full ID from create output)
-tmd show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+tmd object show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+
+# List all objects
+tmd object list
+tmd object list --json
 
 # Query by type and property
 tmd query "type=book status=reading"
@@ -80,23 +84,29 @@ tmd query "type=book" --json
 tmd search "concurrency"
 
 # Link two objects (use full IDs)
-tmd link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
+tmd relation link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
 
 # Unlink (with --both to remove inverse side too)
-tmd unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
+tmd relation unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
 
 # Sync files to DB and rebuild search index (only needed after manual edits)
 tmd reindex
 
 # Validate schemas, objects, and relations
-tmd validate
+tmd type validate
+
+# Show type schema details
+tmd type show book
+
+# List all available types
+tmd type list
 
 # Start MCP server for AI integration
 tmd mcp
 tmd mcp --vault /path/to/vault
 ```
 
-### `tmd show` Output
+### `tmd object show` Output
 
 ```
 book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz

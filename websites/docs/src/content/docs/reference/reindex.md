@@ -24,4 +24,4 @@ Warning: Found 2 orphaned relation(s):
 Orphaned relations have been removed from the index.
 ```
 
-> **Note:** This only cleans up the SQLite index. The frontmatter in `.md` files is not modified — use `tmd unlink --both` to properly remove relations before deleting objects.
+> **Note:** This only cleans up the SQLite index. The frontmatter in `.md` files is not modified — use `tmd relation unlink --both` to properly remove relations before deleting objects.

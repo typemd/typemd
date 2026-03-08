@@ -26,7 +26,7 @@ tmd
 透過 CLI 建立 Object：
 
 ```bash
-tmd create book golang-in-action
+tmd object create book golang-in-action
 # 建立 book/golang-in-action
 ```
 

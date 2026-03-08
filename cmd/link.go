@@ -28,5 +28,5 @@ var linkCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(linkCmd)
+	relationCmd.AddCommand(linkCmd)
 }

@@ -31,5 +31,5 @@ var unlinkCmd = &cobra.Command{
 
 func init() {
 	unlinkCmd.Flags().Bool("both", false, "Also remove the inverse relation on the target object")
-	rootCmd.AddCommand(unlinkCmd)
+	relationCmd.AddCommand(unlinkCmd)
 }

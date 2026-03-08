@@ -1,5 +1,5 @@
 ---
-title: tmd unlink
+title: tmd relation unlink
 description: Remove a relation between two objects.
 sidebar:
   order: 7
@@ -8,7 +8,7 @@ sidebar:
 Removes a relation. Use `--both` to remove the inverse side as well.
 
 ```bash
-tmd unlink book/golang-in-action author person/alan-donovan --both
+tmd relation unlink book/golang-in-action author person/alan-donovan --both
 ```
 
 ## Options

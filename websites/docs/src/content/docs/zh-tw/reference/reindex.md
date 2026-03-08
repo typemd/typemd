@@ -24,4 +24,4 @@ Warning: Found 2 orphaned relation(s):
 Orphaned relations have been removed from the index.
 ```
 
-> **注意：** 這只會清理 SQLite 索引。`.md` 檔案中的 frontmatter 不會被修改 — 建議在刪除物件前先使用 `tmd unlink --both` 正確移除 relation。
+> **注意：** 這只會清理 SQLite 索引。`.md` 檔案中的 frontmatter 不會被修改 — 建議在刪除物件前先使用 `tmd relation unlink --both` 正確移除 relation。

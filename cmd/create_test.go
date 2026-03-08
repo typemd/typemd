@@ -25,7 +25,7 @@ func TestCreateCmd_Success(t *testing.T) {
 	dir := setupTestVaultDir(t)
 
 	vaultPath = dir
-	rootCmd.SetArgs([]string{"create", "book", "clean-code"})
+	rootCmd.SetArgs([]string{"object", "create", "book", "clean-code"})
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatalf("Execute() error = %v", err)
 	}
@@ -41,7 +41,7 @@ func TestCreateCmd_UnknownType(t *testing.T) {
 	dir := setupTestVaultDir(t)
 
 	vaultPath = dir
-	rootCmd.SetArgs([]string{"create", "nonexistent", "foo"})
+	rootCmd.SetArgs([]string{"object", "create", "nonexistent", "foo"})
 	err := rootCmd.Execute()
 	if err == nil {
 		t.Fatal("expected error for unknown type")
@@ -54,13 +54,13 @@ func TestCreateCmd_SameNameTwice(t *testing.T) {
 	vaultPath = dir
 
 	// Create first
-	rootCmd.SetArgs([]string{"create", "book", "duplicate"})
+	rootCmd.SetArgs([]string{"object", "create", "book", "duplicate"})
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatalf("first create error = %v", err)
 	}
 
 	// Create with same name — should succeed because ULID guarantees uniqueness
-	rootCmd.SetArgs([]string{"create", "book", "duplicate"})
+	rootCmd.SetArgs([]string{"object", "create", "book", "duplicate"})
 	if err := rootCmd.Execute(); err != nil {
 		t.Fatalf("second create should succeed with ULID, error = %v", err)
 	}

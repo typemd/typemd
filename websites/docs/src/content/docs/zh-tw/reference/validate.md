@@ -1,5 +1,5 @@
 ---
-title: tmd validate
+title: tmd type validate
 description: 驗證 Type schema、Object、Relation 和 Wiki-link。
 sidebar:
   order: 10
@@ -8,7 +8,7 @@ sidebar:
 驗證 vault 的 Type schema、Object、Relation 和 Wiki-link。依序執行四個階段：
 
 ```bash
-tmd validate
+tmd type validate
 ```
 
 ## 驗證階段

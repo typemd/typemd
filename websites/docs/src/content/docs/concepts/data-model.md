@@ -9,7 +9,7 @@ sidebar:
 
 Objects are stored as Markdown files with YAML frontmatter under `objects/<type>/`. The full Object ID is `type/<slug>-<ulid>`, e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`.
 
-When created via the CLI (`tmd create`), a 26-character lowercase ULID is automatically appended to the slug for uniqueness. Objects created manually (without the CLI) do not require a ULID — this is backward compatible.
+When created via the CLI (`tmd object create`), a 26-character lowercase ULID is automatically appended to the slug for uniqueness. Objects created manually (without the CLI) do not require a ULID — this is backward compatible.
 
 ```
 vault/

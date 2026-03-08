@@ -1,5 +1,5 @@
 ---
-title: tmd unlink
+title: tmd relation unlink
 description: 移除兩個 Object 之間的 Relation。
 sidebar:
   order: 7
@@ -8,7 +8,7 @@ sidebar:
 移除 Relation。使用 `--both` 來同時移除反向端。
 
 ```bash
-tmd unlink book/golang-in-action author person/alan-donovan --both
+tmd relation unlink book/golang-in-action author person/alan-donovan --both
 ```
 
 ## 選項

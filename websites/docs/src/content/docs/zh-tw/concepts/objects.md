@@ -43,7 +43,7 @@ book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 | `golang-in-action` | Slug——人類可讀的名稱 |
 | `01jqr3k5mpbvn8e0f2g7h9txyz` | ULID——唯一識別碼 |
 
-使用 `tmd create` 時，ULID 會自動附加。如果你手動建立檔案，ULID 是可選的——TypeMD 向後相容不含 ULID 的純 slug。
+使用 `tmd object create` 時，ULID 會自動附加。如果你手動建立檔案，ULID 是可選的——TypeMD 向後相容不含 ULID 的純 slug。
 
 ## Object 不是檔案
 

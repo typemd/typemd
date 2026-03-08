@@ -43,7 +43,7 @@ book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 | `golang-in-action` | The Slug — a human-readable name |
 | `01jqr3k5mpbvn8e0f2g7h9txyz` | The ULID — a unique identifier |
 
-The ULID is automatically appended when you use `tmd create`. If you create files manually, the ULID is optional — TypeMD is backward compatible with plain slugs.
+The ULID is automatically appended when you use `tmd object create`. If you create files manually, the ULID is optional — TypeMD is backward compatible with plain slugs.
 
 ## Objects are not files
 

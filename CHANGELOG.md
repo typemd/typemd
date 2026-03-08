@@ -8,12 +8,12 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
 ### Added
 
-- Objects & Types — define typed schemas in YAML, create objects as Markdown files with `tmd create` (#18)
+- Objects & Types — define typed schemas in YAML, create objects as Markdown files with `tmd object create` (#18)
 - ULID filenames — unique suffix for conflict-free object naming (#48)
-- Relations — bidirectional links via `tmd link` / `tmd unlink`, single-value overwrite and multi-value append
+- Relations — bidirectional links via `tmd relation link` / `tmd relation unlink`, single-value overwrite and multi-value append
 - Wiki-links & Backlinks — `[[target]]` syntax in markdown body with automatic backlink tracking (#10)
 - Querying — `tmd query` for type/property filtering, `tmd search` for full-text search, both with `--json` output
-- Validation — `tmd validate` checks schema integrity, property types, orphaned relations, and broken wiki-links (#20)
+- Validation — `tmd type validate` checks schema integrity, property types, orphaned relations, and broken wiki-links (#20)
 - Migration — `tmd migrate` updates existing objects when schemas evolve (#22)
 - Auto-reindex — SQLite index is automatically rebuilt when empty or missing (#41)
 - Orphan cleanup — stale relations detected and removed during reindex (#21)

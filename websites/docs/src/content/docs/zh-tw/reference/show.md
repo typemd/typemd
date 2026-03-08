@@ -1,5 +1,5 @@
 ---
-title: tmd show
+title: tmd object show
 description: 顯示 Object 的完整資訊。
 sidebar:
   order: 3
@@ -8,7 +8,7 @@ sidebar:
 顯示 Object 的完整資訊：屬性（包含 Relation 和反向連結）和內文。
 
 ```bash
-tmd show book/golang-in-action
+tmd object show book/golang-in-action
 ```
 
 輸出範例：

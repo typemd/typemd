@@ -36,7 +36,7 @@ See [[note/go-concurrency-patterns-01jqr5n8oqdxp0g4h1i2kuvabc|Go Concurrency Pat
 2. 目標會與資料庫中的現有 Object 進行比對
 3. Wiki-link 記錄儲存在 SQLite 索引中，以便快速查詢反向連結
 4. 重新同步時，已從內文中移除的 wiki-link 會自動清理——對應的反向連結也會一併移除
-5. 無法解析的目標會儲存為壞連結（可透過 `tmd validate` 偵測）
+5. 無法解析的目標會儲存為壞連結（可透過 `tmd type validate` 偵測）
 
 ## Backlink
 
@@ -66,4 +66,4 @@ TypeMD 有兩種連接 Object 的方式，它們的用途不同：
 
 ## 驗證
 
-`tmd validate` 包含 wiki-link 驗證階段，會偵測壞連結——參照到不存在的 Object。
+`tmd type validate` 包含 wiki-link 驗證階段，會偵測壞連結——參照到不存在的 Object。

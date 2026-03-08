@@ -1,5 +1,5 @@
 ---
-title: tmd validate
+title: tmd type validate
 description: Validate type schemas, objects, relations, and wiki-links.
 sidebar:
   order: 10
@@ -8,7 +8,7 @@ sidebar:
 Validates the vault's type schemas, objects, relations, and wiki-links. Runs four phases in order:
 
 ```bash
-tmd validate
+tmd type validate
 ```
 
 ## Validation Phases
