@@ -53,6 +53,24 @@ Objects are stored as Markdown files with YAML frontmatter. Each directory under
 
 The full Object ID is `type/<slug>-<ulid>`, e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`. A [ULID](https://github.com/ulid/spec) is automatically appended to every new object to guarantee uniqueness.
 
+## Installation
+
+### Homebrew (macOS)
+
+```bash
+brew install typemd/tap/typemd-cli
+```
+
+### Go
+
+```bash
+go install github.com/typemd/typemd/cmd/tmd@latest
+```
+
+### Binary
+
+Download from [GitHub Releases](https://github.com/typemd/typemd/releases).
+
 ## Usage
 
 ```bash

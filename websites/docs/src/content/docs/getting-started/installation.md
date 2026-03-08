@@ -5,6 +5,12 @@ sidebar:
   order: 2
 ---
 
+## Homebrew (macOS)
+
+```bash
+brew install typemd/tap/typemd-cli
+```
+
 ## From Source
 
 Make sure you have [Go](https://go.dev/) installed, then:

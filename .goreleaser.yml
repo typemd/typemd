@@ -31,6 +31,17 @@ checksum:
 changelog:
   sort: asc
 
+brews:
+  - name: typemd-cli
+    repository:
+      owner: typemd
+      name: homebrew-tap
+      token: "{{ .Env.HOMEBREW_TAP_TOKEN }}"
+    homepage: https://typemd.io
+    description: "A local-first CLI knowledge management tool"
+    install: |
+      bin.install "tmd"
+
 release:
   github:
     owner: typemd
