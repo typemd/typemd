@@ -658,20 +658,27 @@ func (m model) View() tea.View {
 
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
-	contentH := m.height - 3 // help bar + borders
+	// In lipgloss v2, Height() is the total height including border.
+	// panelH = total panel height (terminal minus 1 line for help bar).
+	// contentH = content area inside the bordered panel.
+	panelH := m.height - 1
+	contentH := panelH - 2 // subtract top + bottom border
 	if contentH < 0 {
 		contentH = 0
+	}
+	if panelH < 0 {
+		panelH = 0
 	}
 
 	// Styles
 	leftStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(leftW).
-		Height(contentH)
+		Height(panelH)
 	bodyStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(bodyW).
-		Height(contentH)
+		Height(panelH)
 
 	// Focus highlighting (edit mode uses distinct border color)
 	activeBorderColor := colorFocusBorder
@@ -726,7 +733,7 @@ func (m model) View() tea.View {
 		propsStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Width(m.propsWidth).
-			Height(contentH)
+			Height(panelH)
 		if m.focus == focusProps {
 			propsStyle = propsStyle.BorderForeground(activeBorderColor)
 		}
