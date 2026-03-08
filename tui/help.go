@@ -77,7 +77,7 @@ func renderHelp(width, height int, readOnly bool) string {
 	popup := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(colorFocusBorder).
-		Width(popupW).
+		Width(popupW + 2). // +2: lipgloss v2 Width includes border
 		Padding(1, 2).
 		Render(content)
 
