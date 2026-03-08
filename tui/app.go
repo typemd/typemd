@@ -658,27 +658,25 @@ func (m model) View() tea.View {
 
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
-	// In lipgloss v2, Height() is the total height including border.
-	// panelH = total panel height (terminal minus 1 line for help bar).
-	// contentH = content area inside the bordered panel.
-	panelH := m.height - 1
-	contentH := panelH - 2 // subtract top + bottom border
+	// In lipgloss v2, Width()/Height() set the TOTAL size including border.
+	// Internal widths (leftW, bodyW, contentH) remain content-area sizes;
+	// we add the border size (+2) when passing to the panel style.
+	contentH := m.height - 3 // content area: terminal minus help-bar minus borders
 	if contentH < 0 {
 		contentH = 0
 	}
-	if panelH < 0 {
-		panelH = 0
-	}
+	panelH := contentH + 2 // total height including top + bottom border
+	bdr := 2               // left+right or top+bottom border size
 
 	// Styles — MaxHeight clamps viewport content that overflows after line wrapping.
 	leftStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		Width(leftW).
+		Width(leftW + bdr).
 		Height(panelH).
 		MaxHeight(panelH)
 	bodyStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
-		Width(bodyW).
+		Width(bodyW + bdr).
 		Height(panelH).
 		MaxHeight(panelH)
 
@@ -734,7 +732,7 @@ func (m model) View() tea.View {
 	if m.propsVisible {
 		propsStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			Width(m.propsWidth).
+			Width(m.propsWidth + bdr).
 			Height(panelH).
 			MaxHeight(panelH)
 		if m.focus == focusProps {
