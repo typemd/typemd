@@ -18,7 +18,7 @@ func setupTestModel(t *testing.T) model {
 		{ID: "book/test-b", Type: "book", Filename: "test-b", Properties: map[string]any{"title": "B"}},
 		{ID: "note/hello", Type: "note", Filename: "hello", Properties: map[string]any{"title": "Hello"}},
 	}
-	groups := buildGroups(objects)
+	groups := buildGroups(objects, nil)
 	return model{
 		focus:        focusLeft,
 		groups:       groups,
@@ -68,7 +68,7 @@ func TestBuildGroups_SortedByType(t *testing.T) {
 		{ID: "note/a", Type: "note", Filename: "a"},
 		{ID: "book/b", Type: "book", Filename: "b"},
 	}
-	groups := buildGroups(objects)
+	groups := buildGroups(objects, nil)
 	if len(groups) != 2 {
 		t.Fatalf("len(groups) = %d, want 2", len(groups))
 	}
@@ -124,7 +124,7 @@ func TestScrollOffset_CursorFollows(t *testing.T) {
 			ID: fmt.Sprintf("note/%03d", i), Type: "note", Filename: fmt.Sprintf("%03d", i),
 		})
 	}
-	groups := buildGroups(objects)
+	groups := buildGroups(objects, nil)
 	groups[0].Expanded = true
 	m := model{
 		focus:       focusLeft,
@@ -240,7 +240,7 @@ func TestBuildGroups_DefaultCollapse(t *testing.T) {
 		{ID: "book/a", Type: "book", Filename: "a"},
 		{ID: "note/b", Type: "note", Filename: "b"},
 	}
-	groups := buildGroups(objects)
+	groups := buildGroups(objects, nil)
 	for _, g := range groups {
 		if g.Expanded {
 			t.Errorf("expected %q to be collapsed by default", g.Name)
@@ -701,7 +701,7 @@ func setupTestModelWithVault(t *testing.T) (model, *core.Object) {
 		loadedMod = info.ModTime()
 	}
 
-	groups := buildGroups([]*core.Object{obj})
+	groups := buildGroups([]*core.Object{obj}, nil)
 	groups[0].Expanded = true
 	m := model{
 		vault:         v,

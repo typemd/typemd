@@ -18,7 +18,8 @@ type listRow struct {
 }
 
 // buildGroups creates type groups from a flat list of objects, sorted by type name.
-func buildGroups(objects []*core.Object) []typeGroup {
+// If vault is provided, each group's Emoji is populated from the type schema.
+func buildGroups(objects []*core.Object, vault *core.Vault) []typeGroup {
 	groupMap := make(map[string][]*core.Object)
 	for _, obj := range objects {
 		groupMap[obj.Type] = append(groupMap[obj.Type], obj)
@@ -26,8 +27,15 @@ func buildGroups(objects []*core.Object) []typeGroup {
 
 	var groups []typeGroup
 	for name, objs := range groupMap {
+		var emoji string
+		if vault != nil {
+			if ts, err := vault.LoadType(name); err == nil {
+				emoji = ts.Emoji
+			}
+		}
 		groups = append(groups, typeGroup{
 			Name:     name,
+			Emoji:    emoji,
 			Objects:  objs,
 			Expanded: false,
 		})
@@ -106,7 +114,11 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 			if g.Expanded {
 				arrow = "▼"
 			}
-			line = fmt.Sprintf(" %s %s (%d)", arrow, g.Name, len(g.Objects))
+			if g.Emoji != "" {
+				line = fmt.Sprintf(" %s %s %s (%d)", arrow, g.Emoji, g.Name, len(g.Objects))
+			} else {
+				line = fmt.Sprintf(" %s %s (%d)", arrow, g.Name, len(g.Objects))
+			}
 		} else {
 			line = fmt.Sprintf("   %s", row.Object.DisplayName())
 		}

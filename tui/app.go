@@ -24,6 +24,7 @@ const (
 
 type typeGroup struct {
 	Name     string
+	Emoji    string
 	Objects  []*core.Object
 	Expanded bool
 }
@@ -376,7 +377,7 @@ func (m *model) refreshData() {
 		selectedID = m.selected.ID
 	}
 
-	m.groups = buildGroups(objects)
+	m.groups = buildGroups(objects, m.vault)
 	m.searchResults = nil
 
 	// Try to restore cursor to previously selected object
@@ -798,7 +799,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		return fmt.Errorf("query objects: %w", err)
 	}
 
-	groups := buildGroups(objects)
+	groups := buildGroups(objects, v)
 
 	// Expand first group so first object is visible and selectable
 	if len(groups) > 0 {
