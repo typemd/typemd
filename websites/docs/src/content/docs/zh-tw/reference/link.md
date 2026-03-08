@@ -7,6 +7,8 @@ sidebar:
 
 在兩個 Object 之間建立 Relation。如果 schema 定義了 `bidirectional: true`，反向屬性會自動更新。
 
+Object ID 支援前綴匹配 — 可以省略 ULID 後綴，只要前綴能唯一識別 Object 即可。
+
 ```bash
 tmd relation link book/golang-in-action author person/alan-donovan
 ```

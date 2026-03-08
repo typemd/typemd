@@ -21,10 +21,10 @@ func registerTools(s *server.MCPServer, vault *core.Vault) {
 	s.AddTool(searchTool, searchHandler(vault))
 
 	getObjectTool := mcplib.NewTool("get_object",
-		mcplib.WithDescription("Get an object by its ID (e.g. book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz)"),
+		mcplib.WithDescription("Get an object by its full or abbreviated ID. Supports prefix matching (e.g. book/clean-code resolves to the full ULID-suffixed ID)."),
 		mcplib.WithString("id",
 			mcplib.Required(),
-			mcplib.Description("Object ID in type/slug-ulid format"),
+			mcplib.Description("Object ID or prefix (e.g. book/clean-code or book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz)"),
 		),
 	)
 	s.AddTool(getObjectTool, getObjectHandler(vault))
@@ -81,7 +81,7 @@ func getObjectHandler(vault *core.Vault) server.ToolHandlerFunc {
 			return mcplib.NewToolResultError(err.Error()), nil
 		}
 
-		obj, err := vault.GetObject(id)
+		obj, err := vault.ResolveObject(id)
 		if err != nil {
 			return mcplib.NewToolResultError(fmt.Sprintf("get object failed: %v", err)), nil
 		}

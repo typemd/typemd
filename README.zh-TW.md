@@ -69,8 +69,8 @@ tmd --vault /path/to/vault
 tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
-# 顯示 Object 詳情（使用 create 輸出的完整 ID）
-tmd object show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+# 顯示 Object 詳情（支援前綴匹配，不需要輸入完整 ULID）
+tmd object show book/clean-code
 
 # 列出所有 Object
 tmd object list
@@ -83,11 +83,11 @@ tmd query "type=book" --json
 # 全文搜尋
 tmd search "concurrency"
 
-# 連結兩個 Object（使用完整 ID）
-tmd relation link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
+# 連結兩個 Object（支援前綴匹配）
+tmd relation link book/golang-in-action author person/alan-donovan
 
 # 取消連結（使用 --both 同時移除反向端）
-tmd relation unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
+tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 # 同步檔案到資料庫並重建搜尋索引（只在手動編輯後需要）
 tmd reindex

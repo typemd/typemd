@@ -13,9 +13,13 @@ var showCmd = &cobra.Command{
 	Short: "Show object detail (properties, relations, body)",
 	Long: `Display an object's properties, relations, and body content.
 
+Supports prefix matching — you can omit the ULID suffix if the prefix
+uniquely identifies an object.
+
 Examples:
+  tmd object show book/clean-code
   tmd object show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
-  tmd object show person/robert-martin-01jqr3k8yznw2a4dbx6t7c9fpq`,
+  tmd object show person/robert-martin`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vault := resolveVault(vaultPath)
@@ -24,7 +28,7 @@ Examples:
 		}
 		defer vault.Close()
 
-		obj, err := vault.GetObject(args[0])
+		obj, err := vault.ResolveObject(args[0])
 		if err != nil {
 			return err
 		}

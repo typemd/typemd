@@ -434,3 +434,113 @@ func TestVault_SaveObject_ErrorWhenNotOpened(t *testing.T) {
 		t.Fatal("expected error when vault not opened, got nil")
 	}
 }
+
+func TestAmbiguousMatchError_Format(t *testing.T) {
+	err := &AmbiguousMatchError{
+		Prefix:  "book/clean-code",
+		Matches: []string{"book/clean-code-01abc", "book/clean-code-second-02xyz"},
+	}
+	msg := err.Error()
+	if !strings.Contains(msg, `ambiguous object ID "book/clean-code" matches 2 objects:`) {
+		t.Errorf("unexpected error message: %s", msg)
+	}
+	if !strings.Contains(msg, "  book/clean-code-01abc") {
+		t.Errorf("expected match listed: %s", msg)
+	}
+}
+
+func TestVault_ResolveID_InvalidFormat(t *testing.T) {
+	v := setupTestVault(t)
+
+	for _, input := range []string{"no-slash", "/missing-type", "missing-name/", ""} {
+		_, err := v.ResolveID(input)
+		if err == nil {
+			t.Errorf("ResolveID(%q) expected error, got nil", input)
+		}
+	}
+}
+
+func TestVault_ResolveID_TypeDirNotExist(t *testing.T) {
+	v := setupTestVault(t)
+
+	_, err := v.ResolveID("nonexistent/test")
+	if err == nil {
+		t.Fatal("expected error for missing type directory, got nil")
+	}
+}
+
+func TestVault_ResolveID_ExactMatch(t *testing.T) {
+	v := setupTestVault(t)
+
+	obj, err := v.NewObject("book", "test-resolve")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	resolved, err := v.ResolveID(obj.ID)
+	if err != nil {
+		t.Fatalf("ResolveID() error = %v", err)
+	}
+	if resolved != obj.ID {
+		t.Errorf("resolved = %q, want %q", resolved, obj.ID)
+	}
+}
+
+func TestVault_ResolveID_PrefixMatch(t *testing.T) {
+	v := setupTestVault(t)
+
+	obj, err := v.NewObject("book", "unique-prefix")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	resolved, err := v.ResolveID("book/unique-prefix")
+	if err != nil {
+		t.Fatalf("ResolveID() error = %v", err)
+	}
+	if resolved != obj.ID {
+		t.Errorf("resolved = %q, want %q", resolved, obj.ID)
+	}
+}
+
+func TestVault_ResolveID_AmbiguousMatch(t *testing.T) {
+	v := setupTestVault(t)
+
+	_, err := v.NewObject("book", "ambig")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+	_, err = v.NewObject("book", "ambig")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	_, err = v.ResolveID("book/ambig")
+	if err == nil {
+		t.Fatal("expected AmbiguousMatchError, got nil")
+	}
+	ambErr, ok := err.(*AmbiguousMatchError)
+	if !ok {
+		t.Fatalf("expected *AmbiguousMatchError, got %T: %v", err, err)
+	}
+	if len(ambErr.Matches) != 2 {
+		t.Errorf("matches = %d, want 2", len(ambErr.Matches))
+	}
+}
+
+func TestVault_ResolveObject(t *testing.T) {
+	v := setupTestVault(t)
+
+	created, err := v.NewObject("book", "resolve-obj")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	obj, err := v.ResolveObject("book/resolve-obj")
+	if err != nil {
+		t.Fatalf("ResolveObject() error = %v", err)
+	}
+	if obj.ID != created.ID {
+		t.Errorf("ID = %q, want %q", obj.ID, created.ID)
+	}
+}

@@ -9,7 +9,15 @@ import (
 var unlinkCmd = &cobra.Command{
 	Use:   "unlink <from-id> <relation> <to-id>",
 	Short: "Remove a relation between two objects",
-	Args:  cobra.ExactArgs(3),
+	Long: `Remove a relation between two objects.
+
+Supports prefix matching — you can omit the ULID suffix if the prefix
+uniquely identifies an object.
+
+Examples:
+  tmd relation unlink book/clean-code author person/robert-martin
+  tmd relation unlink book/clean-code author person/robert-martin --both`,
+	Args: cobra.ExactArgs(3),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		both, _ := cmd.Flags().GetBool("both")
 
@@ -19,7 +27,15 @@ var unlinkCmd = &cobra.Command{
 		}
 		defer vault.Close()
 
-		fromID, relName, toID := args[0], args[1], args[2]
+		relName := args[1]
+		fromID, err := vault.ResolveID(args[0])
+		if err != nil {
+			return err
+		}
+		toID, err := vault.ResolveID(args[2])
+		if err != nil {
+			return err
+		}
 		if err := vault.UnlinkObjects(fromID, relName, toID, both); err != nil {
 			return err
 		}

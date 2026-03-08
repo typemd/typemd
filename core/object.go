@@ -5,11 +5,27 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/adrg/frontmatter"
 	"gopkg.in/yaml.v3"
 )
+
+// AmbiguousMatchError is returned when a prefix matches multiple objects.
+type AmbiguousMatchError struct {
+	Prefix  string
+	Matches []string
+}
+
+func (e *AmbiguousMatchError) Error() string {
+	var buf strings.Builder
+	fmt.Fprintf(&buf, "ambiguous object ID %q matches %d objects:", e.Prefix, len(e.Matches))
+	for _, m := range e.Matches {
+		fmt.Fprintf(&buf, "\n  %s", m)
+	}
+	return buf.String()
+}
 
 // Object represents a typemd object.
 type Object struct {
@@ -247,6 +263,57 @@ func (v *Vault) GetObject(id string) (*Object, error) {
 		Properties: props,
 		Body:       body,
 	}, nil
+}
+
+// ResolveID resolves a (possibly abbreviated) object ID to the full ID.
+// The input must be in "type/name" format. Exact matches take priority.
+// If no exact match, a filesystem glob is used to find prefix matches.
+func (v *Vault) ResolveID(prefix string) (string, error) {
+	parts := strings.SplitN(prefix, "/", 2)
+	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
+		return "", fmt.Errorf("invalid object ID format: %q", prefix)
+	}
+	typeName, namePrefix := parts[0], parts[1]
+
+	// 1. Exact match
+	exactPath := v.ObjectPath(typeName, namePrefix)
+	if _, err := os.Stat(exactPath); err == nil {
+		return prefix, nil
+	}
+
+	// 2. Glob for prefix matches
+	pattern := filepath.Join(v.ObjectDir(typeName), namePrefix+"*.md")
+	matches, err := filepath.Glob(pattern)
+	if err != nil {
+		return "", fmt.Errorf("glob error: %w", err)
+	}
+
+	switch len(matches) {
+	case 0:
+		return "", fmt.Errorf("no object found matching %q", prefix)
+	case 1:
+		// Extract ID from path: strip dir prefix and .md suffix
+		base := filepath.Base(matches[0])
+		filename := strings.TrimSuffix(base, ".md")
+		return typeName + "/" + filename, nil
+	default:
+		candidates := make([]string, len(matches))
+		for i, m := range matches {
+			base := filepath.Base(m)
+			filename := strings.TrimSuffix(base, ".md")
+			candidates[i] = typeName + "/" + filename
+		}
+		return "", &AmbiguousMatchError{Prefix: prefix, Matches: candidates}
+	}
+}
+
+// ResolveObject resolves a prefix to a full ID and returns the object.
+func (v *Vault) ResolveObject(prefix string) (*Object, error) {
+	id, err := v.ResolveID(prefix)
+	if err != nil {
+		return nil, err
+	}
+	return v.GetObject(id)
 }
 
 // SaveObject persists an object's properties and body to the .md file and updates SQLite.

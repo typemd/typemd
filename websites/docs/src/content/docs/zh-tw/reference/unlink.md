@@ -7,6 +7,8 @@ sidebar:
 
 移除 Relation。使用 `--both` 來同時移除反向端。
 
+Object ID 支援前綴匹配 — 可以省略 ULID 後綴，只要前綴能唯一識別 Object 即可。
+
 ```bash
 tmd relation unlink book/golang-in-action author person/alan-donovan --both
 ```

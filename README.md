@@ -69,8 +69,8 @@ tmd --vault /path/to/vault
 tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
-# Show object detail (use the full ID from create output)
-tmd object show book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+# Show object detail (prefix matching — no need to type the full ULID)
+tmd object show book/clean-code
 
 # List all objects
 tmd object list
@@ -83,11 +83,11 @@ tmd query "type=book" --json
 # Full-text search
 tmd search "concurrency"
 
-# Link two objects (use full IDs)
-tmd relation link book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz...
+# Link two objects (prefix matching supported)
+tmd relation link book/golang-in-action author person/alan-donovan
 
 # Unlink (with --both to remove inverse side too)
-tmd relation unlink book/golang-in-action-01jqr3k5mp... author person/alan-donovan-01jqr3k8yz... --both
+tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 # Sync files to DB and rebuild search index (only needed after manual edits)
 tmd reindex
