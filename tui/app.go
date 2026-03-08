@@ -670,15 +670,17 @@ func (m model) View() tea.View {
 		panelH = 0
 	}
 
-	// Styles
+	// Styles — MaxHeight clamps viewport content that overflows after line wrapping.
 	leftStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(leftW).
-		Height(panelH)
+		Height(panelH).
+		MaxHeight(panelH)
 	bodyStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(bodyW).
-		Height(panelH)
+		Height(panelH).
+		MaxHeight(panelH)
 
 	// Focus highlighting (edit mode uses distinct border color)
 	activeBorderColor := colorFocusBorder
@@ -733,7 +735,8 @@ func (m model) View() tea.View {
 		propsStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Width(m.propsWidth).
-			Height(panelH)
+			Height(panelH).
+			MaxHeight(panelH)
 		if m.focus == focusProps {
 			propsStyle = propsStyle.BorderForeground(activeBorderColor)
 		}
