@@ -2,8 +2,8 @@ package tui
 
 import (
 	"github.com/typemd/typemd/core"
-	"github.com/charmbracelet/bubbles/textinput"
-	tea "github.com/charmbracelet/bubbletea"
+	"charm.land/bubbles/v2/textinput"
+	tea "charm.land/bubbletea/v2"
 )
 
 // initSearchInput creates and configures the search text input.
@@ -25,7 +25,7 @@ func searchResultRows(results []*core.Object) []listRow {
 
 // updateSearch handles key events in search mode.
 // Returns updated model and command.
-func updateSearch(m model, msg tea.KeyMsg) (model, tea.Cmd) {
+func updateSearch(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	switch msg.String() {
 	case "esc":
 		m.searchMode = false

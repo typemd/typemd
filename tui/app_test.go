@@ -8,7 +8,7 @@ import (
 	"time"
 
 	"github.com/typemd/typemd/core"
-	tea "github.com/charmbracelet/bubbletea"
+	tea "charm.land/bubbletea/v2"
 )
 
 func setupTestModel(t *testing.T) model {
@@ -35,7 +35,7 @@ func setupTestModel(t *testing.T) model {
 func TestModel_CursorDown(t *testing.T) {
 	m := setupTestModel(t)
 	// cursor starts at 0 (first group header)
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 	if updated.cursor != 1 {
@@ -45,7 +45,7 @@ func TestModel_CursorDown(t *testing.T) {
 
 func TestModel_TabSwitchFocus(t *testing.T) {
 	m := setupTestModel(t)
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 	if updated.focus != focusBody {
@@ -136,7 +136,7 @@ func TestScrollOffset_CursorFollows(t *testing.T) {
 	}
 
 	for i := 0; i < 8; i++ {
-		msg := tea.KeyMsg{Type: tea.KeyDown}
+		msg := tea.KeyPressMsg{Code: tea.KeyDown}
 		newM, _ := m.Update(msg)
 		m = newM.(model)
 	}
@@ -251,7 +251,7 @@ func TestBuildGroups_DefaultCollapse(t *testing.T) {
 func TestModel_TabCyclesThreePanels(t *testing.T) {
 	m := setupTestModel(t)
 	m.propsVisible = true // enable props for three-panel cycling
-	tab := tea.KeyMsg{Type: tea.KeyTab}
+	tab := tea.KeyPressMsg{Code: tea.KeyTab}
 
 	// Left → Body
 	newM, _ := m.Update(tab)
@@ -277,7 +277,7 @@ func TestModel_TabCyclesThreePanels(t *testing.T) {
 
 func TestModel_TabSkipsPropsWhenHidden(t *testing.T) {
 	m := setupTestModel(t) // propsVisible defaults to false
-	tab := tea.KeyMsg{Type: tea.KeyTab}
+	tab := tea.KeyPressMsg{Code: tea.KeyTab}
 
 	// Left → Body
 	newM, _ := m.Update(tab)
@@ -311,7 +311,7 @@ func TestModel_ThreePanelView_NotEmpty(t *testing.T) {
 	newM, _ := m.Update(msg)
 	m = newM.(model)
 
-	view := m.View()
+	view := m.View().Content
 	if view == "Loading..." {
 		t.Error("View should not be Loading after WindowSizeMsg")
 	}
@@ -340,7 +340,7 @@ func TestModel_ResizeLeftPanel(t *testing.T) {
 	m.focus = focusLeft
 
 	before := m.leftW
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	msg := tea.KeyPressMsg{Code: ']', Text: "]"}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -358,7 +358,7 @@ func TestModel_ResizeBodyPanel(t *testing.T) {
 	m.propsVisible = true
 	m.propsWidth = 30
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	msg := tea.KeyPressMsg{Code: ']', Text: "]"}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -376,7 +376,7 @@ func TestModel_ResizePanelGrow(t *testing.T) {
 	m.focus = focusProps
 
 	before := m.propsWidth
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{']'}}
+	msg := tea.KeyPressMsg{Code: ']', Text: "]"}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -394,7 +394,7 @@ func TestModel_ResizePanelShrink(t *testing.T) {
 	// Ensure propsWidth is above minimum so shrink has room
 	m.propsWidth = 30
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'['}}
+	msg := tea.KeyPressMsg{Code: '[', Text: "["}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -413,7 +413,7 @@ func TestModel_ToggleProperties(t *testing.T) {
 		t.Fatal("propsVisible should default to false")
 	}
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
+	msg := tea.KeyPressMsg{Code: 'p', Text: "p"}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -437,7 +437,7 @@ func TestModel_ToggleProps_MovesFocusWhenHiding(t *testing.T) {
 	m.propsVisible = true
 	m.focus = focusProps
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'p'}}
+	msg := tea.KeyPressMsg{Code: 'p', Text: "p"}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -450,7 +450,7 @@ func TestModel_EnterEditMode_Body(t *testing.T) {
 	m := setupTestModel(t)
 	m.focus = focusBody
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	msg := tea.KeyPressMsg{Code: 'e', Text: "e"}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -464,7 +464,7 @@ func TestModel_EnterEditMode_Props(t *testing.T) {
 	m.focus = focusProps
 	m.propsVisible = true
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	msg := tea.KeyPressMsg{Code: 'e', Text: "e"}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -477,7 +477,7 @@ func TestModel_NoEditMode_WhenFocusLeft(t *testing.T) {
 	m := setupTestModel(t)
 	m.focus = focusLeft
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	msg := tea.KeyPressMsg{Code: 'e', Text: "e"}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -491,7 +491,7 @@ func TestModel_ExitEditMode_Esc(t *testing.T) {
 	m.focus = focusBody
 	m.editMode = true
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -505,7 +505,7 @@ func TestModel_EditMode_TabDoesNotSwitchPanel(t *testing.T) {
 	m.focus = focusBody
 	m.editMode = true
 
-	msg := tea.KeyMsg{Type: tea.KeyTab}
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -523,7 +523,7 @@ func TestModel_EditMode_NavKeysDoNotScrollLeft(t *testing.T) {
 	m.editMode = true
 	initialCursor := m.cursor
 
-	msg := tea.KeyMsg{Type: tea.KeyDown}
+	msg := tea.KeyPressMsg{Code: tea.KeyDown}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -541,7 +541,7 @@ func TestModel_View_ShowsEditModeIndicator(t *testing.T) {
 	m.focus = focusBody
 	m.editMode = true
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "EDIT") {
 		t.Error("View should contain 'EDIT' mode indicator when editMode is true")
 	}
@@ -554,7 +554,7 @@ func TestModel_View_ShowsViewModeIndicator(t *testing.T) {
 	m = newM.(model)
 	m.editMode = false
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "VIEW") {
 		t.Error("View should contain 'VIEW' mode indicator when editMode is false")
 	}
@@ -567,7 +567,7 @@ func TestModel_HelpToggle(t *testing.T) {
 	m = newM.(model)
 
 	// Press ? to open help
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}}
+	msg := tea.KeyPressMsg{Code: '?', Text: "?"}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -588,7 +588,7 @@ func TestModel_HelpToggle_H(t *testing.T) {
 	m := setupTestModel(t)
 
 	// Press h to open help
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'h'}}
+	msg := tea.KeyPressMsg{Code: 'h', Text: "h"}
 	newM, _ := m.Update(msg)
 	m = newM.(model)
 
@@ -609,12 +609,12 @@ func TestModel_HelpEscClose(t *testing.T) {
 	m := setupTestModel(t)
 
 	// Open help
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'?'}}
+	msg := tea.KeyPressMsg{Code: '?', Text: "?"}
 	newM, _ := m.Update(msg)
 	m = newM.(model)
 
 	// Press Esc to close
-	esc := tea.KeyMsg{Type: tea.KeyEscape}
+	esc := tea.KeyPressMsg{Code: tea.KeyEscape}
 	newM, _ = m.Update(esc)
 	m = newM.(model)
 
@@ -629,7 +629,7 @@ func TestModel_HelpInterceptsKeys(t *testing.T) {
 	originalCursor := m.cursor
 
 	// Press j (should be intercepted, cursor should not move)
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'j'}}
+	msg := tea.KeyPressMsg{Code: 'j', Text: "j"}
 	newM, _ := m.Update(msg)
 	m = newM.(model)
 
@@ -648,7 +648,7 @@ func TestModel_HelpView(t *testing.T) {
 	m = newM.(model)
 	m.showHelp = true
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "Keybindings") {
 		t.Error("help view should contain 'Keybindings' title")
 	}
@@ -726,7 +726,7 @@ func TestModel_ExitEditMode_NoSaveWhenNotDirty(t *testing.T) {
 	// Textarea holds same content as body — no change, no save
 	m.bodyTextarea.SetValue(m.selected.Body)
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -744,7 +744,7 @@ func TestModel_ExitEditMode_SavesWhenDirty(t *testing.T) {
 	// Textarea holds new content — differs from current body, triggers dirty + save
 	m.bodyTextarea.SetValue("Updated body")
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -774,7 +774,7 @@ func TestModel_SaveError_ShowsInStatusBar(t *testing.T) {
 	m.width = 120
 	m.height = 24
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "Save failed") {
 		t.Error("View should contain save error message when saveErr is set")
 	}
@@ -810,7 +810,7 @@ func TestModel_ConcurrentEdit_DetectedBeforeSave(t *testing.T) {
 	// Textarea holds new content — triggers dirty check, then conflict on save
 	m.bodyTextarea.SetValue("Local changes")
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -838,7 +838,7 @@ func TestModel_ConcurrentEdit_OverwriteWithY(t *testing.T) {
 	m.dirty = true
 	m.selected.Body = "Force saved body"
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'y'}}
+	msg := tea.KeyPressMsg{Code: 'y', Text: "y"}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -861,7 +861,7 @@ func TestModel_ConcurrentEdit_ReloadWithN(t *testing.T) {
 	m.dirty = true
 	m.selected.Body = "Discarded local changes"
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'n'}}
+	msg := tea.KeyPressMsg{Code: 'n', Text: "n"}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -889,7 +889,7 @@ func TestModel_FirstSave_NoConflict(t *testing.T) {
 	m.bodyTextarea.SetValue("First edit content")
 	m.bodyEditStart = m.bodyTextarea.Value()
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -912,7 +912,7 @@ func TestModel_FirstSave_ZeroModTime_Conflict(t *testing.T) {
 	m.bodyTextarea.SetValue("First edit content")
 	m.bodyEditStart = "original body" // differs from textarea → triggers dirty → save attempted
 
-	msg := tea.KeyMsg{Type: tea.KeyEsc}
+	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -926,7 +926,7 @@ func TestModel_ReadOnly_EditKeyIgnored(t *testing.T) {
 	m.readOnly = true
 	m.focus = focusBody
 
-	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	msg := tea.KeyPressMsg{Code: 'e', Text: "e"}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
@@ -960,7 +960,7 @@ func TestModel_ReadOnly_StatusBarIndicator(t *testing.T) {
 	newM, _ := m.Update(sizeMsg)
 	m = newM.(model)
 
-	view := m.View()
+	view := m.View().Content
 	if !strings.Contains(view, "READONLY") {
 		t.Error("View should contain 'READONLY' indicator when readOnly is true")
 	}

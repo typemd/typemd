@@ -1,10 +1,11 @@
 package tui
 
 import (
+	"image/color"
 	"os"
 	"path/filepath"
 
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 	"gopkg.in/yaml.v3"
 )
 
@@ -28,10 +29,10 @@ const (
 
 // Theme colors and styles.
 var (
-	colorFocusBorder  = lipgloss.Color(defaultColorFocusBorder)
-	colorEditBorder   = lipgloss.Color(defaultColorEditBorder)
-	colorWikiLink     = lipgloss.Color(defaultColorWikiLink)
-	wikiLinkStyleBase = lipgloss.NewStyle().Foreground(colorWikiLink)
+	colorFocusBorder  color.Color = lipgloss.Color(defaultColorFocusBorder)
+	colorEditBorder   color.Color = lipgloss.Color(defaultColorEditBorder)
+	colorWikiLink     color.Color = lipgloss.Color(defaultColorWikiLink)
+	wikiLinkStyleBase             = lipgloss.NewStyle().Foreground(colorWikiLink)
 )
 
 // loadTheme reads .typemd/tui.yaml from the vault root and overrides default

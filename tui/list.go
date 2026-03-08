@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/typemd/typemd/core"
-	"github.com/charmbracelet/lipgloss"
+	"charm.land/lipgloss/v2"
 )
 
 // listRow represents one visible row in the left panel.
