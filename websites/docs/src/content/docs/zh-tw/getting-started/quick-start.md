@@ -17,6 +17,7 @@ tmd init
 
 ```bash
 tmd
+tmd --readonly  # 唯讀模式（停用編輯功能）
 ```
 
 這會啟動三欄介面來瀏覽你的 vault。

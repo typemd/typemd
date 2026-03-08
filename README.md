@@ -65,6 +65,9 @@ tmd
 # Open TUI with specific vault path
 tmd --vault /path/to/vault
 
+# Open TUI in read-only mode (editing disabled)
+tmd --readonly
+
 # Create a new object (ULID is appended automatically)
 tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
@@ -157,7 +160,9 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
 
-The status bar shows the current mode: `[VIEW]` for normal navigation and `[EDIT]` when editing is active.
+The status bar shows the current mode: `[VIEW]` for normal navigation, `[EDIT]` when editing is active, and `[READONLY]` when launched with `--readonly`.
+
+When `--readonly` is active, the `e` key is disabled, no write operations are performed, and the help popup hides edit-related keybindings.
 
 When exiting edit mode, changes are automatically saved to the `.md` file and the SQLite index is updated. If the file was modified externally while editing, a `[CONFLICT]` prompt appears — press `y` to overwrite, `n` to reload from disk, or `Esc` to cancel.
 

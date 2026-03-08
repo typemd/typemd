@@ -20,26 +20,32 @@ type helpEntry struct {
 }
 
 // helpEntries returns the list of keybindings to display in the help popup.
-func helpEntries() []helpEntry {
-	return []helpEntry{
+// When readOnly is true, edit-related keybindings are hidden.
+func helpEntries(readOnly bool) []helpEntry {
+	entries := []helpEntry{
 		{keys.Up.Help().Key, keys.Up.Help().Desc},
 		{keys.Down.Help().Key, keys.Down.Help().Desc},
 		{keys.Enter.Help().Key, keys.Enter.Help().Desc},
 		{keys.Tab.Help().Key, keys.Tab.Help().Desc},
-		{keys.EnterEdit.Help().Key, keys.EnterEdit.Help().Desc},
-		{keys.Search.Help().Key, keys.Search.Help().Desc},
-		{keys.GrowPanel.Help().Key, keys.GrowPanel.Help().Desc},
-		{keys.ShrinkPanel.Help().Key, keys.ShrinkPanel.Help().Desc},
-		{keys.ToggleProps.Help().Key, keys.ToggleProps.Help().Desc},
-		{keys.ToggleWrap.Help().Key, keys.ToggleWrap.Help().Desc},
-		{keys.Help.Help().Key, keys.Help.Help().Desc},
-		{keys.Quit.Help().Key, keys.Quit.Help().Desc},
 	}
+	if !readOnly {
+		entries = append(entries, helpEntry{keys.EnterEdit.Help().Key, keys.EnterEdit.Help().Desc})
+	}
+	entries = append(entries,
+		helpEntry{keys.Search.Help().Key, keys.Search.Help().Desc},
+		helpEntry{keys.GrowPanel.Help().Key, keys.GrowPanel.Help().Desc},
+		helpEntry{keys.ShrinkPanel.Help().Key, keys.ShrinkPanel.Help().Desc},
+		helpEntry{keys.ToggleProps.Help().Key, keys.ToggleProps.Help().Desc},
+		helpEntry{keys.ToggleWrap.Help().Key, keys.ToggleWrap.Help().Desc},
+		helpEntry{keys.Help.Help().Key, keys.Help.Help().Desc},
+		helpEntry{keys.Quit.Help().Key, keys.Quit.Help().Desc},
+	)
+	return entries
 }
 
 // renderHelp builds the help overlay popup content.
-func renderHelp(width, height int) string {
-	entries := helpEntries()
+func renderHelp(width, height int, readOnly bool) string {
+	entries := helpEntries(readOnly)
 
 	// Find max key width for alignment
 	maxKeyW := 0

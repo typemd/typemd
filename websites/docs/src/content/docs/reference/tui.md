@@ -10,6 +10,7 @@ Launches the TUI interactive interface — a three-panel layout for browsing obj
 ```bash
 tmd
 tmd --vault /path/to/vault
+tmd --readonly
 ```
 
 The properties panel is hidden by default and can be toggled with `p`. On narrow terminals (< 56 columns), it auto-hides. The panel displays schema properties, relations, and wiki-link backlinks.
@@ -40,6 +41,17 @@ All global navigation keys (`j`/`k`, `Tab`) are intercepted while editing — th
 If the file was modified externally between when it was loaded and when you saved, a **conflict warning** appears in the status bar. Press `y` to overwrite, `n` to reload from disk, or `Esc` to cancel.
 
 Pressing `e` on the properties panel also enters edit mode (visual indicator only; property editing is not yet supported).
+
+## Read-Only Mode
+
+Launch with `--readonly` to prevent any edits. In this mode:
+
+- The `e` key is disabled — edit mode cannot be entered
+- No write operations are performed to object files or the SQLite index
+- The status bar shows `[READONLY]` instead of `[VIEW]`
+- The help popup hides edit-related keybindings
+
+This is useful for safely browsing a vault in shared terminals, presentations, or automated contexts.
 
 ## Auto-refresh
 

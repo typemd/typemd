@@ -17,6 +17,7 @@ This creates the `.typemd/` directory structure and SQLite database in the curre
 
 ```bash
 tmd
+tmd --readonly  # read-only mode (no editing)
 ```
 
 This launches the three-panel interface for browsing your vault.

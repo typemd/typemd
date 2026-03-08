@@ -658,7 +658,7 @@ func TestModel_HelpView(t *testing.T) {
 }
 
 func TestHelpEntries_NotEmpty(t *testing.T) {
-	entries := helpEntries()
+	entries := helpEntries(false)
 	if len(entries) == 0 {
 		t.Error("helpEntries should return at least one entry")
 	}
@@ -918,5 +918,76 @@ func TestModel_FirstSave_ZeroModTime_Conflict(t *testing.T) {
 
 	if !updated.saveConflict {
 		t.Error("zero loadedModTime should trigger conflict (regression guard)")
+	}
+}
+
+func TestModel_ReadOnly_EditKeyIgnored(t *testing.T) {
+	m := setupTestModel(t)
+	m.readOnly = true
+	m.focus = focusBody
+
+	msg := tea.KeyMsg{Type: tea.KeyRunes, Runes: []rune{'e'}}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.editMode {
+		t.Error("editMode should NOT enter when readOnly is true")
+	}
+}
+
+func TestModel_ReadOnly_DoSaveGuarded(t *testing.T) {
+	m, obj := setupTestModelWithVault(t)
+	m.readOnly = true
+	m.selected.Body = "Should not be saved"
+	m.dirty = true
+
+	m.doSave()
+
+	// Verify file was NOT updated
+	reloaded, err := m.vault.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject() error = %v", err)
+	}
+	if reloaded.Body == "Should not be saved" {
+		t.Error("doSave should not write when readOnly is true")
+	}
+}
+
+func TestModel_ReadOnly_StatusBarIndicator(t *testing.T) {
+	m := setupTestModel(t)
+	m.readOnly = true
+	sizeMsg := tea.WindowSizeMsg{Width: 120, Height: 24}
+	newM, _ := m.Update(sizeMsg)
+	m = newM.(model)
+
+	view := m.View()
+	if !strings.Contains(view, "READONLY") {
+		t.Error("View should contain 'READONLY' indicator when readOnly is true")
+	}
+	if strings.Contains(view, "[VIEW]") {
+		t.Error("View should NOT show [VIEW] when readOnly is true")
+	}
+}
+
+func TestModel_ReadOnly_HelpHidesEditKey(t *testing.T) {
+	entries := helpEntries(true)
+	for _, e := range entries {
+		if e.Key == keys.EnterEdit.Help().Key {
+			t.Error("helpEntries(readOnly=true) should NOT contain edit keybinding")
+		}
+	}
+}
+
+func TestModel_ReadOnly_HelpShowsEditKeyNormally(t *testing.T) {
+	entries := helpEntries(false)
+	found := false
+	for _, e := range entries {
+		if e.Key == keys.EnterEdit.Help().Key {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Error("helpEntries(readOnly=false) should contain edit keybinding")
 	}
 }

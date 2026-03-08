@@ -71,6 +71,7 @@ type model struct {
 	showHelp bool
 
 	// Settings
+	readOnly bool
 	softWrap bool
 
 	// Layout
@@ -227,6 +228,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, textinput.Blink
 
 		case "e":
+			if m.readOnly {
+				return m, nil
+			}
 			if m.focus == focusBody && m.selected != nil {
 				m.editMode = true
 				m.bodyTextarea.SetValue(m.selected.Body)
@@ -440,6 +444,9 @@ func (m *model) selectCurrentRow() {
 // doSave executes the actual vault write and resets save state on success.
 // Shared by saveObject and forceSave.
 func (m *model) doSave() {
+	if m.readOnly {
+		return
+	}
 	if err := m.vault.SaveObject(m.selected); err != nil {
 		m.saveErr = fmt.Sprintf("Save failed: %v", err)
 		return
@@ -642,7 +649,7 @@ func (m model) View() string {
 
 	// Help overlay takes over the entire screen
 	if m.showHelp {
-		return renderHelp(m.width, m.height)
+		return renderHelp(m.width, m.height, m.readOnly)
 	}
 
 	leftW := m.leftWidth()
@@ -735,6 +742,12 @@ func (m model) View() string {
 		helpBar = "  [ERROR]  " + m.saveErr
 	} else if m.editMode {
 		helpBar = "  [EDIT]  esc: exit edit mode"
+	} else if m.readOnly {
+		if m.searchResults != nil {
+			helpBar = "  [READONLY]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit"
+		} else {
+			helpBar = "  [READONLY]  ?/h: help  |  /: search  |  q: quit"
+		}
 	} else if m.searchResults != nil {
 		helpBar = "  [VIEW]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit"
 	} else {
@@ -744,7 +757,7 @@ func (m model) View() string {
 	return panels + "\n" + helpBar
 }
 
-func Start(vaultPath string) error {
+func Start(vaultPath string, readOnly bool) error {
 	if vaultPath == "" {
 		var err error
 		vaultPath, err = os.Getwd()
@@ -815,6 +828,7 @@ func Start(vaultPath string) error {
 		bodyTextarea:  bodyTA,
 		propsViewport: propsVP,
 		propsVisible:  false,
+		readOnly:      readOnly,
 		softWrap:      true,
 		displayProps:  displayProps,
 		loadedModTime: initialModTime,
