@@ -3,10 +3,13 @@ emoji: 👤
 properties:
   - name: name
     type: string
+    emoji: 🏷️
   - name: website
     type: url
+    emoji: 🌐
   - name: books
     type: relation
+    emoji: 📚
     target: book
     multiple: true
     bidirectional: true

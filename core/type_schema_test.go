@@ -773,4 +773,93 @@ func TestValidateObject_DateInvalidDate(t *testing.T) {
 	}
 }
 
+// ── Property emoji tests ────────────────────────────────────────────────────
 
+func TestProperty_EmojiField(t *testing.T) {
+	data := []byte(`
+name: book
+properties:
+  - name: title
+    type: string
+    emoji: 📖
+  - name: rating
+    type: number
+    emoji: ⭐
+`)
+
+	var schema TypeSchema
+	if err := yaml.Unmarshal(data, &schema); err != nil {
+		t.Fatalf("Unmarshal error = %v", err)
+	}
+
+	if schema.Properties[0].Emoji != "📖" {
+		t.Errorf("title.Emoji = %q, want %q", schema.Properties[0].Emoji, "📖")
+	}
+	if schema.Properties[1].Emoji != "⭐" {
+		t.Errorf("rating.Emoji = %q, want %q", schema.Properties[1].Emoji, "⭐")
+	}
+}
+
+func TestProperty_EmojiFieldOmitted(t *testing.T) {
+	data := []byte(`
+name: book
+properties:
+  - name: title
+    type: string
+`)
+
+	var schema TypeSchema
+	if err := yaml.Unmarshal(data, &schema); err != nil {
+		t.Fatalf("Unmarshal error = %v", err)
+	}
+
+	if schema.Properties[0].Emoji != "" {
+		t.Errorf("title.Emoji = %q, want empty string", schema.Properties[0].Emoji)
+	}
+}
+
+func TestValidateSchema_UniquePropertyEmojis(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string", Emoji: "📖"},
+			{Name: "rating", Type: "number", Emoji: "⭐"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors for unique emojis, got %v", errs)
+	}
+}
+
+func TestValidateSchema_DuplicatePropertyEmoji(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string", Emoji: "👤"},
+			{Name: "author", Type: "string", Emoji: "👤"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error for duplicate emoji, got %d: %v", len(errs), errs)
+	}
+	if !strings.Contains(errs[0].Error(), "duplicate property emoji") {
+		t.Errorf("expected duplicate emoji error, got %q", errs[0].Error())
+	}
+}
+
+func TestValidateSchema_EmptyEmojisDoNotConflict(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+			{Name: "author", Type: "string"},
+			{Name: "rating", Type: "number", Emoji: "⭐"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors for empty emojis, got %v", errs)
+	}
+}

@@ -62,6 +62,7 @@ type Option struct {
 type Property struct {
 	Name          string   `yaml:"name"`
 	Type          string   `yaml:"type"`
+	Emoji         string   `yaml:"emoji,omitempty"`
 	Options       []Option `yaml:"options,omitempty"`
 	Target        string   `yaml:"target,omitempty"`
 	Default       any      `yaml:"default,omitempty"`
@@ -77,29 +78,29 @@ var defaultTypes = map[string]TypeSchema{
 		Name:  "book",
 		Emoji: "📚",
 		Properties: []Property{
-			{Name: "title", Type: "string"},
-			{Name: "status", Type: "select", Options: []Option{
+			{Name: "title", Type: "string", Emoji: "📖"},
+			{Name: "status", Type: "select", Emoji: "📋", Options: []Option{
 				{Value: "to-read"},
 				{Value: "reading"},
 				{Value: "done"},
 			}},
-			{Name: "rating", Type: "number"},
+			{Name: "rating", Type: "number", Emoji: "⭐"},
 		},
 	},
 	"person": {
 		Name:  "person",
 		Emoji: "👤",
 		Properties: []Property{
-			{Name: "name", Type: "string"},
-			{Name: "role", Type: "string"},
+			{Name: "name", Type: "string", Emoji: "🏷️"},
+			{Name: "role", Type: "string", Emoji: "💼"},
 		},
 	},
 	"note": {
 		Name:  "note",
 		Emoji: "📝",
 		Properties: []Property{
-			{Name: "title", Type: "string"},
-			{Name: "tags", Type: "string"},
+			{Name: "title", Type: "string", Emoji: "🏷️"},
+			{Name: "tags", Type: "string", Emoji: "🔖"},
 		},
 	},
 }
@@ -146,6 +147,7 @@ func ValidateSchema(schema *TypeSchema) []error {
 		errs = append(errs, fmt.Errorf("schema missing required field: name"))
 	}
 	seen := make(map[string]bool)
+	seenEmoji := make(map[string]string) // emoji -> property name
 	for i, prop := range schema.Properties {
 		if prop.Name == "" {
 			errs = append(errs, fmt.Errorf("property[%d]: missing required field: name", i))
@@ -155,6 +157,12 @@ func ValidateSchema(schema *TypeSchema) []error {
 			errs = append(errs, fmt.Errorf("property %q: duplicate property name", prop.Name))
 		}
 		seen[prop.Name] = true
+		if prop.Emoji != "" {
+			if otherProp, ok := seenEmoji[prop.Emoji]; ok {
+				errs = append(errs, fmt.Errorf("property %q: duplicate property emoji %q (already used by %q)", prop.Name, prop.Emoji, otherProp))
+			}
+			seenEmoji[prop.Emoji] = prop.Name
+		}
 		if prop.Type == "" {
 			errs = append(errs, fmt.Errorf("property %q: missing required field: type", prop.Name))
 			continue
