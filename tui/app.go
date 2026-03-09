@@ -783,11 +783,8 @@ func (m model) View() tea.View {
 
 	// Title panel above body+props
 	if hasTitlePanel {
-		// Title panel width = total width of body + props panels (including borders)
-		titleW := bodyW + bdr
-		if m.propsVisible {
-			titleW += m.propsWidth + bdr
-		}
+		// Title panel width = all remaining space after left panel
+		titleW := m.width - leftW - bdr // total width minus left panel (including its border)
 		titleStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Width(titleW).
