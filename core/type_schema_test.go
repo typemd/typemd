@@ -773,4 +773,32 @@ func TestValidateObject_DateInvalidDate(t *testing.T) {
 	}
 }
 
+func TestTypeSchema_PropertyNames(t *testing.T) {
+	t.Run("empty schema", func(t *testing.T) {
+		schema := &TypeSchema{Name: "empty"}
+		names := schema.PropertyNames()
+		if len(names) != 0 {
+			t.Errorf("expected empty map, got %v", names)
+		}
+	})
 
+	t.Run("multi-property schema", func(t *testing.T) {
+		schema := &TypeSchema{
+			Name: "book",
+			Properties: []Property{
+				{Name: "title", Type: "string"},
+				{Name: "status", Type: "select"},
+				{Name: "rating", Type: "number"},
+			},
+		}
+		names := schema.PropertyNames()
+		if len(names) != 3 {
+			t.Fatalf("expected 3 names, got %d", len(names))
+		}
+		for _, name := range []string{"title", "status", "rating"} {
+			if !names[name] {
+				t.Errorf("expected %q in PropertyNames", name)
+			}
+		}
+	})
+}

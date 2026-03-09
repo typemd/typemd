@@ -71,6 +71,15 @@ type Property struct {
 }
 
 
+// PropertyNames returns the set of property names defined in the schema.
+func (s *TypeSchema) PropertyNames() map[string]bool {
+	names := make(map[string]bool, len(s.Properties))
+	for _, p := range s.Properties {
+		names[p.Name] = true
+	}
+	return names
+}
+
 // defaultTypes contains built-in type schemas.
 var defaultTypes = map[string]TypeSchema{
 	"book": {
