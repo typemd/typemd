@@ -10,8 +10,8 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **cmd/** — CLI commands (Cobra)
 - **tui/** — Terminal UI (Bubble Tea)
 - **mcp/** — MCP server
-- **web/** — Web UI (future)
-- **app/** — Desktop app via Wails (future)
+- **web/** — Web UI: React + shadcn/ui (future)
+- **app/** — Desktop app via Wails + shared React frontend (future)
 - **websites/** — Non-Go websites (site, docs, blog)
 - **marketplace/** — Claude Marketplace plugins (future)
 
@@ -23,6 +23,16 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
 - Object files: `objects/<type>/<name>.md`
+
+## Web UI Architecture
+
+- **Shared frontend**: `tmd serve`, try.typemd.io, and desktop app (Wails) share one React + shadcn/ui frontend
+- **Storage Interface**: Frontend talks to a `VaultStorage` abstraction
+  - `tmd serve` → Go HTTP API (read-write)
+  - try.typemd.io → GitHub REST API from browser, no backend (read-only initially, read-write later)
+  - Wails → Go bindings (read-write)
+- **No SQLite in browser**: try.typemd.io uses in-memory index built from GitHub API responses
+- **Design principle**: SQLite is optional acceleration, not a hard dependency — files are always the source of truth
 
 ## Build & Test
 

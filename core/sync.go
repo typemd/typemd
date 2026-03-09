@@ -36,6 +36,10 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	diskIDs := make(map[string]bool)
 	diskBodies := make(map[string]string)
 
+	// Cache loaded type schemas and their property name sets per type
+	schemaCache := make(map[string]*TypeSchema)
+	propertyNameCache := make(map[string]map[string]bool)
+
 	objsDir := v.ObjectsDir()
 	if _, err := os.Stat(objsDir); os.IsNotExist(err) {
 		// No objects directory — just clean DB and return
@@ -74,6 +78,27 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 		props, body, err := parseFrontmatter(data)
 		if err != nil {
 			return nil // skip unparseable files
+		}
+
+		// Filter properties by type schema (only index schema-defined keys)
+		if _, cached := schemaCache[typeName]; !cached {
+			schema, err := v.LoadType(typeName)
+			if err != nil {
+				// No schema for this type — store nil to skip filtering
+				schemaCache[typeName] = nil
+			} else {
+				schemaCache[typeName] = schema
+				propertyNameCache[typeName] = schema.PropertyNames()
+			}
+		}
+		if allowed := propertyNameCache[typeName]; allowed != nil {
+			filtered := make(map[string]any, len(allowed))
+			for k, val := range props {
+				if allowed[k] {
+					filtered[k] = val
+				}
+			}
+			props = filtered
 		}
 
 		propsJSON, err := json.Marshal(props)
