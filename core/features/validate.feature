@@ -9,7 +9,7 @@ Feature: Validation
 
   Scenario: Invalid schema is detected
     Given a vault is ready
-    And a type schema "bad" with an enum property missing values
+    And a type schema "bad" with a select property missing options
     When I validate all schemas
     Then schema "bad" should have errors
 

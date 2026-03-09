@@ -12,17 +12,20 @@ var migrateDryRun bool
 var migrateRenames []string
 
 var migrateCmd = &cobra.Command{
-	Use:   "migrate <type>",
-	Short: "Update objects to match the current type schema",
-	Long: `Migrate all objects of a given type to match the current schema.
-Adds missing properties (with defaults), removes obsolete ones,
-and optionally renames properties.
+	Use:   "migrate [type]",
+	Short: "Update schemas and objects to match current conventions",
+	Long: `Migrate type schemas and objects.
+
+Without arguments, migrates all type schemas (e.g. enum → select).
+With a type argument, migrates objects of that type to match the current schema.
 
 Examples:
-  tmd migrate book
+  tmd migrate                          # migrate schemas (enum → select)
+  tmd migrate --dry-run                # preview schema migrations
+  tmd migrate book                     # migrate book objects to match schema
   tmd migrate book --dry-run
   tmd migrate book --rename old_field:new_field`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vault, err := openVault(vaultPath, reindex)
 		if err != nil {
@@ -30,6 +33,30 @@ Examples:
 		}
 		defer vault.Close()
 
+		// No type argument: migrate schemas
+		if len(args) == 0 {
+			result, err := vault.MigrateSchemas(migrateDryRun)
+			if err != nil {
+				return err
+			}
+
+			if len(result.Changes) == 0 {
+				fmt.Println("All schemas are up to date. No changes needed.")
+				return nil
+			}
+
+			if migrateDryRun {
+				fmt.Println("Dry run — no files modified:")
+			}
+
+			for _, c := range result.Changes {
+				fmt.Printf("  %s: converted enum → select for %v\n", c.TypeName, c.Properties)
+			}
+			fmt.Printf("Schema migration complete: %d type(s) updated.\n", len(result.Changes))
+			return nil
+		}
+
+		// Type argument: migrate objects
 		opts := core.MigrateOptions{
 			DryRun:  migrateDryRun,
 			Renames: make(map[string]string),

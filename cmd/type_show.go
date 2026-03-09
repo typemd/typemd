@@ -40,8 +40,8 @@ Examples:
 
 		for _, p := range schema.Properties {
 			line := fmt.Sprintf("  %s (%s)", p.Name, p.Type)
-			if p.Type == "enum" && len(p.Values) > 0 {
-				line += fmt.Sprintf(" [%s]", strings.Join(p.Values, ", "))
+			if (p.Type == "select" || p.Type == "multi_select") && len(p.Options) > 0 {
+				line += fmt.Sprintf(" [%s]", strings.Join(p.OptionValues(), ", "))
 			}
 			if p.Type == "relation" && p.Target != "" {
 				line += fmt.Sprintf(" -> %s", p.Target)

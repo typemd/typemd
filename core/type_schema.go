@@ -2,12 +2,17 @@ package core
 
 import (
 	"fmt"
+	"net/url"
 	"os"
 	"path/filepath"
+	"regexp"
 	"sort"
+	"time"
 
 	"gopkg.in/yaml.v3"
 )
+
+var dateRegexp = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
 // OrderedPropKeys returns property keys ordered by schema definition.
 // Keys not in the schema are appended alphabetically at the end.
@@ -47,11 +52,17 @@ type TypeSchema struct {
 	Properties []Property `yaml:"properties"`
 }
 
+// Option defines a selectable value for select/multi_select properties.
+type Option struct {
+	Value string `yaml:"value"`
+	Label string `yaml:"label,omitempty"`
+}
+
 // Property defines a single property in a type schema.
 type Property struct {
 	Name          string   `yaml:"name"`
 	Type          string   `yaml:"type"`
-	Values        []string `yaml:"values,omitempty"`
+	Options       []Option `yaml:"options,omitempty"`
 	Target        string   `yaml:"target,omitempty"`
 	Default       any      `yaml:"default,omitempty"`
 	Multiple      bool     `yaml:"multiple,omitempty"`
@@ -67,7 +78,11 @@ var defaultTypes = map[string]TypeSchema{
 		Emoji: "📚",
 		Properties: []Property{
 			{Name: "title", Type: "string"},
-			{Name: "status", Type: "enum", Values: []string{"to-read", "reading", "done"}},
+			{Name: "status", Type: "select", Options: []Option{
+				{Value: "to-read"},
+				{Value: "reading"},
+				{Value: "done"},
+			}},
 			{Name: "rating", Type: "number"},
 		},
 	},
@@ -113,7 +128,15 @@ func (v *Vault) LoadType(name string) (*TypeSchema, error) {
 
 // validPropertyTypes lists allowed property types.
 var validPropertyTypes = map[string]bool{
-	"string": true, "number": true, "enum": true, "relation": true,
+	"string":       true,
+	"number":       true,
+	"date":         true,
+	"datetime":     true,
+	"url":          true,
+	"checkbox":     true,
+	"select":       true,
+	"multi_select": true,
+	"relation":     true,
 }
 
 // ValidateSchema validates a type schema itself for correctness.
@@ -136,12 +159,16 @@ func ValidateSchema(schema *TypeSchema) []error {
 			errs = append(errs, fmt.Errorf("property %q: missing required field: type", prop.Name))
 			continue
 		}
-		if !validPropertyTypes[prop.Type] {
-			errs = append(errs, fmt.Errorf("property %q: invalid type %q (valid: string, number, enum, relation)", prop.Name, prop.Type))
+		if prop.Type == "enum" {
+			errs = append(errs, fmt.Errorf("property %q: type \"enum\" is no longer supported, use \"select\" with \"options\" instead (run tmd migrate to convert)", prop.Name))
 			continue
 		}
-		if prop.Type == "enum" && len(prop.Values) == 0 {
-			errs = append(errs, fmt.Errorf("property %q: enum type requires non-empty values", prop.Name))
+		if !validPropertyTypes[prop.Type] {
+			errs = append(errs, fmt.Errorf("property %q: invalid type %q (valid: string, number, date, datetime, url, checkbox, select, multi_select, relation)", prop.Name, prop.Type))
+			continue
+		}
+		if (prop.Type == "select" || prop.Type == "multi_select") && len(prop.Options) == 0 {
+			errs = append(errs, fmt.Errorf("property %q: %s type requires non-empty options", prop.Name, prop.Type))
 		}
 		if prop.Type == "relation" && prop.Target == "" {
 			errs = append(errs, fmt.Errorf("property %q: relation type requires target", prop.Name))
@@ -167,6 +194,27 @@ func ValidateObject(props map[string]any, schema *TypeSchema) []error {
 			if _, ok := val.(string); !ok {
 				errs = append(errs, fmt.Errorf("property %q: expected string, got %T", prop.Name, val))
 			}
+		case "number":
+			switch val.(type) {
+			case int, int64, float64:
+				// valid
+			default:
+				errs = append(errs, fmt.Errorf("property %q: expected number, got %T", prop.Name, val))
+			}
+		case "date":
+			errs = append(errs, validateDate(prop.Name, val)...)
+		case "datetime":
+			errs = append(errs, validateDatetime(prop.Name, val)...)
+		case "url":
+			errs = append(errs, validateURL(prop.Name, val)...)
+		case "checkbox":
+			if _, ok := val.(bool); !ok {
+				errs = append(errs, fmt.Errorf("property %q: expected boolean, got %T", prop.Name, val))
+			}
+		case "select":
+			errs = append(errs, validateSelect(prop, val)...)
+		case "multi_select":
+			errs = append(errs, validateMultiSelect(prop, val)...)
 		case "relation":
 			if prop.Multiple {
 				arr, ok := val.([]any)
@@ -184,31 +232,123 @@ func ValidateObject(props map[string]any, schema *TypeSchema) []error {
 					errs = append(errs, fmt.Errorf("property %q: expected string, got %T", prop.Name, val))
 				}
 			}
-		case "number":
-			switch val.(type) {
-			case int, int64, float64:
-				// valid
-			default:
-				errs = append(errs, fmt.Errorf("property %q: expected number, got %T", prop.Name, val))
-			}
-		case "enum":
-			s, ok := val.(string)
-			if !ok {
-				errs = append(errs, fmt.Errorf("property %q: expected string for enum, got %T", prop.Name, val))
-				continue
-			}
-			found := false
-			for _, v := range prop.Values {
-				if v == s {
-					found = true
-					break
-				}
-			}
-			if !found {
-				errs = append(errs, fmt.Errorf("property %q: value %q not in allowed values %v", prop.Name, s, prop.Values))
-			}
 		}
 	}
 
 	return errs
+}
+
+// validateDate validates a date property value (YYYY-MM-DD format).
+// Handles time.Time values from YAML auto-parsing.
+func validateDate(name string, val any) []error {
+	switch v := val.(type) {
+	case time.Time:
+		return nil // YAML auto-parsed date
+	case string:
+		if !dateRegexp.MatchString(v) {
+			return []error{fmt.Errorf("property %q: expected date in YYYY-MM-DD format, got %q", name, v)}
+		}
+		if _, err := time.Parse("2006-01-02", v); err != nil {
+			return []error{fmt.Errorf("property %q: invalid date %q: %v", name, v, err)}
+		}
+		return nil
+	default:
+		return []error{fmt.Errorf("property %q: expected date string or time.Time, got %T", name, val)}
+	}
+}
+
+// validateDatetime validates a datetime property value (ISO 8601 with time).
+// Handles time.Time values from YAML auto-parsing.
+func validateDatetime(name string, val any) []error {
+	switch v := val.(type) {
+	case time.Time:
+		return nil // YAML auto-parsed datetime
+	case string:
+		formats := []string{
+			time.RFC3339,
+			"2006-01-02T15:04:05",
+			"2006-01-02T15:04:05Z",
+		}
+		for _, f := range formats {
+			if _, err := time.Parse(f, v); err == nil {
+				return nil
+			}
+		}
+		return []error{fmt.Errorf("property %q: expected datetime in ISO 8601 format (e.g. 2006-01-02T15:04:05), got %q", name, v)}
+	default:
+		return []error{fmt.Errorf("property %q: expected datetime string or time.Time, got %T", name, val)}
+	}
+}
+
+// validateURL validates a url property value (must have http:// or https:// scheme).
+func validateURL(name string, val any) []error {
+	s, ok := val.(string)
+	if !ok {
+		return []error{fmt.Errorf("property %q: expected string for url, got %T", name, val)}
+	}
+	u, err := url.Parse(s)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return []error{fmt.Errorf("property %q: url must start with http:// or https://, got %q", name, s)}
+	}
+	return nil
+}
+
+// validateSelect validates a select property value against options.
+func validateSelect(prop Property, val any) []error {
+	s, ok := val.(string)
+	if !ok {
+		return []error{fmt.Errorf("property %q: expected string for select, got %T", prop.Name, val)}
+	}
+	for _, opt := range prop.Options {
+		if opt.Value == s {
+			return nil
+		}
+	}
+	return []error{fmt.Errorf("property %q: value %q not in allowed options %v", prop.Name, s, prop.OptionValues())}
+}
+
+// validateMultiSelect validates a multi_select property value.
+// Accepts a list of values (each must be in options). Coerces a single string to a list.
+func validateMultiSelect(prop Property, val any) []error {
+	var items []string
+
+	switch v := val.(type) {
+	case string:
+		items = []string{v}
+	case []any:
+		for i, item := range v {
+			s, ok := item.(string)
+			if !ok {
+				return []error{fmt.Errorf("property %q[%d]: expected string, got %T", prop.Name, i, item)}
+			}
+			items = append(items, s)
+		}
+	case []string:
+		items = v
+	default:
+		return []error{fmt.Errorf("property %q: expected string or array for multi_select, got %T", prop.Name, val)}
+	}
+
+	allowed := make(map[string]bool, len(prop.Options))
+	for _, opt := range prop.Options {
+		allowed[opt.Value] = true
+	}
+
+	var errs []error
+	optionVals := prop.OptionValues()
+	for _, item := range items {
+		if !allowed[item] {
+			errs = append(errs, fmt.Errorf("property %q: value %q not in allowed options %v", prop.Name, item, optionVals))
+		}
+	}
+	return errs
+}
+
+// OptionValues returns a slice of option values (convenience for display/error messages).
+func (p Property) OptionValues() []string {
+	vals := make([]string, len(p.Options))
+	for i, opt := range p.Options {
+		vals[i] = opt.Value
+	}
+	return vals
 }

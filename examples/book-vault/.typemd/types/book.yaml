@@ -4,8 +4,11 @@ properties:
   - name: title
     type: string
   - name: status
-    type: enum
-    values: [to-read, reading, done]
+    type: select
+    options:
+      - value: to-read
+      - value: reading
+      - value: done
   - name: rating
     type: number
   - name: author
