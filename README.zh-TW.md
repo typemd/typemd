@@ -205,7 +205,7 @@ properties:
     type: number
 ```
 
-Type 支援可選的 `emoji` 欄位，用於在 CLI 和 TUI 輸出中視覺辨識。屬性支援可選的 `default` 欄位來指定預設值。
+Type 和屬性都支援可選的 `emoji` 欄位，用於在 CLI 和 TUI 輸出中視覺辨識。屬性還支援可選的 `default` 欄位來指定預設值。
 
 ## Relation
 

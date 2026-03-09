@@ -210,7 +210,7 @@ properties:
     type: number
 ```
 
-Types support an optional `emoji` field for visual identification in CLI and TUI output. Properties support an optional `default` field to specify a default value.
+Types and properties both support an optional `emoji` field for visual identification in CLI and TUI output. Properties also support an optional `default` field to specify a default value.
 
 ## Relations
 
