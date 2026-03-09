@@ -95,21 +95,33 @@ func newBodyTextarea() textarea.Model {
 	return ta
 }
 
-// bodyEditHeaderLines is the number of lines renderBodyHeader() occupies above the textarea.
-const bodyEditHeaderLines = 2
+// titlePanelHeight is the total height of the title panel (1 content line + 2 border lines).
+const titlePanelHeight = 3
 
 // resizeBodyTextarea updates the body textarea dimensions to match the current layout.
-// In edit mode, bodyEditHeaderLines are reserved for the title + separator above the textarea.
 func (m *model) resizeBodyTextarea() {
-	h := m.height - 3
-	if m.editMode {
-		h -= bodyEditHeaderLines
+	h := m.height - 3 // help bar + borders
+	if m.selected != nil {
+		h -= titlePanelHeight // title panel takes vertical space
 	}
 	if h < 0 {
 		h = 0
 	}
 	m.bodyTextarea.SetWidth(m.bodyWidth())
 	m.bodyTextarea.SetHeight(h)
+}
+
+// selectedTypeEmoji returns the emoji for the currently selected object's type.
+func (m model) selectedTypeEmoji() string {
+	if m.selected == nil {
+		return ""
+	}
+	for _, g := range m.groups {
+		if g.Name == m.selected.Type {
+			return g.Emoji
+		}
+	}
+	return ""
 }
 
 func (m model) Init() tea.Cmd {
@@ -150,11 +162,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.propsVisible = false
 		}
 
+		// Body/props panels are shorter when title panel is shown
+		bodyPropsH := contentHeight
+		if m.selected != nil {
+			bodyPropsH -= titlePanelHeight
+			if bodyPropsH < 0 {
+				bodyPropsH = 0
+			}
+		}
+
 		// Update viewport sizes
 		m.bodyViewport.SetWidth(m.bodyWidth())
-		m.bodyViewport.SetHeight(contentHeight)
+		m.bodyViewport.SetHeight(bodyPropsH)
 		m.propsViewport.SetWidth(m.propsWidth)
-		m.propsViewport.SetHeight(contentHeight)
+		m.propsViewport.SetHeight(bodyPropsH)
 		m.resizeBodyTextarea()
 
 		m.updateDetail()
@@ -319,6 +340,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			contentHeight := m.height - 3
 			if contentHeight < 0 {
 				contentHeight = 0
+			}
+			if m.selected != nil {
+				contentHeight -= titlePanelHeight
+				if contentHeight < 0 {
+					contentHeight = 0
+				}
 			}
 			m.bodyViewport.SetWidth(m.bodyWidth())
 			m.propsViewport.SetWidth(m.propsWidth)
@@ -666,20 +693,32 @@ func (m model) View() tea.View {
 	if contentH < 0 {
 		contentH = 0
 	}
-	panelH := contentH + 2 // total height including top + bottom border
-	bdr := 2               // left+right or top+bottom border size
+	bdr := 2 // left+right or top+bottom border size
+
+	// When an object is selected, the title panel takes vertical space from body/props
+	hasTitlePanel := m.selected != nil
+	bodyPropsContentH := contentH
+	if hasTitlePanel {
+		bodyPropsContentH = contentH - titlePanelHeight
+		if bodyPropsContentH < 0 {
+			bodyPropsContentH = 0
+		}
+	}
+
+	leftPanelH := contentH + bdr    // left panel spans full height
+	bodyPropsPanelH := bodyPropsContentH + bdr // body/props panels are shorter when title exists
 
 	// Styles — MaxHeight clamps viewport content that overflows after line wrapping.
 	leftStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(leftW + bdr).
-		Height(panelH).
-		MaxHeight(panelH)
+		Height(leftPanelH).
+		MaxHeight(leftPanelH)
 	bodyStyle := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		Width(bodyW + bdr).
-		Height(panelH).
-		MaxHeight(panelH)
+		Height(bodyPropsPanelH).
+		MaxHeight(bodyPropsPanelH)
 
 	// Focus highlighting (edit mode uses distinct border color)
 	activeBorderColor := colorFocusBorder
@@ -715,35 +754,56 @@ func (m model) View() tea.View {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
 	}
 
-	// Body panel content: header + textarea in edit mode, viewport otherwise
+	// Body panel content: textarea in edit mode, viewport otherwise
 	var bodyPanelContent string
 	if m.editMode && m.focus == focusBody {
-		bodyPanelContent = renderBodyHeader(m.selected, bodyW) + m.bodyTextarea.View()
+		bodyPanelContent = m.bodyTextarea.View()
 	} else {
 		bodyPanelContent = m.bodyViewport.View()
 	}
 
-	// Compose panels
-	panels := lipgloss.JoinHorizontal(lipgloss.Top,
-		leftStyle.Render(leftContent),
-		bodyStyle.Render(bodyPanelContent),
-	)
+	// Build right side: title panel (if selected) above body+props row
+	rightSide := bodyStyle.Render(bodyPanelContent)
 
 	// Properties panel (optional)
 	if m.propsVisible {
 		propsStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Width(m.propsWidth + bdr).
-			Height(panelH).
-			MaxHeight(panelH)
+			Height(bodyPropsPanelH).
+			MaxHeight(bodyPropsPanelH)
 		if m.focus == focusProps {
 			propsStyle = propsStyle.BorderForeground(activeBorderColor)
 		}
-		panels = lipgloss.JoinHorizontal(lipgloss.Top,
-			panels,
+		rightSide = lipgloss.JoinHorizontal(lipgloss.Top,
+			rightSide,
 			propsStyle.Render(m.propsViewport.View()),
 		)
 	}
+
+	// Title panel above body+props
+	if hasTitlePanel {
+		// Title panel width = total width of body + props panels (including borders)
+		titleW := bodyW + bdr
+		if m.propsVisible {
+			titleW += m.propsWidth + bdr
+		}
+		titleStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(titleW).
+			Height(titlePanelHeight)
+		titleContent := renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
+		rightSide = lipgloss.JoinVertical(lipgloss.Left,
+			titleStyle.Render(titleContent),
+			rightSide,
+		)
+	}
+
+	// Compose left + right
+	panels := lipgloss.JoinHorizontal(lipgloss.Top,
+		leftStyle.Render(leftContent),
+		rightSide,
+	)
 
 	// Help bar
 	var helpBar string

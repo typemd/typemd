@@ -156,8 +156,8 @@ func TestRenderBody_WithContent(t *testing.T) {
 		Body:       "# Hello\nWorld",
 	}
 	result := renderBody(obj, 80)
-	if !strings.Contains(result, "book/test") {
-		t.Error("renderBody should contain object ID as title")
+	if strings.Contains(result, "book/test") {
+		t.Error("renderBody should NOT contain object ID (title moved to title panel)")
 	}
 	if !strings.Contains(result, "# Hello") {
 		t.Error("renderBody should contain body content")
@@ -975,6 +975,57 @@ func TestModel_ReadOnly_HelpHidesEditKey(t *testing.T) {
 		if e.Key == keys.EnterEdit.Help().Key {
 			t.Error("helpEntries(readOnly=true) should NOT contain edit keybinding")
 		}
+	}
+}
+
+func TestRenderTitleContent_WithEmoji(t *testing.T) {
+	obj := &core.Object{ID: "book/clean-code", Type: "book", Filename: "clean-code"}
+	result := renderTitleContent(obj, "book", "📖", 40)
+	if !strings.Contains(result, "📖") {
+		t.Error("title should contain emoji")
+	}
+	if !strings.Contains(result, "book") {
+		t.Error("title should contain type name")
+	}
+	if !strings.Contains(result, "clean-code") {
+		t.Error("title should contain display name")
+	}
+	if !strings.Contains(result, "·") {
+		t.Error("title should contain separator dot")
+	}
+}
+
+func TestRenderTitleContent_WithoutEmoji(t *testing.T) {
+	obj := &core.Object{ID: "note/my-note", Type: "note", Filename: "my-note"}
+	result := renderTitleContent(obj, "note", "", 40)
+	if !strings.Contains(result, "note · my-note") {
+		t.Errorf("title without emoji should be 'note · my-note', got %q", result)
+	}
+}
+
+func TestRenderTitleContent_Nil(t *testing.T) {
+	result := renderTitleContent(nil, "", "", 40)
+	if result != "" {
+		t.Errorf("renderTitleContent(nil) should return empty string, got %q", result)
+	}
+}
+
+func TestModel_SelectedTypeEmoji(t *testing.T) {
+	m := setupTestModel(t)
+	m.groups[0].Emoji = "📚"
+	m.selected = m.groups[0].Objects[0]
+	emoji := m.selectedTypeEmoji()
+	if emoji != "📚" {
+		t.Errorf("selectedTypeEmoji() = %q, want %q", emoji, "📚")
+	}
+}
+
+func TestModel_SelectedTypeEmoji_NoMatch(t *testing.T) {
+	m := setupTestModel(t)
+	m.selected = &core.Object{Type: "unknown"}
+	emoji := m.selectedTypeEmoji()
+	if emoji != "" {
+		t.Errorf("selectedTypeEmoji() for unknown type should be empty, got %q", emoji)
 	}
 }
 
