@@ -656,7 +656,11 @@ func (m model) defaultPropsWidth() int {
 
 // bodyWidth calculates the body panel width from remaining space.
 func (m model) bodyWidth() int {
-	w := m.width - m.leftWidth() - 6 // borders for 3 panels
+	borders := 4 // left panel border (2) + body panel border (2)
+	if m.propsVisible {
+		borders += 2 // props panel border
+	}
+	w := m.width - m.leftWidth() - borders
 	if m.propsVisible {
 		w -= m.propsWidth
 	}
