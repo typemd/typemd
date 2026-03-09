@@ -1,7 +1,12 @@
 ---
 author: person/martin-fowler
+favorite: true
+published: 2018-11-20
 rating: 5
 status: done
+tags:
+  - programming
+  - refactoring
 title: 重構：改善既有程式的設計
 ---
 

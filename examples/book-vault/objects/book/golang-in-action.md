@@ -1,7 +1,12 @@
 ---
 author: person/alan-donovan
+favorite: true
+published: 2015-10-26
 rating: 5
 status: done
+tags:
+  - programming
+  - go
 title: The Go Programming Language
 ---
 

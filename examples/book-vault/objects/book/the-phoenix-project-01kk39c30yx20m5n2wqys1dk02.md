@@ -1,7 +1,12 @@
 ---
 author: person/gene-kim-01kk39c30y4001qp772vqzspjm
+favorite: false
+published: 2013-01-10
 rating: 4
 status: reading
+tags:
+  - devops
+  - management
 title: 鳳凰專案：看 IT 部門如何讓公司從谷底翻身
 ---
 

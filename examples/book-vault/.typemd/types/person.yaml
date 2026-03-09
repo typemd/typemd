@@ -3,6 +3,8 @@ emoji: 👤
 properties:
   - name: name
     type: string
+  - name: website
+    type: url
   - name: books
     type: relation
     target: book

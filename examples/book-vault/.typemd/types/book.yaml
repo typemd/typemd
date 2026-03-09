@@ -11,6 +11,18 @@ properties:
       - value: done
   - name: rating
     type: number
+  - name: published
+    type: date
+  - name: favorite
+    type: checkbox
+  - name: tags
+    type: multi_select
+    options:
+      - value: programming
+      - value: devops
+      - value: refactoring
+      - value: go
+      - value: management
   - name: author
     type: relation
     target: person
