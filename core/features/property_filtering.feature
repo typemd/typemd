@@ -18,14 +18,16 @@ Feature: Property filtering during sync
     And the indexed properties for "book/clean-code" should contain "status"
     And the indexed properties for "book/clean-code" should not contain "mood"
 
-  Scenario: Object with only undefined properties stores empty object
+  Scenario: Object with only undefined properties stores only name
     Given a type schema "book" with properties "title,status,rating"
     And a raw object file "book/mystery.md" with properties:
       | key   | value |
       | mood  | happy |
       | color | blue  |
     When I sync the index
-    Then the indexed properties for "book/mystery" should be empty
+    Then the indexed properties for "book/mystery" should contain "name"
+    And the indexed properties for "book/mystery" should not contain "mood"
+    And the indexed properties for "book/mystery" should not contain "color"
 
   Scenario: Object type without schema retains all properties
     And a raw object file "recipe/pasta.md" with properties:

@@ -149,6 +149,71 @@ func TestWriteFrontmatter_KeyOrder(t *testing.T) {
 	}
 }
 
+func TestObject_GetName(t *testing.T) {
+	tests := []struct {
+		name     string
+		props    map[string]any
+		filename string
+		want     string
+	}{
+		{
+			name:     "returns name property",
+			props:    map[string]any{"name": "Clean Code"},
+			filename: "clean-code-01jqr3k5mpbvn8e0f2g7h9txyz",
+			want:     "Clean Code",
+		},
+		{
+			name:     "falls back to DisplayName when missing",
+			props:    map[string]any{},
+			filename: "clean-code-01jqr3k5mpbvn8e0f2g7h9txyz",
+			want:     "clean-code",
+		},
+		{
+			name:     "falls back to DisplayName when empty",
+			props:    map[string]any{"name": ""},
+			filename: "clean-code-01jqr3k5mpbvn8e0f2g7h9txyz",
+			want:     "clean-code",
+		},
+		{
+			name:     "falls back to DisplayName when nil",
+			props:    map[string]any{"name": nil},
+			filename: "clean-code-01jqr3k5mpbvn8e0f2g7h9txyz",
+			want:     "clean-code",
+		},
+		{
+			name:     "whitespace-only name is returned as-is",
+			props:    map[string]any{"name": "   "},
+			filename: "clean-code-01jqr3k5mpbvn8e0f2g7h9txyz",
+			want:     "   ",
+		},
+		{
+			name:     "special characters in name",
+			props:    map[string]any{"name": "Go 語言實戰 (2nd ed.)"},
+			filename: "golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz",
+			want:     "Go 語言實戰 (2nd ed.)",
+		},
+		{
+			name:     "non-string name falls back to DisplayName",
+			props:    map[string]any{"name": 42},
+			filename: "test-01jqr3k5mpbvn8e0f2g7h9txyz",
+			want:     "test",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &Object{
+				Filename:   tt.filename,
+				Properties: tt.props,
+			}
+			got := obj.GetName()
+			if got != tt.want {
+				t.Errorf("GetName() = %q, want %q", got, tt.want)
+			}
+		})
+	}
+}
+
 func TestVault_NewObject(t *testing.T) {
 	v := setupTestVault(t)
 
@@ -177,9 +242,12 @@ func TestVault_NewObject(t *testing.T) {
 		t.Error("expected .md file to exist")
 	}
 
-	// Properties 從 schema 產生（book 有 title, status, rating）
-	if len(obj.Properties) != 3 {
-		t.Errorf("len(Properties) = %d, want 3", len(obj.Properties))
+	// Properties: name (system) + title, status, rating (schema)
+	if len(obj.Properties) != 4 {
+		t.Errorf("len(Properties) = %d, want 4", len(obj.Properties))
+	}
+	if obj.Properties["name"] != "golang-in-action" {
+		t.Errorf("Properties[\"name\"] = %v, want %q", obj.Properties["name"], "golang-in-action")
 	}
 }
 

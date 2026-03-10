@@ -45,7 +45,7 @@ TypeMD ships with three built-in Types to get you started:
 | Type | Properties |
 |------|------------|
 | 📚 `book` | title (string), status (enum: to-read/reading/done), rating (number) |
-| 👤 `person` | name (string), role (string) |
+| 👤 `person` | role (string) |
 | 📝 `note` | title (string), tags (string) |
 
 You can modify these or create your own Types to fit your knowledge domain.

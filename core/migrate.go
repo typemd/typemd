@@ -90,8 +90,11 @@ func (v *Vault) MigrateObjects(typeName string, opts MigrateOptions) (*MigrateRe
 			}
 		}
 
-		// 3. Remove: object properties not in schema (and not a rename source)
+		// 3. Remove: object properties not in schema (and not a rename source or system property)
 		for key := range obj.Properties {
+			if key == NameProperty {
+				continue // system property, never remove
+			}
 			if _, inSchema := schemaProps[key]; !inSchema {
 				if _, isRenameSource := opts.Renames[key]; !isRenameSource {
 					delete(obj.Properties, key)

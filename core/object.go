@@ -12,6 +12,9 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// NameProperty is the reserved system property key for the object's display name.
+const NameProperty = "name"
+
 // AmbiguousMatchError is returned when a prefix matches multiple objects.
 type AmbiguousMatchError struct {
 	Prefix  string
@@ -39,6 +42,15 @@ type Object struct {
 // DisplayName returns the filename with ULID suffix stripped.
 func (o *Object) DisplayName() string {
 	return StripULID(o.Filename)
+}
+
+// GetName returns the object's display name from the NameProperty.
+// If the property is missing or empty, it falls back to DisplayName().
+func (o *Object) GetName() string {
+	if name, ok := o.Properties[NameProperty].(string); ok && name != "" {
+		return name
+	}
+	return o.DisplayName()
 }
 
 // DisplayID returns the object ID with ULID suffix stripped from the filename part.
@@ -119,11 +131,12 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	}
 
 	// Append ULID to filename for uniqueness
+	slug := filename // preserve original slug for the name property
 	ulidStr, err := GenerateULID()
 	if err != nil {
 		return nil, err
 	}
-	filename = filename + "-" + ulidStr
+	filename = slug + "-" + ulidStr
 	id := typeName + "/" + filename
 	objPath := v.ObjectPath(typeName, filename)
 
@@ -134,6 +147,7 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 
 	// Generate initial properties from schema
 	props := make(map[string]any)
+	props[NameProperty] = slug // system property: display name from slug
 	for _, p := range schema.Properties {
 		if p.Default != nil {
 			props[p.Name] = p.Default

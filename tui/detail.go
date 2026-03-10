@@ -14,16 +14,16 @@ func wikiLinkStyle(s string) string {
 }
 
 // renderTitleContent builds the title string for the title panel.
-// Format: "emoji type · DisplayName" or "type · DisplayName" when no emoji.
+// Format: "emoji type · name" or "type · name" when no emoji.
 func renderTitleContent(obj *core.Object, typeName, emoji string, width int) string {
 	if obj == nil {
 		return ""
 	}
 	var title string
 	if emoji != "" {
-		title = fmt.Sprintf(" %s %s · %s", emoji, typeName, obj.DisplayName())
+		title = fmt.Sprintf(" %s %s · %s", emoji, typeName, obj.GetName())
 	} else {
-		title = fmt.Sprintf(" %s · %s", typeName, obj.DisplayName())
+		title = fmt.Sprintf(" %s · %s", typeName, obj.GetName())
 	}
 	maxWidth := width
 	if maxWidth > 0 {

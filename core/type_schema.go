@@ -15,22 +15,31 @@ import (
 var dateRegexp = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
 // OrderedPropKeys returns property keys ordered by schema definition.
+// The "name" property always appears first (if present).
 // Keys not in the schema are appended alphabetically at the end.
-// If schema is nil, keys are sorted alphabetically.
+// If schema is nil, keys are sorted alphabetically (with "name" first).
 func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
+	_, hasName := props[NameProperty]
+
 	if schema == nil {
 		keys := make([]string, 0, len(props))
 		for k := range props {
-			keys = append(keys, k)
+			if k != NameProperty {
+				keys = append(keys, k)
+			}
 		}
 		sort.Strings(keys)
+		if hasName {
+			keys = append([]string{NameProperty}, keys...)
+		}
 		return keys
 	}
 
 	seen := make(map[string]bool)
+	seen[NameProperty] = true // exclude name from schema ordering
 	var keys []string
 	for _, p := range schema.Properties {
-		if _, ok := props[p.Name]; ok {
+		if _, ok := props[p.Name]; ok && p.Name != NameProperty {
 			keys = append(keys, p.Name)
 			seen[p.Name] = true
 		}
@@ -42,7 +51,11 @@ func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
 		}
 	}
 	sort.Strings(extra)
-	return append(keys, extra...)
+	keys = append(keys, extra...)
+	if hasName {
+		keys = append([]string{NameProperty}, keys...)
+	}
+	return keys
 }
 
 // TypeSchema defines the schema for a type.
@@ -101,7 +114,6 @@ var defaultTypes = map[string]TypeSchema{
 		Name:  "person",
 		Emoji: "👤",
 		Properties: []Property{
-			{Name: "name", Type: "string", Emoji: "🏷️"},
 			{Name: "role", Type: "string", Emoji: "💼"},
 		},
 	},
@@ -162,6 +174,10 @@ func ValidateSchema(schema *TypeSchema) []error {
 	for i, prop := range schema.Properties {
 		if prop.Name == "" {
 			errs = append(errs, fmt.Errorf("property[%d]: missing required field: name", i))
+			continue
+		}
+		if prop.Name == NameProperty {
+			errs = append(errs, fmt.Errorf("property %q: %q is a reserved system property and cannot be defined in type schemas", prop.Name, NameProperty))
 			continue
 		}
 		if seen[prop.Name] {

@@ -50,7 +50,7 @@ func printObjects(objects []*core.Object, asJSON bool) error {
 		fmt.Println(string(data))
 	} else {
 		for _, obj := range objects {
-			fmt.Println(obj.DisplayID())
+			fmt.Printf("%s/%s\n", obj.Type, obj.GetName())
 		}
 	}
 	return nil

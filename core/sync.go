@@ -80,19 +80,32 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 			return nil // skip unparseable files
 		}
 
-		// Filter properties by type schema (only index schema-defined keys)
+		// Populate schema cache (used by both name migration and property filtering)
 		if _, cached := schemaCache[typeName]; !cached {
 			schema, err := v.LoadType(typeName)
 			if err != nil {
-				// No schema for this type — store nil to skip filtering
 				schemaCache[typeName] = nil
 			} else {
 				schemaCache[typeName] = schema
 				propertyNameCache[typeName] = schema.PropertyNames()
 			}
 		}
+
+		// Migrate: add NameProperty if missing
+		nameVal, hasName := props[NameProperty]
+		if !hasName || nameVal == nil || nameVal == "" {
+			props[NameProperty] = StripULID(filename)
+			if updated, err := writeFrontmatter(props, body, OrderedPropKeys(props, schemaCache[typeName])); err == nil {
+				if writeErr := os.WriteFile(path, updated, 0644); writeErr != nil {
+					return fmt.Errorf("write name migration for %s: %w", id, writeErr)
+				}
+			}
+		}
+
+		// Filter properties by type schema (only index schema-defined keys)
 		if allowed := propertyNameCache[typeName]; allowed != nil {
-			filtered := make(map[string]any, len(allowed))
+			filtered := make(map[string]any, len(allowed)+1)
+			filtered[NameProperty] = props[NameProperty] // always preserve system property
 			for k, val := range props {
 				if allowed[k] {
 					filtered[k] = val

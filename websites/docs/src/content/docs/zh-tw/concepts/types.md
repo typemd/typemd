@@ -45,7 +45,7 @@ TypeMD 內建三種 Type 讓你快速開始：
 | Type | 屬性 |
 |------|------|
 | 📚 `book` | title (string)、status (enum: to-read/reading/done)、rating (number) |
-| 👤 `person` | name (string)、role (string) |
+| 👤 `person` | role (string) |
 | 📝 `note` | title (string)、tags (string) |
 
 你可以修改這些內建 Type，或建立自己的 Type 來符合你的知識領域。

@@ -955,3 +955,64 @@ func TestTypeSchema_PropertyNames(t *testing.T) {
 		}
 	})
 }
+
+func TestOrderedPropKeys_NameFirst(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+			{Name: "rating", Type: "number"},
+		},
+	}
+
+	t.Run("name appears first with schema", func(t *testing.T) {
+		props := map[string]any{"name": "Test", "title": "Go", "rating": 5}
+		keys := OrderedPropKeys(props, schema)
+		if len(keys) < 1 || keys[0] != "name" {
+			t.Errorf("first key = %q, want \"name\"; keys = %v", keys[0], keys)
+		}
+	})
+
+	t.Run("name appears first without schema", func(t *testing.T) {
+		props := map[string]any{"name": "Test", "zebra": "z", "alpha": "a"}
+		keys := OrderedPropKeys(props, nil)
+		if len(keys) < 1 || keys[0] != "name" {
+			t.Errorf("first key = %q, want \"name\"; keys = %v", keys[0], keys)
+		}
+	})
+
+	t.Run("no name property present", func(t *testing.T) {
+		props := map[string]any{"title": "Go", "rating": 5}
+		keys := OrderedPropKeys(props, schema)
+		if len(keys) != 2 {
+			t.Errorf("len(keys) = %d, want 2", len(keys))
+		}
+		if keys[0] != "title" {
+			t.Errorf("first key = %q, want \"title\"", keys[0])
+		}
+	})
+}
+
+func TestValidateSchema_ReservedNameProperty(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "bad-type",
+		Properties: []Property{
+			{Name: "name", Type: "string"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) == 0 {
+		t.Fatal("expected validation error for reserved property name \"name\", got none")
+	}
+	found := false
+	for _, err := range errs {
+		if strings.Contains(err.Error(), "reserved") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("expected error mentioning \"reserved\", got: %v", errs)
+	}
+}
+
