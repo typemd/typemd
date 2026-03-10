@@ -41,6 +41,7 @@ vault/
 │   ├── types/              # Type schema 定義（YAML）
 │   │   ├── book.yaml
 │   │   └── person.yaml
+│   ├── properties.yaml     # 共用屬性定義（選用）
 │   ├── index.db            # SQLite 索引（自動更新）
 │   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
 └── objects/

@@ -87,9 +87,23 @@ func ValidateWikiLinks(v *Vault) []error {
 }
 
 // ValidateAllSchemas scans .typemd/types/*.yaml and validates each schema.
+// Also validates shared properties if .typemd/properties.yaml exists.
 // Returns a map of type name to validation errors.
 func ValidateAllSchemas(v *Vault) map[string][]error {
 	result := make(map[string][]error)
+
+	// Load and validate shared properties
+	sharedProps, err := v.LoadSharedProperties()
+	if err != nil {
+		result["_shared_properties"] = []error{err}
+		return result
+	}
+	if sharedProps != nil {
+		if errs := ValidateSharedProperties(sharedProps); len(errs) > 0 {
+			result["_shared_properties"] = errs
+		}
+	}
+
 	entries, err := os.ReadDir(v.TypesDir())
 	if err != nil {
 		return result
@@ -109,7 +123,7 @@ func ValidateAllSchemas(v *Vault) map[string][]error {
 			result[typeName] = []error{fmt.Errorf("parse YAML: %w", err)}
 			continue
 		}
-		if errs := ValidateSchema(&schema); len(errs) > 0 {
+		if errs := ValidateSchema(&schema, sharedProps); len(errs) > 0 {
 			result[typeName] = errs
 		}
 	}

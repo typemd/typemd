@@ -41,6 +41,7 @@ vault/
 │   ├── types/              # type schema definitions (YAML)
 │   │   ├── book.yaml
 │   │   └── person.yaml
+│   ├── properties.yaml     # shared property definitions (optional)
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
 └── objects/

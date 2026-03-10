@@ -14,8 +14,10 @@ const vaultDir = ".typemd"
 
 // Vault represents a typemd vault.
 type Vault struct {
-	Root string
-	db   *sql.DB
+	Root             string
+	db               *sql.DB
+	sharedProperties []Property
+	sharedPropsLoaded bool
 }
 
 // NewVault creates a Vault rooted at the given directory.
@@ -31,6 +33,11 @@ func (v *Vault) Dir() string {
 // TypesDir returns the types directory path.
 func (v *Vault) TypesDir() string {
 	return filepath.Join(v.Dir(), "types")
+}
+
+// SharedPropertiesPath returns the path to the shared properties file.
+func (v *Vault) SharedPropertiesPath() string {
+	return filepath.Join(v.Dir(), "properties.yaml")
 }
 
 // DBPath returns the SQLite database path.

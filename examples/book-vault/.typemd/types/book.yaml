@@ -19,18 +19,8 @@ properties:
   - name: published
     type: date
     emoji: 📅
-  - name: favorite
-    type: checkbox
-    emoji: ❤️
-  - name: tags
-    type: multi_select
-    emoji: 🔖
-    options:
-      - value: programming
-      - value: devops
-      - value: refactoring
-      - value: go
-      - value: management
+  - use: favorite
+  - use: tags
   - name: author
     type: relation
     emoji: ✍️

@@ -20,6 +20,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
 - All objects have a required `name` system property (first key in frontmatter, auto-populated from slug on creation)
 - Type schemas: `.typemd/types/*.yaml` (cannot define a property named `name` — it's reserved)
+- Shared properties: `.typemd/properties.yaml` (optional, defines reusable property definitions referenced via `use` in type schemas)
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
