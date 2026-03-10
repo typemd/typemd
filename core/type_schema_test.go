@@ -864,6 +864,68 @@ func TestValidateSchema_EmptyEmojisDoNotConflict(t *testing.T) {
 	}
 }
 
+func TestValidateSchema_PositivePinAccepted(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "status", Type: "string", Pin: 1},
+			{Name: "rating", Type: "number", Pin: 2},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors for valid pin values, got %v", errs)
+	}
+}
+
+func TestValidateSchema_NegativePinRejected(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "status", Type: "string", Pin: -1},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error for negative pin, got %d: %v", len(errs), errs)
+	}
+	if !strings.Contains(errs[0].Error(), "pin value must be a positive integer") {
+		t.Errorf("expected pin validation error, got %q", errs[0].Error())
+	}
+}
+
+func TestValidateSchema_DuplicatePinRejected(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "status", Type: "string", Pin: 1},
+			{Name: "rating", Type: "number", Pin: 1},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 1 {
+		t.Fatalf("expected 1 error for duplicate pin, got %d: %v", len(errs), errs)
+	}
+	if !strings.Contains(errs[0].Error(), "duplicate pin value") {
+		t.Errorf("expected duplicate pin error, got %q", errs[0].Error())
+	}
+}
+
+func TestValidateSchema_UnpinnedDoNotConflict(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+			{Name: "author", Type: "string"},
+			{Name: "status", Type: "string", Pin: 1},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors for unpinned properties, got %v", errs)
+	}
+}
+
 func TestTypeSchema_PropertyNames(t *testing.T) {
 	t.Run("empty schema", func(t *testing.T) {
 		schema := &TypeSchema{Name: "empty"}

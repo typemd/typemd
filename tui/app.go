@@ -608,7 +608,7 @@ func softWrapLines(content string, width int) string {
 
 // updateDetail refreshes viewport contents with current selected object.
 func (m *model) updateDetail() {
-	bodyContent := renderBody(m.selected, m.bodyViewport.Width())
+	bodyContent := renderBody(m.selected, m.bodyViewport.Width(), m.displayProps)
 	if m.softWrap && m.bodyViewport.Width() > 0 {
 		bodyContent = softWrapLines(bodyContent, m.bodyViewport.Width())
 	}
@@ -885,7 +885,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 	}
 
 	bodyVP := viewport.New()
-	bodyVP.SetContent(renderBody(selected, 0))
+	bodyVP.SetContent(renderBody(selected, 0, displayProps))
 	propsVP := viewport.New()
 	propsVP.SetContent(renderProperties(selected, displayProps))
 

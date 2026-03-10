@@ -14,6 +14,8 @@ type DisplayProperty struct {
 	Key        string
 	Value      any
 	Type       string // property type from schema (string, date, checkbox, etc.)
+	Emoji      string // property emoji from schema
+	Pin        int    // pin order (0 = not pinned, positive = pinned with order)
 	IsRelation bool
 	IsReverse  bool
 	IsBacklink bool
@@ -90,18 +92,14 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 		merged[k] = v
 	}
 
-	// Single pass over schema: fill missing properties + build relation/type sets
-	relProps := make(map[string]bool)
-	propTypes := make(map[string]string)
+	// Single pass over schema: fill missing properties + build property lookup
+	schemaProp := make(map[string]*Property)
 	if schema != nil {
-		for _, p := range schema.Properties {
+		for i, p := range schema.Properties {
 			if _, ok := merged[p.Name]; !ok {
 				merged[p.Name] = nil
 			}
-			if p.Type == "relation" {
-				relProps[p.Name] = true
-			}
-			propTypes[p.Name] = p.Type
+			schemaProp[p.Name] = &schema.Properties[i]
 		}
 	}
 
@@ -115,12 +113,17 @@ func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 	propKeys := OrderedPropKeys(merged, schema)
 	var result []DisplayProperty
 	for _, k := range propKeys {
-		result = append(result, DisplayProperty{
-			Key:        k,
-			Value:      merged[k],
-			Type:       propTypes[k],
-			IsRelation: relProps[k],
-		})
+		dp := DisplayProperty{
+			Key:   k,
+			Value: merged[k],
+		}
+		if sp, ok := schemaProp[k]; ok {
+			dp.Type = sp.Type
+			dp.Emoji = sp.Emoji
+			dp.Pin = sp.Pin
+			dp.IsRelation = sp.Type == "relation"
+		}
+		result = append(result, dp)
 	}
 
 	// Append reverse relations

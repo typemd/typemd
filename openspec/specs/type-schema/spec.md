@@ -92,3 +92,43 @@ The schema validation SHALL accept the following property types: `string`, `numb
 #### Scenario: Enum type rejected with guidance
 - **WHEN** a type schema defines a property with `type: enum`
 - **THEN** schema validation SHALL return an error message indicating to use `select` instead
+
+### Requirement: Property supports optional pin field
+
+The Property struct SHALL support an optional `pin` field that stores a positive integer value. When a property definition in a type schema YAML includes a `pin` field, it SHALL be parsed and stored. When the field is omitted, the pin SHALL default to zero (not pinned). Pinned properties are displayed prominently at the top of the TUI body panel rather than in the Properties panel.
+
+#### Scenario: Property with pin defined
+- **WHEN** a type schema property definition contains `pin: 1`
+- **THEN** the loaded Property SHALL have its Pin field set to 1
+
+#### Scenario: Property without pin defined
+- **WHEN** a type schema property definition does not contain a `pin` field
+- **THEN** the loaded Property SHALL have its Pin field set to 0
+
+### Requirement: Pin values must be positive integers
+
+When a property has a pin value set, it SHALL be a positive integer (greater than zero). Schema validation SHALL reject negative pin values.
+
+#### Scenario: Positive pin value accepted
+- **WHEN** a type schema property has `pin: 3`
+- **THEN** schema validation SHALL accept it without error
+
+#### Scenario: Negative pin value rejected
+- **WHEN** a type schema property has `pin: -1`
+- **THEN** schema validation SHALL return an error indicating invalid pin value
+
+### Requirement: Pin values unique within type scope
+
+Within a single type schema, no two properties SHALL have the same non-zero pin value. Schema validation SHALL reject duplicate pin values.
+
+#### Scenario: Unique pin values accepted
+- **WHEN** a type schema has properties with pin values 1 and 2
+- **THEN** schema validation SHALL accept it without error
+
+#### Scenario: Duplicate pin values rejected
+- **WHEN** a type schema has two properties both with `pin: 1`
+- **THEN** schema validation SHALL return an error indicating duplicate pin value 1
+
+#### Scenario: Unpinned properties do not conflict
+- **WHEN** a type schema has three properties where two have no pin and one has `pin: 1`
+- **THEN** schema validation SHALL accept it without error

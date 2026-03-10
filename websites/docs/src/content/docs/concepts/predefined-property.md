@@ -127,6 +127,31 @@ Links an Object to another Object. See the [Relations](/concepts/relations) page
   inverse: books
 ```
 
+## Property attributes
+
+Beyond `name` and `type`, properties support optional attributes:
+
+| Attribute | Type | Description |
+|-----------|------|-------------|
+| `emoji` | string | Visual icon for compact display (must be unique within the type) |
+| `pin` | integer | Positive integer for prominent display at the top of the TUI body panel. Lower values appear first. Pinned properties are excluded from the Properties panel. |
+| `default` | any | Default value assigned when creating a new object |
+
+### Pin example
+
+```yaml
+- name: status
+  type: select
+  emoji: 📋
+  pin: 1
+  options:
+    - value: to-read
+    - value: reading
+    - value: done
+```
+
+Pin values must be positive integers and unique within a type schema. Properties without `pin` (or `pin: 0`) appear in the Properties panel as usual.
+
 ## Validation
 
 TypeMD uses lenient validation — only properties defined in the schema are validated:

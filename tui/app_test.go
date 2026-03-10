@@ -155,7 +155,7 @@ func TestRenderBody_WithContent(t *testing.T) {
 		Properties: map[string]any{"title": "Test"},
 		Body:       "# Hello\nWorld",
 	}
-	result := renderBody(obj, 80)
+	result := renderBody(obj, 80, nil)
 	if strings.Contains(result, "book/test") {
 		t.Error("renderBody should NOT contain object ID (title moved to title panel)")
 	}
@@ -168,7 +168,7 @@ func TestRenderBody_WithContent(t *testing.T) {
 }
 
 func TestRenderBody_Nil(t *testing.T) {
-	result := renderBody(nil, 80)
+	result := renderBody(nil, 80, nil)
 	if !strings.Contains(result, "Select an object") {
 		t.Error("renderBody(nil, 80) should show placeholder")
 	}
@@ -176,7 +176,7 @@ func TestRenderBody_Nil(t *testing.T) {
 
 func TestRenderBody_EmptyBody(t *testing.T) {
 	obj := &core.Object{ID: "book/test", Body: ""}
-	result := renderBody(obj, 80)
+	result := renderBody(obj, 80, nil)
 	if !strings.Contains(result, "(empty)") {
 		t.Error("renderBody with empty body should show (empty)")
 	}

@@ -63,6 +63,7 @@ type Property struct {
 	Name          string   `yaml:"name"`
 	Type          string   `yaml:"type"`
 	Emoji         string   `yaml:"emoji,omitempty"`
+	Pin           int      `yaml:"pin,omitempty"`
 	Options       []Option `yaml:"options,omitempty"`
 	Target        string   `yaml:"target,omitempty"`
 	Default       any      `yaml:"default,omitempty"`
@@ -157,6 +158,7 @@ func ValidateSchema(schema *TypeSchema) []error {
 	}
 	seen := make(map[string]bool)
 	seenEmoji := make(map[string]string) // emoji -> property name
+	seenPin := make(map[int]string)      // pin -> property name
 	for i, prop := range schema.Properties {
 		if prop.Name == "" {
 			errs = append(errs, fmt.Errorf("property[%d]: missing required field: name", i))
@@ -171,6 +173,14 @@ func ValidateSchema(schema *TypeSchema) []error {
 				errs = append(errs, fmt.Errorf("property %q: duplicate property emoji %q (already used by %q)", prop.Name, prop.Emoji, otherProp))
 			}
 			seenEmoji[prop.Emoji] = prop.Name
+		}
+		if prop.Pin < 0 {
+			errs = append(errs, fmt.Errorf("property %q: pin value must be a positive integer, got %d", prop.Name, prop.Pin))
+		} else if prop.Pin > 0 {
+			if otherProp, ok := seenPin[prop.Pin]; ok {
+				errs = append(errs, fmt.Errorf("property %q: duplicate pin value %d (already used by %q)", prop.Name, prop.Pin, otherProp))
+			}
+			seenPin[prop.Pin] = prop.Name
 		}
 		if prop.Type == "" {
 			errs = append(errs, fmt.Errorf("property %q: missing required field: type", prop.Name))
