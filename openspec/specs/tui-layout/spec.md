@@ -65,3 +65,14 @@ The title panel SHALL occupy exactly 3 lines of vertical space (1 content line +
 #### Scenario: Vertical space allocation
 - **WHEN** the TUI detail view is rendered with an object selected
 - **THEN** the body and properties panels SHALL have their content height reduced by 3 lines compared to the no-title-panel state
+
+### Requirement: TUI startup initializes from restored state
+The TUI `Start()` function SHALL attempt to load session state from `.typemd/tui-state.yaml` before applying default values. Restored state values take precedence over hardcoded defaults. If no state file exists or loading fails, the TUI SHALL use the current default behavior (first group expanded, first object selected).
+
+#### Scenario: Startup with saved state
+- **WHEN** the TUI starts and `.typemd/tui-state.yaml` contains valid state
+- **THEN** the TUI SHALL initialize with the restored state instead of hardcoded defaults
+
+#### Scenario: Startup without saved state
+- **WHEN** the TUI starts and no `.typemd/tui-state.yaml` exists
+- **THEN** the TUI SHALL initialize with current defaults (first group expanded, cursor at top, focus on left panel)
