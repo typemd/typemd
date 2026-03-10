@@ -1,9 +1,6 @@
 name: person
 emoji: 👤
 properties:
-  - name: name
-    type: string
-    emoji: 🏷️
   - name: website
     type: url
     emoji: 🌐
