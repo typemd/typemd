@@ -23,6 +23,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
+- TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch)
 - Object files: `objects/<type>/<name>.md`
 
 ## Web UI Architecture

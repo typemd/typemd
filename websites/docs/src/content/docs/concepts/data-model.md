@@ -17,7 +17,8 @@ vault/
 │   ├── types/              # type schema definitions (YAML)
 │   │   ├── book.yaml
 │   │   └── person.yaml
-│   └── index.db            # SQLite index (auto-updated)
+│   ├── index.db            # SQLite index (auto-updated)
+│   └── tui-state.yaml      # TUI session state (auto-saved)
 └── objects/
     ├── book/
     │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md

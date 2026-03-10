@@ -85,6 +85,23 @@ Launch with `--readonly` to prevent any edits. In this mode:
 
 This is useful for safely browsing a vault in shared terminals, presentations, or automated contexts.
 
+## Session State
+
+The TUI automatically saves your session state to `.typemd/tui-state.yaml` when you quit. On next launch, it restores:
+
+- **Selected object** — cursor returns to the same object (identified by Object ID)
+- **Expanded groups** — type groups stay expanded/collapsed as you left them
+- **Panel dimensions** — left panel and properties panel widths
+- **Properties visibility** — whether the properties panel was shown
+- **Focus panel** — which panel had focus (left, body, or properties)
+- **Scroll offset** — vertical scroll position in the object list
+
+If the previously selected object was deleted, the TUI falls back to the first object in the same type group, then to the first object overall.
+
+Search state is not persisted — each session starts with a fresh view.
+
+If the state file is missing or corrupt, the TUI silently falls back to default startup behavior.
+
 ## Auto-refresh
 
 The TUI watches the `objects/` directory via fsnotify. When files are created, modified, or deleted, it automatically syncs the database and refreshes the view (200ms debounce), preserving the current selection when possible.

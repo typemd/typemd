@@ -15,7 +15,8 @@ vault/
 │   ├── types/              # Type schema 定義（YAML）
 │   │   ├── book.yaml
 │   │   └── person.yaml
-│   └── index.db            # SQLite 索引（自動更新）
+│   ├── index.db            # SQLite 索引（自動更新）
+│   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
 └── objects/
     ├── book/
     │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md

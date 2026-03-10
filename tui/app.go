@@ -244,6 +244,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		switch msg.String() {
 		case "q", "ctrl+c":
+			if m.vault != nil {
+				saveSessionState(m.vault.Root, m.captureState())
+			}
 			return m, tea.Quit
 
 		case "/":
@@ -862,25 +865,24 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 
 	groups := buildGroups(objects, v)
 
-	// Expand first group so first object is visible and selectable
-	if len(groups) > 0 {
-		groups[0].Expanded = true
-	}
+	// Load saved session state (or zero value if missing/corrupt)
+	savedState := loadSessionState(vaultPath)
 
-	// Auto-select first object and capture its mtime for conflict detection
+	// Apply saved state to groups and resolve cursor position
+	initialCursor, selectedID := applySessionState(savedState, groups)
+
+	// Select the resolved object and capture its mtime for conflict detection
 	var selected *core.Object
 	var displayProps []core.DisplayProperty
 	var initialModTime time.Time
-	rows := visibleRows(groups)
-	for _, row := range rows {
-		if !row.IsHeader && row.Object != nil {
-			selected = row.Object
+	if selectedID != "" {
+		if obj, err := v.GetObject(selectedID); err == nil {
+			selected = obj
 			displayProps, _ = v.BuildDisplayProperties(selected)
 			objPath := v.ObjectPath(selected.Type, selected.Filename)
 			if info, err := os.Stat(objPath); err == nil {
 				initialModTime = info.ModTime()
 			}
-			break
 		}
 	}
 
@@ -891,25 +893,27 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 
 	bodyTA := newBodyTextarea()
 
-	// Set cursor to first object (skip header row)
-	initialCursor := 0
-	for i, row := range rows {
-		if !row.IsHeader && row.Object != nil {
-			initialCursor = i
-			break
-		}
-	}
+	// Restore focus panel (default: left)
+	focus := stringToFocusPanel(savedState.Focus)
+
+	// Restore panel widths (0 = use default, applied later on WindowSizeMsg)
+	leftW := savedState.LeftPanelWidth
+	propsWidth := savedState.PropsPanelWidth
+	propsVisible := savedState.PropsVisible
 
 	m := model{
 		vault:         v,
-		focus:         focusLeft,
+		focus:         focus,
 		groups:        groups,
 		cursor:        initialCursor,
+		scrollOffset:  savedState.ScrollOffset,
 		selected:      selected,
 		bodyViewport:  bodyVP,
 		bodyTextarea:  bodyTA,
 		propsViewport: propsVP,
-		propsVisible:  false,
+		leftW:         leftW,
+		propsWidth:    propsWidth,
+		propsVisible:  propsVisible,
 		readOnly:      readOnly,
 		softWrap:      true,
 		displayProps:  displayProps,
