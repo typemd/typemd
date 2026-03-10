@@ -175,11 +175,11 @@ func (v *Vault) resolveSchemaUseEntries(schema *TypeSchema) error {
 		return nil
 	}
 
-	shared, err := v.LoadSharedProperties()
+	_, err := v.LoadSharedProperties()
 	if err != nil {
 		return err
 	}
-	return resolveUseEntries(schema, SharedPropertiesMap(shared))
+	return resolveUseEntries(schema, v.sharedPropsMap)
 }
 
 // validPropertyTypes lists allowed property types.
@@ -193,6 +193,37 @@ var validPropertyTypes = map[string]bool{
 	"select":       true,
 	"multi_select": true,
 	"relation":     true,
+}
+
+// validatePropertyType validates the type field and related constraints of a property.
+// Returns validation errors with the given property name prefix.
+func validatePropertyType(prop Property, namePrefix string) []error {
+	var errs []error
+
+	if prop.Type == "" {
+		errs = append(errs, fmt.Errorf("%s: missing required field: type", namePrefix))
+		return errs
+	}
+
+	if prop.Type == "enum" {
+		errs = append(errs, fmt.Errorf("%s: type \"enum\" is no longer supported, use \"select\" with \"options\" instead", namePrefix))
+		return errs
+	}
+
+	if !validPropertyTypes[prop.Type] {
+		errs = append(errs, fmt.Errorf("%s: invalid type %q (valid: string, number, date, datetime, url, checkbox, select, multi_select, relation)", namePrefix, prop.Type))
+		return errs
+	}
+
+	if (prop.Type == "select" || prop.Type == "multi_select") && len(prop.Options) == 0 {
+		errs = append(errs, fmt.Errorf("%s: %s type requires non-empty options", namePrefix, prop.Type))
+	}
+
+	if prop.Type == "relation" && prop.Target == "" {
+		errs = append(errs, fmt.Errorf("%s: relation type requires target", namePrefix))
+	}
+
+	return errs
 }
 
 // ValidateSchema validates a type schema itself for correctness.
@@ -302,23 +333,10 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 			}
 			seenPin[prop.Pin] = prop.Name
 		}
-		if prop.Type == "" {
-			errs = append(errs, fmt.Errorf("property %q: missing required field: type", prop.Name))
+		typeErrs := validatePropertyType(prop, fmt.Sprintf("property %q", prop.Name))
+		errs = append(errs, typeErrs...)
+		if len(typeErrs) > 0 && (prop.Type == "" || prop.Type == "enum" || !validPropertyTypes[prop.Type]) {
 			continue
-		}
-		if prop.Type == "enum" {
-			errs = append(errs, fmt.Errorf("property %q: type \"enum\" is no longer supported, use \"select\" with \"options\" instead (run tmd migrate to convert)", prop.Name))
-			continue
-		}
-		if !validPropertyTypes[prop.Type] {
-			errs = append(errs, fmt.Errorf("property %q: invalid type %q (valid: string, number, date, datetime, url, checkbox, select, multi_select, relation)", prop.Name, prop.Type))
-			continue
-		}
-		if (prop.Type == "select" || prop.Type == "multi_select") && len(prop.Options) == 0 {
-			errs = append(errs, fmt.Errorf("property %q: %s type requires non-empty options", prop.Name, prop.Type))
-		}
-		if prop.Type == "relation" && prop.Target == "" {
-			errs = append(errs, fmt.Errorf("property %q: relation type requires target", prop.Name))
 		}
 	}
 	return errs
@@ -327,27 +345,23 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 // validateUseOverrides checks that a `use` property entry only has allowed override fields.
 func validateUseOverrides(index int, prop Property) error {
 	// Only pin and emoji overrides are allowed on use entries.
-	// Check for any disallowed fields that are set.
-	if prop.Type != "" {
-		return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got \"type\"", index, prop.Use)
+	disallowed := []struct {
+		fieldName string
+		isSet     bool
+	}{
+		{"type", prop.Type != ""},
+		{"options", len(prop.Options) > 0},
+		{"target", prop.Target != ""},
+		{"default", prop.Default != nil},
+		{"multiple", prop.Multiple},
+		{"bidirectional", prop.Bidirectional},
+		{"inverse", prop.Inverse != ""},
 	}
-	if len(prop.Options) > 0 {
-		return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got \"options\"", index, prop.Use)
-	}
-	if prop.Target != "" {
-		return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got \"target\"", index, prop.Use)
-	}
-	if prop.Default != nil {
-		return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got \"default\"", index, prop.Use)
-	}
-	if prop.Multiple {
-		return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got \"multiple\"", index, prop.Use)
-	}
-	if prop.Bidirectional {
-		return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got \"bidirectional\"", index, prop.Use)
-	}
-	if prop.Inverse != "" {
-		return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got \"inverse\"", index, prop.Use)
+
+	for _, f := range disallowed {
+		if f.isSet {
+			return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got %q", index, prop.Use, f.fieldName)
+		}
 	}
 	return nil
 }

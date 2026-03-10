@@ -32,6 +32,7 @@ func (v *Vault) LoadSharedProperties() ([]Property, error) {
 	}
 
 	v.sharedProperties = file.Properties
+	v.sharedPropsMap = SharedPropertiesMap(file.Properties)
 	v.sharedPropsLoaded = true
 	return v.sharedProperties, nil
 }
@@ -65,23 +66,10 @@ func ValidateSharedProperties(props []Property) []error {
 		seen[prop.Name] = true
 
 		// Validate using the same rules as type schema properties
-		if prop.Type == "" {
-			errs = append(errs, fmt.Errorf("shared property %q: missing required field: type", prop.Name))
+		typeErrs := validatePropertyType(prop, fmt.Sprintf("shared property %q", prop.Name))
+		errs = append(errs, typeErrs...)
+		if len(typeErrs) > 0 && (prop.Type == "" || prop.Type == "enum" || !validPropertyTypes[prop.Type]) {
 			continue
-		}
-		if prop.Type == "enum" {
-			errs = append(errs, fmt.Errorf("shared property %q: type \"enum\" is no longer supported, use \"select\" with \"options\" instead", prop.Name))
-			continue
-		}
-		if !validPropertyTypes[prop.Type] {
-			errs = append(errs, fmt.Errorf("shared property %q: invalid type %q (valid: string, number, date, datetime, url, checkbox, select, multi_select, relation)", prop.Name, prop.Type))
-			continue
-		}
-		if (prop.Type == "select" || prop.Type == "multi_select") && len(prop.Options) == 0 {
-			errs = append(errs, fmt.Errorf("shared property %q: %s type requires non-empty options", prop.Name, prop.Type))
-		}
-		if prop.Type == "relation" && prop.Target == "" {
-			errs = append(errs, fmt.Errorf("shared property %q: relation type requires target", prop.Name))
 		}
 	}
 

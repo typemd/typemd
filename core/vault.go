@@ -14,9 +14,10 @@ const vaultDir = ".typemd"
 
 // Vault represents a typemd vault.
 type Vault struct {
-	Root             string
-	db               *sql.DB
-	sharedProperties []Property
+	Root              string
+	db                *sql.DB
+	sharedProperties  []Property
+	sharedPropsMap    map[string]Property
 	sharedPropsLoaded bool
 }
 
