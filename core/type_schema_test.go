@@ -503,7 +503,7 @@ func TestValidateSchema_AllNewTypes(t *testing.T) {
 			{Name: "title", Type: "string"},
 			{Name: "count", Type: "number"},
 			{Name: "published", Type: "date"},
-			{Name: "created_at", Type: "datetime"},
+			{Name: "due_at", Type: "datetime"},
 			{Name: "homepage", Type: "url"},
 			{Name: "active", Type: "checkbox"},
 			{Name: "status", Type: "select", Options: []Option{{Value: "a"}}},

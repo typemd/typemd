@@ -39,6 +39,7 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	// Cache loaded type schemas and their property name sets per type
 	schemaCache := make(map[string]*TypeSchema)
 	propertyNameCache := make(map[string]map[string]bool)
+	sysNames := SystemPropertyNames()
 
 	objsDir := v.ObjectsDir()
 	if _, err := os.Stat(objsDir); os.IsNotExist(err) {
@@ -102,10 +103,15 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 			}
 		}
 
-		// Filter properties by type schema (only index schema-defined keys)
+		// Filter properties by type schema (only index schema-defined keys + system properties)
 		if allowed := propertyNameCache[typeName]; allowed != nil {
-			filtered := make(map[string]any, len(allowed)+1)
-			filtered[NameProperty] = props[NameProperty] // always preserve system property
+			filtered := make(map[string]any, len(allowed)+len(sysNames))
+			// Preserve all system properties
+			for _, name := range sysNames {
+				if val, ok := props[name]; ok {
+					filtered[name] = val
+				}
+			}
 			for k, val := range props {
 				if allowed[k] {
 					filtered[k] = val

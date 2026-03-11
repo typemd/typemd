@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/adrg/frontmatter"
 	"gopkg.in/yaml.v3"
@@ -148,6 +149,9 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	// Generate initial properties from schema
 	props := make(map[string]any)
 	props[NameProperty] = slug // system property: display name from slug
+	now := time.Now().Format(time.RFC3339)
+	props[CreatedAtProperty] = now
+	props[UpdatedAtProperty] = now
 	for _, p := range schema.Properties {
 		if p.Default != nil {
 			props[p.Name] = p.Default
@@ -200,6 +204,7 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 
 // saveObjectFile writes object properties to both .md file and SQLite.
 func (v *Vault) saveObjectFile(obj *Object) error {
+	obj.Properties[UpdatedAtProperty] = time.Now().Format(time.RFC3339)
 	schema, _ := v.LoadType(obj.Type)
 	data, err := writeFrontmatter(obj.Properties, obj.Body, OrderedPropKeys(obj.Properties, schema))
 	if err != nil {

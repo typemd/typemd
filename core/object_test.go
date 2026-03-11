@@ -242,9 +242,9 @@ func TestVault_NewObject(t *testing.T) {
 		t.Error("expected .md file to exist")
 	}
 
-	// Properties: name (system) + title, status, rating (schema)
-	if len(obj.Properties) != 4 {
-		t.Errorf("len(Properties) = %d, want 4", len(obj.Properties))
+	// Properties: name, created_at, updated_at (system) + title, status, rating (schema)
+	if len(obj.Properties) != 6 {
+		t.Errorf("len(Properties) = %d, want 6", len(obj.Properties))
 	}
 	if obj.Properties["name"] != "golang-in-action" {
 		t.Errorf("Properties[\"name\"] = %v, want %q", obj.Properties["name"], "golang-in-action")

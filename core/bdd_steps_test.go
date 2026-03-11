@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 	"strings"
+	"time"
 
 	"github.com/cucumber/godog"
 )
@@ -51,6 +52,9 @@ type domainContext struct {
 	// shared properties results
 	sharedProperties []Property
 	loadedSchema     *TypeSchema
+
+	// system property tracking
+	createdAtSnapshot string // snapshot of created_at after object creation
 }
 
 func newDomainContext() *domainContext {
@@ -236,6 +240,10 @@ func (dc *domainContext) aObjectNamedExists(typeName, name string) {
 	dc.objects[name] = obj
 	dc.prevObject = dc.currentObject
 	dc.currentObject = obj
+	// Snapshot created_at for system property tests
+	if val, ok := obj.Properties["created_at"]; ok {
+		dc.createdAtSnapshot = fmt.Sprintf("%v", val)
+	}
 }
 
 func (dc *domainContext) iGetTheObjectByItsID() {
@@ -827,7 +835,7 @@ properties:
     type: number
   - name: published
     type: date
-  - name: created_at
+  - name: due_at
     type: datetime
   - name: homepage
     type: url
@@ -1443,6 +1451,172 @@ func (dc *domainContext) theLoadedPropertyAtIndexShouldBe(index int, expectedNam
 	return nil
 }
 
+// ── System property steps ────────────────────────────────────────────────
+
+func (dc *domainContext) theSystemPropertyRegistryShouldContain(nameList string) error {
+	expected := strings.Split(nameList, ", ")
+	for i, s := range expected {
+		expected[i] = strings.TrimSpace(s)
+	}
+	got := SystemPropertyNames()
+	if len(got) != len(expected) {
+		return fmt.Errorf("registry has %d entries, want %d: %v", len(got), len(expected), got)
+	}
+	for i, name := range expected {
+		if got[i] != name {
+			return fmt.Errorf("registry[%d] = %q, want %q", i, got[i], name)
+		}
+	}
+	return nil
+}
+
+func (dc *domainContext) shouldBeASystemProperty(name string) error {
+	if !IsSystemProperty(name) {
+		return fmt.Errorf("%q should be a system property", name)
+	}
+	return nil
+}
+
+func (dc *domainContext) shouldNotBeASystemProperty(name string) error {
+	if IsSystemProperty(name) {
+		return fmt.Errorf("%q should not be a system property", name)
+	}
+	return nil
+}
+
+func (dc *domainContext) aTypeSchemaWithASystemProperty(typeName, propName string) {
+	content := fmt.Sprintf(`name: %s
+properties:
+  - name: %s
+    type: datetime
+`, typeName, propName)
+	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+}
+
+func (dc *domainContext) aSharedPropertiesFileWithASystemProperty(propName string) {
+	content := fmt.Sprintf(`properties:
+  - name: %s
+    type: datetime
+`, propName)
+	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
+}
+
+func (dc *domainContext) theObjectShouldHaveATimestamp(propName string) error {
+	got, err := dc.vault.GetObject(dc.currentObject.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
+	}
+	val, ok := got.Properties[propName]
+	if !ok || val == nil || val == "" {
+		return fmt.Errorf("expected %q to be set, got %v", propName, val)
+	}
+	return nil
+}
+
+func (dc *domainContext) theObjectTimestampShouldNotHaveChanged(propName string) error {
+	got, err := dc.vault.GetObject(dc.currentObject.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
+	}
+	val := fmt.Sprintf("%v", got.Properties[propName])
+	if dc.createdAtSnapshot == "" {
+		return fmt.Errorf("no snapshot for %q", propName)
+	}
+	if val != dc.createdAtSnapshot {
+		return fmt.Errorf("%q changed: was %q, now %q", propName, dc.createdAtSnapshot, val)
+	}
+	return nil
+}
+
+func (dc *domainContext) theObjectTimestampShouldBeRecent(propName string) error {
+	got, err := dc.vault.GetObject(dc.currentObject.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
+	}
+	val, ok := got.Properties[propName]
+	if !ok || val == nil || val == "" {
+		return fmt.Errorf("expected %q to be set", propName)
+	}
+	s := fmt.Sprintf("%v", val)
+	parsed, err := time.Parse(time.RFC3339, s)
+	if err != nil {
+		return fmt.Errorf("%q value %q is not valid RFC 3339: %v", propName, s, err)
+	}
+	if time.Since(parsed) > 5*time.Second {
+		return fmt.Errorf("%q value %q is not recent (older than 5s)", propName, s)
+	}
+	return nil
+}
+
+func (dc *domainContext) theFrontmatterShouldHaveSystemPropertiesBeforeSchemaProperties() error {
+	data, err := os.ReadFile(dc.vault.ObjectPath(dc.currentObject.Type, dc.currentObject.Filename))
+	if err != nil {
+		return fmt.Errorf("ReadFile error: %v", err)
+	}
+	content := string(data)
+	nameIdx := strings.Index(content, "name:")
+	createdIdx := strings.Index(content, "created_at:")
+	updatedIdx := strings.Index(content, "updated_at:")
+	titleIdx := strings.Index(content, "title:")
+
+	if nameIdx == -1 || createdIdx == -1 || updatedIdx == -1 {
+		return fmt.Errorf("missing system properties in frontmatter:\n%s", content)
+	}
+
+	if nameIdx > createdIdx {
+		return fmt.Errorf("name should come before created_at")
+	}
+	if createdIdx > updatedIdx {
+		return fmt.Errorf("created_at should come before updated_at")
+	}
+	if titleIdx != -1 && updatedIdx > titleIdx {
+		return fmt.Errorf("updated_at should come before title")
+	}
+	return nil
+}
+
+func (dc *domainContext) theIndexedPropertiesForTheObjectShouldContain(propName string) error {
+	var propsJSON string
+	err := dc.vault.db.QueryRow("SELECT properties FROM objects WHERE id = ?", dc.currentObject.ID).Scan(&propsJSON)
+	if err != nil {
+		return fmt.Errorf("query error: %v", err)
+	}
+	var props map[string]any
+	if err := json.Unmarshal([]byte(propsJSON), &props); err != nil {
+		return fmt.Errorf("unmarshal error: %v", err)
+	}
+	if _, ok := props[propName]; !ok {
+		return fmt.Errorf("indexed properties do not contain %q: %v", propName, props)
+	}
+	return nil
+}
+
+func (dc *domainContext) aRawObjectFileWithoutTimestampsExists() {
+	typeName := "book"
+	filename := "legacy-book-" + mustULID()
+	objPath := dc.vault.ObjectPath(typeName, filename)
+	os.MkdirAll(filepath.Dir(objPath), 0755)
+	content := "---\nname: legacy-book\ntitle: Legacy\n---\n"
+	os.WriteFile(objPath, []byte(content), 0644)
+	dc.currentObject = &Object{
+		ID:       typeName + "/" + filename,
+		Type:     typeName,
+		Filename: filename,
+	}
+}
+
+func (dc *domainContext) theRawObjectFileShouldNotHaveTimestampsAdded() error {
+	data, err := os.ReadFile(dc.vault.ObjectPath(dc.currentObject.Type, dc.currentObject.Filename))
+	if err != nil {
+		return fmt.Errorf("ReadFile error: %v", err)
+	}
+	content := string(data)
+	if strings.Contains(content, "created_at:") || strings.Contains(content, "updated_at:") {
+		return fmt.Errorf("timestamps were added to existing object:\n%s", content)
+	}
+	return nil
+}
+
 func initDomainSteps(ctx *godog.ScenarioContext) {
 	dc := newDomainContext()
 
@@ -1614,6 +1788,20 @@ func initDomainSteps(ctx *godog.ScenarioContext) {
 	ctx.Step(`^the loaded property "([^"]*)" should have pin (\d+)$`, dc.theLoadedPropertyShouldHavePin)
 	ctx.Step(`^a type schema "([^"]*)" with mixed use and name properties$`, dc.aTypeSchemaWithMixedUseAndNameProperties)
 	ctx.Step(`^the loaded property at index (\d+) should be "([^"]*)"$`, dc.theLoadedPropertyAtIndexShouldBe)
+
+	// System property steps
+	ctx.Step(`^the system property registry should contain "([^"]*)"$`, dc.theSystemPropertyRegistryShouldContain)
+	ctx.Step(`^"([^"]*)" should be a system property$`, dc.shouldBeASystemProperty)
+	ctx.Step(`^"([^"]*)" should not be a system property$`, dc.shouldNotBeASystemProperty)
+	ctx.Step(`^a type schema "([^"]*)" with a system property "([^"]*)"$`, dc.aTypeSchemaWithASystemProperty)
+	ctx.Step(`^a shared properties file with a system property "([^"]*)"$`, dc.aSharedPropertiesFileWithASystemProperty)
+	ctx.Step(`^the object should have an? "([^"]*)" timestamp$`, dc.theObjectShouldHaveATimestamp)
+	ctx.Step(`^the object "([^"]*)" should not have changed$`, dc.theObjectTimestampShouldNotHaveChanged)
+	ctx.Step(`^the object "([^"]*)" should be recent$`, dc.theObjectTimestampShouldBeRecent)
+	ctx.Step(`^the frontmatter should have system properties before schema properties$`, dc.theFrontmatterShouldHaveSystemPropertiesBeforeSchemaProperties)
+	ctx.Step(`^the indexed properties for the object should contain "([^"]*)"$`, dc.theIndexedPropertiesForTheObjectShouldContain)
+	ctx.Step(`^a raw object file without timestamps exists$`, dc.aRawObjectFileWithoutTimestampsExists)
+	ctx.Step(`^the raw object file should not have timestamps added$`, dc.theRawObjectFileShouldNotHaveTimestampsAdded)
 
 	// Common steps
 	ctx.Step(`^an error should occur$`, dc.anErrorShouldOccur)

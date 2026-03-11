@@ -56,8 +56,8 @@ func ValidateSharedProperties(props []Property) []error {
 			errs = append(errs, fmt.Errorf("shared property[%d]: missing required field: name", i))
 			continue
 		}
-		if prop.Name == NameProperty {
-			errs = append(errs, fmt.Errorf("shared property %q: %q is a reserved system property", prop.Name, NameProperty))
+		if IsSystemProperty(prop.Name) {
+			errs = append(errs, fmt.Errorf("shared property %q: %q is a reserved system property", prop.Name, prop.Name))
 			continue
 		}
 		if seen[prop.Name] {

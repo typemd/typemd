@@ -55,7 +55,7 @@ Type schema 中的每個屬性都有一個 `type`，決定它接受什麼值以�
 接受 ISO 8601 日期時間值，必須包含時間部分（至少包含時和分）。
 
 ```yaml
-- name: created_at
+- name: due_at
   type: datetime
 ```
 

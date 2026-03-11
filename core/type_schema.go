@@ -15,31 +15,39 @@ import (
 var dateRegexp = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 
 // OrderedPropKeys returns property keys ordered by schema definition.
-// The "name" property always appears first (if present).
-// Keys not in the schema are appended alphabetically at the end.
-// If schema is nil, keys are sorted alphabetically (with "name" first).
+// System properties appear first in registry order (name, created_at, updated_at),
+// followed by schema-defined properties, then extras alphabetically.
+// If schema is nil, keys are sorted alphabetically (with system properties first).
 func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
-	_, hasName := props[NameProperty]
+	// Collect system properties that are present, in registry order
+	sysNames := SystemPropertyNames()
+	var prefix []string
+	sysSet := make(map[string]bool)
+	for _, name := range sysNames {
+		sysSet[name] = true
+		if _, ok := props[name]; ok {
+			prefix = append(prefix, name)
+		}
+	}
 
 	if schema == nil {
 		keys := make([]string, 0, len(props))
 		for k := range props {
-			if k != NameProperty {
+			if !sysSet[k] {
 				keys = append(keys, k)
 			}
 		}
 		sort.Strings(keys)
-		if hasName {
-			keys = append([]string{NameProperty}, keys...)
-		}
-		return keys
+		return append(prefix, keys...)
 	}
 
 	seen := make(map[string]bool)
-	seen[NameProperty] = true // exclude name from schema ordering
+	for k := range sysSet {
+		seen[k] = true
+	}
 	var keys []string
 	for _, p := range schema.Properties {
-		if _, ok := props[p.Name]; ok && p.Name != NameProperty {
+		if _, ok := props[p.Name]; ok && !sysSet[p.Name] {
 			keys = append(keys, p.Name)
 			seen[p.Name] = true
 		}
@@ -52,10 +60,7 @@ func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
 	}
 	sort.Strings(extra)
 	keys = append(keys, extra...)
-	if hasName {
-		keys = append([]string{NameProperty}, keys...)
-	}
-	return keys
+	return append(prefix, keys...)
 }
 
 // TypeSchema defines the schema for a type.
@@ -305,8 +310,8 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 			errs = append(errs, fmt.Errorf("property[%d]: missing required field: name", i))
 			continue
 		}
-		if prop.Name == NameProperty {
-			errs = append(errs, fmt.Errorf("property %q: %q is a reserved system property and cannot be defined in type schemas", prop.Name, NameProperty))
+		if IsSystemProperty(prop.Name) {
+			errs = append(errs, fmt.Errorf("property %q: %q is a reserved system property and cannot be defined in type schemas", prop.Name, prop.Name))
 			continue
 		}
 		// Check if local property name conflicts with a shared property name
