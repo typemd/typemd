@@ -11,6 +11,18 @@ Objects are stored as Markdown files with YAML frontmatter under `objects/<type>
 
 When created via the CLI (`tmd object create`), a 26-character lowercase ULID is automatically appended to the slug for uniqueness. Objects created manually (without the CLI) do not require a ULID — this is backward compatible.
 
+### System properties
+
+All objects have three system properties managed by TypeMD:
+
+| Property | Description |
+|----------|-------------|
+| `name` | Display name, auto-populated from the slug on creation |
+| `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) |
+| `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) |
+
+System properties always appear first in frontmatter in the order above, followed by schema-defined properties. These names are reserved and cannot be used in type schemas or shared properties.
+
 ```
 vault/
 ├── .typemd/

@@ -9,6 +9,18 @@ sidebar:
 
 Object 以 Markdown 檔案搭配 YAML frontmatter 儲存在 `objects/<type>/` 底下。完整的 Object ID 格式為 `type/<slug>-<ulid>`，例如 `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`。透過 CLI 建立的 Object，檔名會自動附加 ULID（26 位小寫字元）以確保唯一性。
 
+### 系統屬性
+
+所有 Object 都有三個由 TypeMD 管理的系統屬性：
+
+| 屬性 | 說明 |
+|------|------|
+| `name` | 顯示名稱，建立時從 slug 自動填入 |
+| `created_at` | 建立時間戳記，RFC 3339 格式（僅設定一次，不會修改） |
+| `updated_at` | 最後修改時間戳記，RFC 3339 格式（每次儲存時更新） |
+
+系統屬性在 frontmatter 中永遠依上述順序排在最前面，接著才是 schema 定義的屬性。這些名稱是保留的，不能在 type schema 或 shared properties 中使用。
+
 ```
 vault/
 ├── .typemd/

@@ -11,11 +11,14 @@ An Object is the fundamental building block of a TypeMD knowledge base. Everythi
 
 An Object is a Markdown file with two parts:
 
-- **Frontmatter** — YAML metadata at the top (properties like title, status, rating)
+- **Frontmatter** — YAML metadata at the top (system properties like `name` and timestamps, plus schema-defined properties)
 - **Body** — free-form Markdown content (notes, thoughts, references)
 
 ```markdown
 ---
+name: golang-in-action
+created_at: "2026-03-09T10:30:00+08:00"
+updated_at: "2026-03-11T18:00:00+08:00"
 title: Go in Action
 status: reading
 rating: 4.5

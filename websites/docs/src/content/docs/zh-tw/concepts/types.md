@@ -89,3 +89,4 @@ TypeMD 採用寬鬆驗證：
 - `date` 必須是 YYYY-MM-DD 格式
 - `url` 必須以 http:// 或 https:// 開頭
 - `relation` 的目標會檢查 Type 是否正確
+- 屬性名稱 `name`、`created_at` 和 `updated_at` 為[系統屬性](/zh-tw/concepts/data-model#系統屬性)保留，不能在 type schema 中使用
