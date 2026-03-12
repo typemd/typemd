@@ -15,6 +15,14 @@
       "version": "1.0.0",
       "category": "workflow",
       "tags": ["import", "markdown", "migration", "convert"]
+    },
+    {
+      "name": "vault-guide",
+      "source": "./plugins/vault-guide",
+      "description": "typemd reference guide — teaches Claude how to work with typemd vaults, CLI commands, type schemas, and objects",
+      "version": "1.0.0",
+      "category": "reference",
+      "tags": ["reference", "guide", "documentation", "vault"]
     }
   ]
 }
