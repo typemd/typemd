@@ -43,21 +43,34 @@ Type 為你的知識庫帶來**一致性**和**可查詢性**：
 
 ## 內建 Type
 
-TypeMD 內建三種 Type 讓你快速開始：
+TypeMD 內建四種 Type 讓你快速開始：
 
 | Type | 屬性 |
 |------|------|
 | 📚 `book` | title (string)、status (select: to-read/reading/done)、rating (number) |
 | 👤 `person` | role (string) |
-| 📝 `note` | title (string)、tags (string) |
+| 📝 `note` | title (string) |
+| 🏷️ `tag` | color (string)、icon (string) |
 
 你可以修改這些內建 Type，或建立自己的 Type 來符合你的知識領域。
 
+## 標籤
+
+標籤在 TypeMD 中是一級 Object。每個 Object 都有一個 `tags` [系統屬性](/zh-tw/concepts/data-model#系統屬性)，存放對 `tag` Object 的參照。標籤名稱在整個 vault 中必須唯一。
+
+在 frontmatter 中，標籤參照可以使用完整的 Object ID 或標籤名稱：
+
+```yaml
+tags:
+  - tag/go
+  - tag/programming-01jqr3k5mpbvn8e0f2g7h9txyz
+```
+
+同步時，TypeMD 會將名稱參照解析為完整 ID，並自動建立不存在的標籤。
+
 ## Type vs. 標籤
 
-許多工具使用自由格式的標籤（tag）來分類筆記。標籤很彈性但也很脆弱——打錯字就會產生幽靈分類，而且沒有結構可以查詢。
-
-Type 是明確的：一個 `book` 永遠是 `book`，帶有可以篩選、排序和連結的定義屬性。你用一點前期定義的工夫，換來更強大的組織能力。
+標籤跨 Type 分類 Object——一本 `book` 和一篇 `note` 可以共用同一個標籤。Type 定義結構——一本 `book` 永遠有 title、status 和 rating。使用 Type 確保結構一致性；使用標籤進行跨類型分類。
 
 ## 屬性型別
 
@@ -89,4 +102,4 @@ TypeMD 採用寬鬆驗證：
 - `date` 必須是 YYYY-MM-DD 格式
 - `url` 必須以 http:// 或 https:// 開頭
 - `relation` 的目標會檢查 Type 是否正確
-- 屬性名稱 `name`、`description`、`created_at` 和 `updated_at` 為[系統屬性](/zh-tw/concepts/data-model#系統屬性)保留，不能在 type schema 中使用
+- 屬性名稱 `name`、`description`、`created_at`、`updated_at` 和 `tags` 為[系統屬性](/zh-tw/concepts/data-model#系統屬性)保留，不能在 type schema 中使用

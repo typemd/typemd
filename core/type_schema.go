@@ -133,7 +133,14 @@ var defaultTypes = map[string]TypeSchema{
 		Emoji: "📝",
 		Properties: []Property{
 			{Name: "title", Type: "string", Emoji: "🏷️"},
-			{Name: "tags", Type: "string", Emoji: "🔖"},
+		},
+	},
+	TagTypeName: {
+		Name:  TagTypeName,
+		Emoji: "🏷️",
+		Properties: []Property{
+			{Name: "color", Type: "string", Emoji: "🎨"},
+			{Name: "icon", Type: "string", Emoji: "✨"},
 		},
 	},
 }

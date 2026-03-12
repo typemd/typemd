@@ -507,7 +507,7 @@ func TestValidateSchema_AllNewTypes(t *testing.T) {
 			{Name: "homepage", Type: "url"},
 			{Name: "active", Type: "checkbox"},
 			{Name: "status", Type: "select", Options: []Option{{Value: "a"}}},
-			{Name: "tags", Type: "multi_select", Options: []Option{{Value: "b"}}},
+			{Name: "categories", Type: "multi_select", Options: []Option{{Value: "b"}}},
 			{Name: "author", Type: "relation", Target: "person"},
 		},
 	}
@@ -991,6 +991,46 @@ func TestOrderedPropKeys_NameFirst(t *testing.T) {
 			t.Errorf("first key = %q, want \"title\"", keys[0])
 		}
 	})
+}
+
+// ── Tag built-in type tests (1.5) ───────────────────────────────────────────
+
+func TestDefaultTypes_TagExists(t *testing.T) {
+	schema, ok := defaultTypes[TagTypeName]
+	if !ok {
+		t.Fatal("defaultTypes missing \"tag\"")
+	}
+	if schema.Name != TagTypeName {
+		t.Errorf("Name = %q, want %q", schema.Name, TagTypeName)
+	}
+	if schema.Emoji != "🏷️" {
+		t.Errorf("Emoji = %q, want %q", schema.Emoji, "🏷️")
+	}
+	if len(schema.Properties) != 2 {
+		t.Fatalf("len(Properties) = %d, want 2", len(schema.Properties))
+	}
+
+	color := schema.Properties[0]
+	if color.Name != "color" || color.Type != "string" {
+		t.Errorf("Properties[0] = {Name: %q, Type: %q}, want {Name: \"color\", Type: \"string\"}", color.Name, color.Type)
+	}
+
+	icon := schema.Properties[1]
+	if icon.Name != "icon" || icon.Type != "string" {
+		t.Errorf("Properties[1] = {Name: %q, Type: %q}, want {Name: \"icon\", Type: \"string\"}", icon.Name, icon.Type)
+	}
+}
+
+func TestDefaultTypes_NoteDoesNotHaveTagsProperty(t *testing.T) {
+	note, ok := defaultTypes["note"]
+	if !ok {
+		t.Fatal("defaultTypes missing \"note\"")
+	}
+	for _, prop := range note.Properties {
+		if prop.Name == TagsProperty {
+			t.Error("note type should not have a \"tags\" property")
+		}
+	}
 }
 
 func TestValidateSchema_ReservedNameProperty(t *testing.T) {

@@ -13,7 +13,7 @@ When created via the CLI (`tmd object create`), a 26-character lowercase ULID is
 
 ### System properties
 
-All objects have four system properties managed by TypeMD:
+All objects have five system properties managed by TypeMD:
 
 | Property | Description |
 |----------|-------------|
@@ -21,6 +21,7 @@ All objects have four system properties managed by TypeMD:
 | `description` | Optional single-line summary for list displays and search results |
 | `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) |
 | `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) |
+| `tags` | Array of tag references (relation to the built-in `tag` type, multiple) |
 
 System properties always appear first in frontmatter in the order above, followed by schema-defined properties. These names are reserved and cannot be used in type schemas or shared properties.
 

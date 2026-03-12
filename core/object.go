@@ -131,6 +131,13 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		return nil, fmt.Errorf("load type: %w", err)
 	}
 
+	// Enforce tag name uniqueness
+	if typeName == TagTypeName {
+		if err := v.checkTagNameUnique(filename); err != nil {
+			return nil, err
+		}
+	}
+
 	// Append ULID to filename for uniqueness
 	slug := filename // preserve original slug for the name property
 	ulidStr, err := GenerateULID()

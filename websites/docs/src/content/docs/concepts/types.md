@@ -43,21 +43,34 @@ Types give your knowledge base **consistency** and **queryability**:
 
 ## Built-in Types
 
-TypeMD ships with three built-in Types to get you started:
+TypeMD ships with four built-in Types to get you started:
 
 | Type | Properties |
 |------|------------|
 | 📚 `book` | title (string), status (select: to-read/reading/done), rating (number) |
 | 👤 `person` | role (string) |
-| 📝 `note` | title (string), tags (string) |
+| 📝 `note` | title (string) |
+| 🏷️ `tag` | color (string), icon (string) |
 
 You can modify these or create your own Types to fit your knowledge domain.
 
+## Tags
+
+Tags are first-class Objects in TypeMD. Every Object has a `tags` [system property](/concepts/data-model#system-properties) that holds references to `tag` Objects. Tag names must be unique across the vault.
+
+In frontmatter, tag references can use either the full Object ID or the tag name:
+
+```yaml
+tags:
+  - tag/go
+  - tag/programming-01jqr3k5mpbvn8e0f2g7h9txyz
+```
+
+During sync, TypeMD resolves name-based references to their full IDs and auto-creates missing tags.
+
 ## Types vs. tags
 
-Many tools use freeform tags to categorize notes. Tags are flexible but fragile — typos create phantom categories, and there's no structure to query against.
-
-Types are explicit: a `book` is always a `book`, with defined properties you can filter, sort, and connect. You trade a bit of upfront definition for much more powerful organization.
+Tags categorize Objects across Types — a `book` and a `note` can share the same tag. Types define structure — a `book` always has title, status, and rating. Use Types for structural consistency; use tags for cross-cutting categorization.
 
 ## Property types
 
@@ -89,4 +102,4 @@ TypeMD uses lenient validation:
 - `date` must be in YYYY-MM-DD format
 - `url` must start with http:// or https://
 - `relation` targets are checked for correct type
-- Property names `name`, `description`, `created_at`, and `updated_at` are reserved for [system properties](/concepts/data-model#system-properties) and cannot be used in type schemas
+- Property names `name`, `description`, `created_at`, `updated_at`, and `tags` are reserved for [system properties](/concepts/data-model#system-properties) and cannot be used in type schemas

@@ -43,3 +43,16 @@ Feature: Object relations
   Scenario: List relations for an unlinked object
     Given a "book" object named "test" exists
     Then listing relations for "test" should return 0 entries
+
+  Scenario: Link object to tag via system property
+    Given a "tag" object named "go" exists
+    And a "book" object named "golang-book" exists
+    When I link "golang-book" to "go" via "tags"
+    Then the "tags" property of "golang-book" should contain "go"
+
+  Scenario: Unlink tag from object via system property
+    Given a "tag" object named "go" exists
+    And a "book" object named "golang-book" exists
+    And I link "golang-book" to "go" via "tags"
+    When I unlink "golang-book" from "go" via "tags" without both flag
+    Then the "tags" property of "golang-book" should be empty

@@ -8,7 +8,7 @@ sidebar:
 Type schema 中的每個屬性都有一個 `type`，決定它接受什麼值以及如何驗證。
 
 :::note
-本頁介紹的是 **schema 定義的屬性型別**——你在 `.typemd/types/*.yaml` 中宣告的屬性。關於 TypeMD 自動管理的系統屬性（`name`、`description`、`created_at`、`updated_at`），請參閱[系統屬性](/zh-tw/concepts/data-model#系統屬性)。
+本頁介紹的是 **schema 定義的屬性型別**——你在 `.typemd/types/*.yaml` 中宣告的屬性。關於 TypeMD 自動管理的系統屬性（`name`、`description`、`created_at`、`updated_at`、`tags`），請參閱[系統屬性](/zh-tw/concepts/data-model#系統屬性)。
 :::
 
 ## 可用型別

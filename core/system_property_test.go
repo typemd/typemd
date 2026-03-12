@@ -27,7 +27,7 @@ func TestIsSystemProperty_CaseSensitive(t *testing.T) {
 
 func TestSystemPropertyNames_Order(t *testing.T) {
 	names := SystemPropertyNames()
-	expected := []string{"name", "description", "created_at", "updated_at"}
+	expected := []string{"name", "description", "created_at", "updated_at", "tags"}
 	if len(names) != len(expected) {
 		t.Fatalf("SystemPropertyNames() returned %d names, want %d", len(names), len(expected))
 	}
@@ -50,6 +50,83 @@ func TestSystemPropertyNames_ReturnsNewSlice(t *testing.T) {
 	a[0] = "modified"
 	if b[0] == "modified" {
 		t.Error("SystemPropertyNames should return a new slice each time")
+	}
+}
+
+// ── Tags system property tests (2.5) ────────────────────────────────────────
+
+func TestIsSystemProperty_Tags(t *testing.T) {
+	if !IsSystemProperty(TagsProperty) {
+		t.Error("tags should be a system property")
+	}
+}
+
+func TestSystemProperty_TagsRelationFields(t *testing.T) {
+	var tagsProp SystemProperty
+	found := false
+	for _, sp := range systemProperties {
+		if sp.Name == TagsProperty {
+			tagsProp = sp
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Fatal("tags not found in systemProperties registry")
+	}
+	if tagsProp.Type != "relation" {
+		t.Errorf("tags Type = %q, want %q", tagsProp.Type, "relation")
+	}
+	if tagsProp.Target != TagTypeName {
+		t.Errorf("tags Target = %q, want %q", tagsProp.Target, TagTypeName)
+	}
+	if !tagsProp.Multiple {
+		t.Error("tags Multiple = false, want true")
+	}
+}
+
+// ── Schema validation rejects tags (3.1-3.4) ───────────────────────────────
+
+func TestValidateSchema_RejectsTagsProperty(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "bad",
+		Properties: []Property{
+			{Name: TagsProperty, Type: "string"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) == 0 {
+		t.Fatal("expected error for system property \"tags\" in schema, got none")
+	}
+	found := false
+	for _, err := range errs {
+		if strings.Contains(err.Error(), "reserved system property") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("error should mention 'reserved system property', got %v", errs)
+	}
+}
+
+func TestValidateSharedProperties_RejectsTagsProperty(t *testing.T) {
+	props := []Property{
+		{Name: TagsProperty, Type: "string"},
+	}
+	errs := ValidateSharedProperties(props)
+	if len(errs) == 0 {
+		t.Fatal("expected error for system property \"tags\" in shared properties, got none")
+	}
+	found := false
+	for _, err := range errs {
+		if strings.Contains(err.Error(), "reserved system property") {
+			found = true
+			break
+		}
+	}
+	if !found {
+		t.Errorf("error should mention 'reserved system property', got %v", errs)
 	}
 }
 

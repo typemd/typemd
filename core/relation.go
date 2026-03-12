@@ -104,6 +104,21 @@ func findRelationProperty(schema *TypeSchema, name string) *Property {
 	return nil
 }
 
+// findSystemRelationProperty returns a Property representation of a system property relation.
+func findSystemRelationProperty(name string) *Property {
+	for _, sp := range systemProperties {
+		if sp.Name == name && sp.Type == "relation" {
+			return &Property{
+				Name:     sp.Name,
+				Type:     "relation",
+				Target:   sp.Target,
+				Multiple: sp.Multiple,
+			}
+		}
+	}
+	return nil
+}
+
 // LinkObjects creates a relation between two objects.
 func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 	if v.db == nil {
@@ -122,6 +137,9 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 	}
 
 	relProp := findRelationProperty(fromSchema, relName)
+	if relProp == nil {
+		relProp = findSystemRelationProperty(relName)
+	}
 	if relProp == nil {
 		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
 	}
@@ -205,6 +223,9 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 	}
 
 	relProp := findRelationProperty(fromSchema, relName)
+	if relProp == nil {
+		relProp = findSystemRelationProperty(relName)
+	}
 	if relProp == nil {
 		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
 	}

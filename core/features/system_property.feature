@@ -3,7 +3,7 @@ Feature: System property registry
   automatically present on all objects regardless of type schema.
 
   Scenario: Registry contains all system properties in order
-    Then the system property registry should contain "name, description, created_at, updated_at"
+    Then the system property registry should contain "name, description, created_at, updated_at, tags"
 
   Scenario: IsSystemProperty recognizes system properties
     Then "name" should be a system property
@@ -116,3 +116,15 @@ Feature: System property registry
     And a raw object file without timestamps exists
     When I sync the index
     Then the raw object file should not have timestamps added
+
+  Scenario: Schema validation rejects tags property
+    Given a vault is ready
+    And a type schema "bad" with a system property "tags"
+    When I validate all schemas
+    Then schema "bad" should have errors
+
+  Scenario: Shared property validation rejects tags
+    Given a vault is ready
+    And a shared properties file with a system property "tags"
+    When I validate all schemas
+    Then shared properties should have errors

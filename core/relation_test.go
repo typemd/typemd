@@ -276,3 +276,73 @@ func TestVault_UnlinkObjects_DBNotOpen(t *testing.T) {
 		t.Fatal("expected error when DB not opened, got nil")
 	}
 }
+
+func TestFindSystemRelationProperty_Tags(t *testing.T) {
+	p := findSystemRelationProperty(TagsProperty)
+	if p == nil {
+		t.Fatal("expected non-nil Property for tags")
+	}
+	if p.Target != TagTypeName {
+		t.Errorf("Target = %q, want %q", p.Target, TagTypeName)
+	}
+	if !p.Multiple {
+		t.Error("Multiple should be true for tags")
+	}
+	if p.Type != "relation" {
+		t.Errorf("Type = %q, want %q", p.Type, "relation")
+	}
+}
+
+func TestFindSystemRelationProperty_NonRelation(t *testing.T) {
+	p := findSystemRelationProperty("name")
+	if p != nil {
+		t.Errorf("expected nil for non-relation system property, got %+v", p)
+	}
+}
+
+func TestFindSystemRelationProperty_Nonexistent(t *testing.T) {
+	p := findSystemRelationProperty("nonexistent")
+	if p != nil {
+		t.Errorf("expected nil for nonexistent property, got %+v", p)
+	}
+}
+
+func TestVault_LinkObjects_SystemRelationTags(t *testing.T) {
+	v := setupRelationTestVault(t)
+
+	tag, _ := v.NewObject("tag", "go")
+	book, _ := v.NewObject("book", "golang-book")
+
+	err := v.LinkObjects(book.ID, TagsProperty, tag.ID)
+	if err != nil {
+		t.Fatalf("LinkObjects() error = %v", err)
+	}
+
+	bookObj, _ := v.GetObject(book.ID)
+	tags, ok := bookObj.Properties[TagsProperty].([]any)
+	if !ok {
+		t.Fatalf("tags type = %T, want []any", bookObj.Properties[TagsProperty])
+	}
+	if len(tags) != 1 || tags[0] != tag.ID {
+		t.Errorf("tags = %v, want [%s]", tags, tag.ID)
+	}
+}
+
+func TestVault_UnlinkObjects_SystemRelationTags(t *testing.T) {
+	v := setupRelationTestVault(t)
+
+	tag, _ := v.NewObject("tag", "go")
+	book, _ := v.NewObject("book", "golang-book")
+
+	v.LinkObjects(book.ID, TagsProperty, tag.ID)
+
+	err := v.UnlinkObjects(book.ID, TagsProperty, tag.ID, false)
+	if err != nil {
+		t.Fatalf("UnlinkObjects() error = %v", err)
+	}
+
+	bookObj, _ := v.GetObject(book.ID)
+	if bookObj.Properties[TagsProperty] != nil {
+		t.Errorf("tags = %v, want nil", bookObj.Properties[TagsProperty])
+	}
+}

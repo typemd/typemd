@@ -203,3 +203,55 @@ func TestValidateWikiLinks_NoWikiLinks(t *testing.T) {
 		t.Errorf("expected no errors, got %v", errs)
 	}
 }
+
+// ── Tag name uniqueness tests (4.5) ─────────────────────────────────────────
+
+func TestValidateTagNameUniqueness_NoDuplicates(t *testing.T) {
+	v := setupTestVault(t)
+	v.NewObject("tag", "go")
+	v.NewObject("tag", "rust")
+
+	errs := ValidateTagNameUniqueness(v)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}
+
+func TestValidateTagNameUniqueness_CaseSensitive(t *testing.T) {
+	v := setupTestVault(t)
+	v.NewObject("tag", "Go")
+	v.NewObject("tag", "go")
+
+	errs := ValidateTagNameUniqueness(v)
+	if len(errs) != 0 {
+		t.Errorf("expected no errors (case-sensitive), got %v", errs)
+	}
+}
+
+func TestNewObject_TagNameDuplicate(t *testing.T) {
+	v := setupTestVault(t)
+	_, err := v.NewObject("tag", "go")
+	if err != nil {
+		t.Fatalf("first NewObject error = %v", err)
+	}
+	_, err = v.NewObject("tag", "go")
+	if err == nil {
+		t.Fatal("expected error for duplicate tag name, got nil")
+	}
+	if !strings.Contains(err.Error(), "already exists") {
+		t.Errorf("error = %q, want it to contain 'already exists'", err)
+	}
+}
+
+func TestNewObject_NonTagDuplicateNameAllowed(t *testing.T) {
+	v := setupTestVault(t)
+	_, err := v.NewObject("book", "test")
+	if err != nil {
+		t.Fatalf("first book error = %v", err)
+	}
+	_, err = v.NewObject("book", "test")
+	if err != nil {
+		t.Errorf("second book with same name should be allowed, got %v", err)
+	}
+}
+

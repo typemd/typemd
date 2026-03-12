@@ -35,6 +35,8 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	// Collect all object IDs found on disk, along with their bodies for wiki-link extraction
 	diskIDs := make(map[string]bool)
 	diskBodies := make(map[string]string)
+	diskTags := make(map[string]*Object)          // tag ID → Object (for name resolution)
+	diskTagRefs := make(map[string][]string)       // object ID → tag reference strings
 
 	// Cache loaded type schemas and their property name sets per type
 	schemaCache := make(map[string]*TypeSchema)
@@ -141,6 +143,32 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 
 		diskIDs[id] = true
 		diskBodies[id] = body
+
+		// Collect tag objects for name resolution
+		if typeName == TagTypeName {
+			diskTags[id] = &Object{
+				ID:         id,
+				Type:       typeName,
+				Filename:   filename,
+				Properties: props,
+			}
+		}
+
+		// Collect tag references from the tags system property
+		if tagsVal, ok := props[TagsProperty]; ok {
+			if tagsArr, ok := tagsVal.([]any); ok {
+				var refs []string
+				for _, item := range tagsArr {
+					if ref, ok := item.(string); ok {
+						refs = append(refs, ref)
+					}
+				}
+				if len(refs) > 0 {
+					diskTagRefs[id] = refs
+				}
+			}
+		}
+
 		return nil
 	})
 	if err != nil {
@@ -224,6 +252,55 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	for id, body := range diskBodies {
 		if err := v.syncWikiLinks(id, body, diskIDs); err != nil {
 			return nil, fmt.Errorf("sync wikilinks for %s: %w", id, err)
+		}
+	}
+
+	// Resolve tag references and write tag relations
+	// First, clear existing tag relations (they will be rebuilt from frontmatter)
+	if _, err := v.db.Exec("DELETE FROM relations WHERE name = ?", TagsProperty); err != nil {
+		return nil, fmt.Errorf("clear tag relations: %w", err)
+	}
+
+	// Build a name→ID index from diskTags for quick uniqueness checks during auto-creation
+	tagNameIndex := make(map[string]string) // tag name → tag ID
+	for _, obj := range diskTags {
+		if name, ok := obj.Properties[NameProperty].(string); ok {
+			tagNameIndex[name] = obj.ID
+		}
+	}
+
+	for objID, refs := range diskTagRefs {
+		for _, ref := range refs {
+			tagID, ok := v.resolveTagReference(ref, diskTags, tagNameIndex)
+			if !ok {
+				// Auto-create if it's a name reference (no ULID suffix)
+				slug := strings.TrimPrefix(ref, "tag/")
+				if !ulidSuffixPattern.MatchString(slug) {
+					// Check tagNameIndex to avoid N+1 DB queries via checkTagNameUnique
+					if existingID, exists := tagNameIndex[slug]; exists {
+						tagID = existingID
+					} else {
+						newTag, err := v.NewObject(TagTypeName, slug)
+						if err != nil {
+							continue // skip on error
+						}
+						diskTags[newTag.ID] = newTag
+						diskIDs[newTag.ID] = true
+						tagNameIndex[slug] = newTag.ID
+						tagID = newTag.ID
+					}
+				} else {
+					continue // broken full-ID reference, skip
+				}
+			}
+			// Write relation
+			_, err := v.db.Exec(
+				"INSERT INTO relations (name, from_id, to_id) VALUES (?, ?, ?)",
+				TagsProperty, objID, tagID,
+			)
+			if err != nil {
+				return nil, fmt.Errorf("insert tag relation: %w", err)
+			}
 		}
 	}
 

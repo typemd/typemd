@@ -5,13 +5,21 @@ const (
 	DescriptionProperty = "description"
 	CreatedAtProperty   = "created_at"
 	UpdatedAtProperty   = "updated_at"
+	TagsProperty        = "tags"
+)
+
+// Built-in type name constants.
+const (
+	TagTypeName = "tag"
 )
 
 // SystemProperty defines a system-managed property that is automatically
 // present on all objects, regardless of type schema.
 type SystemProperty struct {
-	Name string
-	Type string
+	Name     string
+	Type     string
+	Target   string // only for relation type
+	Multiple bool   // only for relation type
 }
 
 // systemProperties is the authoritative registry of all system properties.
@@ -21,6 +29,7 @@ var systemProperties = []SystemProperty{
 	{Name: DescriptionProperty, Type: "text"},
 	{Name: CreatedAtProperty, Type: "datetime"},
 	{Name: UpdatedAtProperty, Type: "datetime"},
+	{Name: TagsProperty, Type: "relation", Target: TagTypeName, Multiple: true},
 }
 
 // IsSystemProperty returns true if the given name is a system property.

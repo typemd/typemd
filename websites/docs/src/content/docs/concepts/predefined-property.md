@@ -8,7 +8,7 @@ sidebar:
 Every property in a type schema has a `type` that determines what values it accepts and how they are validated.
 
 :::note
-This page covers property types for **schema-defined properties** — the ones you declare in `.typemd/types/*.yaml`. For the system properties that TypeMD manages automatically (`name`, `description`, `created_at`, `updated_at`), see [System properties](/concepts/data-model#system-properties).
+This page covers property types for **schema-defined properties** — the ones you declare in `.typemd/types/*.yaml`. For the system properties that TypeMD manages automatically (`name`, `description`, `created_at`, `updated_at`, `tags`), see [System properties](/concepts/data-model#system-properties).
 :::
 
 ## Available Types

@@ -86,6 +86,40 @@ func ValidateWikiLinks(v *Vault) []error {
 	return errs
 }
 
+// ValidateTagNameUniqueness checks that no two tag objects share the same name.
+func ValidateTagNameUniqueness(v *Vault) []error {
+	var errs []error
+	rows, err := v.db.Query(
+		"SELECT id, json_extract(properties, '$.name') AS name FROM objects WHERE type = ?",
+		TagTypeName,
+	)
+	if err != nil {
+		return []error{fmt.Errorf("query tags: %w", err)}
+	}
+	defer rows.Close()
+
+	seen := make(map[string]string) // name → first ID
+	for rows.Next() {
+		var id string
+		var name *string
+		if err := rows.Scan(&id, &name); err != nil {
+			continue
+		}
+		if name == nil || *name == "" {
+			continue
+		}
+		if firstID, ok := seen[*name]; ok {
+			errs = append(errs, fmt.Errorf("duplicate tag name %q: %s and %s", *name, firstID, id))
+		} else {
+			seen[*name] = id
+		}
+	}
+	if err := rows.Err(); err != nil {
+		errs = append(errs, fmt.Errorf("iterate tags: %w", err))
+	}
+	return errs
+}
+
 // ValidateAllSchemas scans .typemd/types/*.yaml and validates each schema.
 // Also validates shared properties if .typemd/properties.yaml exists.
 // Returns a map of type name to validation errors.
