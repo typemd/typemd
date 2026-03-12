@@ -2,8 +2,9 @@ package core
 
 // System property name constants.
 const (
-	CreatedAtProperty = "created_at"
-	UpdatedAtProperty = "updated_at"
+	DescriptionProperty = "description"
+	CreatedAtProperty   = "created_at"
+	UpdatedAtProperty   = "updated_at"
 )
 
 // SystemProperty defines a system-managed property that is automatically
@@ -17,6 +18,7 @@ type SystemProperty struct {
 // Order matters: it determines frontmatter output ordering.
 var systemProperties = []SystemProperty{
 	{Name: NameProperty, Type: "text"},
+	{Name: DescriptionProperty, Type: "text"},
 	{Name: CreatedAtProperty, Type: "datetime"},
 	{Name: UpdatedAtProperty, Type: "datetime"},
 }

@@ -1,3 +1,5 @@
+## MODIFIED Requirements
+
 ### Requirement: System property registry defines all system-managed properties
 
 The core package SHALL maintain a registry of system properties as a package-level slice. Each entry SHALL declare a property name and type. The registry SHALL define properties in display order: `name`, `description`, `created_at`, `updated_at`.

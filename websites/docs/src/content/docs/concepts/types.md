@@ -89,4 +89,4 @@ TypeMD uses lenient validation:
 - `date` must be in YYYY-MM-DD format
 - `url` must start with http:// or https://
 - `relation` targets are checked for correct type
-- Property names `name`, `created_at`, and `updated_at` are reserved for [system properties](/concepts/data-model#system-properties) and cannot be used in type schemas
+- Property names `name`, `description`, `created_at`, and `updated_at` are reserved for [system properties](/concepts/data-model#system-properties) and cannot be used in type schemas

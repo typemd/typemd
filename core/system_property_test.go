@@ -27,7 +27,7 @@ func TestIsSystemProperty_CaseSensitive(t *testing.T) {
 
 func TestSystemPropertyNames_Order(t *testing.T) {
 	names := SystemPropertyNames()
-	expected := []string{"name", "created_at", "updated_at"}
+	expected := []string{"name", "description", "created_at", "updated_at"}
 	if len(names) != len(expected) {
 		t.Fatalf("SystemPropertyNames() returned %d names, want %d", len(names), len(expected))
 	}
@@ -35,6 +35,12 @@ func TestSystemPropertyNames_Order(t *testing.T) {
 		if names[i] != name {
 			t.Errorf("SystemPropertyNames()[%d] = %q, want %q", i, names[i], name)
 		}
+	}
+}
+
+func TestIsSystemProperty_Description(t *testing.T) {
+	if !IsSystemProperty("description") {
+		t.Error("description should be a system property")
 	}
 }
 
@@ -233,6 +239,59 @@ func TestOrderedPropKeys_SystemPropertiesFirst(t *testing.T) {
 	}
 }
 
+func TestOrderedPropKeys_WithDescription(t *testing.T) {
+	props := map[string]any{
+		"name":        "test",
+		"description": "A test book",
+		"created_at":  "2026-03-11T10:00:00+08:00",
+		"updated_at":  "2026-03-11T10:00:00+08:00",
+		"title":       "Test",
+	}
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+		},
+	}
+
+	keys := OrderedPropKeys(props, schema)
+	expected := []string{"name", "description", "created_at", "updated_at", "title"}
+	if len(keys) != len(expected) {
+		t.Fatalf("OrderedPropKeys returned %d keys, want %d: %v", len(keys), len(expected), keys)
+	}
+	for i, k := range expected {
+		if keys[i] != k {
+			t.Errorf("keys[%d] = %q, want %q", i, keys[i], k)
+		}
+	}
+}
+
+func TestOrderedPropKeys_WithoutDescription(t *testing.T) {
+	props := map[string]any{
+		"name":       "test",
+		"created_at": "2026-03-11T10:00:00+08:00",
+		"updated_at": "2026-03-11T10:00:00+08:00",
+		"title":      "Test",
+	}
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+		},
+	}
+
+	keys := OrderedPropKeys(props, schema)
+	expected := []string{"name", "created_at", "updated_at", "title"}
+	if len(keys) != len(expected) {
+		t.Fatalf("OrderedPropKeys returned %d keys, want %d: %v", len(keys), len(expected), keys)
+	}
+	for i, k := range expected {
+		if keys[i] != k {
+			t.Errorf("keys[%d] = %q, want %q", i, keys[i], k)
+		}
+	}
+}
+
 func TestOrderedPropKeys_MissingTimestamps(t *testing.T) {
 	props := map[string]any{
 		"name":  "test",
@@ -276,6 +335,21 @@ func TestOrderedPropKeys_NoSchema(t *testing.T) {
 		if keys[i] != k {
 			t.Errorf("keys[%d] = %q, want %q", i, keys[i], k)
 		}
+	}
+}
+
+// ── Description absence on creation ─────────────────────────────────────────
+
+func TestNewObject_DoesNotIncludeDescription(t *testing.T) {
+	v := setupTestVault(t)
+
+	obj, err := v.NewObject("book", "test")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	if _, ok := obj.Properties["description"]; ok {
+		t.Error("NewObject should not include description in properties")
 	}
 }
 
