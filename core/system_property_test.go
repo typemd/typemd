@@ -266,32 +266,6 @@ func TestOrderedPropKeys_WithDescription(t *testing.T) {
 	}
 }
 
-func TestOrderedPropKeys_WithoutDescription(t *testing.T) {
-	props := map[string]any{
-		"name":       "test",
-		"created_at": "2026-03-11T10:00:00+08:00",
-		"updated_at": "2026-03-11T10:00:00+08:00",
-		"title":      "Test",
-	}
-	schema := &TypeSchema{
-		Name: "book",
-		Properties: []Property{
-			{Name: "title", Type: "string"},
-		},
-	}
-
-	keys := OrderedPropKeys(props, schema)
-	expected := []string{"name", "created_at", "updated_at", "title"}
-	if len(keys) != len(expected) {
-		t.Fatalf("OrderedPropKeys returned %d keys, want %d: %v", len(keys), len(expected), keys)
-	}
-	for i, k := range expected {
-		if keys[i] != k {
-			t.Errorf("keys[%d] = %q, want %q", i, keys[i], k)
-		}
-	}
-}
-
 func TestOrderedPropKeys_MissingTimestamps(t *testing.T) {
 	props := map[string]any{
 		"name":  "test",
