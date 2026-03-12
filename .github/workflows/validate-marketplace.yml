@@ -1,0 +1,23 @@
+name: Validate Marketplace
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "marketplace/**"
+
+concurrency:
+  group: validate-marketplace-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate marketplace
+        run: cd marketplace && claude plugin validate .

@@ -1,0 +1,20 @@
+{
+  "name": "typemd-marketplace",
+  "owner": {
+    "name": "typemd"
+  },
+  "metadata": {
+    "description": "Community plugins for typemd — a local-first CLI knowledge management tool",
+    "pluginRoot": "./plugins"
+  },
+  "plugins": [
+    {
+      "name": "markdown-import",
+      "source": "./plugins/markdown-import",
+      "description": "Convert existing markdown files into typemd objects with frontmatter, type detection, and relation discovery",
+      "version": "1.0.0",
+      "category": "workflow",
+      "tags": ["import", "markdown", "migration", "convert"]
+    }
+  ]
+}

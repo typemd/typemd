@@ -1,0 +1,9 @@
+{
+  "name": "markdown-import",
+  "description": "Convert existing markdown files into typemd objects with frontmatter, type detection, and relation discovery",
+  "version": "1.0.0",
+  "author": {
+    "name": "typemd"
+  },
+  "keywords": ["import", "markdown", "migration", "convert"]
+}

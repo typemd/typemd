@@ -1,0 +1,30 @@
+name: Publish Marketplace
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "marketplace/**"
+
+concurrency:
+  group: publish-marketplace
+  cancel-in-progress: false
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install Claude Code
+        run: npm install -g @anthropic-ai/claude-code
+
+      - name: Validate marketplace
+        run: cd marketplace && claude plugin validate .
+
+      - name: Push marketplace subtree to typemd/marketplace
+        run: |
+          git remote add marketplace https://x-access-token:${{ secrets.MARKETPLACE_PUSH_TOKEN }}@github.com/typemd/marketplace.git || true
+          git subtree push --prefix=marketplace marketplace main
