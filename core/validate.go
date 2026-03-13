@@ -123,66 +123,26 @@ func ValidateNameUniqueness(v *Vault) []error {
 				seen[*name] = id
 			}
 		}
-		rows.Close()
 		if err := rows.Err(); err != nil {
 			errs = append(errs, fmt.Errorf("iterate %s objects: %w", typeName, err))
 		}
+		rows.Close()
 	}
 	return errs
 }
 
 // collectUniqueTypes returns all type names that have Unique: true.
-// It checks both built-in defaults and custom YAML schemas.
 func collectUniqueTypes(v *Vault) []string {
 	var uniqueTypes []string
-
-	// Check built-in defaults
-	for name, schema := range defaultTypes {
+	for _, name := range v.ListTypes() {
+		schema, err := v.LoadType(name)
+		if err != nil {
+			continue
+		}
 		if schema.Unique {
 			uniqueTypes = append(uniqueTypes, name)
 		}
 	}
-
-	// Check custom YAML schemas
-	entries, err := os.ReadDir(v.TypesDir())
-	if err != nil {
-		return uniqueTypes
-	}
-	builtinSeen := make(map[string]bool)
-	for _, name := range uniqueTypes {
-		builtinSeen[name] = true
-	}
-	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
-			continue
-		}
-		typeName := strings.TrimSuffix(entry.Name(), ".yaml")
-		data, err := os.ReadFile(filepath.Join(v.TypesDir(), entry.Name()))
-		if err != nil {
-			continue
-		}
-		var schema TypeSchema
-		if err := yaml.Unmarshal(data, &schema); err != nil {
-			continue
-		}
-		if schema.Unique {
-			if builtinSeen[typeName] {
-				// Already added from built-in, skip duplicate
-				continue
-			}
-			uniqueTypes = append(uniqueTypes, typeName)
-		} else if builtinSeen[typeName] {
-			// Custom schema overrides built-in: remove from list if unique is false
-			filtered := uniqueTypes[:0]
-			for _, name := range uniqueTypes {
-				if name != typeName {
-					filtered = append(filtered, name)
-				}
-			}
-			uniqueTypes = filtered
-		}
-	}
-
 	return uniqueTypes
 }
 

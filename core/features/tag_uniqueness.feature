@@ -17,5 +17,5 @@ Feature: Tag name uniqueness
   Scenario: Validation reports duplicate tag names
     Given a "tag" object named "go" exists
     And a raw duplicate tag named "go" exists
-    When I validate tag name uniqueness
-    Then there should be tag uniqueness errors
+    When I validate name uniqueness
+    Then there should be name uniqueness errors

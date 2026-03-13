@@ -2,7 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
 	"path/filepath"
 
 	"github.com/cucumber/godog"
@@ -35,30 +34,7 @@ func (dc *domainContext) iSetTagsOnTheObjectToATagReference() {
 // ── Tag uniqueness steps ────────────────────────────────────────────────
 
 func (dc *domainContext) aRawDuplicateTagNamedExists(name string) {
-	// Create a raw tag file bypassing the uniqueness check
-	ulid := mustULID()
-	filename := name + "-" + ulid
-	objPath := dc.vault.ObjectPath(TagTypeName, filename)
-	os.MkdirAll(filepath.Dir(objPath), 0755)
-	content := fmt.Sprintf("---\nname: %s\ncreated_at: 2026-01-01T00:00:00+08:00\nupdated_at: 2026-01-01T00:00:00+08:00\n---\n", name)
-	os.WriteFile(objPath, []byte(content), 0644)
-	// Also insert into DB
-	propsJSON := fmt.Sprintf(`{"name":"%s"}`, name)
-	dc.vault.db.Exec(
-		"INSERT INTO objects (id, type, filename, properties, body) VALUES (?, ?, ?, ?, ?)",
-		TagTypeName+"/"+filename, TagTypeName, filename, propsJSON, "",
-	)
-}
-
-func (dc *domainContext) iValidateTagNameUniqueness() {
-	dc.tagUniquenessErrors = ValidateNameUniqueness(dc.vault)
-}
-
-func (dc *domainContext) thereShouldBeTagUniquenessErrors() error {
-	if len(dc.tagUniquenessErrors) == 0 {
-		return fmt.Errorf("expected tag uniqueness errors, got none")
-	}
-	return nil
+	dc.aRawDuplicateObjectOfTypeNamedExists(TagTypeName, name)
 }
 
 // ── Tag resolution steps ────────────────────────────────────────────────
@@ -124,8 +100,6 @@ func initTagSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 
 	// Tag uniqueness steps
 	ctx.Step(`^a raw duplicate tag named "([^"]*)" exists$`, dc.aRawDuplicateTagNamedExists)
-	ctx.Step(`^I validate tag name uniqueness$`, dc.iValidateTagNameUniqueness)
-	ctx.Step(`^there should be tag uniqueness errors$`, dc.thereShouldBeTagUniquenessErrors)
 
 	// Tag resolution steps
 	ctx.Step(`^a "book" object named "([^"]*)" exists with tag reference by ID$`, dc.aBookObjectExistsWithTagReferenceByID)
