@@ -20,7 +20,7 @@ TUI 使用多面板版面配置：
 
 | 面板 | 說明 |
 |------|------|
-| **Object 列表**（左側） | 依 type 分群顯示 object。群組標題會顯示 type emoji（若有定義）、type 名稱和 object 數量（如 `▼ 📚 book (3)`）。 |
+| **Object 列表**（左側） | 依 type 分群顯示 object。群組標題會顯示 type emoji（若有定義）、type 複數名稱和 object 數量（如 `▼ 📚 books (3)`）。 |
 | **標題**（右上方） | 顯示所選 object 的 type emoji、type 名稱和顯示名稱（如 `📖 book · Clean Code`）。未選取 object 時隱藏。 |
 | **內文**（右中） | 顯示 object 的 markdown 內文內容。 |
 | **屬性**（右側） | 顯示 schema 屬性、Relation 和 wiki-link 反向連結。預設隱藏，可用 `p` 切換。在窄終端（< 56 欄）上會自動隱藏。 |

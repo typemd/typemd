@@ -16,6 +16,7 @@ Type 以 YAML schema 檔案定義，放在 `.typemd/types/`：
 ```yaml
 # .typemd/types/book.yaml
 name: book
+plural: books
 emoji: 📚
 properties:
   - name: title
@@ -30,6 +31,8 @@ properties:
   - name: rating
     type: number
 ```
+
+可選的 `plural` 欄位提供 Type 在集合情境中的正確複數顯示名稱（如 TUI 群組標題中的「▼ 📚 books (3)」）。若未設定，則使用 Type 名稱作為預設值。
 
 可選的 `emoji` 欄位為 Type 提供視覺圖示，顯示在 CLI 和 TUI 的輸出中。
 

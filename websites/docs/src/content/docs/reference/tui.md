@@ -20,7 +20,7 @@ The TUI uses a multi-panel layout:
 
 | Panel | Description |
 |-------|-------------|
-| **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type name, and object count (e.g. `▼ 📚 book (3)`). |
+| **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). |
 | **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). Hidden when no object is selected. |
 | **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content. |
 | **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). |

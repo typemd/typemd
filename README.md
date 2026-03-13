@@ -199,6 +199,7 @@ Define your types in `.typemd/types/` (only `tag` is built-in — all others are
 ```yaml
 # .typemd/types/book.yaml
 name: book
+plural: books
 emoji: 📚
 properties:
   - name: title
@@ -218,6 +219,8 @@ properties:
   - name: rating
     type: number
 ```
+
+The optional `plural` field specifies the grammatically correct plural form for display in TUI group headers and CLI output. When omitted, falls back to the type name.
 
 Types and properties both support an optional `emoji` field for visual identification in CLI and TUI output. Properties also support an optional `default` field to specify a default value.
 

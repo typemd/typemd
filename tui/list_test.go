@@ -11,6 +11,7 @@ func TestRenderList_GroupHeaderWithEmoji(t *testing.T) {
 	groups := []typeGroup{
 		{
 			Name:     "book",
+			Plural:   "books",
 			Emoji:    "📚",
 			Objects:  []*core.Object{{ID: "book/test", Type: "book", Filename: "test"}},
 			Expanded: true,
@@ -19,7 +20,7 @@ func TestRenderList_GroupHeaderWithEmoji(t *testing.T) {
 
 	result := renderList(groups, 0, 0, true, 40, 10)
 
-	if !strings.Contains(result, "📚 book (1)") {
+	if !strings.Contains(result, "📚 books (1)") {
 		t.Errorf("expected group header to contain emoji, got: %s", result)
 	}
 }
@@ -28,6 +29,7 @@ func TestRenderList_GroupHeaderWithoutEmoji(t *testing.T) {
 	groups := []typeGroup{
 		{
 			Name:     "note",
+			Plural:   "note",
 			Objects:  []*core.Object{{ID: "note/test", Type: "note", Filename: "test"}},
 			Expanded: true,
 		},

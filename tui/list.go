@@ -40,13 +40,16 @@ func buildGroups(objects []*core.Object, vault *core.Vault) []typeGroup {
 	var groups []typeGroup
 	for name, objs := range groupMap {
 		var emoji string
+		plural := name
 		if vault != nil {
 			if ts, err := vault.LoadType(name); err == nil {
 				emoji = ts.Emoji
+				plural = ts.PluralName()
 			}
 		}
 		groups = append(groups, typeGroup{
 			Name:     name,
+			Plural:   plural,
 			Emoji:    emoji,
 			Objects:  objs,
 			Expanded: false,
@@ -127,9 +130,9 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 				arrow = "▼"
 			}
 			if g.Emoji != "" {
-				line = fmt.Sprintf(" %s %s %s (%d)", arrow, padEmoji(g.Emoji), g.Name, len(g.Objects))
+				line = fmt.Sprintf(" %s %s %s (%d)", arrow, padEmoji(g.Emoji), g.Plural, len(g.Objects))
 			} else {
-				line = fmt.Sprintf(" %s %s (%d)", arrow, g.Name, len(g.Objects))
+				line = fmt.Sprintf(" %s %s (%d)", arrow, g.Plural, len(g.Objects))
 			}
 		} else {
 			line = fmt.Sprintf("   %s", row.Object.GetName())

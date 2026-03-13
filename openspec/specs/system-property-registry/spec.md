@@ -1,11 +1,11 @@
 ### Requirement: System property registry defines all system-managed properties
 
-The core package SHALL maintain a registry of system properties as a package-level slice. Each entry SHALL declare a property name and type. The registry SHALL define properties in display order: `name`, `description`, `created_at`, `updated_at`.
+The core package SHALL maintain a registry of system properties as a package-level slice. Each entry SHALL declare a property name and type. Entries with `type: relation` SHALL additionally declare `Target` and `Multiple` fields. The registry SHALL define properties in display order: `name`, `description`, `created_at`, `updated_at`, `tags`.
 
 #### Scenario: Registry contains all system properties
 
 - **WHEN** the system property registry is queried
-- **THEN** it SHALL contain entries for `name` (text), `description` (text), `created_at` (datetime), and `updated_at` (datetime) in that order
+- **THEN** it SHALL contain entries for `name` (text), `description` (text), `created_at` (datetime), `updated_at` (datetime), and `tags` (relation, target: tag, multiple: true) in that order
 
 ### Requirement: IsSystemProperty identifies reserved property names
 
@@ -31,6 +31,11 @@ The `IsSystemProperty(name)` function SHALL return `true` for any property name 
 - **WHEN** `IsSystemProperty("updated_at")` is called
 - **THEN** it SHALL return `true`
 
+#### Scenario: Recognized system property tags
+
+- **WHEN** `IsSystemProperty("tags")` is called
+- **THEN** it SHALL return `true`
+
 #### Scenario: Non-system property
 
 - **WHEN** `IsSystemProperty("title")` is called
@@ -43,7 +48,7 @@ The `SystemPropertyNames()` function SHALL return a slice of all system property
 #### Scenario: Property names in order
 
 - **WHEN** `SystemPropertyNames()` is called
-- **THEN** it SHALL return `["name", "description", "created_at", "updated_at"]`
+- **THEN** it SHALL return `["name", "description", "created_at", "updated_at", "tags"]`
 
 ### Requirement: Type schema validation rejects all system property names
 
@@ -62,6 +67,11 @@ The `SystemPropertyNames()` function SHALL return a slice of all system property
 #### Scenario: Schema defines updated_at property
 
 - **WHEN** a type schema defines a property named `updated_at`
+- **THEN** validation SHALL return an error containing "reserved system property"
+
+#### Scenario: Schema defines tags property
+
+- **WHEN** a type schema defines a property named `tags`
 - **THEN** validation SHALL return an error containing "reserved system property"
 
 ### Requirement: Shared property validation rejects all system property names
@@ -83,6 +93,11 @@ The `SystemPropertyNames()` function SHALL return a slice of all system property
 - **WHEN** a shared properties file defines a property named `updated_at`
 - **THEN** validation SHALL return an error containing "reserved system property"
 
+#### Scenario: Shared property named tags
+
+- **WHEN** a shared properties file defines a property named `tags`
+- **THEN** validation SHALL return an error containing "reserved system property"
+
 ### Requirement: SyncIndex preserves all system properties
 
 During property filtering in `SyncIndex`, all system properties present in the object's frontmatter SHALL be preserved in the filtered property set, regardless of type schema definitions.
@@ -95,16 +110,16 @@ During property filtering in `SyncIndex`, all system properties present in the o
 
 ### Requirement: Frontmatter orders system properties first
 
-`OrderedPropKeys` SHALL place system properties before schema-defined properties, in registry order (name, description, created_at, updated_at). Schema-defined properties follow in schema order. Extra properties are appended alphabetically.
+`OrderedPropKeys` SHALL place system properties before schema-defined properties, in registry order (name, description, created_at, updated_at, tags). Schema-defined properties follow in schema order. Extra properties are appended alphabetically.
 
 #### Scenario: Full property ordering
 
-- **WHEN** an object has properties `name`, `description`, `created_at`, `updated_at`, `title`, and `rating`
+- **WHEN** an object has properties `name`, `description`, `created_at`, `updated_at`, `tags`, `title`, and `rating`
 - **AND** the schema defines `title` then `rating`
-- **THEN** `OrderedPropKeys` SHALL return `["name", "description", "created_at", "updated_at", "title", "rating"]`
+- **THEN** `OrderedPropKeys` SHALL return `["name", "description", "created_at", "updated_at", "tags", "title", "rating"]`
 
 #### Scenario: System properties absent
 
-- **WHEN** an object has properties `name` and `title` (no description or timestamps)
+- **WHEN** an object has properties `name` and `title` (no description, timestamps, or tags)
 - **AND** the schema defines `title`
 - **THEN** `OrderedPropKeys` SHALL return `["name", "title"]`
