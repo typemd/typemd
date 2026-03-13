@@ -8,6 +8,15 @@ import (
 
 var templatePlaceholderRegexp = regexp.MustCompile(`\{\{\s*(\w+):([^}]+)\}\}`)
 
+var dateFormatReplacer = strings.NewReplacer(
+	"YYYY", "2006",
+	"MM", "01",
+	"DD", "02",
+	"HH", "15",
+	"mm", "04",
+	"ss", "05",
+)
+
 // EvaluateNameTemplate evaluates a name template string, replacing placeholders.
 // Currently supports {{ date:FORMAT }} with user-friendly format tokens.
 func EvaluateNameTemplate(template string, now time.Time) string {
@@ -31,13 +40,5 @@ func EvaluateNameTemplate(template string, now time.Time) string {
 
 // convertDateFormat converts user-friendly date format tokens to Go reference time.
 func convertDateFormat(format string) string {
-	replacer := strings.NewReplacer(
-		"YYYY", "2006",
-		"MM", "01",
-		"DD", "02",
-		"HH", "15",
-		"mm", "04",
-		"ss", "05",
-	)
-	return replacer.Replace(format)
+	return dateFormatReplacer.Replace(format)
 }

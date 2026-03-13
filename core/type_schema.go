@@ -139,7 +139,7 @@ func (v *Vault) LoadType(name string) (*TypeSchema, error) {
 		// Extract name template from properties if present
 		filtered := schema.Properties[:0]
 		for _, prop := range schema.Properties {
-			if prop.Name == "name" {
+			if prop.Name == NameProperty {
 				schema.NameTemplate = prop.Template
 				continue
 			}
@@ -305,7 +305,7 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 			errs = append(errs, fmt.Errorf("property[%d]: missing required field: name", i))
 			continue
 		}
-		if prop.Name == "name" {
+		if prop.Name == NameProperty {
 			// Allow name entry with only template set
 			onlyTemplate := prop.Template != "" &&
 				prop.Type == "" && prop.Emoji == "" && prop.Pin == 0 &&
@@ -367,6 +367,7 @@ func validateUseOverrides(index int, prop Property) error {
 		{"multiple", prop.Multiple},
 		{"bidirectional", prop.Bidirectional},
 		{"inverse", prop.Inverse != ""},
+		{"template", prop.Template != ""},
 	}
 
 	for _, f := range disallowed {

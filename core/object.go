@@ -131,10 +131,12 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		return nil, fmt.Errorf("load type: %w", err)
 	}
 
+	now := time.Now()
+
 	// Handle empty name: use template or error
 	if filename == "" {
 		if schema.NameTemplate != "" {
-			filename = EvaluateNameTemplate(schema.NameTemplate, time.Now())
+			filename = EvaluateNameTemplate(schema.NameTemplate, now)
 		} else {
 			return nil, fmt.Errorf("name is required (type %q has no name template)", typeName)
 		}
@@ -165,9 +167,9 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	// Generate initial properties from schema
 	props := make(map[string]any)
 	props[NameProperty] = slug // system property: display name from slug
-	now := time.Now().Format(time.RFC3339)
-	props[CreatedAtProperty] = now
-	props[UpdatedAtProperty] = now
+	nowStr := now.Format(time.RFC3339)
+	props[CreatedAtProperty] = nowStr
+	props[UpdatedAtProperty] = nowStr
 	for _, p := range schema.Properties {
 		if p.Default != nil {
 			props[p.Name] = p.Default
