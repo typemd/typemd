@@ -78,6 +78,17 @@ var validateCmd = &cobra.Command{
 			fmt.Println()
 		}
 
+		// Phase 5: Tag name uniqueness validation
+		tagErrs := core.ValidateTagNameUniqueness(vault)
+		if len(tagErrs) > 0 {
+			fmt.Println("Tag uniqueness errors:")
+			for _, e := range tagErrs {
+				fmt.Printf("  %s\n", e)
+				totalErrors++
+			}
+			fmt.Println()
+		}
+
 		if totalErrors > 0 {
 			return fmt.Errorf("found %d validation error(s)", totalErrors)
 		}
