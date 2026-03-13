@@ -5,7 +5,7 @@ sidebar:
   order: 10
 ---
 
-驗證 vault 的 Type schema、Object、Relation 和 Wiki-link。依序執行四個階段：
+驗證 vault 的 Type schema、Object、Relation、Wiki-link 和 name 唯一性。依序執行五個階段：
 
 ```bash
 tmd type validate
@@ -38,6 +38,10 @@ tmd type validate
 
 偵測壞掉的 wiki-link——Object 內文中的 `[[target]]` 參照，但目標 Object 不存在。
 
+### 階段 5：Name 唯一性驗證
+
+檢查所有 schema 中有 `unique: true` 的 type（例如內建的 `tag` type），確保同一 type 下沒有兩個 object 共用相同的 `name` 值。
+
 ## 輸出
 
 成功時：
@@ -61,5 +65,8 @@ Relation errors:
 Wiki-link errors:
   book/example: broken wiki-link [[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]]
 
-found 4 validation error(s)
+Name uniqueness errors:
+  duplicate tag name "golang": tag/golang-01abc and tag/golang-01xyz
+
+found 5 validation error(s)
 ```

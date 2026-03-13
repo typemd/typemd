@@ -5,7 +5,7 @@ sidebar:
   order: 10
 ---
 
-Validates the vault's type schemas, objects, relations, and wiki-links. Runs four phases in order:
+Validates the vault's type schemas, objects, relations, wiki-links, and name uniqueness. Runs five phases in order:
 
 ```bash
 tmd type validate
@@ -38,6 +38,10 @@ Checks all stored relations to ensure both the source and target objects exist.
 
 Detects broken wiki-links — `[[target]]` references in object body content where the target object does not exist.
 
+### Phase 5: Name Uniqueness Validation
+
+Checks all types with `unique: true` in their schema (e.g., the built-in `tag` type) to ensure no two objects of the same type share the same `name` value.
+
 ## Output
 
 On success:
@@ -61,5 +65,8 @@ Relation errors:
 Wiki-link errors:
   book/example: broken wiki-link [[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]]
 
-found 4 validation error(s)
+Name uniqueness errors:
+  duplicate tag name "golang": tag/golang-01abc and tag/golang-01xyz
+
+found 5 validation error(s)
 ```

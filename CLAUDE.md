@@ -19,7 +19,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 
 - Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
 - All objects have system properties managed by typemd: `name` (auto-populated from slug, or from name template if defined), `description` (optional, user-authored), `created_at` (set on creation), `updated_at` (updated on save), `tags` (relation to built-in `tag` type, multiple). These appear first in frontmatter in that order.
-- Type schemas: `.typemd/types/*.yaml` (cannot define properties named `description`, `created_at`, `updated_at`, or `tags` — they're reserved system properties; `name` can appear in `properties` with only a `template` field for auto-generated names). Type schemas support an optional `plural` field for display in collection contexts (e.g., TUI group headers).
+- Type schemas: `.typemd/types/*.yaml` (cannot define properties named `description`, `created_at`, `updated_at`, or `tags` — they're reserved system properties; `name` can appear in `properties` with only a `template` field for auto-generated names). Type schemas support optional `plural` (for display in collection contexts) and `unique` (to enforce name uniqueness) fields.
 - Shared properties: `.typemd/properties.yaml` (optional, defines reusable property definitions referenced via `use` in type schemas)
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking

@@ -222,6 +222,8 @@ properties:
 
 The optional `plural` field specifies the grammatically correct plural form for display in TUI group headers and CLI output. When omitted, falls back to the type name.
 
+The optional `unique` field (boolean, defaults to `false`) enforces that no two objects of the same type can share the same `name` value. When set to `true`, attempting to create an object with a duplicate name will fail. The built-in `tag` type has `unique: true` enabled by default.
+
 Types and properties both support an optional `emoji` field for visual identification in CLI and TUI output. Properties also support an optional `default` field to specify a default value.
 
 ## Relations

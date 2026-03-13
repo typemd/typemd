@@ -46,20 +46,17 @@ Type 為你的知識庫帶來**一致性**和**可查詢性**：
 
 ## 內建 Type
 
-TypeMD 內建四種 Type 讓你快速開始：
+TypeMD 只有一個內建 Type：
 
-| Type | 屬性 |
-|------|------|
-| 📚 `book` | title (string)、status (select: to-read/reading/done)、rating (number) |
-| 👤 `person` | role (string) |
-| 📝 `note` | title (string) |
-| 🏷️ `tag` | color (string)、icon (string) |
+| Type | 屬性 | 用途 |
+|------|------|------|
+| 🏷️ `tag` | color (string)、icon (string) | 支援 `tags` 系統屬性；具有 `unique: true` 以強制 name 唯一性 |
 
-你可以修改這些內建 Type，或建立自己的 Type 來符合你的知識領域。
+所有其他 Type 都是使用者透過 `.typemd/types/*.yaml` 檔案自行定義。你可以設計符合自己領域的 Type——書籍、人物、筆記、專案，或任何其他分類。
 
 ## 標籤
 
-標籤在 TypeMD 中是一級 Object。每個 Object 都有一個 `tags` [系統屬性](/zh-tw/concepts/data-model#系統屬性)，存放對 `tag` Object 的參照。標籤名稱在整個 vault 中必須唯一。
+標籤在 TypeMD 中是一級 Object。每個 Object 都有一個 `tags` [系統屬性](/zh-tw/concepts/data-model#系統屬性)，存放對 `tag` Object 的參照。內建的 `tag` type 在 schema 中設有 `unique: true`，因此標籤名稱必須唯一。此唯一性約束在建立時強制執行，並由 `tmd type validate` 驗證。任何使用者自訂的 type 也可以透過在 schema 中加入 `unique: true` 來啟用 name 唯一性。
 
 在 frontmatter 中，標籤參照可以使用完整的 Object ID 或標籤名稱：
 

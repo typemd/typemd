@@ -40,7 +40,22 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-Only the `tag` type is built-in (it backs the `tags` system property). The built-in `tag` type includes a plural form ("tags") for grammatically correct display in group headers. All other types must be defined via `.typemd/types/*.yaml` files.
+Only the `tag` type is built-in (it backs the `tags` system property). The built-in `tag` type includes a plural form ("tags") for grammatically correct display in group headers and has `unique: true` to enforce name uniqueness. All other types must be defined via `.typemd/types/*.yaml` files.
+
+### Unique constraint
+
+Type schemas can opt into name uniqueness enforcement by setting `unique: true`. When enabled, TypeMD prevents creating multiple objects of the same type with identical `name` values. The built-in `tag` type has this enabled by default.
+
+```yaml
+# .typemd/types/person.yaml
+name: person
+unique: true  # only one person per name
+properties:
+  - name: role
+    type: string
+```
+
+Uniqueness is enforced at creation time and validated by `tmd type validate`. If a type does not have `unique: true` (the default), multiple objects can share the same name.
 
 ## Indexing
 

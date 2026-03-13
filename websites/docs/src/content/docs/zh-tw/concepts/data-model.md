@@ -38,6 +38,23 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
+只有 `tag` type 是內建的（支援 `tags` 系統屬性）。內建的 `tag` type 包含複數形式（「tags」）以便在群組標題中正確顯示，並且預設啟用 `unique: true` 以強制 name 唯一性。其他所有 type 都必須透過 `.typemd/types/*.yaml` 檔案定義。
+
+### 唯一性約束
+
+Type schema 可透過設定 `unique: true` 來啟用 name 唯一性檢查。啟用後，TypeMD 會阻止建立同一 type 下擁有相同 `name` 值的多個 object。內建的 `tag` type 預設啟用此功能。
+
+```yaml
+# .typemd/types/person.yaml
+name: person
+unique: true  # 同一個人名稱只能有一個
+properties:
+  - name: role
+    type: string
+```
+
+唯一性在建立時強制執行，並由 `tmd type validate` 驗證。若 type 沒有設定 `unique: true`（預設值），則允許多個 object 共用相同的 name。
+
 ## 索引
 
 TypeMD 使用 SQLite 搭配 FTS5 進行索引。索引儲存在 `.typemd/index.db`，包含：

@@ -50,13 +50,13 @@ TypeMD has one built-in Type:
 
 | Type | Properties | Purpose |
 |------|------------|---------|
-| 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property |
+| 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property; has `unique: true` to enforce name uniqueness |
 
 All other Types are user-defined via `.typemd/types/*.yaml` files. You design your knowledge base by creating the Types that fit your domain — books, people, notes, projects, or anything else.
 
 ## Tags
 
-Tags are first-class Objects in TypeMD. Every Object has a `tags` [system property](/concepts/data-model#system-properties) that holds references to `tag` Objects. Tag names must be unique across the vault.
+Tags are first-class Objects in TypeMD. Every Object has a `tags` [system property](/concepts/data-model#system-properties) that holds references to `tag` Objects. The built-in `tag` type has `unique: true` in its schema, which means tag names must be unique. This uniqueness constraint is enforced at creation time and validated by `tmd type validate`. Any user-defined type can also enable name uniqueness by adding `unique: true` to its schema.
 
 In frontmatter, tag references can use either the full Object ID or the tag name:
 
