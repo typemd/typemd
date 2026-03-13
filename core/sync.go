@@ -17,10 +17,16 @@ type OrphanedRelation struct {
 
 // SyncResult holds statistics from a SyncIndex operation.
 type SyncResult struct {
-	Created  int
-	Updated  int
 	Deleted  int
 	Orphaned []OrphanedRelation
+}
+
+// syncContext holds intermediate state collected during SyncIndex.
+type syncContext struct {
+	diskIDs     map[string]bool
+	diskBodies  map[string]string
+	diskTags    map[string]*Object
+	diskTagRefs map[string][]string
 }
 
 // SyncIndex scans the objects directory, upserts all found objects into the DB,
@@ -32,28 +38,66 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 
 	result := &SyncResult{}
 
-	// Collect all object IDs found on disk, along with their bodies for wiki-link extraction
-	diskIDs := make(map[string]bool)
-	diskBodies := make(map[string]string)
-	diskTags := make(map[string]*Object)          // tag ID → Object (for name resolution)
-	diskTagRefs := make(map[string][]string)       // object ID → tag reference strings
-
-	// Cache loaded type schemas and their property name sets per type
-	schemaCache := make(map[string]*TypeSchema)
-	propertyNameCache := make(map[string]map[string]bool)
-	sysNames := SystemPropertyNames()
-
+	// Handle empty vault (no objects directory)
 	objsDir := v.ObjectsDir()
 	if _, err := os.Stat(objsDir); os.IsNotExist(err) {
-		// No objects directory — just clean DB and return
-		_, err := v.db.Exec("DELETE FROM objects")
-		if err != nil {
+		if _, err := v.db.Exec("DELETE FROM objects"); err != nil {
 			return nil, fmt.Errorf("clean objects: %w", err)
 		}
 		return result, v.RebuildIndex()
 	}
 
-	// Walk objects/<type>/<name>.md
+	ctx, err := v.walkAndUpsertObjects()
+	if err != nil {
+		return nil, err
+	}
+
+	deleted, err := v.deleteStaleObjects(ctx.diskIDs)
+	if err != nil {
+		return nil, err
+	}
+	result.Deleted = len(deleted)
+
+	orphaned, err := v.cleanOrphanedRelations()
+	if err != nil {
+		return nil, err
+	}
+	result.Orphaned = orphaned
+
+	// Clean up wikilinks for deleted objects and sync current ones
+	for _, id := range deleted {
+		if _, err := v.db.Exec("DELETE FROM wikilinks WHERE from_id = ?", id); err != nil {
+			return nil, fmt.Errorf("delete wikilinks for %s: %w", id, err)
+		}
+	}
+	for id, body := range ctx.diskBodies {
+		if err := v.syncWikiLinks(id, body, ctx.diskIDs); err != nil {
+			return nil, fmt.Errorf("sync wikilinks for %s: %w", id, err)
+		}
+	}
+
+	if err := v.syncTagRelations(ctx); err != nil {
+		return nil, err
+	}
+
+	return result, v.RebuildIndex()
+}
+
+// walkAndUpsertObjects walks the objects directory, parses each object file,
+// and upserts it into the database. Returns collected state for downstream steps.
+func (v *Vault) walkAndUpsertObjects() (*syncContext, error) {
+	ctx := &syncContext{
+		diskIDs:     make(map[string]bool),
+		diskBodies:  make(map[string]string),
+		diskTags:    make(map[string]*Object),
+		diskTagRefs: make(map[string][]string),
+	}
+
+	schemaCache := make(map[string]*TypeSchema)
+	propertyNameCache := make(map[string]map[string]bool)
+	sysNames := SystemPropertyNames()
+
+	objsDir := v.ObjectsDir()
 	err := filepath.Walk(objsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") {
 			return nil
@@ -72,7 +116,6 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 		filename := strings.TrimSuffix(parts[1], ".md")
 		id := typeName + "/" + filename
 
-		// Read and parse file
 		data, err := os.ReadFile(path)
 		if err != nil {
 			return nil // skip unreadable files
@@ -83,7 +126,7 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 			return nil // skip unparseable files
 		}
 
-		// Populate schema cache (used by both name migration and property filtering)
+		// Populate schema cache
 		if _, cached := schemaCache[typeName]; !cached {
 			schema, err := v.LoadType(typeName)
 			if err != nil {
@@ -108,7 +151,6 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 		// Filter properties by type schema (only index schema-defined keys + system properties)
 		if allowed := propertyNameCache[typeName]; allowed != nil {
 			filtered := make(map[string]any, len(allowed)+len(sysNames))
-			// Preserve all system properties
 			for _, name := range sysNames {
 				if val, ok := props[name]; ok {
 					filtered[name] = val
@@ -127,7 +169,6 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 			return nil
 		}
 
-		// Upsert into DB
 		_, err = v.db.Exec(`
 			INSERT INTO objects (id, type, filename, properties, body)
 			VALUES (?, ?, ?, ?, ?)
@@ -141,12 +182,11 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 			return fmt.Errorf("upsert object %s: %w", id, err)
 		}
 
-		diskIDs[id] = true
-		diskBodies[id] = body
+		ctx.diskIDs[id] = true
+		ctx.diskBodies[id] = body
 
-		// Collect tag objects for name resolution
 		if typeName == TagTypeName {
-			diskTags[id] = &Object{
+			ctx.diskTags[id] = &Object{
 				ID:         id,
 				Type:       typeName,
 				Filename:   filename,
@@ -154,7 +194,6 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 			}
 		}
 
-		// Collect tag references from the tags system property
 		if tagsVal, ok := props[TagsProperty]; ok {
 			if tagsArr, ok := tagsVal.([]any); ok {
 				var refs []string
@@ -164,7 +203,7 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 					}
 				}
 				if len(refs) > 0 {
-					diskTagRefs[id] = refs
+					ctx.diskTagRefs[id] = refs
 				}
 			}
 		}
@@ -175,7 +214,12 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 		return nil, fmt.Errorf("walk objects: %w", err)
 	}
 
-	// Remove DB entries that no longer exist on disk
+	return ctx, nil
+}
+
+// deleteStaleObjects removes DB entries for objects that no longer exist on disk.
+// Returns the list of deleted object IDs.
+func (v *Vault) deleteStaleObjects(diskIDs map[string]bool) ([]string, error) {
 	rows, err := v.db.Query("SELECT id FROM objects")
 	if err != nil {
 		return nil, fmt.Errorf("list db objects: %w", err)
@@ -201,11 +245,15 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 			return nil, fmt.Errorf("delete stale object %s: %w", id, err)
 		}
 	}
-	result.Deleted = len(toDelete)
 
-	// Detect and clean up orphaned relations
-	orphanRows, err := v.db.Query(`
-		SELECT r.name, r.from_id, r.to_id FROM relations r
+	return toDelete, nil
+}
+
+// cleanOrphanedRelations detects and removes relation records that reference
+// non-existent objects. Returns the list of orphaned relations found.
+func (v *Vault) cleanOrphanedRelations() ([]OrphanedRelation, error) {
+	rows, err := v.db.Query(`
+		SELECT r.id, r.name, r.from_id, r.to_id FROM relations r
 		LEFT JOIN objects o1 ON r.from_id = o1.id
 		LEFT JOIN objects o2 ON r.to_id = o2.id
 		WHERE o1.id IS NULL OR o2.id IS NULL
@@ -213,96 +261,83 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	if err != nil {
 		return nil, fmt.Errorf("detect orphaned relations: %w", err)
 	}
-	defer orphanRows.Close()
+	defer rows.Close()
 
-	for orphanRows.Next() {
+	var orphaned []OrphanedRelation
+	var orphanIDs []any
+	for rows.Next() {
+		var rowID int
 		var o OrphanedRelation
-		if err := orphanRows.Scan(&o.Name, &o.FromID, &o.ToID); err != nil {
+		if err := rows.Scan(&rowID, &o.Name, &o.FromID, &o.ToID); err != nil {
 			return nil, fmt.Errorf("scan orphaned relation: %w", err)
 		}
-		result.Orphaned = append(result.Orphaned, o)
+		orphaned = append(orphaned, o)
+		orphanIDs = append(orphanIDs, rowID)
 	}
-	if err := orphanRows.Err(); err != nil {
+	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate orphaned relations: %w", err)
 	}
 
-	// Delete orphaned relations from DB
-	if len(result.Orphaned) > 0 {
-		_, err := v.db.Exec(`
-			DELETE FROM relations WHERE id IN (
-				SELECT r.id FROM relations r
-				LEFT JOIN objects o1 ON r.from_id = o1.id
-				LEFT JOIN objects o2 ON r.to_id = o2.id
-				WHERE o1.id IS NULL OR o2.id IS NULL
-			)
-		`)
+	if len(orphanIDs) > 0 {
+		placeholders := strings.Repeat("?,", len(orphanIDs))
+		_, err := v.db.Exec(
+			"DELETE FROM relations WHERE id IN ("+placeholders[:len(placeholders)-1]+")",
+			orphanIDs...,
+		)
 		if err != nil {
 			return nil, fmt.Errorf("delete orphaned relations: %w", err)
 		}
 	}
 
-	// Clean up wikilinks for deleted objects
-	for _, id := range toDelete {
-		if _, err := v.db.Exec("DELETE FROM wikilinks WHERE from_id = ?", id); err != nil {
-			return nil, fmt.Errorf("delete wikilinks for %s: %w", id, err)
-		}
-	}
+	return orphaned, nil
+}
 
-	// Sync wiki-links using in-memory diskIDs for target resolution
-	for id, body := range diskBodies {
-		if err := v.syncWikiLinks(id, body, diskIDs); err != nil {
-			return nil, fmt.Errorf("sync wikilinks for %s: %w", id, err)
-		}
-	}
-
-	// Resolve tag references and write tag relations
-	// First, clear existing tag relations (they will be rebuilt from frontmatter)
+// syncTagRelations clears existing tag relations and rebuilds them from frontmatter references.
+// It auto-creates tag objects for name references that don't match existing tags.
+func (v *Vault) syncTagRelations(ctx *syncContext) error {
 	if _, err := v.db.Exec("DELETE FROM relations WHERE name = ?", TagsProperty); err != nil {
-		return nil, fmt.Errorf("clear tag relations: %w", err)
+		return fmt.Errorf("clear tag relations: %w", err)
 	}
 
-	// Build a name→ID index from diskTags for quick uniqueness checks during auto-creation
-	tagNameIndex := make(map[string]string) // tag name → tag ID
-	for _, obj := range diskTags {
+	// Build a name->ID index from diskTags for quick lookups
+	tagNameIndex := make(map[string]string)
+	for _, obj := range ctx.diskTags {
 		if name, ok := obj.Properties[NameProperty].(string); ok {
 			tagNameIndex[name] = obj.ID
 		}
 	}
 
-	for objID, refs := range diskTagRefs {
+	for objID, refs := range ctx.diskTagRefs {
 		for _, ref := range refs {
-			tagID, ok := v.resolveTagReference(ref, diskTags, tagNameIndex)
+			tagID, ok := v.resolveTagReference(ref, ctx.diskTags, tagNameIndex)
 			if !ok {
-				// Auto-create if it's a name reference (no ULID suffix)
 				slug := strings.TrimPrefix(ref, "tag/")
 				if !ulidSuffixPattern.MatchString(slug) {
-					// Check tagNameIndex to avoid N+1 DB queries via checkNameUnique
 					if existingID, exists := tagNameIndex[slug]; exists {
 						tagID = existingID
 					} else {
 						newTag, err := v.NewObject(TagTypeName, slug)
 						if err != nil {
-							continue // skip on error
+							continue
 						}
-						diskTags[newTag.ID] = newTag
-						diskIDs[newTag.ID] = true
+						ctx.diskTags[newTag.ID] = newTag
+						ctx.diskIDs[newTag.ID] = true
 						tagNameIndex[slug] = newTag.ID
 						tagID = newTag.ID
 					}
 				} else {
-					continue // broken full-ID reference, skip
+					continue
 				}
 			}
-			// Write relation
 			_, err := v.db.Exec(
 				"INSERT INTO relations (name, from_id, to_id) VALUES (?, ?, ?)",
 				TagsProperty, objID, tagID,
 			)
 			if err != nil {
-				return nil, fmt.Errorf("insert tag relation: %w", err)
+				return fmt.Errorf("insert tag relation: %w", err)
 			}
 		}
 	}
 
-	return result, v.RebuildIndex()
+	return nil
 }
