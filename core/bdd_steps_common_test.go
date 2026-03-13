@@ -52,6 +52,9 @@ type domainContext struct {
 
 	// tag uniqueness validation results
 	tagUniquenessErrors []error
+
+	// name uniqueness validation results (generalized)
+	nameUniquenessErrors []error
 }
 
 func newDomainContext() *domainContext {

@@ -204,25 +204,25 @@ func TestValidateWikiLinks_NoWikiLinks(t *testing.T) {
 	}
 }
 
-// ── Tag name uniqueness tests (4.5) ─────────────────────────────────────────
+// ── Name uniqueness tests ────────────────────────────────────────────────────
 
-func TestValidateTagNameUniqueness_NoDuplicates(t *testing.T) {
+func TestValidateNameUniqueness_NoDuplicates(t *testing.T) {
 	v := setupTestVault(t)
 	v.NewObject("tag", "go")
 	v.NewObject("tag", "rust")
 
-	errs := ValidateTagNameUniqueness(v)
+	errs := ValidateNameUniqueness(v)
 	if len(errs) != 0 {
 		t.Errorf("expected no errors, got %v", errs)
 	}
 }
 
-func TestValidateTagNameUniqueness_CaseSensitive(t *testing.T) {
+func TestValidateNameUniqueness_CaseSensitive(t *testing.T) {
 	v := setupTestVault(t)
 	v.NewObject("tag", "Go")
 	v.NewObject("tag", "go")
 
-	errs := ValidateTagNameUniqueness(v)
+	errs := ValidateNameUniqueness(v)
 	if len(errs) != 0 {
 		t.Errorf("expected no errors (case-sensitive), got %v", errs)
 	}

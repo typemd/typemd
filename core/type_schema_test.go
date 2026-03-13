@@ -99,6 +99,9 @@ func TestDefaultTypes_OnlyTag(t *testing.T) {
 	if schema.Name != TagTypeName {
 		t.Errorf("tag schema Name = %q, want %q", schema.Name, TagTypeName)
 	}
+	if !schema.Unique {
+		t.Errorf("tag schema Unique = false, want true")
+	}
 	// book, person, note should NOT be built-in
 	for _, name := range []string{"book", "person", "note"} {
 		if _, ok := defaultTypes[name]; ok {

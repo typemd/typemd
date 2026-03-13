@@ -51,7 +51,7 @@ func (dc *domainContext) aRawDuplicateTagNamedExists(name string) {
 }
 
 func (dc *domainContext) iValidateTagNameUniqueness() {
-	dc.tagUniquenessErrors = ValidateTagNameUniqueness(dc.vault)
+	dc.tagUniquenessErrors = ValidateNameUniqueness(dc.vault)
 }
 
 func (dc *domainContext) thereShouldBeTagUniquenessErrors() error {

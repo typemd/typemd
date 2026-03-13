@@ -68,6 +68,7 @@ type TypeSchema struct {
 	Name         string     `yaml:"name"`
 	Plural       string     `yaml:"plural,omitempty"`
 	Emoji        string     `yaml:"emoji,omitempty"`
+	Unique       bool       `yaml:"unique,omitempty"`
 	Properties   []Property `yaml:"properties"`
 	NameTemplate string     `yaml:"-"` // extracted from name property entry during load
 }
@@ -125,6 +126,7 @@ var defaultTypes = map[string]TypeSchema{
 		Name:   TagTypeName,
 		Plural: "tags",
 		Emoji:  "🏷️",
+		Unique: true,
 		Properties: []Property{
 			{Name: "color", Type: "string", Emoji: "🎨"},
 			{Name: "icon", Type: "string", Emoji: "✨"},

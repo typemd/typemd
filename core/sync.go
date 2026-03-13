@@ -276,7 +276,7 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 				// Auto-create if it's a name reference (no ULID suffix)
 				slug := strings.TrimPrefix(ref, "tag/")
 				if !ulidSuffixPattern.MatchString(slug) {
-					// Check tagNameIndex to avoid N+1 DB queries via checkTagNameUnique
+					// Check tagNameIndex to avoid N+1 DB queries via checkNameUnique
 					if existingID, exists := tagNameIndex[slug]; exists {
 						tagID = existingID
 					} else {

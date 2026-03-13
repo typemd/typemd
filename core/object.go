@@ -142,9 +142,9 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		}
 	}
 
-	// Enforce tag name uniqueness
-	if typeName == TagTypeName {
-		if err := v.checkTagNameUnique(filename); err != nil {
+	// Enforce name uniqueness for types with unique constraint
+	if schema.Unique {
+		if err := v.checkNameUnique(typeName, filename); err != nil {
 			return nil, err
 		}
 	}

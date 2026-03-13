@@ -86,38 +86,104 @@ func ValidateWikiLinks(v *Vault) []error {
 	return errs
 }
 
-// ValidateTagNameUniqueness checks that no two tag objects share the same name.
-func ValidateTagNameUniqueness(v *Vault) []error {
+// ValidateNameUniqueness checks that no two objects of the same unique type share the same name.
+// It scans all types with Unique: true and reports duplicate name values.
+func ValidateNameUniqueness(v *Vault) []error {
 	var errs []error
-	rows, err := v.db.Query(
-		"SELECT id, json_extract(properties, '$.name') AS name FROM objects WHERE type = ?",
-		TagTypeName,
-	)
-	if err != nil {
-		return []error{fmt.Errorf("query tags: %w", err)}
-	}
-	defer rows.Close()
 
-	seen := make(map[string]string) // name → first ID
-	for rows.Next() {
-		var id string
-		var name *string
-		if err := rows.Scan(&id, &name); err != nil {
-			continue
-		}
-		if name == nil || *name == "" {
-			continue
-		}
-		if firstID, ok := seen[*name]; ok {
-			errs = append(errs, fmt.Errorf("duplicate tag name %q: %s and %s", *name, firstID, id))
-		} else {
-			seen[*name] = id
-		}
+	// Collect all unique type names
+	uniqueTypes := collectUniqueTypes(v)
+	if len(uniqueTypes) == 0 {
+		return nil
 	}
-	if err := rows.Err(); err != nil {
-		errs = append(errs, fmt.Errorf("iterate tags: %w", err))
+
+	for _, typeName := range uniqueTypes {
+		rows, err := v.db.Query(
+			"SELECT id, json_extract(properties, '$.name') AS name FROM objects WHERE type = ?",
+			typeName,
+		)
+		if err != nil {
+			errs = append(errs, fmt.Errorf("query %s objects: %w", typeName, err))
+			continue
+		}
+
+		seen := make(map[string]string) // name → first ID
+		for rows.Next() {
+			var id string
+			var name *string
+			if err := rows.Scan(&id, &name); err != nil {
+				continue
+			}
+			if name == nil || *name == "" {
+				continue
+			}
+			if firstID, ok := seen[*name]; ok {
+				errs = append(errs, fmt.Errorf("duplicate %s name %q: %s and %s", typeName, *name, firstID, id))
+			} else {
+				seen[*name] = id
+			}
+		}
+		rows.Close()
+		if err := rows.Err(); err != nil {
+			errs = append(errs, fmt.Errorf("iterate %s objects: %w", typeName, err))
+		}
 	}
 	return errs
+}
+
+// collectUniqueTypes returns all type names that have Unique: true.
+// It checks both built-in defaults and custom YAML schemas.
+func collectUniqueTypes(v *Vault) []string {
+	var uniqueTypes []string
+
+	// Check built-in defaults
+	for name, schema := range defaultTypes {
+		if schema.Unique {
+			uniqueTypes = append(uniqueTypes, name)
+		}
+	}
+
+	// Check custom YAML schemas
+	entries, err := os.ReadDir(v.TypesDir())
+	if err != nil {
+		return uniqueTypes
+	}
+	builtinSeen := make(map[string]bool)
+	for _, name := range uniqueTypes {
+		builtinSeen[name] = true
+	}
+	for _, entry := range entries {
+		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
+			continue
+		}
+		typeName := strings.TrimSuffix(entry.Name(), ".yaml")
+		data, err := os.ReadFile(filepath.Join(v.TypesDir(), entry.Name()))
+		if err != nil {
+			continue
+		}
+		var schema TypeSchema
+		if err := yaml.Unmarshal(data, &schema); err != nil {
+			continue
+		}
+		if schema.Unique {
+			if builtinSeen[typeName] {
+				// Already added from built-in, skip duplicate
+				continue
+			}
+			uniqueTypes = append(uniqueTypes, typeName)
+		} else if builtinSeen[typeName] {
+			// Custom schema overrides built-in: remove from list if unique is false
+			filtered := uniqueTypes[:0]
+			for _, name := range uniqueTypes {
+				if name != typeName {
+					filtered = append(filtered, name)
+				}
+			}
+			uniqueTypes = filtered
+		}
+	}
+
+	return uniqueTypes
 }
 
 // ValidateAllSchemas scans .typemd/types/*.yaml and validates each schema.

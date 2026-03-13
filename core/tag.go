@@ -6,20 +6,20 @@ import (
 	"strings"
 )
 
-// checkTagNameUnique returns an error if a tag object with the given name already exists.
-func (v *Vault) checkTagNameUnique(name string) error {
+// checkNameUnique returns an error if an object of the given type with the given name already exists.
+func (v *Vault) checkNameUnique(typeName, name string) error {
 	var id string
 	err := v.db.QueryRow(
 		"SELECT id FROM objects WHERE type = ? AND json_extract(properties, '$.name') = ? LIMIT 1",
-		TagTypeName, name,
+		typeName, name,
 	).Scan(&id)
 	if err == nil {
-		return fmt.Errorf("tag name %q already exists: %s", name, id)
+		return fmt.Errorf("%s name %q already exists: %s", typeName, name, id)
 	}
 	if err == sql.ErrNoRows {
 		return nil
 	}
-	return fmt.Errorf("check tag name uniqueness: %w", err)
+	return fmt.Errorf("check name uniqueness: %w", err)
 }
 
 // resolveTagReference resolves a tag reference string to an object ID.
