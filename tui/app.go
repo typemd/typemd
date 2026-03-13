@@ -24,6 +24,7 @@ const (
 
 type typeGroup struct {
 	Name     string
+	Plural   string
 	Emoji    string
 	Objects  []*core.Object
 	Expanded bool

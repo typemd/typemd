@@ -145,6 +145,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initSharedSteps(ctx, dc)
 	initSystemSteps(ctx, dc)
 	initTagSteps(ctx, dc)
+	initPluralSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

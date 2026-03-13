@@ -29,6 +29,9 @@ Examples:
 		} else {
 			fmt.Printf("Type: %s\n", schema.Name)
 		}
+		if schema.Plural != "" {
+			fmt.Printf("Plural: %s\n", schema.Plural)
+		}
 		fmt.Println()
 		fmt.Println("Properties")
 		fmt.Println("──────────")

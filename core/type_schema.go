@@ -66,8 +66,17 @@ func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
 // TypeSchema defines the schema for a type.
 type TypeSchema struct {
 	Name       string     `yaml:"name"`
+	Plural     string     `yaml:"plural,omitempty"`
 	Emoji      string     `yaml:"emoji,omitempty"`
 	Properties []Property `yaml:"properties"`
+}
+
+// PluralName returns the plural form if set, otherwise falls back to Name.
+func (s *TypeSchema) PluralName() string {
+	if s.Plural != "" {
+		return s.Plural
+	}
+	return s.Name
 }
 
 // Option defines a selectable value for select/multi_select properties.
@@ -111,8 +120,9 @@ func (s *TypeSchema) PropertyNames() map[string]bool {
 // All other types must be defined via .typemd/types/*.yaml files.
 var defaultTypes = map[string]TypeSchema{
 	TagTypeName: {
-		Name:  TagTypeName,
-		Emoji: "🏷️",
+		Name:   TagTypeName,
+		Plural: "tags",
+		Emoji:  "🏷️",
 		Properties: []Property{
 			{Name: "color", Type: "string", Emoji: "🎨"},
 			{Name: "icon", Type: "string", Emoji: "✨"},
