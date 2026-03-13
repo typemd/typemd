@@ -107,34 +107,9 @@ func (s *TypeSchema) PropertyNames() map[string]bool {
 }
 
 // defaultTypes contains built-in type schemas.
+// Only "tag" is built-in because it backs the "tags" system property.
+// All other types must be defined via .typemd/types/*.yaml files.
 var defaultTypes = map[string]TypeSchema{
-	"book": {
-		Name:  "book",
-		Emoji: "📚",
-		Properties: []Property{
-			{Name: "title", Type: "string", Emoji: "📖"},
-			{Name: "status", Type: "select", Emoji: "📋", Options: []Option{
-				{Value: "to-read"},
-				{Value: "reading"},
-				{Value: "done"},
-			}},
-			{Name: "rating", Type: "number", Emoji: "⭐"},
-		},
-	},
-	"person": {
-		Name:  "person",
-		Emoji: "👤",
-		Properties: []Property{
-			{Name: "role", Type: "string", Emoji: "💼"},
-		},
-	},
-	"note": {
-		Name:  "note",
-		Emoji: "📝",
-		Properties: []Property{
-			{Name: "title", Type: "string", Emoji: "🏷️"},
-		},
-	},
 	TagTypeName: {
 		Name:  TagTypeName,
 		Emoji: "🏷️",

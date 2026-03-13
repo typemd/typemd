@@ -43,16 +43,13 @@ Types give your knowledge base **consistency** and **queryability**:
 
 ## Built-in Types
 
-TypeMD ships with four built-in Types to get you started:
+TypeMD has one built-in Type:
 
-| Type | Properties |
-|------|------------|
-| 📚 `book` | title (string), status (select: to-read/reading/done), rating (number) |
-| 👤 `person` | role (string) |
-| 📝 `note` | title (string) |
-| 🏷️ `tag` | color (string), icon (string) |
+| Type | Properties | Purpose |
+|------|------------|---------|
+| 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property |
 
-You can modify these or create your own Types to fit your knowledge domain.
+All other Types are user-defined via `.typemd/types/*.yaml` files. You design your knowledge base by creating the Types that fit your domain — books, people, notes, projects, or anything else.
 
 ## Tags
 

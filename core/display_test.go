@@ -13,6 +13,7 @@ func TestBuildDisplayProperties(t *testing.T) {
 	if err := v.Init(); err != nil {
 		t.Fatal(err)
 	}
+	writeCommonTestTypeSchemas(v)
 	if err := v.Open(); err != nil {
 		t.Fatal(err)
 	}
@@ -59,7 +60,7 @@ func TestBuildDisplayPropertiesWithRelations(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	// Write a custom schema with a relation property
+	// Write custom schemas
 	schemaYAML := `name: article
 properties:
   - name: title
@@ -71,6 +72,7 @@ properties:
 	if err := os.WriteFile(filepath.Join(v.TypesDir(), "article.yaml"), []byte(schemaYAML), 0644); err != nil {
 		t.Fatal(err)
 	}
+	writeCommonTestTypeSchemas(v)
 
 	if err := v.Open(); err != nil {
 		t.Fatal(err)

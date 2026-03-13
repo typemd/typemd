@@ -69,20 +69,22 @@ func TestVault_ListTypes_CustomOverridesDefault(t *testing.T) {
 		t.Fatalf("Init() error = %v", err)
 	}
 
-	// Create a custom type that overrides a default
-	customBook := `name: book
+	// Create a custom tag type that overrides the built-in tag
+	customTag := `name: tag
 properties:
-  - name: title
+  - name: color
     type: string
-  - name: isbn
+  - name: icon
     type: string
+  - name: priority
+    type: number
 `
-	if err := os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte(customBook), 0644); err != nil {
+	if err := os.WriteFile(filepath.Join(v.TypesDir(), "tag.yaml"), []byte(customTag), 0644); err != nil {
 		t.Fatalf("write custom type: %v", err)
 	}
 
 	types := v.ListTypes()
-	// Should not have duplicates
+	// Should not have duplicates — custom tag overrides built-in tag
 	if len(types) != len(defaultTypes) {
 		t.Errorf("expected %d types (no duplicates), got %d: %v", len(defaultTypes), len(types), types)
 	}

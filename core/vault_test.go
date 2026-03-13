@@ -279,6 +279,8 @@ func setupTestVault(t *testing.T) *Vault {
 	if err := v.Init(); err != nil {
 		t.Fatalf("Init() error = %v", err)
 	}
+	// Write common test type schemas before Open (no longer built-in defaults)
+	writeCommonTestTypeSchemas(v)
 	if err := v.Open(); err != nil {
 		t.Fatalf("Open() error = %v", err)
 	}

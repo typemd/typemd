@@ -22,7 +22,28 @@ tmd --readonly  # read-only mode (no editing)
 
 This launches the interactive TUI for browsing your vault — objects are grouped by type in a list on the left, with a title, body, and properties panel on the right.
 
-## 3. Create Your First Object
+## 3. Define a Type
+
+Create a type schema to define the structure of your objects:
+
+```yaml
+# .typemd/types/book.yaml
+name: book
+emoji: 📚
+properties:
+  - name: title
+    type: string
+  - name: status
+    type: select
+    options:
+      - value: to-read
+      - value: reading
+      - value: done
+  - name: rating
+    type: number
+```
+
+## 4. Create Your First Object
 
 Use the CLI to create an object:
 
@@ -47,7 +68,7 @@ A great book about Go...
 
 The TUI will automatically detect the new file and display it. If you cloned an existing vault, the database is populated automatically on first open — no manual `tmd --reindex` needed.
 
-## 4. Query and Search
+## 5. Query and Search
 
 ```bash
 # Filter by type and property

@@ -3,6 +3,7 @@ package tui
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -680,6 +681,8 @@ func setupTestModelWithVault(t *testing.T) (model, *core.Object) {
 	if err := v.Init(); err != nil {
 		t.Fatalf("vault Init() error = %v", err)
 	}
+	// Write test type schemas (book is no longer a built-in type)
+	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
 	if err := v.Open(); err != nil {
 		t.Fatalf("vault Open() error = %v", err)
 	}

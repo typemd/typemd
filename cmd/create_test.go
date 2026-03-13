@@ -1,6 +1,7 @@
 package cmd
 
 import (
+	"os"
 	"path/filepath"
 	"testing"
 
@@ -14,6 +15,9 @@ func setupTestVaultDir(t *testing.T) string {
 	if err := v.Init(); err != nil {
 		t.Fatalf("Init() error = %v", err)
 	}
+	// Write test type schemas (book, person, note are no longer built-in)
+	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"), []byte("name: person\nproperties:\n  - name: role\n    type: string\n"), 0644)
 	if err := v.Open(); err != nil {
 		t.Fatalf("Open() error = %v", err)
 	}

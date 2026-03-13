@@ -28,9 +28,9 @@ System properties always appear first in frontmatter in the order above, followe
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # type schema definitions (YAML)
-│   │   ├── book.yaml
-│   │   └── person.yaml
+│   ├── types/              # user-defined type schemas (YAML)
+│   │   ├── book.yaml       # example: you create this
+│   │   └── person.yaml     # example: you create this
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
 └── objects/
@@ -39,6 +39,8 @@ vault/
     └── person/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
+
+Only the `tag` type is built-in (it backs the `tags` system property). All other types must be defined via `.typemd/types/*.yaml` files.
 
 ## Indexing
 

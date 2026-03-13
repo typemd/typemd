@@ -87,30 +87,23 @@ properties:
 	}
 }
 
-func TestDefaultTypes(t *testing.T) {
+func TestDefaultTypes_OnlyTag(t *testing.T) {
+	// Only tag should be a built-in type
+	if len(defaultTypes) != 1 {
+		t.Errorf("len(defaultTypes) = %d, want 1 (tag only)", len(defaultTypes))
+	}
+	schema, ok := defaultTypes[TagTypeName]
+	if !ok {
+		t.Fatal("defaultTypes missing tag")
+	}
+	if schema.Name != TagTypeName {
+		t.Errorf("tag schema Name = %q, want %q", schema.Name, TagTypeName)
+	}
+	// book, person, note should NOT be built-in
 	for _, name := range []string{"book", "person", "note"} {
-		schema, ok := defaultTypes[name]
-		if !ok {
-			t.Errorf("defaultTypes missing %q", name)
-			continue
+		if _, ok := defaultTypes[name]; ok {
+			t.Errorf("defaultTypes should not contain %q", name)
 		}
-		if schema.Name != name {
-			t.Errorf("defaultTypes[%q].Name = %q", name, schema.Name)
-		}
-		if len(schema.Properties) == 0 {
-			t.Errorf("defaultTypes[%q] has no properties", name)
-		}
-	}
-}
-
-func TestDefaultTypes_BookUsesSelect(t *testing.T) {
-	book := defaultTypes["book"]
-	status := book.Properties[1]
-	if status.Type != "select" {
-		t.Errorf("book.status.Type = %q, want %q", status.Type, "select")
-	}
-	if len(status.Options) != 3 {
-		t.Errorf("len(book.status.Options) = %d, want 3", len(status.Options))
 	}
 }
 
@@ -152,16 +145,19 @@ func TestVault_LoadType_BuiltinFallback(t *testing.T) {
 		t.Fatalf("Init() error = %v", err)
 	}
 
-	schema, err := v.LoadType("book")
+	// Only tag has a built-in fallback
+	schema, err := v.LoadType(TagTypeName)
 	if err != nil {
 		t.Fatalf("LoadType() error = %v", err)
 	}
-
-	if schema.Name != "book" {
-		t.Errorf("Name = %q, want %q", schema.Name, "book")
+	if schema.Name != TagTypeName {
+		t.Errorf("Name = %q, want %q", schema.Name, TagTypeName)
 	}
-	if len(schema.Properties) != 3 {
-		t.Errorf("len(Properties) = %d, want 3", len(schema.Properties))
+
+	// Non-built-in types without YAML should fail
+	_, err = v.LoadType("book")
+	if err == nil {
+		t.Fatal("expected error for non-built-in type without YAML, got nil")
 	}
 }
 
@@ -554,22 +550,13 @@ properties:
 	}
 }
 
-func TestDefaultTypes_HaveEmoji(t *testing.T) {
-	expected := map[string]string{
-		"book":   "📚",
-		"person": "👤",
-		"note":   "📝",
+func TestDefaultTypes_TagHasEmoji(t *testing.T) {
+	schema, ok := defaultTypes[TagTypeName]
+	if !ok {
+		t.Fatal("defaultTypes missing tag")
 	}
-
-	for name, wantEmoji := range expected {
-		schema, ok := defaultTypes[name]
-		if !ok {
-			t.Errorf("defaultTypes missing %q", name)
-			continue
-		}
-		if schema.Emoji != wantEmoji {
-			t.Errorf("defaultTypes[%q].Emoji = %q, want %q", name, schema.Emoji, wantEmoji)
-		}
+	if schema.Emoji != "🏷️" {
+		t.Errorf("defaultTypes[tag].Emoji = %q, want %q", schema.Emoji, "🏷️")
 	}
 }
 
@@ -1021,14 +1008,14 @@ func TestDefaultTypes_TagExists(t *testing.T) {
 	}
 }
 
-func TestDefaultTypes_NoteDoesNotHaveTagsProperty(t *testing.T) {
-	note, ok := defaultTypes["note"]
+func TestDefaultTypes_TagDoesNotHaveTagsProperty(t *testing.T) {
+	tag, ok := defaultTypes[TagTypeName]
 	if !ok {
-		t.Fatal("defaultTypes missing \"note\"")
+		t.Fatal("defaultTypes missing tag")
 	}
-	for _, prop := range note.Properties {
+	for _, prop := range tag.Properties {
 		if prop.Name == TagsProperty {
-			t.Error("note type should not have a \"tags\" property")
+			t.Error("tag type should not have a \"tags\" property in its schema")
 		}
 	}
 }

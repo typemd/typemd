@@ -38,8 +38,8 @@ TypeMD lets you think in **Objects** — books, people, ideas, meetings — conn
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # type schema definitions (YAML)
-│   │   ├── book.yaml
+│   ├── types/              # user-defined type schemas (YAML)
+│   │   ├── book.yaml       # you create these
 │   │   └── person.yaml
 │   ├── properties.yaml     # shared property definitions (optional)
 │   ├── index.db            # SQLite index (auto-updated)
@@ -190,7 +190,7 @@ The TUI automatically watches the `objects/` directory and refreshes when files 
 
 ## Type Schema
 
-Define your own types in `.typemd/types/`:
+Define your types in `.typemd/types/` (only `tag` is built-in — all others are user-defined):
 
 ```yaml
 # .typemd/types/book.yaml

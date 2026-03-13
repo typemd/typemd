@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"os"
+	"path/filepath"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -12,9 +13,53 @@ import (
 
 func (dc *domainContext) aVaultIsReady() {
 	dc.aVaultIsInitialized()
+	// Write common test type schemas before Open (no longer built-in defaults)
+	writeCommonTestTypeSchemas(dc.vault)
 	if err := dc.vault.Open(); err != nil {
 		panic(fmt.Sprintf("vault open failed: %v", err))
 	}
+}
+
+// writeCommonTestTypeSchemas writes book, person, and note type schemas
+// into the vault's types directory. These were previously built-in defaults
+// but are now only available as user-defined types.
+func writeCommonTestTypeSchemas(v *Vault) {
+	mustWrite := func(path string, data []byte) {
+		if err := os.WriteFile(path, data, 0644); err != nil {
+			panic(fmt.Sprintf("writeCommonTestTypeSchemas: %v", err))
+		}
+	}
+	mustWrite(filepath.Join(v.TypesDir(), "book.yaml"), []byte(`name: book
+emoji: "📚"
+properties:
+  - name: title
+    type: string
+    emoji: "📖"
+  - name: status
+    type: select
+    emoji: "📋"
+    options:
+      - value: to-read
+      - value: reading
+      - value: done
+  - name: rating
+    type: number
+    emoji: "⭐"
+`))
+	mustWrite(filepath.Join(v.TypesDir(), "person.yaml"), []byte(`name: person
+emoji: "👤"
+properties:
+  - name: role
+    type: string
+    emoji: "💼"
+`))
+	mustWrite(filepath.Join(v.TypesDir(), "note.yaml"), []byte(`name: note
+emoji: "📝"
+properties:
+  - name: title
+    type: string
+    emoji: "🏷️"
+`))
 }
 
 func (dc *domainContext) iCreateAObjectNamed(typeName, name string) {
