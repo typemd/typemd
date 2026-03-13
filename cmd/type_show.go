@@ -10,7 +10,7 @@ import (
 var typeShowCmd = &cobra.Command{
 	Use:   "show <type>",
 	Short: "Show type schema details",
-	Long: `Display the schema definition for a type, including all properties and their configurations.
+	Long: `Display the schema definition for a type, including name, plural (if defined), and all properties and their configurations.
 
 Examples:
   tmd type show book

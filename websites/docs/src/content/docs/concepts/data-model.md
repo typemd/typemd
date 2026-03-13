@@ -40,7 +40,7 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-Only the `tag` type is built-in (it backs the `tags` system property). All other types must be defined via `.typemd/types/*.yaml` files.
+Only the `tag` type is built-in (it backs the `tags` system property). The built-in `tag` type includes a plural form ("tags") for grammatically correct display in group headers. All other types must be defined via `.typemd/types/*.yaml` files.
 
 ## Indexing
 

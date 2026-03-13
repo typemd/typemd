@@ -16,6 +16,7 @@ Types are defined as YAML schema files in `.typemd/types/`:
 ```yaml
 # .typemd/types/book.yaml
 name: book
+plural: books
 emoji: 📚
 properties:
   - name: title
@@ -30,6 +31,8 @@ properties:
   - name: rating
     type: number
 ```
+
+The optional `plural` field provides a grammatically correct display name for the type in collection contexts (e.g., "▼ 📚 books (3)" in TUI group headers). When omitted, the type name is used as fallback.
 
 The optional `emoji` field provides a visual icon for the type in CLI and TUI output.
 
