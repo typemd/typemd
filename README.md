@@ -92,6 +92,10 @@ tmd --readonly
 tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
+# Create with name template (name auto-generated if type defines a template)
+tmd object create journal
+# → Created journal/日記-2026-03-14-01jqr3k5mpbvn8e0f2g7h9txyz
+
 # Show object detail (prefix matching — no need to type the full ULID)
 tmd object show book/clean-code
 

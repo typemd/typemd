@@ -131,6 +131,15 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		return nil, fmt.Errorf("load type: %w", err)
 	}
 
+	// Handle empty name: use template or error
+	if filename == "" {
+		if schema.NameTemplate != "" {
+			filename = EvaluateNameTemplate(schema.NameTemplate, time.Now())
+		} else {
+			return nil, fmt.Errorf("name is required (type %q has no name template)", typeName)
+		}
+	}
+
 	// Enforce tag name uniqueness
 	if typeName == TagTypeName {
 		if err := v.checkTagNameUnique(filename); err != nil {

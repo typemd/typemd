@@ -146,13 +146,19 @@ func TestValidateSchema_RejectsAllSystemProperties(t *testing.T) {
 		}
 		found := false
 		for _, err := range errs {
-			if strings.Contains(err.Error(), "reserved system property") {
+			if name == "name" {
+				// "name" now gets a specific error about template
+				if strings.Contains(err.Error(), "template") {
+					found = true
+					break
+				}
+			} else if strings.Contains(err.Error(), "reserved system property") {
 				found = true
 				break
 			}
 		}
 		if !found {
-			t.Errorf("error for %q should mention 'reserved system property', got %v", name, errs)
+			t.Errorf("error for %q should mention rejection reason, got %v", name, errs)
 		}
 	}
 }

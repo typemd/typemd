@@ -1033,13 +1033,66 @@ func TestValidateSchema_ReservedNameProperty(t *testing.T) {
 	}
 	found := false
 	for _, err := range errs {
-		if strings.Contains(err.Error(), "reserved") {
+		if strings.Contains(err.Error(), "template") {
 			found = true
 			break
 		}
 	}
 	if !found {
-		t.Errorf("expected error mentioning \"reserved\", got: %v", errs)
+		t.Errorf("expected error mentioning \"template\", got: %v", errs)
+	}
+}
+
+func TestValidateSchema_NameWithTemplateAccepted(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "journal",
+		Properties: []Property{
+			{Name: "name", Template: "日記 {{ date:YYYY-MM-DD }}"},
+			{Name: "content", Type: "string"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) > 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}
+
+func TestValidateSchema_NameWithTypeRejected(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "bad",
+		Properties: []Property{
+			{Name: "name", Type: "string"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) == 0 {
+		t.Error("expected errors for name with type, got none")
+	}
+}
+
+func TestValidateSchema_NameWithTemplateAndEmojiRejected(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "bad",
+		Properties: []Property{
+			{Name: "name", Template: "test", Emoji: "📝"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) == 0 {
+		t.Error("expected errors for name with template and emoji, got none")
+	}
+}
+
+func TestValidateSchema_NameWithNoFieldsRejected(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "bad",
+		Properties: []Property{
+			{Name: "name"},
+		},
+	}
+	errs := ValidateSchema(schema)
+	if len(errs) == 0 {
+		t.Error("expected errors for name with no fields, got none")
 	}
 }
 
