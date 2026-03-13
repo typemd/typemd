@@ -1,12 +1,37 @@
 ## REMOVED Requirements
 
 ### Requirement: Built-in default types include emoji
+
+Built-in default types SHALL include predefined emoji values for visual identification.
+
+#### Scenario: Book default type has emoji
+
+- **WHEN** the built-in "book" type is loaded
+- **THEN** its emoji SHALL be "📚"
+
+#### Scenario: Person default type has emoji
+
+- **WHEN** the built-in "person" type is loaded
+- **THEN** its emoji SHALL be "👤"
+
+#### Scenario: Note default type has emoji
+
+- **WHEN** the built-in "note" type is loaded
+- **THEN** its emoji SHALL be "📝"
+
 **Reason**: Built-in types `book`, `person`, `note` are removed. Only `tag` remains as a built-in type. Users define all other types via `.typemd/types/*.yaml`.
 **Migration**: Create `.typemd/types/book.yaml`, `.typemd/types/person.yaml`, `.typemd/types/note.yaml` with the desired schema definitions.
 
 ## MODIFIED Requirements
 
 ### Requirement: Custom type emoji overrides built-in default
+
+~~When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type.~~
+
+~~#### Scenario: Custom book type with different emoji~~
+
+~~- **WHEN** a custom `book.yaml` defines `emoji: 📖`~~
+~~- **THEN** the loaded book type SHALL have emoji "📖" instead of the built-in "📚"~~
 
 When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type. Since only `tag` remains as a built-in type, this override behavior only applies to the `tag` type.
 

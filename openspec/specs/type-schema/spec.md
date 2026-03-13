@@ -1,4 +1,8 @@
-## ADDED Requirements
+## Purpose
+
+Type schemas define the structure and metadata for object types in typemd. This specification defines how type schemas are loaded, validated, and applied.
+
+## Requirements
 
 ### Requirement: Type schema supports optional emoji field
 
@@ -14,33 +18,14 @@ The TypeSchema struct SHALL support an optional `emoji` field that stores a stri
 - **WHEN** a type schema YAML file does not contain an `emoji` field
 - **THEN** the loaded TypeSchema SHALL have its Emoji field set to an empty string
 
-### Requirement: Built-in default types include emoji
-
-Built-in default types SHALL include predefined emoji values for visual identification.
-
-#### Scenario: Book default type has emoji
-
-- **WHEN** the built-in "book" type is loaded
-- **THEN** its emoji SHALL be "📚"
-
-#### Scenario: Person default type has emoji
-
-- **WHEN** the built-in "person" type is loaded
-- **THEN** its emoji SHALL be "👤"
-
-#### Scenario: Note default type has emoji
-
-- **WHEN** the built-in "note" type is loaded
-- **THEN** its emoji SHALL be "📝"
-
 ### Requirement: Custom type emoji overrides built-in default
 
-When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type.
+When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type. Since only `tag` remains as a built-in type, this override behavior only applies to the `tag` type.
 
-#### Scenario: Custom book type with different emoji
+#### Scenario: Custom tag type with different emoji
 
-- **WHEN** a custom `book.yaml` defines `emoji: 📖`
-- **THEN** the loaded book type SHALL have emoji "📖" instead of the built-in "📚"
+- **WHEN** a custom `tag.yaml` defines `emoji: 🔖`
+- **THEN** the loaded tag type SHALL have emoji "🔖" instead of the built-in "🏷️"
 
 ### Requirement: CLI type show displays emoji
 
@@ -136,3 +121,25 @@ Within a single type schema, no two properties SHALL have the same non-zero pin 
 #### Scenario: Unpinned properties do not conflict
 - **WHEN** a type schema has three properties where two have no pin and one has `pin: 1`
 - **THEN** schema validation SHALL accept it without error
+
+### Requirement: Only tag is a built-in type
+
+The `defaultTypes` map SHALL contain only the `tag` type. All other types MUST be defined via `.typemd/types/*.yaml` files.
+
+#### Scenario: Loading an undefined type returns error
+
+- **WHEN** no `.typemd/types/book.yaml` exists and no built-in `book` type is defined
+- **AND** `LoadType("book")` is called
+- **THEN** it SHALL return an error containing "unknown type: book"
+
+#### Scenario: Tag type loads without custom schema
+
+- **WHEN** no `.typemd/types/tag.yaml` exists
+- **AND** `LoadType("tag")` is called
+- **THEN** it SHALL return the built-in tag type schema with emoji "🏷️"
+
+#### Scenario: User-defined type loads from YAML
+
+- **WHEN** `.typemd/types/book.yaml` exists with a valid schema
+- **AND** `LoadType("book")` is called
+- **THEN** it SHALL return the schema from the YAML file
