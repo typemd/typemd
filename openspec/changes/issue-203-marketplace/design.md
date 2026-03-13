@@ -35,11 +35,11 @@ All plugins use relative paths (`./plugins/<name>`) in `marketplace.json` rather
 
 **Alternative considered**: Each plugin as a separate GitHub repo with `github` source type. Rejected as unnecessarily complex for a monorepo-hosted marketplace.
 
-### 3. Shell-based CI validation over dedicated tooling
+### 3. Claude Code plugin validation in CI
 
-The validation workflow uses a shell script to check plugin structure (JSON syntax with `jq`, file existence checks, YAML frontmatter parsing). No custom Go tool or Node.js dependency.
+The validation workflow uses `claude plugin validate .` directly, since it provides authoritative validation against Claude Code's native plugin format. This ensures plugins are always valid according to the latest plugin specification.
 
-**Alternative considered**: `claude plugin validate .` in CI. Rejected because it requires Claude Code installed in CI, which adds complexity and authentication concerns.
+**Alternative considered**: Shell-based validation with `jq` and file existence checks. Rejected because it duplicates logic that Claude Code already implements and could drift out of sync with the actual plugin format.
 
 ### 4. Subtree push triggered by path filter
 

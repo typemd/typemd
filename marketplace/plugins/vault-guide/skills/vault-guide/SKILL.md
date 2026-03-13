@@ -100,13 +100,13 @@ name: Clean Code
 description: A handbook of agile software craftsmanship
 created_at: 2024-01-15T10:30:00Z
 updated_at: 2024-03-13T14:22:15Z
+tags:
+  - tag/programming-01kk39c30z58yc2ewct9zxrw61
+  - tag/refactoring-01kk39c31a69zd3fxdu0aysx72
 title: "Clean Code: A Handbook of Agile Software Craftsmanship"
 author: person/robert-martin-01kk39c30y47xb1dvbs8ywqv50
 status: reading
 rating: 4
-tags:
-  - programming
-  - refactoring
 favorite: false
 ---
 
@@ -125,8 +125,9 @@ Always appear first in frontmatter, in this order:
 | `description` | Optional user-authored summary | No |
 | `created_at` | ISO 8601 datetime, set on creation | Yes, immutable |
 | `updated_at` | ISO 8601 datetime, updated on save | Yes |
+| `tags` | Relation to built-in tag type, multiple | No |
 
-These are **reserved** — type schemas cannot define properties with these names.
+These are **reserved** — type schemas cannot define properties named `name`, `description`, `created_at`, `updated_at`, or `tags`.
 
 ### Object ID Format
 
@@ -161,7 +162,6 @@ properties:
     type: date
     emoji: 📅
   - use: favorite
-  - use: tags
   - name: author
     type: relation
     emoji: ✍️
@@ -208,13 +208,9 @@ Define reusable properties in `.typemd/properties.yaml`:
 
 ```yaml
 properties:
-  - name: tags
-    type: multi_select
-    emoji: 🔖
-    options:
-      - value: programming
-      - value: devops
-      - value: go
+  - name: source
+    type: url
+    emoji: 🔗
   - name: favorite
     type: checkbox
     emoji: ❤️
@@ -224,10 +220,14 @@ Reference in type schemas with `use:`. Only `pin` and `emoji` can be overridden:
 
 ```yaml
 properties:
-  - use: tags
+  - use: source
   - use: favorite
     pin: 1
 ```
+
+## Built-in Tag Type
+
+Tags are managed as objects of the built-in `tag` type. When you reference a tag in an object's `tags` property, typemd automatically creates the tag object if it doesn't already exist. Tag objects live at `objects/tag/<name>-<ulid>.md` like any other object.
 
 ## Wiki-Links
 

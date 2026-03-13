@@ -11,7 +11,7 @@ Help the user convert existing markdown files into typemd objects.
 
 1. **Read the vault's type schemas** from `.typemd/types/*.yaml` to understand available types and their properties
 2. **Check `.typemd/properties.yaml`** for shared property definitions (referenced via `use:` in type schemas)
-3. **List existing objects** with `tmd list` to understand what's already in the vault (for relation discovery)
+3. **List existing objects** with `tmd object list` to understand what's already in the vault (for relation discovery)
 
 If no type schemas exist, inform the user and suggest creating basic types first, or proceed with system properties only.
 
@@ -70,6 +70,6 @@ When the user has multiple files to import:
 ## Important Rules
 
 - **Never modify or delete the original markdown file** — only create new typemd object files
-- **Never guess ULIDs** — use `tmd add <type> <name>` if you need typemd to generate the object with a proper ULID, or create the file manually and let typemd assign the ULID on next reindex
+- **Never guess ULIDs** — use `tmd object create <type> <name>` if you need typemd to generate the object with a proper ULID, or create the file manually and let typemd assign the ULID on next reindex
 - **Always respect the type schema** — only include properties defined in the schema
 - **System properties are managed by typemd** — set them during import but know that typemd will manage `updated_at` going forward
