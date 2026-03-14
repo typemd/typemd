@@ -18,6 +18,7 @@ type Vault struct {
 	db                *sql.DB
 	index             ObjectIndex
 	repo              ObjectRepository
+	projector         *Projector
 	sharedProperties  []Property
 	sharedPropsMap    map[string]Property
 	sharedPropsLoaded bool
@@ -97,34 +98,39 @@ func (v *Vault) Open() error {
 	v.db = db
 	v.index = NewSQLiteObjectIndex(db)
 	v.repo = NewLocalObjectRepository(v.Root)
+	v.projector = NewProjector(v.repo, v.index, func(slug string) (*Object, error) {
+		return v.NewObject(TagTypeName, slug, "")
+	})
 
 	if err := v.index.EnsureSchema(); err != nil {
-		v.db.Close()
-		v.db = nil
-		v.index = nil
-		v.repo = nil
+		v.closeInternal()
 		return fmt.Errorf("ensure schema: %w", err)
 	}
 
 	sync, err := v.index.NeedsSync()
 	if err != nil {
-		v.db.Close()
-		v.db = nil
-		v.index = nil
-		v.repo = nil
+		v.closeInternal()
 		return fmt.Errorf("check index: %w", err)
 	}
 	if sync {
 		if _, err := v.SyncIndex(); err != nil {
-			v.db.Close()
-			v.db = nil
-			v.index = nil
-			v.repo = nil
+			v.closeInternal()
 			return fmt.Errorf("auto sync index: %w", err)
 		}
 	}
 
 	return nil
+}
+
+// closeInternal releases all resources without checking state.
+func (v *Vault) closeInternal() {
+	if v.db != nil {
+		v.db.Close()
+	}
+	v.db = nil
+	v.index = nil
+	v.repo = nil
+	v.projector = nil
 }
 
 // Close closes the SQLite database connection.
@@ -136,6 +142,7 @@ func (v *Vault) Close() error {
 	v.db = nil
 	v.index = nil
 	v.repo = nil
+	v.projector = nil
 	return err
 }
 

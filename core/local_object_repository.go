@@ -138,7 +138,7 @@ func (r *LocalObjectRepository) Walk() ([]*Object, error) {
 		return nil, nil
 	}
 
-	var objects []*Object
+	objects := make([]*Object, 0) // non-nil: directory exists but may be empty
 	err := filepath.Walk(objsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") {
 			return nil

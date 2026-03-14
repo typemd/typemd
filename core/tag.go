@@ -26,7 +26,7 @@ func (v *Vault) checkNameUnique(typeName, name string) error {
 // If the value (after stripping "tag/" prefix) ends with a ULID suffix, it is
 // treated as a full object ID. Otherwise, it is looked up by tag name using tagNameIndex.
 // Returns the resolved ID and true, or empty string and false if not resolved.
-func (v *Vault) resolveTagReference(ref string, diskTags map[string]*Object, tagNameIndex map[string]string) (string, bool) {
+func resolveTagReference(ref string, diskTags map[string]*Object, tagNameIndex map[string]string) (string, bool) {
 	if !strings.HasPrefix(ref, "tag/") {
 		return "", false
 	}

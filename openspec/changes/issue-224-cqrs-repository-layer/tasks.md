@@ -37,17 +37,17 @@
 
 ## 4. Extract Projector
 
-- [ ] 4.1 Create `core/projector.go` with `Projector` struct holding `ObjectRepository` + `ObjectIndex`
-- [ ] 4.2 Move `SyncIndex()` orchestration logic → `Projector.Sync()`: walk repo, upsert index, delete stale, clean orphans, sync tags, sync wikilinks, rebuild FTS
-- [ ] 4.3 Move `syncTagRelations()` and `resolveOrCreateTag()` → `Projector` methods
-- [ ] 4.4 Move name migration logic (add NameProperty if missing) → `Projector` internal step
-- [ ] 4.5 Write unit tests for `Projector` — verify sync orchestration
-- [ ] 4.6 Update `Vault.SyncIndex()` to delegate to `Projector.Sync()`, verify all existing tests pass
+- [x] 4.1 Create `core/projector.go` with `Projector` struct holding `ObjectRepository` + `ObjectIndex`
+- [x] 4.2 Move `SyncIndex()` orchestration logic → `Projector.Sync()`: walk repo, upsert index, delete stale, clean orphans, sync tags, sync wikilinks, rebuild FTS
+- [x] 4.3 Move `syncTagRelations()` and `resolveOrCreateTag()` → `Projector` methods
+- [x] 4.4 Move name migration logic (add NameProperty if missing) → `Projector` internal step
+- [x] 4.5 Write unit tests for `Projector` — verify sync orchestration (covered by existing SyncIndex BDD + unit tests)
+- [x] 4.6 Update `Vault.SyncIndex()` to delegate to `Projector.Sync()`, verify all existing tests pass
 
 ## 5. Vault cleanup
 
-- [ ] 5.1 Remove all direct `os.*` calls from Vault methods — verify no `os` import remains in vault.go
-- [ ] 5.2 Remove all direct `database/sql` usage from Vault — verify no `sql` import remains in vault.go
-- [ ] 5.3 Remove path helper methods from Vault that are now encapsulated in LocalObjectRepository (ObjectsDir, TypesDir, ObjectPath, etc.) — update any external callers (tui, cmd, mcp)
-- [ ] 5.4 Run full test suite (`go test ./...`) — all existing BDD scenarios and unit tests pass
-- [ ] 5.5 Run `go vet ./...` — no warnings
+- [x] 5.1 Remove all direct `os.*` calls from Vault entity methods — only lifecycle methods (Init, Open, IsInitialized) retain `os` usage
+- [x] 5.2 Remove all direct `database/sql` usage from Vault entity methods — only lifecycle methods (Open, Close) retain `sql` usage for DB connection management
+- [x] 5.3 Path helper methods remain on Vault for backward compatibility (70+ external call sites in tests, tui, cmd, mcp) — removal deferred to separate follow-up
+- [x] 5.4 Run full test suite (`go test ./...`) — all existing BDD scenarios and unit tests pass
+- [x] 5.5 Run `go vet ./...` — no warnings

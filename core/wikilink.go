@@ -102,21 +102,3 @@ func RenderWikiLinksStyled(body string, style func(string) string) string {
 	return b.String()
 }
 
-// syncWikiLinks extracts wiki-links from an object body and stores them in the index.
-// knownIDs is used for in-memory target resolution to avoid N+1 DB queries.
-func (v *Vault) syncWikiLinks(objectID, body string, knownIDs map[string]bool) error {
-	links := ParseWikiLinks(body)
-	entries := make([]WikiLinkEntry, len(links))
-	for i, link := range links {
-		toID := ""
-		if knownIDs[link.Target] {
-			toID = link.Target
-		}
-		entries[i] = WikiLinkEntry{
-			ToID:        toID,
-			Target:      link.Target,
-			DisplayText: link.DisplayText,
-		}
-	}
-	return v.index.SyncWikiLinks(objectID, entries)
-}

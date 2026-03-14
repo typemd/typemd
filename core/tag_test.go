@@ -13,7 +13,7 @@ func TestResolveTagReference_ByID(t *testing.T) {
 
 	diskTags := map[string]*Object{tag.ID: tag}
 	nameIndex := map[string]string{"go": tag.ID}
-	resolved, ok := v.resolveTagReference(tag.ID, diskTags, nameIndex)
+	resolved, ok := resolveTagReference(tag.ID, diskTags, nameIndex)
 	if !ok {
 		t.Fatal("expected tag reference to resolve by ID")
 	}
@@ -28,7 +28,7 @@ func TestResolveTagReference_ByName(t *testing.T) {
 
 	diskTags := map[string]*Object{tag.ID: tag}
 	nameIndex := map[string]string{"go": tag.ID}
-	resolved, ok := v.resolveTagReference("tag/go", diskTags, nameIndex)
+	resolved, ok := resolveTagReference("tag/go", diskTags, nameIndex)
 	if !ok {
 		t.Fatal("expected tag reference to resolve by name")
 	}
@@ -38,31 +38,28 @@ func TestResolveTagReference_ByName(t *testing.T) {
 }
 
 func TestResolveTagReference_MissingName(t *testing.T) {
-	v := setupTestVault(t)
 	diskTags := map[string]*Object{}
 	nameIndex := map[string]string{}
-	_, ok := v.resolveTagReference("tag/nonexistent", diskTags, nameIndex)
+	_, ok := resolveTagReference("tag/nonexistent", diskTags, nameIndex)
 	if ok {
 		t.Error("expected tag reference not to resolve")
 	}
 }
 
 func TestResolveTagReference_BrokenFullID(t *testing.T) {
-	v := setupTestVault(t)
 	diskTags := map[string]*Object{}
 	nameIndex := map[string]string{}
 	// A full ID that ends with ULID but doesn't exist
-	_, ok := v.resolveTagReference("tag/go-01jqr3k5mpbvn8e0f2g7h9txyz", diskTags, nameIndex)
+	_, ok := resolveTagReference("tag/go-01jqr3k5mpbvn8e0f2g7h9txyz", diskTags, nameIndex)
 	if ok {
 		t.Error("expected broken full-ID reference not to resolve")
 	}
 }
 
 func TestResolveTagReference_NoPrefix(t *testing.T) {
-	v := setupTestVault(t)
 	diskTags := map[string]*Object{}
 	nameIndex := map[string]string{}
-	_, ok := v.resolveTagReference("go", diskTags, nameIndex)
+	_, ok := resolveTagReference("go", diskTags, nameIndex)
 	if ok {
 		t.Error("expected reference without tag/ prefix not to resolve")
 	}
