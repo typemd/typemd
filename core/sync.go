@@ -32,7 +32,7 @@ type syncContext struct {
 // SyncIndex scans the objects directory, upserts all found objects into the DB,
 // removes DB entries for deleted files, cleans up orphaned relations, and rebuilds the FTS index.
 func (v *Vault) SyncIndex() (*SyncResult, error) {
-	if v.db == nil {
+	if v.index == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
 
@@ -41,8 +41,15 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	// Handle empty vault (no objects directory)
 	objsDir := v.ObjectsDir()
 	if _, err := os.Stat(objsDir); os.IsNotExist(err) {
-		if _, err := v.db.Exec("DELETE FROM objects"); err != nil {
-			return nil, fmt.Errorf("clean objects: %w", err)
+		// Remove all indexed objects
+		ids, err := v.index.ListIDs()
+		if err != nil {
+			return nil, fmt.Errorf("list indexed objects: %w", err)
+		}
+		for _, id := range ids {
+			if err := v.index.Remove(id); err != nil {
+				return nil, fmt.Errorf("clean object %s: %w", id, err)
+			}
 		}
 		return result, v.RebuildIndex()
 	}
@@ -58,7 +65,7 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	}
 	result.Deleted = len(deleted)
 
-	orphaned, err := v.cleanOrphanedRelations()
+	orphaned, err := v.index.CleanOrphanedRelations()
 	if err != nil {
 		return nil, err
 	}
@@ -66,7 +73,7 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 
 	// Clean up wikilinks for deleted objects and sync current ones
 	for _, id := range deleted {
-		if _, err := v.db.Exec("DELETE FROM wikilinks WHERE from_id = ?", id); err != nil {
+		if err := v.index.DeleteWikiLinks(id); err != nil {
 			return nil, fmt.Errorf("delete wikilinks for %s: %w", id, err)
 		}
 	}
@@ -171,16 +178,7 @@ func (v *Vault) walkAndUpsertObjects() (*syncContext, error) {
 			return nil
 		}
 
-		_, err = v.db.Exec(`
-			INSERT INTO objects (id, type, filename, properties, body)
-			VALUES (?, ?, ?, ?, ?)
-			ON CONFLICT(id) DO UPDATE SET
-				type = excluded.type,
-				filename = excluded.filename,
-				properties = excluded.properties,
-				body = excluded.body
-		`, id, typeName, filename, string(propsJSON), body)
-		if err != nil {
+		if err := v.index.Upsert(id, typeName, filename, string(propsJSON), body); err != nil {
 			return fmt.Errorf("upsert object %s: %w", id, err)
 		}
 
@@ -219,31 +217,23 @@ func (v *Vault) walkAndUpsertObjects() (*syncContext, error) {
 	return ctx, nil
 }
 
-// deleteStaleObjects removes DB entries for objects that no longer exist on disk.
+// deleteStaleObjects removes index entries for objects that no longer exist on disk.
 // Returns the list of deleted object IDs.
 func (v *Vault) deleteStaleObjects(diskIDs map[string]bool) ([]string, error) {
-	rows, err := v.db.Query("SELECT id FROM objects")
+	indexedIDs, err := v.index.ListIDs()
 	if err != nil {
-		return nil, fmt.Errorf("list db objects: %w", err)
+		return nil, fmt.Errorf("list indexed objects: %w", err)
 	}
-	defer rows.Close()
 
 	var toDelete []string
-	for rows.Next() {
-		var id string
-		if err := rows.Scan(&id); err != nil {
-			return nil, fmt.Errorf("scan id: %w", err)
-		}
+	for _, id := range indexedIDs {
 		if !diskIDs[id] {
 			toDelete = append(toDelete, id)
 		}
 	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate db objects: %w", err)
-	}
 
 	for _, id := range toDelete {
-		if _, err := v.db.Exec("DELETE FROM objects WHERE id = ?", id); err != nil {
+		if err := v.index.Remove(id); err != nil {
 			return nil, fmt.Errorf("delete stale object %s: %w", id, err)
 		}
 	}
@@ -251,53 +241,10 @@ func (v *Vault) deleteStaleObjects(diskIDs map[string]bool) ([]string, error) {
 	return toDelete, nil
 }
 
-// cleanOrphanedRelations detects and removes relation records that reference
-// non-existent objects. Returns the list of orphaned relations found.
-func (v *Vault) cleanOrphanedRelations() ([]OrphanedRelation, error) {
-	rows, err := v.db.Query(`
-		SELECT r.id, r.name, r.from_id, r.to_id FROM relations r
-		LEFT JOIN objects o1 ON r.from_id = o1.id
-		LEFT JOIN objects o2 ON r.to_id = o2.id
-		WHERE o1.id IS NULL OR o2.id IS NULL
-	`)
-	if err != nil {
-		return nil, fmt.Errorf("detect orphaned relations: %w", err)
-	}
-	defer rows.Close()
-
-	var orphaned []OrphanedRelation
-	var orphanIDs []any
-	for rows.Next() {
-		var rowID int
-		var o OrphanedRelation
-		if err := rows.Scan(&rowID, &o.Name, &o.FromID, &o.ToID); err != nil {
-			return nil, fmt.Errorf("scan orphaned relation: %w", err)
-		}
-		orphaned = append(orphaned, o)
-		orphanIDs = append(orphanIDs, rowID)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, fmt.Errorf("iterate orphaned relations: %w", err)
-	}
-
-	if len(orphanIDs) > 0 {
-		placeholders := strings.Repeat("?,", len(orphanIDs))
-		_, err := v.db.Exec(
-			"DELETE FROM relations WHERE id IN ("+placeholders[:len(placeholders)-1]+")",
-			orphanIDs...,
-		)
-		if err != nil {
-			return nil, fmt.Errorf("delete orphaned relations: %w", err)
-		}
-	}
-
-	return orphaned, nil
-}
-
 // syncTagRelations clears existing tag relations and rebuilds them from frontmatter references.
 // It auto-creates tag objects for name references that don't match existing tags.
 func (v *Vault) syncTagRelations(ctx *syncContext) error {
-	if _, err := v.db.Exec("DELETE FROM relations WHERE name = ?", TagsProperty); err != nil {
+	if err := v.index.DeleteRelationsByName(TagsProperty); err != nil {
 		return fmt.Errorf("clear tag relations: %w", err)
 	}
 
@@ -315,10 +262,7 @@ func (v *Vault) syncTagRelations(ctx *syncContext) error {
 			if err != nil {
 				continue // skip unresolvable tag references
 			}
-			if _, err := v.db.Exec(
-				"INSERT INTO relations (name, from_id, to_id) VALUES (?, ?, ?)",
-				TagsProperty, objID, tagID,
-			); err != nil {
+			if err := v.index.InsertRelation(TagsProperty, objID, tagID); err != nil {
 				return fmt.Errorf("insert tag relation: %w", err)
 			}
 		}

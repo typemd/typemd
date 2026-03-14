@@ -56,86 +56,64 @@ func scanObjects(rows *sql.Rows) ([]*Object, error) {
 	return results, rows.Err()
 }
 
+// objectResultToObject converts an ObjectResult to an Object.
+// The Body field is empty since ObjectResult is a lightweight projection.
+func objectResultToObject(r *ObjectResult) *Object {
+	return &Object{
+		ID:         r.ID,
+		Type:       r.Type,
+		Filename:   r.Filename,
+		Properties: r.Properties,
+		Body:       r.Body,
+	}
+}
+
+// objectResultsToObjects converts a slice of ObjectResult to Objects.
+func objectResultsToObjects(results []*ObjectResult) []*Object {
+	if results == nil {
+		return nil
+	}
+	objects := make([]*Object, len(results))
+	for i, r := range results {
+		objects[i] = objectResultToObject(r)
+	}
+	return objects
+}
+
 // QueryObjects queries objects using key=value filter syntax.
 // Multiple conditions are combined with AND.
 // "type" is a special key that filters on the objects.type column.
 // Other keys filter on JSON properties using json_extract.
 // An empty filter returns all objects.
 func (v *Vault) QueryObjects(filter string) ([]*Object, error) {
-	if v.db == nil {
+	if v.index == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-
-	conditions, err := parseFilter(filter)
+	results, err := v.index.Query(filter)
 	if err != nil {
-		return nil, fmt.Errorf("parse filter: %w", err)
+		return nil, err
 	}
-
-	query := "SELECT id, type, filename, properties, body FROM objects"
-	var whereClauses []string
-	var args []any
-
-	for _, c := range conditions {
-		if c.Key == "type" {
-			whereClauses = append(whereClauses, "type = ?")
-			args = append(args, c.Value)
-		} else {
-			whereClauses = append(whereClauses, "json_extract(properties, ?) = ?")
-			args = append(args, "$."+c.Key, c.Value)
-		}
-	}
-
-	if len(whereClauses) > 0 {
-		query += " WHERE " + strings.Join(whereClauses, " AND ")
-	}
-
-	rows, err := v.db.Query(query, args...)
-	if err != nil {
-		return nil, fmt.Errorf("query objects: %w", err)
-	}
-	defer rows.Close()
-
-	return scanObjects(rows)
+	return objectResultsToObjects(results), nil
 }
 
 // SearchObjects performs full-text search using FTS5.
 // Searches across filename, properties, and body.
 // Returns nil, nil for empty keyword.
 func (v *Vault) SearchObjects(keyword string) ([]*Object, error) {
-	if v.db == nil {
+	if v.index == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-
-	keyword = strings.TrimSpace(keyword)
-	if keyword == "" {
-		return nil, nil
-	}
-
-	query := `SELECT o.id, o.type, o.filename, o.properties, o.body
-		FROM objects o
-		JOIN objects_fts fts ON o.rowid = fts.rowid
-		WHERE objects_fts MATCH ?`
-
-	rows, err := v.db.Query(query, keyword)
+	results, err := v.index.Search(keyword)
 	if err != nil {
-		return nil, fmt.Errorf("search objects: %w", err)
+		return nil, err
 	}
-	defer rows.Close()
-
-	return scanObjects(rows)
+	return objectResultsToObjects(results), nil
 }
 
 // RebuildIndex rebuilds the FTS5 index from the objects table.
-// Useful when the index may be out of sync with the objects table.
 func (v *Vault) RebuildIndex() error {
-	if v.db == nil {
+	if v.index == nil {
 		return fmt.Errorf("vault not opened")
 	}
-
-	_, err := v.db.Exec("INSERT INTO objects_fts(objects_fts) VALUES('rebuild')")
-	if err != nil {
-		return fmt.Errorf("rebuild index: %w", err)
-	}
-
-	return nil
+	return v.index.Rebuild()
 }

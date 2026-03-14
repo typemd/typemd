@@ -123,7 +123,7 @@ func parseFrontmatter(data []byte) (map[string]any, string, error) {
 // NewObject creates a new object with the given type and filename.
 // If templateName is non-empty, the specified template is loaded and applied.
 func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, error) {
-	if v.db == nil {
+	if v.index == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
 
@@ -227,16 +227,12 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 		return nil, fmt.Errorf("close file: %w", err)
 	}
 
-	// Insert into SQLite
+	// Insert into index
 	propsJSON, err := json.Marshal(props)
 	if err != nil {
 		return nil, fmt.Errorf("marshal properties: %w", err)
 	}
-	_, err = v.db.Exec(
-		"INSERT INTO objects (id, type, filename, properties, body) VALUES (?, ?, ?, ?, ?)",
-		id, typeName, filename, string(propsJSON), body,
-	)
-	if err != nil {
+	if err := v.index.Upsert(id, typeName, filename, string(propsJSON), body); err != nil {
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
@@ -268,11 +264,7 @@ func (v *Vault) saveObjectFile(obj *Object) error {
 	if err != nil {
 		return fmt.Errorf("marshal properties: %w", err)
 	}
-	_, err = v.db.Exec(
-		"UPDATE objects SET properties = ?, body = ? WHERE id = ?",
-		string(propsJSON), obj.Body, obj.ID,
-	)
-	if err != nil {
+	if err := v.index.Upsert(obj.ID, obj.Type, obj.Filename, string(propsJSON), obj.Body); err != nil {
 		return fmt.Errorf("update object: %w", err)
 	}
 
@@ -281,7 +273,7 @@ func (v *Vault) saveObjectFile(obj *Object) error {
 
 // SetProperty updates a single property on an object.
 func (v *Vault) SetProperty(id, key string, value any) error {
-	if v.db == nil {
+	if v.index == nil {
 		return fmt.Errorf("vault not opened")
 	}
 
@@ -386,7 +378,7 @@ func (v *Vault) ResolveObject(prefix string) (*Object, error) {
 
 // SaveObject persists an object's properties and body to the .md file and updates SQLite.
 func (v *Vault) SaveObject(obj *Object) error {
-	if v.db == nil {
+	if v.index == nil {
 		return fmt.Errorf("vault not opened")
 	}
 	return v.saveObjectFile(obj)

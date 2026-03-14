@@ -17,28 +17,10 @@ type Relation struct {
 
 // ListRelations returns all relations where objectID is either the source or target.
 func (v *Vault) ListRelations(objectID string) ([]Relation, error) {
-	if v.db == nil {
+	if v.index == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-
-	rows, err := v.db.Query(
-		"SELECT name, from_id, to_id FROM relations WHERE from_id = ? OR to_id = ?",
-		objectID, objectID,
-	)
-	if err != nil {
-		return nil, fmt.Errorf("list relations: %w", err)
-	}
-	defer rows.Close()
-
-	var rels []Relation
-	for rows.Next() {
-		var r Relation
-		if err := rows.Scan(&r.Name, &r.FromID, &r.ToID); err != nil {
-			return nil, fmt.Errorf("scan relation: %w", err)
-		}
-		rels = append(rels, r)
-	}
-	return rels, rows.Err()
+	return v.index.FindRelations(objectID)
 }
 
 // getRelationSlice extracts the existing []any from a property value.
@@ -143,7 +125,7 @@ func (v *Vault) loadObjectAndSchema(id string) (*Object, *TypeSchema, error) {
 
 // LinkObjects creates a relation between two objects.
 func (v *Vault) LinkObjects(fromID, relName, toID string) error {
-	if v.db == nil {
+	if v.index == nil {
 		return fmt.Errorf("vault not opened")
 	}
 
@@ -171,10 +153,7 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 	if err := v.saveObjectFile(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
-	if _, err := v.db.Exec(
-		"INSERT INTO relations (name, from_id, to_id) VALUES (?, ?, ?)",
-		relName, fromID, toID,
-	); err != nil {
+	if err := v.index.InsertRelation(relName, fromID, toID); err != nil {
 		return fmt.Errorf("insert relation: %w", err)
 	}
 
@@ -196,10 +175,7 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 		if err := v.saveObjectFile(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}
-		if _, err := v.db.Exec(
-			"INSERT INTO relations (name, from_id, to_id) VALUES (?, ?, ?)",
-			relProp.Inverse, toID, fromID,
-		); err != nil {
+		if err := v.index.InsertRelation(relProp.Inverse, toID, fromID); err != nil {
 			return fmt.Errorf("insert inverse relation: %w", err)
 		}
 	}
@@ -210,7 +186,7 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 // UnlinkObjects removes a relation between two objects.
 // If both is true and the relation is bidirectional, also removes the inverse.
 func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
-	if v.db == nil {
+	if v.index == nil {
 		return fmt.Errorf("vault not opened")
 	}
 
@@ -228,10 +204,7 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 	if err := v.saveObjectFile(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
-	if _, err := v.db.Exec(
-		"DELETE FROM relations WHERE name = ? AND from_id = ? AND to_id = ?",
-		relName, fromID, toID,
-	); err != nil {
+	if err := v.index.DeleteRelation(relName, fromID, toID); err != nil {
 		return fmt.Errorf("delete relation: %w", err)
 	}
 
@@ -251,10 +224,7 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 		if err := v.saveObjectFile(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}
-		if _, err := v.db.Exec(
-			"DELETE FROM relations WHERE name = ? AND from_id = ? AND to_id = ?",
-			relProp.Inverse, toID, fromID,
-		); err != nil {
+		if err := v.index.DeleteRelation(relProp.Inverse, toID, fromID); err != nil {
 			return fmt.Errorf("delete inverse relation: %w", err)
 		}
 	}
