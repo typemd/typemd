@@ -1,9 +1,100 @@
 package tui
 
 import (
+	"strings"
+
+	"github.com/typemd/typemd/core"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 )
+
+// updateNewType handles key events during new type name input.
+func updateNewType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		name := strings.TrimSpace(m.newTypeName.Value())
+		if name == "" {
+			return m, nil
+		}
+		// Check if type already exists
+		existing := m.vault.ListTypes()
+		for _, t := range existing {
+			if t == name {
+				m.saveErr = "type \"" + name + "\" already exists"
+				return m, nil
+			}
+		}
+		// Create empty type schema
+		schema := &core.TypeSchema{Name: name}
+		if err := m.vault.SaveType(schema); err != nil {
+			m.saveErr = err.Error()
+			m.newTypeMode = false
+			return m, nil
+		}
+		m.saveErr = ""
+		m.newTypeMode = false
+		// Refresh sidebar
+		m.refreshData()
+		// Open type editor for new type
+		if ts, err := m.vault.LoadType(name); err == nil {
+			m.typeEditor = newTypeEditor(ts, name, true, m.vault)
+			m.rightPanel = panelTypeEditor
+			m.selected = nil
+			m.focus = focusBody
+		}
+		return m, nil
+	case "esc":
+		m.newTypeMode = false
+		m.saveErr = ""
+		return m, nil
+	}
+	var cmd tea.Cmd
+	m.newTypeName, cmd = m.newTypeName.Update(msg)
+	return m, cmd
+}
+
+// updateNewObject handles key events during new object name input.
+func updateNewObject(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		name := strings.TrimSpace(m.newObjectName.Value())
+		if name == "" {
+			return m, nil
+		}
+		obj, err := m.vault.Objects.Create(m.newObjectType, name, "")
+		if err != nil {
+			m.saveErr = err.Error()
+			m.newObjectMode = false
+			return m, nil
+		}
+		m.saveErr = ""
+		m.newObjectMode = false
+		m.refreshData()
+		// Select the new object
+		m.selected = obj
+		m.rightPanel = panelObject
+		m.typeEditor = nil
+		m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
+		m.updateDetail()
+		// Move cursor to the new object
+		rows := m.currentRows()
+		for i, row := range rows {
+			if row.Kind == rowObject && row.Object != nil && row.Object.ID == obj.ID {
+				m.cursor = i
+				m.adjustScroll()
+				break
+			}
+		}
+		return m, nil
+	case "esc":
+		m.newObjectMode = false
+		m.saveErr = ""
+		return m, nil
+	}
+	var cmd tea.Cmd
+	m.newObjectName, cmd = m.newObjectName.Update(msg)
+	return m, cmd
+}
 
 // updateHelp handles key events when the help overlay is shown.
 func updateHelp(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
@@ -88,9 +179,15 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	case "tab":
 		switch m.focus {
 		case focusLeft:
-			m.focus = focusBody
+			if m.rightPanel == panelTypeEditor {
+				m.focus = focusBody // focusBody doubles as "right panel focus" for type editor
+			} else {
+				m.focus = focusBody
+			}
 		case focusBody:
-			if m.propsVisible {
+			if m.rightPanel == panelTypeEditor {
+				m.focus = focusLeft
+			} else if m.propsVisible {
 				m.focus = focusProps
 			} else {
 				m.focus = focusLeft
@@ -103,6 +200,20 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	case "w":
 		m.softWrap = !m.softWrap
 		m.updateDetail()
+		return m, nil
+
+	case "n":
+		if m.readOnly || m.focus != focusLeft {
+			return m, nil
+		}
+		// Determine type from current cursor context
+		rows := m.currentRows()
+		if m.cursor >= 0 && m.cursor < len(rows) {
+			row := rows[m.cursor]
+			if row.Kind == rowHeader || row.Kind == rowObject {
+				m.startNewObject(row.GroupIndex)
+			}
+		}
 		return m, nil
 
 	case "esc":
@@ -174,19 +285,43 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		m.showHelp = true
 		return m, nil
 
-	case "enter", " ":
+	case "enter":
 		if m.focus == focusLeft {
 			rows := m.currentRows()
 			if m.cursor >= 0 && m.cursor < len(rows) {
 				row := rows[m.cursor]
-				if row.IsHeader {
+				switch row.Kind {
+				case rowHeader:
+					// Enter on header: focus type editor (already opened by cursor movement)
+					if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
+						m.focus = focusBody
+					}
+				case rowObject:
+					m.selectCurrentRow()
+					case rowNewType:
+					m.startNewType()
+				}
+			}
+		}
+		return m, nil
+
+	case " ", "space":
+		if m.focus == focusLeft {
+			rows := m.currentRows()
+			if m.cursor >= 0 && m.cursor < len(rows) {
+				row := rows[m.cursor]
+				switch row.Kind {
+				case rowHeader:
+					// Space on header: toggle expand/collapse
 					m.groups[row.GroupIndex].Expanded = !m.groups[row.GroupIndex].Expanded
-					// Re-clamp cursor after collapse
 					newRows := m.currentRows()
 					m.cursor = clampCursor(m.cursor, len(newRows))
 					m.adjustScroll()
+				case rowObject:
+					m.selectCurrentRow()
+					case rowNewType:
+					m.startNewType()
 				}
-				m.selectCurrentRow()
 			}
 		}
 		return m, nil

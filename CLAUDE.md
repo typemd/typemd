@@ -110,7 +110,7 @@ graph LR
 
 - **ObjectRepository** returns domain entities (`*Object`, `*TypeSchema`), not raw bytes. Path conventions and serialization are encapsulated in implementations.
 - **ObjectIndex** returns `ObjectResult` (lightweight projection) for search results. Full entity retrieval goes through `ObjectRepository.Get(id)`.
-- **Vault** is a thin facade / DI container. All business logic lives in `ObjectService` (commands) and `QueryService` (queries).
+- **Vault** is a thin facade / DI container. Object business logic lives in `ObjectService` (commands) and `QueryService` (queries). Type schema CRUD (`SaveType`, `DeleteType`, `CountObjectsByType`) lives directly on Vault since it delegates to `ObjectRepository` without needing a separate service layer.
 - **Domain Events** follow "entity produces → use case dispatches" pattern. Entity methods return `DomainEvent`; services collect and dispatch after successful operations.
 - **Files are the source of truth**. SQLite index is an acceleration layer maintained by the `Projector`.
 
@@ -129,7 +129,17 @@ graph LR
 | `projector.go` | Projector (file→index sync) |
 | `domain_event.go` | Domain event types + EventDispatcher |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `type_schema.go` | TypeSchema entity + validation |
+| `type_schema.go` | TypeSchema entity + validation + YAML serialization + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
+
+### TUI Architecture
+
+The TUI uses a three-panel layout (sidebar, body, properties) with a **right panel mode** system:
+
+- `panelEmpty` — no content selected
+- `panelObject` — object detail view (body + properties)
+- `panelTypeEditor` — type schema editor (independent sub-model `typeEditor` in `tui/type_editor.go`)
+
+The right panel automatically follows the sidebar cursor: moving to an object shows its detail, moving to a type header shows the type editor. The `typeEditor` sub-model has its own `Update()`/`View()` methods and internal mode state (view, edit, move, add wizard, delete confirmation, property detail popup).
 
 ## Data Model
 
@@ -140,7 +150,7 @@ graph LR
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
-- TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch)
+- TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, and props visibility)
 - Object templates: `templates/<type>/<name>.md` (optional, Markdown files with frontmatter property overrides and body content applied during `tmd object create`; single template auto-applies, multiple templates prompt for selection or use `-t` flag)
 - Object files: `objects/<type>/<name>.md`
 

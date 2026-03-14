@@ -284,6 +284,18 @@ func (r *LocalObjectRepository) WriteSchema(typeName string, data []byte) error 
 	return os.WriteFile(path, data, 0644)
 }
 
+// DeleteSchema removes a type schema YAML file.
+func (r *LocalObjectRepository) DeleteSchema(typeName string) error {
+	path := filepath.Join(r.typesDir(), typeName+".yaml")
+	if err := os.Remove(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("type schema %q does not exist", typeName)
+		}
+		return err
+	}
+	return nil
+}
+
 // ListSchemas returns the names of all available types (custom + built-in).
 func (r *LocalObjectRepository) ListSchemas() ([]string, error) {
 	seen := make(map[string]bool)

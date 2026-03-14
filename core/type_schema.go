@@ -6,6 +6,8 @@ import (
 	"regexp"
 	"sort"
 	"time"
+
+	"gopkg.in/yaml.v3"
 )
 
 var dateRegexp = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
@@ -154,6 +156,43 @@ var defaultTypes = map[string]TypeSchema{
 // LoadType loads a type schema by name.
 func (v *Vault) LoadType(name string) (*TypeSchema, error) {
 	return v.repo.GetSchema(name)
+}
+
+// SaveType validates and persists a TypeSchema to .typemd/types/<name>.yaml.
+func (v *Vault) SaveType(schema *TypeSchema) error {
+	if errs := ValidateSchema(schema); len(errs) > 0 {
+		return fmt.Errorf("invalid schema: %v", errs[0])
+	}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		return fmt.Errorf("marshal type schema: %w", err)
+	}
+	return v.repo.WriteSchema(schema.Name, data)
+}
+
+// DeleteType removes a user-defined type schema. Built-in types cannot be deleted.
+func (v *Vault) DeleteType(name string) error {
+	if _, ok := defaultTypes[name]; ok {
+		return fmt.Errorf("cannot delete built-in type %q", name)
+	}
+	return v.repo.DeleteSchema(name)
+}
+
+// CountObjectsByType returns the number of objects of the given type.
+func (v *Vault) CountObjectsByType(typeName string) (int, error) {
+	results, err := v.index.Query("type=" + typeName)
+	if err != nil {
+		return 0, err
+	}
+	return len(results), nil
+}
+
+// ValidPropertyTypeNames returns the list of allowed property type names in display order.
+func ValidPropertyTypeNames() []string {
+	return []string{
+		"string", "number", "date", "datetime", "url",
+		"checkbox", "select", "multi_select", "relation",
+	}
 }
 
 // validPropertyTypes lists allowed property types.
@@ -526,4 +565,39 @@ func (p Property) OptionValues() []string {
 		vals[i] = opt.Value
 	}
 	return vals
+}
+
+// marshalSchema is the YAML-serializable form of TypeSchema.
+// It re-introduces the name property entry when NameTemplate is set,
+// since NameTemplate is excluded from standard yaml marshaling (yaml:"-").
+type marshalSchema struct {
+	Name       string     `yaml:"name"`
+	Plural     string     `yaml:"plural,omitempty"`
+	Emoji      string     `yaml:"emoji,omitempty"`
+	Unique     bool       `yaml:"unique,omitempty"`
+	Properties []Property `yaml:"properties"`
+}
+
+// MarshalTypeSchema serializes a TypeSchema to YAML bytes suitable for
+// writing to .typemd/types/<name>.yaml. It handles the NameTemplate →
+// name property entry conversion that yaml:"-" would otherwise drop.
+func MarshalTypeSchema(schema *TypeSchema) ([]byte, error) {
+	ms := marshalSchema{
+		Name:   schema.Name,
+		Plural: schema.Plural,
+		Emoji:  schema.Emoji,
+		Unique: schema.Unique,
+	}
+
+	// Re-introduce name template as a name property entry if set
+	if schema.NameTemplate != "" {
+		ms.Properties = append(ms.Properties, Property{
+			Name:     NameProperty,
+			Template: schema.NameTemplate,
+		})
+	}
+
+	ms.Properties = append(ms.Properties, schema.Properties...)
+
+	return yaml.Marshal(&ms)
 }

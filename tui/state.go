@@ -11,6 +11,7 @@ import (
 // SessionState represents the TUI session state that is persisted across restarts.
 type SessionState struct {
 	SelectedObjectID string   `yaml:"selected_object_id,omitempty"`
+	SelectedTypeName string   `yaml:"selected_type_name,omitempty"` // type header cursor was on
 	ExpandedGroups   []string `yaml:"expanded_groups,omitempty"`
 	ScrollOffset     int      `yaml:"scroll_offset,omitempty"`
 	Focus            string   `yaml:"focus,omitempty"`
@@ -62,6 +63,8 @@ func (m model) captureState() SessionState {
 
 	if m.selected != nil {
 		state.SelectedObjectID = m.selected.ID
+	} else if m.typeEditor != nil {
+		state.SelectedTypeName = m.typeEditor.typeName
 	}
 
 	for _, g := range m.groups {
@@ -97,11 +100,21 @@ func applySessionState(state SessionState, groups []typeGroup) (cursor int, sele
 		groups[0].Expanded = true
 	}
 
+	// Find the saved type header by name
+	if state.SelectedTypeName != "" && state.SelectedObjectID == "" {
+		rows := visibleRows(groups)
+		for i, row := range rows {
+			if row.Kind == rowHeader && row.GroupIndex < len(groups) && groups[row.GroupIndex].Name == state.SelectedTypeName {
+				return i, ""
+			}
+		}
+	}
+
 	// Find the saved object by ID
 	if state.SelectedObjectID != "" {
 		rows := visibleRows(groups)
 		for i, row := range rows {
-			if !row.IsHeader && row.Object != nil && row.Object.ID == state.SelectedObjectID {
+			if row.Kind == rowObject && row.Object != nil && row.Object.ID == state.SelectedObjectID {
 				return i, row.Object.ID
 			}
 		}
@@ -116,7 +129,7 @@ func applySessionState(state SessionState, groups []typeGroup) (cursor int, sele
 			}
 			rows = visibleRows(groups)
 			for i, row := range rows {
-				if !row.IsHeader && row.Object != nil && row.Object.Type == objType {
+				if row.Kind == rowObject && row.Object != nil && row.Object.Type == objType {
 					return i, row.Object.ID
 				}
 			}
@@ -126,7 +139,7 @@ func applySessionState(state SessionState, groups []typeGroup) (cursor int, sele
 	// Final fallback: first object in first expanded group
 	rows := visibleRows(groups)
 	for i, row := range rows {
-		if !row.IsHeader && row.Object != nil {
+		if row.Kind == rowObject && row.Object != nil {
 			return i, row.Object.ID
 		}
 	}

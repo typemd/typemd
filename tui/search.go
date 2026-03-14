@@ -18,7 +18,7 @@ func initSearchInput() textinput.Model {
 func searchResultRows(results []*core.Object) []listRow {
 	var rows []listRow
 	for _, obj := range results {
-		rows = append(rows, listRow{IsHeader: false, GroupIndex: -1, Object: obj})
+		rows = append(rows, listRow{Kind: rowObject, GroupIndex: -1, Object: obj})
 	}
 	return rows
 }

@@ -33,6 +33,7 @@ var (
 	colorEditBorder   color.Color = lipgloss.Color(defaultColorEditBorder)
 	colorWikiLink     color.Color = lipgloss.Color(defaultColorWikiLink)
 	wikiLinkStyleBase             = lipgloss.NewStyle().Foreground(colorWikiLink)
+	highlightStyle                = lipgloss.NewStyle().Bold(true).Reverse(true)
 )
 
 // loadTheme reads .typemd/tui.yaml from the vault root and overrides default

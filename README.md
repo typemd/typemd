@@ -179,9 +179,11 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 
 | Key | Action |
 |-----|--------|
-| `↑`/`k`, `↓`/`j` | Navigate object list |
-| `Enter`/`Space` | Select object / Toggle group |
+| `↑`/`k`, `↓`/`j` | Navigate list / scroll content |
+| `Enter` | Select object / Focus type editor / Confirm |
+| `Space` | Toggle group expand/collapse |
 | `Tab` | Cycle focus between panels |
+| `n` | Create new object (in current type group) |
 | `e` | Enter edit mode (body or properties panel) |
 | `/` | Search (FTS5 full-text search) |
 | `Esc` | Exit edit mode (auto-saves if changed) / Clear search results |
@@ -191,7 +193,9 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
 
-The status bar shows the current mode: `[VIEW]` for normal navigation, `[EDIT]` when editing is active, and `[READONLY]` when launched with `--readonly`.
+Moving the cursor to a type group header automatically shows the **type editor** in the right panel, where you can edit type metadata (plural, emoji, unique), manage properties (add, delete, reorder, pin), and delete the type. The type editor has its own keybindings shown in the status bar.
+
+The status bar shows the current mode: `[VIEW]` for normal navigation, `[EDIT]` when editing is active, `[TYPE]` when the type editor is focused, and `[READONLY]` when launched with `--readonly`.
 
 When `--readonly` is active, the `e` key is disabled, no write operations are performed, and the help popup hides edit-related keybindings.
 

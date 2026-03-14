@@ -7,7 +7,6 @@ import (
 
 	"github.com/mattn/go-runewidth"
 	"github.com/typemd/typemd/core"
-	"charm.land/lipgloss/v2"
 )
 
 // padEmoji strips the variation selector (U+FE0F) and pads the emoji
@@ -21,12 +20,20 @@ func padEmoji(emoji string) string {
 	return display
 }
 
+type rowKind int
+
+const (
+	rowHeader    rowKind = iota // type group header
+	rowObject                   // object item
+	rowNewObject                // "+ New Object" action row (per group)
+	rowNewType                  // "+ New Type" action row
+)
+
 // listRow represents one visible row in the left panel.
-// It is either a group header or an object item.
 type listRow struct {
-	IsHeader   bool
+	Kind       rowKind
 	GroupIndex int
-	Object     *core.Object // nil for headers
+	Object     *core.Object // nil for headers and newType
 }
 
 // buildGroups creates type groups from a flat list of objects, sorted by type name.
@@ -35,6 +42,15 @@ func buildGroups(objects []*core.Object, vault *core.Vault) []typeGroup {
 	groupMap := make(map[string][]*core.Object)
 	for _, obj := range objects {
 		groupMap[obj.Type] = append(groupMap[obj.Type], obj)
+	}
+
+	// Include all types from the vault, even those with no objects
+	if vault != nil {
+		for _, name := range vault.ListTypes() {
+			if _, ok := groupMap[name]; !ok {
+				groupMap[name] = nil
+			}
+		}
 	}
 
 	var groups []typeGroup
@@ -62,16 +78,18 @@ func buildGroups(objects []*core.Object, vault *core.Vault) []typeGroup {
 }
 
 // visibleRows returns the list of rows currently visible based on expand/collapse state.
+// Includes a "+ New Type" row at the bottom.
 func visibleRows(groups []typeGroup) []listRow {
 	var rows []listRow
 	for i, g := range groups {
-		rows = append(rows, listRow{IsHeader: true, GroupIndex: i})
+		rows = append(rows, listRow{Kind: rowHeader, GroupIndex: i})
 		if g.Expanded {
 			for _, obj := range g.Objects {
-				rows = append(rows, listRow{IsHeader: false, GroupIndex: i, Object: obj})
+				rows = append(rows, listRow{Kind: rowObject, GroupIndex: i, Object: obj})
 			}
 		}
 	}
+	rows = append(rows, listRow{Kind: rowNewType})
 	return rows
 }
 
@@ -123,7 +141,8 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 	for i := start; i < end; i++ {
 		row := rows[i]
 		var line string
-		if row.IsHeader {
+		switch row.Kind {
+		case rowHeader:
 			g := groups[row.GroupIndex]
 			arrow := "▶"
 			if g.Expanded {
@@ -134,12 +153,14 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 			} else {
 				line = fmt.Sprintf(" %s %s (%d)", arrow, g.Plural, len(g.Objects))
 			}
-		} else {
+		case rowObject:
 			line = fmt.Sprintf("   %s", row.Object.GetName())
+		case rowNewType:
+			line = " + New Type"
 		}
 
 		if i == cursor {
-			style := lipgloss.NewStyle().Bold(true).Reverse(true)
+			style := highlightStyle.Width(width)
 			line = style.Render(line)
 		}
 

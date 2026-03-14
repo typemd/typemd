@@ -1,6 +1,7 @@
 ---
 name: resolve-issue
-description: This skill should be used when the user asks to "resolve an issue", "work on issue #N", "fix #N", "implement #N", "close #N", "tackle #N", "pick up #N", "start working on #N", "what should I work on next", or references a specific GitHub issue number they want to work on. Can also auto-select the best issue when no number is specified.
+description: |
+  This skill should be used when the user asks to "resolve an issue", "work on issue #N", "fix #N", "implement #N", "close #N", "tackle #N", "pick up #N", "start working on #N", "what should I work on next", or references a specific GitHub issue number they want to work on. Can also auto-select the best issue when no number is specified.
 allowed-tools:
   - Bash(gh api graphql:*)
   - Bash(gh issue list:*)
@@ -54,7 +55,7 @@ If the user does not specify an issue number, automatically select the best issu
 ```bash
 gh api graphql -f query='query {
   repository(owner:"typemd", name:"typemd") {
-    issues(first: 1, states: OPEN, filterBy: {issueType: "Release"}, orderBy: {field: CREATED_AT, direction: ASC}) {
+    issues(first: 1, states: OPEN, filterBy: {type: "Release"}, orderBy: {field: CREATED_AT, direction: ASC}) {
       nodes { number title subIssues(first: 30) { nodes { number title state labels(first: 5) { nodes { name } } } } }
     }
   }

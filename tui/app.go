@@ -22,6 +22,14 @@ const (
 	focusProps
 )
 
+type rightPanelMode int
+
+const (
+	panelEmpty      rightPanelMode = iota // no content selected
+	panelObject                           // object detail view (existing behavior)
+	panelTypeEditor                       // type editor view
+)
+
 type typeGroup struct {
 	Name     string
 	Plural   string
@@ -33,6 +41,15 @@ type typeGroup struct {
 type model struct {
 	vault *core.Vault
 	focus focusPanel
+
+	// Right panel mode
+	rightPanel  rightPanelMode
+	typeEditor  *typeEditor // non-nil when rightPanel == panelTypeEditor
+	newTypeName  textinput.Model
+	newTypeMode  bool // true when entering new type name in sidebar
+	newObjectName textinput.Model
+	newObjectMode bool   // true when entering new object name
+	newObjectType string // type for the new object
 
 	// Left panel
 	groups       []typeGroup
@@ -134,6 +151,17 @@ func (m model) Init() tea.Cmd {
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
+	case focusLeftMsg:
+		m.focus = focusLeft
+		return m, nil
+
+	case typeDeletedMsg:
+		m.typeEditor = nil
+		m.rightPanel = panelEmpty
+		m.focus = focusLeft
+		m.refreshData()
+		return m, nil
+
 	case fileChangedMsg:
 		if m.skipNextReload {
 			m.skipNextReload = false
@@ -164,8 +192,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 
 		// Body/props panels are shorter when title panel is shown
+		hasTitlePanel := m.hasTitlePanel()
 		bodyPropsH := contentHeight
-		if m.selected != nil {
+		if hasTitlePanel {
 			bodyPropsH -= titlePanelHeight
 			if bodyPropsH < 0 {
 				bodyPropsH = 0
@@ -183,7 +212,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case tea.KeyPressMsg:
-		// Mode priority: help > search > conflict > edit > normal
+		// Mode priority: help > search > conflict > typeEditor > edit > normal
 		switch {
 		case m.showHelp:
 			return updateHelp(m, msg)
@@ -196,6 +225,21 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case m.saveConflict:
 			return updateConflict(m, msg)
+		case m.newObjectMode:
+			return updateNewObject(m, msg)
+		case m.newTypeMode:
+			return updateNewType(m, msg)
+		case m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.focus != focusLeft:
+			// q/ctrl+c quits globally unless in an interactive mode
+			if (msg.String() == "q" || msg.String() == "ctrl+c") && m.typeEditor.CanQuit() {
+				if m.vault != nil {
+					saveSessionState(m.vault.Root, m.captureState())
+				}
+				return m, tea.Quit
+			}
+			te, cmd := m.typeEditor.Update(msg)
+			m.typeEditor = te
+			return m, cmd
 		case m.editMode:
 			return updateEdit(m, msg)
 		default:
@@ -238,7 +282,7 @@ func (m *model) refreshData() {
 	rows := visibleRows(m.groups)
 	m.cursor = 0
 	for i, row := range rows {
-		if !row.IsHeader && row.Object != nil && row.Object.ID == selectedID {
+		if row.Kind == rowObject && row.Object != nil && row.Object.ID == selectedID {
 			m.cursor = i
 			break
 		}
@@ -277,25 +321,65 @@ func (m *model) selectCurrentRow() {
 	rows := m.currentRows()
 	if m.cursor >= 0 && m.cursor < len(rows) {
 		row := rows[m.cursor]
-		if !row.IsHeader && row.Object != nil {
-			if m.vault != nil {
-				if obj, err := m.vault.GetObject(row.Object.ID); err == nil {
-					m.applyLoadedObject(obj)
+		switch row.Kind {
+		case rowObject:
+			if row.Object != nil {
+				if m.vault != nil {
+					if obj, err := m.vault.GetObject(row.Object.ID); err == nil {
+						m.applyLoadedObject(obj)
+					} else {
+						m.selected = row.Object
+						m.displayProps = nil
+					}
 				} else {
 					m.selected = row.Object
 					m.displayProps = nil
 				}
-			} else {
-				m.selected = row.Object
-				m.displayProps = nil
+				m.rightPanel = panelObject
+				m.typeEditor = nil
+				m.dirty = false
+				m.saveErr = ""
+				m.saveConflict = false
+				m.updateDetail()
 			}
-			m.dirty = false
-			m.saveErr = ""
-			m.saveConflict = false
-			m.updateDetail()
-			return
+		case rowHeader:
+			if m.vault != nil {
+				g := m.groups[row.GroupIndex]
+				if ts, err := m.vault.LoadType(g.Name); err == nil {
+					m.typeEditor = newTypeEditor(ts, g.Name, false, m.vault)
+					m.rightPanel = panelTypeEditor
+					m.selected = nil
+				}
+			}
 		}
 	}
+}
+
+// startNewObject enters the new object name input mode for a specific type.
+func (m *model) startNewObject(groupIndex int) {
+	if m.readOnly || groupIndex >= len(m.groups) {
+		return
+	}
+	ti := textinput.New()
+	ti.Placeholder = "object name"
+	ti.CharLimit = 100
+	ti.Focus()
+	m.newObjectName = ti
+	m.newObjectMode = true
+	m.newObjectType = m.groups[groupIndex].Name
+}
+
+// startNewType enters the new type name input mode.
+func (m *model) startNewType() {
+	if m.readOnly {
+		return
+	}
+	ti := textinput.New()
+	ti.Placeholder = "type name"
+	ti.CharLimit = 50
+	ti.Focus()
+	m.newTypeName = ti
+	m.newTypeMode = true
 }
 
 // doSave executes the actual vault write and resets save state on success.
@@ -481,6 +565,11 @@ func (m model) defaultPropsWidth() int {
 	return w
 }
 
+// hasTitlePanel returns true when the right side should show a title panel.
+func (m model) hasTitlePanel() bool {
+	return m.selected != nil || (m.rightPanel == panelTypeEditor && m.typeEditor != nil)
+}
+
 // bodyWidth calculates the body panel width from remaining space.
 func (m model) bodyWidth() int {
 	borders := 4 // left panel border (2) + body panel border (2)
@@ -527,7 +616,7 @@ func (m model) View() tea.View {
 	bdr := 2 // left+right or top+bottom border size
 
 	// When an object is selected, the title panel takes vertical space from body/props
-	hasTitlePanel := m.selected != nil
+	hasTitlePanel := m.hasTitlePanel()
 	bodyPropsContentH := contentH
 	if hasTitlePanel {
 		bodyPropsContentH = contentH - titlePanelHeight
@@ -574,7 +663,7 @@ func (m model) View() tea.View {
 			for i, row := range rows {
 				line := fmt.Sprintf("   %s/%s", row.Object.Type, row.Object.GetName())
 				if i == m.cursor {
-					style := lipgloss.NewStyle().Bold(true).Reverse(true)
+					style := highlightStyle
 					line = style.Render(line)
 				}
 				lines = append(lines, line)
@@ -583,48 +672,92 @@ func (m model) View() tea.View {
 		}
 	} else {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
+		if m.newObjectMode {
+			leftContent += "\n New " + m.newObjectType + ": " + m.newObjectName.View()
+		} else if m.newTypeMode {
+			leftContent += "\n New type: " + m.newTypeName.View()
+		}
 	}
 
-	// Body panel content: textarea in edit mode, viewport otherwise
-	var bodyPanelContent string
-	if m.editMode && m.focus == focusBody {
-		bodyPanelContent = m.bodyTextarea.View()
-	} else {
-		bodyPanelContent = m.bodyViewport.View()
-	}
+	var rightSide string
 
-	// Build right side: title panel (if selected) above body+props row
-	rightSide := bodyStyle.Render(bodyPanelContent)
-
-	// Properties panel (optional)
-	if m.propsVisible {
-		propsStyle := lipgloss.NewStyle().
+	if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
+		// Type editor uses full right-side width (no props panel)
+		editorW := m.width - m.leftWidth() - 4 // left border + body border
+		if editorW < 10 {
+			editorW = 10
+		}
+		editorStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
-			Width(m.propsWidth + bdr).
+			Width(editorW + bdr).
 			Height(bodyPropsPanelH).
 			MaxHeight(bodyPropsPanelH)
-		if m.focus == focusProps {
-			propsStyle = propsStyle.BorderForeground(activeBorderColor)
+		if m.focus != focusLeft {
+			editorStyle = editorStyle.BorderForeground(activeBorderColor)
 		}
-		rightSide = lipgloss.JoinHorizontal(lipgloss.Top,
-			rightSide,
-			propsStyle.Render(m.propsViewport.View()),
-		)
-	}
 
-	// Title panel above body+props
-	if hasTitlePanel {
-		// Title panel width = all remaining space after left panel
-		titleW := m.width - leftW - bdr // total width minus left panel (including its border)
+		// Title panel for type editor
+		titleW := m.width - leftW - bdr
 		titleStyle := lipgloss.NewStyle().
 			Border(lipgloss.RoundedBorder()).
 			Width(titleW).
 			Height(titlePanelHeight)
-		titleContent := renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
+		te := m.typeEditor
+		emojiPrefix := ""
+		if te.schema.Emoji != "" {
+			emojiPrefix = padEmoji(te.schema.Emoji) + " "
+		}
+		titleText := fmt.Sprintf(" %s%s", emojiPrefix, te.typeName)
+		titleContent := titleStyle.Render(titleText)
+
+		// Adjust editor panel height for title
+		editorH := bodyPropsPanelH
+		editorStyle = editorStyle.Height(editorH).MaxHeight(editorH)
+
 		rightSide = lipgloss.JoinVertical(lipgloss.Left,
-			titleStyle.Render(titleContent),
-			rightSide,
+			titleContent,
+			editorStyle.Render(te.View()),
 		)
+	} else {
+		// Object detail view (existing behavior)
+		var bodyPanelContent string
+		if m.editMode && m.focus == focusBody {
+			bodyPanelContent = m.bodyTextarea.View()
+		} else {
+			bodyPanelContent = m.bodyViewport.View()
+		}
+
+		rightSide = bodyStyle.Render(bodyPanelContent)
+
+		// Properties panel (optional)
+		if m.propsVisible {
+			propsStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				Width(m.propsWidth + bdr).
+				Height(bodyPropsPanelH).
+				MaxHeight(bodyPropsPanelH)
+			if m.focus == focusProps {
+				propsStyle = propsStyle.BorderForeground(activeBorderColor)
+			}
+			rightSide = lipgloss.JoinHorizontal(lipgloss.Top,
+				rightSide,
+				propsStyle.Render(m.propsViewport.View()),
+			)
+		}
+
+		// Title panel above body+props
+		if hasTitlePanel {
+			titleW := m.width - leftW - bdr
+			titleStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				Width(titleW).
+				Height(titlePanelHeight)
+			titleContent := renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
+			rightSide = lipgloss.JoinVertical(lipgloss.Left,
+				titleStyle.Render(titleContent),
+				rightSide,
+			)
+		}
 	}
 
 	// Compose left + right
@@ -635,8 +768,14 @@ func (m model) View() tea.View {
 
 	// Help bar
 	var helpBar string
-	if m.searchMode {
+	if m.newObjectMode {
+		helpBar = "  [NEW OBJECT]  enter: create  esc: cancel"
+	} else if m.newTypeMode {
+		helpBar = "  [NEW TYPE]  enter: create  esc: cancel"
+	} else if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
+	} else if m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.focus != focusLeft {
+		helpBar = m.typeEditor.HelpBar()
 	} else if m.saveConflict {
 		helpBar = "  [CONFLICT]  " + m.saveErr
 	} else if m.saveErr != "" {
@@ -655,7 +794,16 @@ func (m model) View() tea.View {
 		}
 	}
 
-	v := tea.NewView(panels + "\n" + helpBar)
+	screen := panels + "\n" + helpBar
+
+	// Overlay popup if type editor has one active
+	if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
+		if overlay := m.typeEditor.Overlay(m.width, m.height); overlay != "" {
+			screen = overlay
+		}
+	}
+
+	v := tea.NewView(screen)
 	v.AltScreen = true
 	return v
 }
@@ -717,17 +865,32 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 
 	bodyTA := newBodyTextarea()
 
-	// Restore focus panel (default: left)
-	focus := stringToFocusPanel(savedState.Focus)
+	// Note: focus is always reset to focusLeft on startup for consistent UX
+	_ = savedState.Focus
 
 	// Restore panel widths (0 = use default, applied later on WindowSizeMsg)
 	leftW := savedState.LeftPanelWidth
 	propsWidth := savedState.PropsPanelWidth
 	propsVisible := savedState.PropsVisible
 
+	// Determine initial right panel mode and type editor
+	var initialRightPanel rightPanelMode
+	var initialTypeEditor *typeEditor
+	if selected != nil {
+		initialRightPanel = panelObject
+	} else if selectedID == "" && savedState.SelectedTypeName != "" {
+		// Cursor on a type header — open type editor
+		if ts, err := v.LoadType(savedState.SelectedTypeName); err == nil {
+			initialTypeEditor = newTypeEditor(ts, savedState.SelectedTypeName, false, v)
+			initialRightPanel = panelTypeEditor
+		}
+	}
+
 	m := model{
 		vault:         v,
-		focus:         focus,
+		focus:         focusLeft, // always start with focus on sidebar
+		rightPanel:    initialRightPanel,
+		typeEditor:    initialTypeEditor,
 		groups:        groups,
 		cursor:        initialCursor,
 		scrollOffset:  savedState.ScrollOffset,

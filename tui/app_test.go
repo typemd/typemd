@@ -86,8 +86,15 @@ func TestVisibleRows_Collapsed(t *testing.T) {
 		{Name: "book", Objects: []*core.Object{{ID: "book/a"}}, Expanded: false},
 	}
 	rows := visibleRows(groups)
-	if len(rows) != 1 {
-		t.Errorf("len(rows) = %d, want 1 (header only)", len(rows))
+	// 1 header + 1 "New Type" row at bottom
+	if len(rows) != 2 {
+		t.Errorf("len(rows) = %d, want 2 (header + new type)", len(rows))
+	}
+	if rows[0].Kind != rowHeader {
+		t.Errorf("rows[0].Kind = %d, want rowHeader", rows[0].Kind)
+	}
+	if rows[1].Kind != rowNewType {
+		t.Errorf("rows[1].Kind = %d, want rowNewType", rows[1].Kind)
 	}
 }
 

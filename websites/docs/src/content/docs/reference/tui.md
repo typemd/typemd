@@ -20,12 +20,35 @@ The TUI uses a multi-panel layout:
 
 | Panel | Description |
 |-------|-------------|
-| **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). |
-| **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). Hidden when no object is selected. |
-| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content. |
-| **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). |
+| **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). All defined types appear even if they have no objects. A `+ New Type` row appears at the bottom. |
+| **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). When a type header is selected, shows the type name instead. Hidden when nothing is selected. |
+| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content. When a type header is selected, replaced by the **type editor**. |
+| **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor is active. |
 
 The title panel spans the full width of the right side (body + properties area).
+
+## Type Editor
+
+Moving the cursor to a type group header automatically opens the **type editor** in the right panel. The type editor lets you manage the type schema without editing YAML files:
+
+- **Meta fields** — Edit plural name, emoji, and unique constraint. Name is read-only (type rename not supported).
+- **Properties** — Split into Pinned (Header) and Properties sections. Add new properties via a multi-step wizard, edit emoji, delete, or reorder with move mode.
+- **Pin toggle** — Press `p` on a property to move it between Pinned and Properties sections.
+- **Property detail** — Press `Enter` on a property to open a popup for editing metadata (emoji).
+- **Delete type** — Press `D` (shift+d) to delete the type (with confirmation). The built-in `tag` type cannot be deleted.
+
+Changes are saved immediately on each operation (no explicit save step).
+
+| Key | Action (in type editor) |
+|-----|-------------------------|
+| `e` | Edit meta field (Plural/Emoji: text input; Unique: toggle) |
+| `Enter` | Open property detail popup |
+| `a` | Add property (multi-step wizard) |
+| `d` | Delete property (with confirmation) |
+| `D` | Delete type (with confirmation) |
+| `m` | Enter move mode (`↑`/`↓` to reorder, `Enter`/`Esc` to exit) |
+| `p` | Toggle pin (move property between Pinned/Properties sections) |
+| `Esc` | Return focus to sidebar |
 
 ## Pinned Properties
 
@@ -48,56 +71,126 @@ properties:
     type: string  # no pin — shown in Properties panel
 ```
 
-## Keyboard Shortcuts
+## Modes and Keybindings
+
+The TUI operates in different modes depending on context. The current mode is shown in `[brackets]` in the status bar at the bottom. Each mode has its own set of active keybindings.
+
+### `[VIEW]` — Normal Navigation
+
+The default mode. Browse objects and types in the sidebar.
 
 | Key | Action |
 |-----|--------|
-| `↑` / `k` | Move up (navigate list / scroll detail) |
-| `↓` / `j` | Move down (navigate list / scroll detail) |
-| `Enter` / `Space` | Select object / Toggle group |
+| `↑`/`k`, `↓`/`j` | Navigate list / scroll content |
+| `Enter` | Select object / Focus type editor |
+| `Space` | Toggle group expand/collapse |
 | `Tab` | Cycle focus between panels |
-| `e` | Enter edit mode (body or properties panel) |
+| `n` | Create new object (in current type group) |
+| `e` | Enter edit mode (when body panel focused) |
 | `/` | Enter search mode |
-| `Esc` | Exit edit mode / Exit search / Clear results |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |
-| `[` / `]` | Shrink / grow focused panel |
-| `?` / `h` | Open help popup |
-| `q` / `Ctrl+C` | Quit |
+| `[`/`]` | Shrink/grow focused panel |
+| `?`/`h` | Open help popup |
+| `q`/`Ctrl+C` | Quit |
 
-## Edit Mode
+### `[TYPE]` — Type Editor
 
-Pressing `e` when the **body panel** is focused switches to in-place edit mode: the read-only viewport is replaced with a textarea pre-filled with the current object's body content. You can type, delete, and navigate freely using standard text-editing keys. The status bar shows `[EDIT]` and the panel border changes to orange.
+Active when the type editor panel has focus. Press `Tab` or `Enter` on a type header to enter this mode.
 
-All global navigation keys (`j`/`k`, `Tab`) are intercepted while editing — they do not switch panels. Press `Esc` to exit edit mode: changes are **auto-saved** to disk and the view returns to `[VIEW]`.
+| Key | Action |
+|-----|--------|
+| `↑`/`k`, `↓`/`j` | Navigate meta fields and properties |
+| `Enter` | Open property detail popup / Start add wizard on `+ Add Property` |
+| `e` | Edit meta field (Plural/Emoji: text input, Unique: toggle) |
+| `a` | Add property (starts wizard) |
+| `d` | Delete property (with confirmation) |
+| `D` | Delete type (with confirmation) |
+| `m` | Enter move mode |
+| `p` | Toggle pin on property |
+| `Tab`/`Esc` | Return focus to sidebar |
+| `q`/`Ctrl+C` | Quit |
 
-If the file was modified externally between when it was loaded and when you saved, a **conflict warning** appears in the status bar. Press `y` to overwrite, `n` to reload from disk, or `Esc` to cancel.
+### `[EDIT]` — Body Editing
 
-Pressing `e` on the properties panel also enters edit mode (visual indicator only; property editing is not yet supported).
+Active when editing the object body text. Press `e` in VIEW mode while the body panel is focused.
 
-## Read-Only Mode
+| Key | Action |
+|-----|--------|
+| Standard text keys | Edit body content |
+| `Esc` | Exit edit mode (auto-saves if changed) |
 
-Launch with `--readonly` to prevent any edits. In this mode:
+All navigation keys (`j`/`k`, `Tab`) are intercepted and do not switch panels. The panel border changes to orange.
 
-- The `e` key is disabled — edit mode cannot be entered
-- No write operations are performed to object files or the SQLite index
-- The status bar shows `[READONLY]` instead of `[VIEW]`
-- The help popup hides edit-related keybindings
+If the file was modified externally while editing, a **`[CONFLICT]`** warning appears. Press `y` to overwrite, `n` to reload from disk, or `Esc` to dismiss.
 
-This is useful for safely browsing a vault in shared terminals, presentations, or automated contexts.
+### `[MOVE]` — Property Reorder
+
+Active within the type editor when reordering properties. Press `m` on a property in TYPE mode.
+
+| Key | Action |
+|-----|--------|
+| `↑`/`k`, `↓`/`j` | Move property up/down (swaps with neighbor) |
+| `Enter`/`Esc` | Confirm and save new order |
+
+Moving a property across the Pinned/Properties boundary automatically toggles its pin value.
+
+### `[ADD PROPERTY]` — Add Property Wizard
+
+A multi-step wizard for adding a new property to a type. Press `a` in TYPE mode or `Enter` on `+ Add Property`.
+
+| Step | Input | Keys |
+|------|-------|------|
+| 1. Name | Text input for property name | `Enter`: next, `Esc`: cancel |
+| 2. Type | Select from list (string, number, date, ...) | `↑`/`↓`: select, `Enter`: next, `Esc`: back |
+| 2b. Options | Comma-separated values (for select/multi_select) | `Enter`: create, `Esc`: back |
+| 3. Relation | Target type, multiple, bidirectional, inverse name | `Tab`: next field, `Enter`/`Space`: toggle/confirm, `Esc`: back |
+
+### `[PROPERTY]` — Property Detail Popup
+
+A popup overlay for editing property metadata. Press `Enter` on a property in TYPE mode.
+
+| Key | Action |
+|-----|--------|
+| `Enter`/`e` | Edit the selected field |
+| `Esc` | Close popup |
+
+When editing a field: `Enter` saves, `Esc` cancels (reverts).
+
+### `[DELETE]` / `[DELETE TYPE]` — Deletion Confirmation
+
+Shown when deleting a property (`d`) or type (`D`).
+
+| Key | Action |
+|-----|--------|
+| `y` | Confirm deletion |
+| `n`/`Esc` | Cancel |
+
+### `[NEW TYPE]` / `[NEW OBJECT]` — Creation Input
+
+Shown when creating a new type (`+ New Type`) or object (`n`).
+
+| Key | Action |
+|-----|--------|
+| Text keys | Type name/object name |
+| `Enter` | Create |
+| `Esc` | Cancel |
+
+### `[READONLY]` — Read-Only Mode
+
+Active when launched with `--readonly`. The `e` and `n` keys are disabled, no write operations are performed, and the help popup hides edit-related keybindings.
 
 ## Session State
 
 The TUI automatically saves your session state to `.typemd/tui-state.yaml` when you quit. On next launch, it restores:
 
-- **Selected object** — cursor returns to the same object (identified by Object ID)
+- **Selected object or type** — cursor returns to the same object (by ID) or type header (by name)
 - **Expanded groups** — type groups stay expanded/collapsed as you left them
 - **Panel dimensions** — left panel and properties panel widths
 - **Properties visibility** — whether the properties panel was shown
-- **Focus panel** — which panel had focus (left, body, or properties)
 - **Scroll offset** — vertical scroll position in the object list
 
-If the previously selected object was deleted, the TUI falls back to the first object in the same type group, then to the first object overall.
+If the previously selected object was deleted, the TUI falls back to the first object in the same type group, then to the first object overall. Focus always starts on the sidebar.
 
 Search state is not persisted — each session starts with a fresh view.
 

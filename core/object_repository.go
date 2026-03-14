@@ -23,6 +23,7 @@ type ObjectRepository interface {
 	// Type schema operations
 	GetSchema(typeName string) (*TypeSchema, error)
 	WriteSchema(typeName string, data []byte) error
+	DeleteSchema(typeName string) error
 	ListSchemas() ([]string, error)
 
 	// Template operations
