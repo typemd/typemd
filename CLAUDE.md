@@ -15,6 +15,122 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **websites/** — Non-Go websites (site, docs, blog)
 - **marketplace/** — Claude Marketplace plugins (future)
 
+## Core Package Architecture
+
+The `core/` package follows **Clean Architecture** with **CQRS** (Command Query Responsibility Segregation). The design separates concerns into layers with clear dependency rules.
+
+### Layer Diagram
+
+```mermaid
+graph TB
+    subgraph Consumers
+        CMD[cmd/ — CLI]
+        TUI[tui/ — Terminal UI]
+        MCP[mcp/ — MCP Server]
+    end
+
+    subgraph Facade
+        V[Vault]
+    end
+
+    subgraph Use Cases
+        OS[ObjectService — commands]
+        QS[QueryService — queries]
+        PJ[Projector — file→index sync]
+    end
+
+    subgraph Domain
+        OBJ[Object — aggregate root]
+        TS[TypeSchema — aggregate root]
+        OID[ObjectID — value object]
+        EVT[DomainEvent — event types]
+        ED[EventDispatcher]
+    end
+
+    subgraph Infrastructure
+        REPO[ObjectRepository — interface]
+        IDX[ObjectIndex — interface]
+        LR[LocalObjectRepository — files]
+        SI[SQLiteObjectIndex — SQLite]
+    end
+
+    CMD --> V
+    TUI --> V
+    MCP --> V
+
+    V --> OS
+    V --> QS
+    V --> PJ
+    V --> ED
+
+    OS --> REPO
+    OS --> IDX
+    OS --> ED
+    QS --> REPO
+    QS --> IDX
+    PJ --> REPO
+    PJ --> IDX
+
+    OS --> OBJ
+    OS --> TS
+    QS --> OBJ
+
+    REPO -.-> LR
+    IDX -.-> SI
+
+    OBJ --> OID
+    OBJ --> EVT
+```
+
+### CQRS Flow
+
+```mermaid
+graph LR
+    subgraph Command Side
+        C[Create / Save / Link] --> OS2[ObjectService]
+        OS2 --> R1[ObjectRepository — write file]
+        OS2 --> I1[ObjectIndex — upsert index]
+        OS2 --> E1[EventDispatcher — emit events]
+    end
+
+    subgraph Query Side
+        Q[Query / Search / Resolve] --> QS2[QueryService]
+        QS2 --> R2[ObjectRepository — read by ID]
+        QS2 --> I2[ObjectIndex — search/filter]
+    end
+
+    subgraph Projection
+        PJ2[Projector.Sync] --> R3[ObjectRepository.Walk]
+        R3 --> PJ2
+        PJ2 --> I3[ObjectIndex.Upsert]
+    end
+```
+
+### Key Design Decisions
+
+- **ObjectRepository** returns domain entities (`*Object`, `*TypeSchema`), not raw bytes. Path conventions and serialization are encapsulated in implementations.
+- **ObjectIndex** returns `ObjectResult` (lightweight projection) for search results. Full entity retrieval goes through `ObjectRepository.Get(id)`.
+- **Vault** is a thin facade / DI container. All business logic lives in `ObjectService` (commands) and `QueryService` (queries).
+- **Domain Events** follow "entity produces → use case dispatches" pattern. Entity methods return `DomainEvent`; services collect and dispatch after successful operations.
+- **Files are the source of truth**. SQLite index is an acceleration layer maintained by the `Projector`.
+
+### Key Files
+
+| File | Role |
+|------|------|
+| `object.go` | Object entity (aggregate root) + Vault facade methods |
+| `object_id.go` | ObjectID value object |
+| `object_repository.go` | ObjectRepository interface |
+| `object_index.go` | ObjectIndex interface + ObjectResult |
+| `object_service.go` | ObjectService (command use cases) |
+| `query_service.go` | QueryService (query use cases) |
+| `local_object_repository.go` | LocalObjectRepository (file I/O) |
+| `sqlite_object_index.go` | SQLiteObjectIndex (SQLite queries) |
+| `projector.go` | Projector (file→index sync) |
+| `domain_event.go` | Domain event types + EventDispatcher |
+| `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
+| `type_schema.go` | TypeSchema entity + validation |
+
 ## Data Model
 
 - Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
