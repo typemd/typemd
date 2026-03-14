@@ -76,16 +76,6 @@ func removeRelationValue(props map[string]any, name, value string, multiple bool
 	}
 }
 
-// findRelationProperty finds a relation property by name in a type schema.
-func findRelationProperty(schema *TypeSchema, name string) *Property {
-	for i, p := range schema.Properties {
-		if p.Name == name && p.Type == "relation" {
-			return &schema.Properties[i]
-		}
-	}
-	return nil
-}
-
 // findSystemRelationProperty returns a Property representation of a system property relation.
 func findSystemRelationProperty(name string) *Property {
 	for _, sp := range systemProperties {
@@ -99,15 +89,6 @@ func findSystemRelationProperty(name string) *Property {
 		}
 	}
 	return nil
-}
-
-// resolveRelationProperty looks up a relation property by name, checking both
-// the type schema and system properties.
-func resolveRelationProperty(schema *TypeSchema, name string) *Property {
-	if p := findRelationProperty(schema, name); p != nil {
-		return p
-	}
-	return findSystemRelationProperty(name)
 }
 
 // loadObjectAndSchema loads an object and its type schema.
@@ -134,7 +115,7 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 		return fmt.Errorf("get source: %w", err)
 	}
 
-	relProp := resolveRelationProperty(fromSchema, relName)
+	relProp := fromSchema.FindRelation(relName)
 	if relProp == nil {
 		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
 	}
@@ -147,7 +128,7 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 		return fmt.Errorf("target type mismatch: expected %q, got %q", relProp.Target, toObj.Type)
 	}
 
-	if err := appendRelationValue(fromObj.Properties, relName, toID, relProp.Multiple); err != nil {
+	if err := fromObj.LinkTo(relName, toID, relProp); err != nil {
 		return fmt.Errorf("relation already exists: %s -[%s]-> %s", fromID, relName, toID)
 	}
 	if err := v.saveObjectFile(fromObj); err != nil {
@@ -164,12 +145,12 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 			return fmt.Errorf("load target type: %w", err)
 		}
 
-		inverseProp := findRelationProperty(toSchema, relProp.Inverse)
+		inverseProp := toSchema.FindRelation(relProp.Inverse)
 		if inverseProp == nil {
 			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
 		}
 
-		if err := appendRelationValue(toObj.Properties, relProp.Inverse, fromID, inverseProp.Multiple); err != nil && !errors.Is(err, errDuplicateRelation) {
+		if err := toObj.LinkTo(relProp.Inverse, fromID, inverseProp); err != nil && !errors.Is(err, errDuplicateRelation) {
 			return fmt.Errorf("set inverse relation: %w", err)
 		}
 		if err := v.saveObjectFile(toObj); err != nil {
@@ -195,12 +176,12 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 		return fmt.Errorf("get source: %w", err)
 	}
 
-	relProp := resolveRelationProperty(fromSchema, relName)
+	relProp := fromSchema.FindRelation(relName)
 	if relProp == nil {
 		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
 	}
 
-	removeRelationValue(fromObj.Properties, relName, toID, relProp.Multiple)
+	fromObj.Unlink(relName, toID, relProp)
 	if err := v.saveObjectFile(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
@@ -215,12 +196,12 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 			return fmt.Errorf("get target: %w", err)
 		}
 
-		inverseProp := findRelationProperty(toSchema, relProp.Inverse)
+		inverseProp := toSchema.FindRelation(relProp.Inverse)
 		if inverseProp == nil {
 			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
 		}
 
-		removeRelationValue(toObj.Properties, relProp.Inverse, fromID, inverseProp.Multiple)
+		toObj.Unlink(relProp.Inverse, fromID, inverseProp)
 		if err := v.saveObjectFile(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}

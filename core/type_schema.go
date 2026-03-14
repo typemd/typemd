@@ -105,6 +105,27 @@ type SharedPropertiesFile struct {
 }
 
 
+// FindProperty returns a pointer to the named property, or nil if not found.
+func (s *TypeSchema) FindProperty(name string) *Property {
+	for i, p := range s.Properties {
+		if p.Name == name {
+			return &s.Properties[i]
+		}
+	}
+	return nil
+}
+
+// FindRelation returns a pointer to the named relation property, checking both
+// schema-defined properties and system properties (e.g. tags).
+func (s *TypeSchema) FindRelation(name string) *Property {
+	for i, p := range s.Properties {
+		if p.Name == name && p.Type == "relation" {
+			return &s.Properties[i]
+		}
+	}
+	return findSystemRelationProperty(name)
+}
+
 // PropertyNames returns the set of property names defined in the schema.
 func (s *TypeSchema) PropertyNames() map[string]bool {
 	names := make(map[string]bool, len(s.Properties))

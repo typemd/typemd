@@ -57,6 +57,49 @@ func (o *Object) DisplayID() string {
 	return o.Type + "/" + o.DisplayName()
 }
 
+// MarkUpdated sets the updated_at timestamp to now.
+func (o *Object) MarkUpdated() {
+	o.Properties[UpdatedAtProperty] = time.Now().Format(time.RFC3339)
+}
+
+// Validate checks this object's properties against the given type schema.
+func (o *Object) Validate(schema *TypeSchema) []error {
+	return ValidateObject(o.Properties, schema)
+}
+
+// SetProperty validates and sets a single property value.
+// Returns an error if validation fails against the schema.
+func (o *Object) SetProperty(key string, value any, schema *TypeSchema) error {
+	testProps := map[string]any{key: value}
+	if errs := ValidateObject(testProps, schema); len(errs) > 0 {
+		return errs[0]
+	}
+	o.Properties[key] = value
+	return nil
+}
+
+// LinkTo appends a relation target to this object's properties.
+// For single-value relations, it overwrites. For multi-value, it appends.
+// Returns an error if the target already exists in a multi-value relation.
+func (o *Object) LinkTo(relName, targetID string, prop *Property) error {
+	return appendRelationValue(o.Properties, relName, targetID, prop.Multiple)
+}
+
+// Unlink removes a relation target from this object's properties.
+func (o *Object) Unlink(relName, targetID string, prop *Property) {
+	removeRelationValue(o.Properties, relName, targetID, prop.Multiple)
+}
+
+// ApplyTemplate applies template properties and body to this object.
+// It filters template properties against the schema and skips immutable system properties.
+func (o *Object) ApplyTemplate(tmpl *Template, schema *TypeSchema) {
+	filtered := filterTemplateProperties(tmpl.Properties, schema)
+	for key, val := range filtered {
+		o.Properties[key] = val
+	}
+	o.Body = tmpl.Body
+}
+
 // writeFrontmatter writes properties and body as markdown with YAML frontmatter.
 // keyOrder specifies the desired property output order. Properties not in keyOrder
 // are appended at the end. If keyOrder is nil, properties are written in map iteration order.
@@ -194,23 +237,17 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 		}
 	}
 
-	// Apply template properties (overrides schema defaults)
-	body := ""
-	if tmpl != nil {
-		filtered := filterTemplateProperties(tmpl.Properties, schema)
-		for key, val := range filtered {
-			props[key] = val
-		}
-		body = tmpl.Body
-	}
-
-	// Write .md file via repository (O_EXCL ensures atomic uniqueness check)
+	// Build the new object entity
 	newObj := &Object{
 		ID:         id,
 		Type:       typeName,
 		Filename:   filename,
 		Properties: props,
-		Body:       body,
+	}
+
+	// Apply template (overrides schema defaults)
+	if tmpl != nil {
+		newObj.ApplyTemplate(tmpl, schema)
 	}
 	if err := v.repo.Create(newObj, OrderedPropKeys(props, schema)); err != nil {
 		return nil, fmt.Errorf("create object file: %w", err)
@@ -221,7 +258,7 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 	if err != nil {
 		return nil, fmt.Errorf("marshal properties: %w", err)
 	}
-	if err := v.index.Upsert(id, typeName, filename, string(propsJSON), body); err != nil {
+	if err := v.index.Upsert(id, typeName, filename, string(propsJSON), newObj.Body); err != nil {
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
@@ -230,9 +267,7 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 
 // saveObjectFile writes object properties to both .md file and index.
 func (v *Vault) saveObjectFile(obj *Object) error {
-	obj.Properties[UpdatedAtProperty] = time.Now().Format(time.RFC3339)
-	// LoadType may fail for unknown types; nil schema is safe here because
-	// OrderedPropKeys falls back to map iteration order when schema is nil.
+	obj.MarkUpdated()
 	schema, _ := v.LoadType(obj.Type)
 	keyOrder := OrderedPropKeys(obj.Properties, schema)
 
@@ -267,12 +302,9 @@ func (v *Vault) SetProperty(id, key string, value any) error {
 		return fmt.Errorf("load type: %w", err)
 	}
 
-	testProps := map[string]any{key: value}
-	if errs := ValidateObject(testProps, schema); len(errs) > 0 {
-		return errs[0]
+	if err := obj.SetProperty(key, value, schema); err != nil {
+		return err
 	}
-
-	obj.Properties[key] = value
 
 	return v.saveObjectFile(obj)
 }
