@@ -18,11 +18,15 @@ project-root/
 │   │   ├── book.yaml
 │   │   └── person.yaml
 │   └── properties.yaml      # Shared property definitions (optional)
-└── objects/                  # Object files organized by type
-    ├── book/
-    │   └── clean-code-01kk39c30x27ck7ahyc7ct4nyn.md
-    └── person/
-        └── robert-martin-01kk39c30y47xb1dvbs8ywqv50.md
+├── templates/               # Object templates (optional)
+│   └── book/
+│       └── review.md        # Template with frontmatter overrides + body
+├── objects/                  # Object files organized by type
+│   ├── book/
+│   │   └── clean-code-01kk39c30x27ck7ahyc7ct4nyn.md
+│   └── person/
+│       └── robert-martin-01kk39c30y47xb1dvbs8ywqv50.md
+└── ...
 ```
 
 ## CLI Commands
@@ -41,7 +45,7 @@ project-root/
 
 | Command | Description |
 |---------|-------------|
-| `tmd object create <type> <name>` | Create a new object (ULID auto-appended) |
+| `tmd object create <type> [name] [-t tmpl]` | Create a new object (ULID auto-appended; name optional with name template; `-t` selects object template) |
 | `tmd object show <id>` | Display object properties, relations, and body |
 | `tmd object list [--json]` | List all objects |
 
@@ -80,7 +84,7 @@ tmd query "type=book" --json
 
 | Command | Description |
 |---------|-------------|
-| `tmd migrate` | Migrate all type schemas (e.g., `enum` → `select`) |
+| `tmd migrate [--dry-run]` | Migrate all type schemas (e.g., `enum` → `select`) |
 | `tmd migrate <type> [--dry-run]` | Migrate objects to match current schema |
 | `tmd migrate <type> --rename old:new` | Rename a property across all objects of a type |
 
@@ -121,7 +125,7 @@ Always appear first in frontmatter, in this order:
 
 | Property | Description | Auto-set |
 |----------|-------------|----------|
-| `name` | Display name (from slug: `clean-code` → `Clean Code`) | Yes |
+| `name` | Display name (from slug: `clean-code` → `Clean Code`, or auto-generated from name template if defined) | Yes |
 | `description` | Optional user-authored summary | No |
 | `created_at` | ISO 8601 datetime, set on creation | Yes, immutable |
 | `updated_at` | ISO 8601 datetime, updated on save | Yes |
@@ -141,8 +145,12 @@ Type schemas live in `.typemd/types/<type>.yaml`:
 
 ```yaml
 name: book
+plural: books            # optional: display name in collection contexts
 emoji: 📚
+unique: true             # optional: enforce name uniqueness across objects of this type
 properties:
+  - name: name           # optional: name entry with template for auto-generated names
+    template: "{{.title}} by {{.author}}"
   - name: title
     type: string
     emoji: 📖
@@ -184,6 +192,13 @@ properties:
 | `multi_select` | Array of `options[].value` | Multiple choices |
 | `relation` | Object ID(s) | See relation options below |
 
+### Schema-Level Options
+
+| Option | Description |
+|--------|-------------|
+| `plural` | Plural display name for collection contexts (e.g., `books`) |
+| `unique` | When `true`, enforces name uniqueness across objects of this type |
+
 ### Property Options
 
 | Option | Description |
@@ -192,6 +207,7 @@ properties:
 | `pin: <int>` | Display order in TUI body panel (1 = top) |
 | `default` | Default value for new objects |
 | `use: <name>` | Reference a shared property from `properties.yaml` |
+| `template` | Only valid on the `name` property — Go template for auto-generated names (e.g., `"{{.title}} by {{.author}}"`) |
 
 ### Relation Options
 
@@ -225,9 +241,26 @@ properties:
     pin: 1
 ```
 
+## Object Templates
+
+Object templates live at `templates/<type>/<name>.md`. They are Markdown files with frontmatter property overrides and body content that are applied during `tmd object create`.
+
+- **Single template** for a type → auto-applied on creation
+- **Multiple templates** → user is prompted to select, or use `-t <name>` flag
+- Templates can set default property values and provide starter body content
+
 ## Built-in Tag Type
 
-Tags are managed as objects of the built-in `tag` type. When you reference a tag in an object's `tags` property, typemd automatically creates the tag object if it doesn't already exist. Tag objects live at `objects/tag/<name>-<ulid>.md` like any other object.
+Tags are managed as objects of the built-in `tag` type (`unique: true`, `plural: "tags"`, emoji: 🏷️). When you reference a tag in an object's `tags` property, typemd automatically creates the tag object if it doesn't already exist. Tag objects live at `objects/tag/<name>-<ulid>.md` like any other object.
+
+The default tag schema has two properties:
+
+| Property | Type | Emoji | Description |
+|----------|------|-------|-------------|
+| `color` | `string` | 🎨 | Tag color |
+| `icon` | `string` | ✨ | Tag icon |
+
+You can override the built-in tag schema by creating `.typemd/types/tag.yaml`.
 
 ## Wiki-Links
 
@@ -242,12 +275,16 @@ Backlinks are tracked automatically — objects know what links to them.
 
 ## TUI
 
-The terminal UI has 4 panels:
+The terminal UI has a three-panel layout (sidebar, body, properties) with a **right panel mode** system:
 
-1. **Left**: Object list grouped by type (collapsible)
-2. **Center (Body)**: Pinned properties + markdown body
-3. **Right (Properties)**: All properties, relations, backlinks (toggleable)
+1. **Sidebar (Left)**: Object list grouped by type (collapsible), with `+ New Type` at the bottom
+2. **Body (Center)**: Pinned properties + markdown body (when viewing objects), or type schema editor (when viewing types)
+3. **Properties (Right)**: All properties, relations, backlinks (toggleable)
 4. **Status Bar**: Mode, unsaved indicator, messages
+
+The right panel follows the sidebar cursor:
+- Selecting an **object** → shows object detail (body + properties)
+- Selecting a **type header** → shows the type schema editor with full CRUD support (add/edit/reorder/delete properties)
 
 ### Key Keybindings
 
@@ -258,6 +295,7 @@ The terminal UI has 4 panels:
 | `tab` | Switch panel focus |
 | `e` | Enter edit mode |
 | `esc` | Exit edit mode (saves) |
+| `n` | Create new object (on type header or object) |
 | `/` | Search |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft-wrap |

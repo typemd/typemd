@@ -30,7 +30,9 @@ If the content doesn't clearly map to an existing type, ask the user which type 
 
 ### 2. Generate the typemd Object
 
-Create a new file at `objects/<type>/<slug>.md` with:
+Use `tmd object create <type> <name>` to create the object file. This generates the proper ULID filename at `objects/<type>/<slug>-<ulid>.md`. If the type has object templates, use `-t <template>` to select one.
+
+Then edit the created file to populate:
 
 **Frontmatter** (YAML between `---` delimiters):
 - System properties first, in this order:
@@ -38,6 +40,7 @@ Create a new file at `objects/<type>/<slug>.md` with:
   - `description`: optional one-line summary extracted from the content
   - `created_at`: ISO 8601 timestamp (use the original file's date if available, otherwise current time)
   - `updated_at`: current ISO 8601 timestamp
+  - `tags`: array of tag object IDs (e.g., `tag/programming-01kk...`)
 - Type-specific properties after system properties, matching the type schema's property definitions and order
 
 **Body**: the markdown content, cleaned up and adapted. Preserve the substance of the original content.
@@ -51,7 +54,7 @@ Look for mentions of existing objects in the vault:
 ### 4. Confirm Before Writing
 
 Always show the user the generated object before writing it. Present:
-- The target path (`objects/<type>/<slug>.md`)
+- The target path (`objects/<type>/<slug>-<ulid>.md`)
 - The full frontmatter
 - A preview of the body (first ~10 lines if long)
 - Any suggested wiki-links or relations
@@ -70,6 +73,6 @@ When the user has multiple files to import:
 ## Important Rules
 
 - **Never modify or delete the original markdown file** — only create new typemd object files
-- **Never guess ULIDs** — use `tmd object create <type> <name>` if you need typemd to generate the object with a proper ULID, or create the file manually and let typemd assign the ULID on next reindex
+- **Never guess ULIDs** — always use `tmd object create <type> <name>` to generate the object with a proper ULID filename
 - **Always respect the type schema** — only include properties defined in the schema
 - **System properties are managed by typemd** — set them during import but know that typemd will manage `updated_at` going forward
