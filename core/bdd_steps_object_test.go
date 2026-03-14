@@ -232,7 +232,7 @@ func (dc *domainContext) aObjectNamedExistsWithPropertySetTo(typeName, name, pro
 func (dc *domainContext) aObjectNamedExistsWithBody(typeName, name, body string) {
 	dc.aObjectNamedExists(typeName, name)
 	dc.currentObject.Body = body
-	if err := dc.vault.saveObjectFile(dc.currentObject); err != nil {
+	if err := dc.vault.SaveObject(dc.currentObject); err != nil {
 		panic(fmt.Sprintf("saveObjectFile failed: %v", err))
 	}
 }

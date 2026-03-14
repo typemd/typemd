@@ -2,7 +2,6 @@ package core
 
 import (
 	"bytes"
-	"encoding/json"
 	"fmt"
 	"strings"
 	"time"
@@ -170,191 +169,33 @@ func parseFrontmatter(data []byte) (map[string]any, string, error) {
 	return props, body, nil
 }
 
-// NewObject creates a new object with the given type and filename.
-// If templateName is non-empty, the specified template is loaded and applied.
+// NewObject creates a new object. Delegates to ObjectService.
 func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, error) {
-	if v.index == nil {
+	if v.Objects == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-
-	schema, err := v.LoadType(typeName)
-	if err != nil {
-		return nil, fmt.Errorf("load type: %w", err)
-	}
-
-	// Load template if specified
-	var tmpl *Template
-	if templateName != "" {
-		tmpl, err = v.LoadTemplate(typeName, templateName)
-		if err != nil {
-			return nil, fmt.Errorf("load template: %w", err)
-		}
-	}
-
-	now := time.Now()
-
-	// Handle empty name: check template, then name template, then error
-	if filename == "" {
-		if tmpl != nil {
-			if nameVal, ok := tmpl.Properties[NameProperty]; ok {
-				if s, ok := nameVal.(string); ok && s != "" {
-					filename = s
-				}
-			}
-		}
-		if filename == "" {
-			if schema.NameTemplate != "" {
-				filename = EvaluateNameTemplate(schema.NameTemplate, now)
-			} else {
-				return nil, fmt.Errorf("name is required (type %q has no name template)", typeName)
-			}
-		}
-	}
-
-	// Enforce name uniqueness for types with unique constraint
-	if schema.Unique {
-		if err := v.checkNameUnique(typeName, filename); err != nil {
-			return nil, err
-		}
-	}
-
-	// Generate ObjectID with ULID suffix
-	slug := filename // preserve original slug for the name property
-	objID, err := NewObjectID(typeName, slug)
-	if err != nil {
-		return nil, err
-	}
-	filename = objID.Filename
-	id := objID.String()
-
-	// Create type directory
-	if err := v.repo.EnsureDir(typeName); err != nil {
-		return nil, fmt.Errorf("create directory: %w", err)
-	}
-
-	// Generate initial properties from schema defaults
-	props := make(map[string]any)
-	props[NameProperty] = slug
-	nowStr := now.Format(time.RFC3339)
-	props[CreatedAtProperty] = nowStr
-	props[UpdatedAtProperty] = nowStr
-	for _, p := range schema.Properties {
-		if p.Default != nil {
-			props[p.Name] = p.Default
-		} else {
-			props[p.Name] = nil
-		}
-	}
-
-	// Build the new object entity
-	newObj := &Object{
-		ID:         id,
-		Type:       typeName,
-		Filename:   filename,
-		Properties: props,
-	}
-
-	// Apply template (overrides schema defaults)
-	if tmpl != nil {
-		newObj.ApplyTemplate(tmpl, schema)
-	}
-	if err := v.repo.Create(newObj, OrderedPropKeys(props, schema)); err != nil {
-		return nil, fmt.Errorf("create object file: %w", err)
-	}
-
-	// Insert into index
-	propsJSON, err := json.Marshal(props)
-	if err != nil {
-		return nil, fmt.Errorf("marshal properties: %w", err)
-	}
-	if err := v.index.Upsert(id, typeName, filename, string(propsJSON), newObj.Body); err != nil {
-		return nil, fmt.Errorf("insert object: %w", err)
-	}
-
-	return newObj, nil
+	return v.Objects.Create(typeName, filename, templateName)
 }
 
-// saveObjectFile writes object properties to both .md file and index.
-func (v *Vault) saveObjectFile(obj *Object) error {
-	obj.MarkUpdated()
-	schema, _ := v.LoadType(obj.Type)
-	keyOrder := OrderedPropKeys(obj.Properties, schema)
-
-	if err := v.repo.Save(obj, keyOrder); err != nil {
-		return fmt.Errorf("save object file: %w", err)
-	}
-
-	propsJSON, err := json.Marshal(obj.Properties)
-	if err != nil {
-		return fmt.Errorf("marshal properties: %w", err)
-	}
-	if err := v.index.Upsert(obj.ID, obj.Type, obj.Filename, string(propsJSON), obj.Body); err != nil {
-		return fmt.Errorf("update index: %w", err)
-	}
-
-	return nil
-}
-
-// SetProperty updates a single property on an object.
+// SetProperty updates a single property. Delegates to ObjectService.
 func (v *Vault) SetProperty(id, key string, value any) error {
-	if v.index == nil {
+	if v.Objects == nil {
 		return fmt.Errorf("vault not opened")
 	}
-
-	obj, err := v.GetObject(id)
-	if err != nil {
-		return fmt.Errorf("get object: %w", err)
-	}
-
-	schema, err := v.LoadType(obj.Type)
-	if err != nil {
-		return fmt.Errorf("load type: %w", err)
-	}
-
-	if _, err := obj.SetProperty(key, value, schema); err != nil {
-		return err
-	}
-
-	return v.saveObjectFile(obj)
+	return v.Objects.SetProperty(id, key, value)
 }
 
-// GetObject reads an object from its Markdown file.
+// GetObject reads an object by ID. Delegates to QueryService.
 func (v *Vault) GetObject(id string) (*Object, error) {
-	return v.repo.Get(id)
+	return v.Queries.Get(id)
 }
 
-// ResolveID resolves a (possibly abbreviated) object ID to the full ID.
-// The input must be in "type/name" format. Exact matches take priority.
-// If no exact match, a filesystem glob is used to find prefix matches.
+// ResolveID resolves an abbreviated object ID. Delegates to QueryService.
 func (v *Vault) ResolveID(prefix string) (string, error) {
-	parts := strings.SplitN(prefix, "/", 2)
-	if len(parts) != 2 || parts[0] == "" || parts[1] == "" {
-		return "", fmt.Errorf("invalid object ID format: %q", prefix)
-	}
-	typeName, namePrefix := parts[0], parts[1]
-
-	// 1. Exact match — try to get the object directly
-	if _, err := v.repo.ModTime(prefix); err == nil {
-		return prefix, nil
-	}
-
-	// 2. Glob for prefix matches
-	matches, err := v.repo.GlobIDs(typeName, namePrefix)
-	if err != nil {
-		return "", fmt.Errorf("glob error: %w", err)
-	}
-
-	switch len(matches) {
-	case 0:
-		return "", fmt.Errorf("no object found matching %q", prefix)
-	case 1:
-		return matches[0], nil
-	default:
-		return "", &AmbiguousMatchError{Prefix: prefix, Matches: matches}
-	}
+	return v.Queries.Resolve(prefix)
 }
 
-// ResolveObject resolves a prefix to a full ID and returns the object.
+// ResolveObject resolves a prefix and returns the object.
 func (v *Vault) ResolveObject(prefix string) (*Object, error) {
 	id, err := v.ResolveID(prefix)
 	if err != nil {
@@ -363,11 +204,11 @@ func (v *Vault) ResolveObject(prefix string) (*Object, error) {
 	return v.GetObject(id)
 }
 
-// SaveObject persists an object's properties and body to the .md file and updates SQLite.
+// SaveObject persists an object. Delegates to ObjectService.
 func (v *Vault) SaveObject(obj *Object) error {
-	if v.index == nil {
+	if v.Objects == nil {
 		return fmt.Errorf("vault not opened")
 	}
-	return v.saveObjectFile(obj)
+	return v.Objects.Save(obj)
 }
 

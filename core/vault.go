@@ -13,12 +13,16 @@ import (
 const vaultDir = ".typemd"
 
 // Vault represents a typemd vault.
+// It serves as a facade and DI container, delegating to focused services.
 type Vault struct {
 	Root              string
 	db                *sql.DB
 	index             ObjectIndex
 	repo              ObjectRepository
 	projector         *Projector
+	Objects           *ObjectService
+	Queries           *QueryService
+	Events            *EventDispatcher
 	sharedProperties  []Property
 	sharedPropsMap    map[string]Property
 	sharedPropsLoaded bool
@@ -98,8 +102,11 @@ func (v *Vault) Open() error {
 	v.db = db
 	v.index = NewSQLiteObjectIndex(db)
 	v.repo = NewLocalObjectRepository(v.Root)
+	v.Events = NewEventDispatcher()
+	v.Objects = NewObjectService(v.repo, v.index, v.Events)
+	v.Queries = NewQueryService(v.repo, v.index)
 	v.projector = NewProjector(v.repo, v.index, func(slug string) (*Object, error) {
-		return v.NewObject(TagTypeName, slug, "")
+		return v.Objects.Create(TagTypeName, slug, "")
 	})
 
 	if err := v.index.EnsureSchema(); err != nil {
@@ -131,6 +138,9 @@ func (v *Vault) closeInternal() {
 	v.index = nil
 	v.repo = nil
 	v.projector = nil
+	v.Objects = nil
+	v.Queries = nil
+	v.Events = nil
 }
 
 // Close closes the SQLite database connection.
@@ -143,6 +153,9 @@ func (v *Vault) Close() error {
 	v.index = nil
 	v.repo = nil
 	v.projector = nil
+	v.Objects = nil
+	v.Queries = nil
+	v.Events = nil
 	return err
 }
 

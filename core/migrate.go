@@ -109,7 +109,7 @@ func (v *Vault) MigrateObjects(typeName string, opts MigrateOptions) (*MigrateRe
 		}
 
 		if !opts.DryRun {
-			if err := v.saveObjectFile(obj); err != nil {
+			if err := v.Objects.Save(obj); err != nil {
 				return nil, fmt.Errorf("write object %s: %w", obj.ID, err)
 			}
 		}

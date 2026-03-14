@@ -49,18 +49,18 @@ func ParseWikiLinks(body string) []WikiLink {
 
 // ListWikiLinks returns all wiki-links from the given object.
 func (v *Vault) ListWikiLinks(objectID string) ([]StoredWikiLink, error) {
-	if v.index == nil {
+	if v.Queries == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-	return v.index.ListWikiLinks(objectID)
+	return v.Queries.ListWikiLinks(objectID)
 }
 
 // ListBacklinks returns all wiki-links pointing to the given object.
 func (v *Vault) ListBacklinks(objectID string) ([]StoredWikiLink, error) {
-	if v.index == nil {
+	if v.Queries == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-	return v.index.FindBacklinks(objectID)
+	return v.Queries.ListBacklinks(objectID)
 }
 
 // RenderWikiLinks replaces wiki-link syntax in body with plain display text.

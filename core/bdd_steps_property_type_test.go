@@ -83,7 +83,7 @@ properties:
 func (dc *domainContext) aObjectNamedExistsWithRawProperty(typeName, name, prop, value string) {
 	dc.aObjectNamedExists(typeName, name)
 	dc.currentObject.Properties[prop] = value
-	if err := dc.vault.saveObjectFile(dc.currentObject); err != nil {
+	if err := dc.vault.SaveObject(dc.currentObject); err != nil {
 		panic(fmt.Sprintf("saveObjectFile failed: %v", err))
 	}
 	// Re-sync to update DB

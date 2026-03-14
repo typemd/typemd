@@ -17,10 +17,10 @@ type Relation struct {
 
 // ListRelations returns all relations where objectID is either the source or target.
 func (v *Vault) ListRelations(objectID string) ([]Relation, error) {
-	if v.index == nil {
+	if v.Queries == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-	return v.index.FindRelations(objectID)
+	return v.Queries.ListRelations(objectID)
 }
 
 // getRelationSlice extracts the existing []any from a property value.
@@ -91,124 +91,18 @@ func findSystemRelationProperty(name string) *Property {
 	return nil
 }
 
-// loadObjectAndSchema loads an object and its type schema.
-func (v *Vault) loadObjectAndSchema(id string) (*Object, *TypeSchema, error) {
-	obj, err := v.GetObject(id)
-	if err != nil {
-		return nil, nil, fmt.Errorf("get object: %w", err)
-	}
-	schema, err := v.LoadType(obj.Type)
-	if err != nil {
-		return nil, nil, fmt.Errorf("load type: %w", err)
-	}
-	return obj, schema, nil
-}
-
-// LinkObjects creates a relation between two objects.
+// LinkObjects creates a relation between two objects. Delegates to ObjectService.
 func (v *Vault) LinkObjects(fromID, relName, toID string) error {
-	if v.index == nil {
+	if v.Objects == nil {
 		return fmt.Errorf("vault not opened")
 	}
-
-	fromObj, fromSchema, err := v.loadObjectAndSchema(fromID)
-	if err != nil {
-		return fmt.Errorf("get source: %w", err)
-	}
-
-	relProp := fromSchema.FindRelation(relName)
-	if relProp == nil {
-		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
-	}
-
-	toObj, err := v.GetObject(toID)
-	if err != nil {
-		return fmt.Errorf("get target object: %w", err)
-	}
-	if relProp.Target != "" && toObj.Type != relProp.Target {
-		return fmt.Errorf("target type mismatch: expected %q, got %q", relProp.Target, toObj.Type)
-	}
-
-	if _, err := fromObj.LinkTo(relName, toID, relProp); err != nil {
-		return fmt.Errorf("relation already exists: %s -[%s]-> %s", fromID, relName, toID)
-	}
-	if err := v.saveObjectFile(fromObj); err != nil {
-		return fmt.Errorf("write source object: %w", err)
-	}
-	if err := v.index.InsertRelation(relName, fromID, toID); err != nil {
-		return fmt.Errorf("insert relation: %w", err)
-	}
-
-	// Handle bidirectional
-	if relProp.Bidirectional && relProp.Inverse != "" {
-		toSchema, err := v.LoadType(toObj.Type)
-		if err != nil {
-			return fmt.Errorf("load target type: %w", err)
-		}
-
-		inverseProp := toSchema.FindRelation(relProp.Inverse)
-		if inverseProp == nil {
-			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
-		}
-
-		if _, err := toObj.LinkTo(relProp.Inverse, fromID, inverseProp); err != nil && !errors.Is(err, errDuplicateRelation) {
-			return fmt.Errorf("set inverse relation: %w", err)
-		}
-		if err := v.saveObjectFile(toObj); err != nil {
-			return fmt.Errorf("write target object: %w", err)
-		}
-		if err := v.index.InsertRelation(relProp.Inverse, toID, fromID); err != nil {
-			return fmt.Errorf("insert inverse relation: %w", err)
-		}
-	}
-
-	return nil
+	return v.Objects.Link(fromID, relName, toID)
 }
 
-// UnlinkObjects removes a relation between two objects.
-// If both is true and the relation is bidirectional, also removes the inverse.
+// UnlinkObjects removes a relation between two objects. Delegates to ObjectService.
 func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
-	if v.index == nil {
+	if v.Objects == nil {
 		return fmt.Errorf("vault not opened")
 	}
-
-	fromObj, fromSchema, err := v.loadObjectAndSchema(fromID)
-	if err != nil {
-		return fmt.Errorf("get source: %w", err)
-	}
-
-	relProp := fromSchema.FindRelation(relName)
-	if relProp == nil {
-		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
-	}
-
-	_ = fromObj.Unlink(relName, toID, relProp)
-	if err := v.saveObjectFile(fromObj); err != nil {
-		return fmt.Errorf("write source object: %w", err)
-	}
-	if err := v.index.DeleteRelation(relName, fromID, toID); err != nil {
-		return fmt.Errorf("delete relation: %w", err)
-	}
-
-	// Handle --both with bidirectional
-	if both && relProp.Bidirectional && relProp.Inverse != "" {
-		toObj, toSchema, err := v.loadObjectAndSchema(toID)
-		if err != nil {
-			return fmt.Errorf("get target: %w", err)
-		}
-
-		inverseProp := toSchema.FindRelation(relProp.Inverse)
-		if inverseProp == nil {
-			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
-		}
-
-		_ = toObj.Unlink(relProp.Inverse, fromID, inverseProp)
-		if err := v.saveObjectFile(toObj); err != nil {
-			return fmt.Errorf("write target object: %w", err)
-		}
-		if err := v.index.DeleteRelation(relProp.Inverse, toID, fromID); err != nil {
-			return fmt.Errorf("delete inverse relation: %w", err)
-		}
-	}
-
-	return nil
+	return v.Objects.Unlink(fromID, relName, toID, both)
 }

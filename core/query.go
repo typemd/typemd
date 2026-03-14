@@ -80,37 +80,23 @@ func objectResultsToObjects(results []*ObjectResult) []*Object {
 	return objects
 }
 
-// QueryObjects queries objects using key=value filter syntax.
-// Multiple conditions are combined with AND.
-// "type" is a special key that filters on the objects.type column.
-// Other keys filter on JSON properties using json_extract.
-// An empty filter returns all objects.
+// QueryObjects queries objects. Delegates to QueryService.
 func (v *Vault) QueryObjects(filter string) ([]*Object, error) {
-	if v.index == nil {
+	if v.Queries == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-	results, err := v.index.Query(filter)
-	if err != nil {
-		return nil, err
-	}
-	return objectResultsToObjects(results), nil
+	return v.Queries.Query(filter)
 }
 
-// SearchObjects performs full-text search using FTS5.
-// Searches across filename, properties, and body.
-// Returns nil, nil for empty keyword.
+// SearchObjects performs full-text search. Delegates to QueryService.
 func (v *Vault) SearchObjects(keyword string) ([]*Object, error) {
-	if v.index == nil {
+	if v.Queries == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-	results, err := v.index.Search(keyword)
-	if err != nil {
-		return nil, err
-	}
-	return objectResultsToObjects(results), nil
+	return v.Queries.Search(keyword)
 }
 
-// RebuildIndex rebuilds the FTS5 index from the objects table.
+// RebuildIndex rebuilds the FTS5 index.
 func (v *Vault) RebuildIndex() error {
 	if v.index == nil {
 		return fmt.Errorf("vault not opened")

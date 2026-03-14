@@ -234,7 +234,7 @@ func TestVault_SearchObjects_ByBody(t *testing.T) {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 	obj.Body = "This book covers goroutines and channels."
-	if err := v.saveObjectFile(obj); err != nil {
+	if err := v.SaveObject(obj); err != nil {
 		t.Fatalf("saveObjectFile() error = %v", err)
 	}
 
@@ -330,7 +330,7 @@ func TestVault_SearchObjects_UpdateSync(t *testing.T) {
 
 	// UPDATE should sync FTS via trigger
 	obj.Body = "This chapter covers blockchain fundamentals."
-	if err := v.saveObjectFile(obj); err != nil {
+	if err := v.SaveObject(obj); err != nil {
 		t.Fatalf("saveObjectFile() error = %v", err)
 	}
 
@@ -353,7 +353,7 @@ func TestVault_RebuildIndex(t *testing.T) {
 		t.Fatalf("NewObject() error = %v", err)
 	}
 	obj.Body = "concurrency patterns in Go"
-	if err := v.saveObjectFile(obj); err != nil {
+	if err := v.SaveObject(obj); err != nil {
 		t.Fatalf("saveObjectFile() error = %v", err)
 	}
 
