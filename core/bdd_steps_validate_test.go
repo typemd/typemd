@@ -62,8 +62,8 @@ func (dc *domainContext) twoLinkedNotesExist() {
 	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	noteA, _ := dc.vault.NewObject("note", "alpha")
-	noteB, _ := dc.vault.NewObject("note", "beta")
+	noteA, _ := dc.vault.NewObject("note", "alpha", "")
+	noteB, _ := dc.vault.NewObject("note", "beta", "")
 	dc.objects["alpha"] = noteA
 	dc.objects["beta"] = noteB
 
@@ -76,7 +76,7 @@ func (dc *domainContext) aNoteWithABrokenWikiLinkExists() {
 	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	note, _ := dc.vault.NewObject("note", "alpha")
+	note, _ := dc.vault.NewObject("note", "alpha", "")
 	dc.objects["alpha"] = note
 
 	body := "---\ntitle: Alpha\n---\n\nSee [[note/nonexistent-01jjjjjjjjjjjjjjjjjjjjjjjj]].\n"

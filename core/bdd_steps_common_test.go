@@ -52,6 +52,10 @@ type domainContext struct {
 
 	// name uniqueness validation results
 	nameUniquenessErrors []error
+
+	// template results
+	templateNames  []string
+	loadedTemplate *Template
 }
 
 func newDomainContext() *domainContext {

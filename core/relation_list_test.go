@@ -4,7 +4,7 @@ import "testing"
 
 func TestVault_ListRelations_Empty(t *testing.T) {
 	v := setupRelationTestVault(t)
-	book, _ := v.NewObject("book", "test")
+	book, _ := v.NewObject("book", "test", "")
 
 	rels, err := v.ListRelations(book.ID)
 	if err != nil {
@@ -17,8 +17,8 @@ func TestVault_ListRelations_Empty(t *testing.T) {
 
 func TestVault_ListRelations_Forward(t *testing.T) {
 	v := setupRelationTestVault(t)
-	book, _ := v.NewObject("book", "test")
-	alan, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test", "")
+	alan, _ := v.NewObject("person", "alan", "")
 	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// Bidirectional link creates 2 DB rows: forward (author) + inverse (books)
@@ -45,8 +45,8 @@ func TestVault_ListRelations_Forward(t *testing.T) {
 
 func TestVault_ListRelations_BothDirections(t *testing.T) {
 	v := setupRelationTestVault(t)
-	book, _ := v.NewObject("book", "test")
-	alan, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test", "")
+	alan, _ := v.NewObject("person", "alan", "")
 	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// person/alan should have both: inverse (books, from_id=person/alan) + forward (author, to_id=person/alan)

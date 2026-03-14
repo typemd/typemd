@@ -68,6 +68,23 @@ tags:
 
 During sync, TypeMD resolves name-based references to their full IDs and auto-creates missing tags.
 
+## Object templates
+
+Each Type can have one or more object templates stored at `templates/<type>/<name>.md`. Templates are regular Markdown files with optional frontmatter and body content that provide defaults when creating new Objects.
+
+```bash
+# If book has one template, it auto-applies
+tmd object create book clean-code
+
+# Specify a template explicitly
+tmd object create book clean-code -t review
+
+# If multiple templates exist, you'll be prompted to choose
+tmd object create book clean-code
+```
+
+Template frontmatter properties override the schema's default values. The template body becomes the initial body of the new Object. Auto-managed system properties (`created_at`, `updated_at`) in templates are ignored — they always reflect the actual creation time.
+
 ## Types vs. tags
 
 Tags categorize Objects across Types — a `book` and a `note` can share the same tag. Types define structure — a `book` always has title, status, and rating. Use Types for structural consistency; use tags for cross-cutting categorization.

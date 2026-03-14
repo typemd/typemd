@@ -53,6 +53,50 @@ func TestSystemPropertyNames_ReturnsNewSlice(t *testing.T) {
 	}
 }
 
+// ── Immutability tests ──────────────────────────────────────────────────────
+
+func TestIsImmutableSystemProperty_CreatedAt(t *testing.T) {
+	if !IsImmutableSystemProperty("created_at") {
+		t.Error("created_at should be immutable")
+	}
+}
+
+func TestIsImmutableSystemProperty_UpdatedAt(t *testing.T) {
+	if !IsImmutableSystemProperty("updated_at") {
+		t.Error("updated_at should be immutable")
+	}
+}
+
+func TestIsImmutableSystemProperty_Name(t *testing.T) {
+	if IsImmutableSystemProperty("name") {
+		t.Error("name should not be immutable")
+	}
+}
+
+func TestIsImmutableSystemProperty_Description(t *testing.T) {
+	if IsImmutableSystemProperty("description") {
+		t.Error("description should not be immutable")
+	}
+}
+
+func TestIsImmutableSystemProperty_Tags(t *testing.T) {
+	if IsImmutableSystemProperty("tags") {
+		t.Error("tags should not be immutable")
+	}
+}
+
+func TestIsImmutableSystemProperty_NonSystemProperty(t *testing.T) {
+	if IsImmutableSystemProperty("title") {
+		t.Error("non-system property should not be immutable")
+	}
+}
+
+func TestIsImmutableSystemProperty_EmptyString(t *testing.T) {
+	if IsImmutableSystemProperty("") {
+		t.Error("empty string should not be immutable")
+	}
+}
+
 // ── Tags system property tests (2.5) ────────────────────────────────────────
 
 func TestIsSystemProperty_Tags(t *testing.T) {
@@ -180,7 +224,7 @@ func TestValidateSharedProperties_RejectsAllSystemProperties(t *testing.T) {
 func TestNewObject_TimestampFormat(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "test")
+	obj, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -210,7 +254,7 @@ func TestNewObject_TimestampFormat(t *testing.T) {
 func TestNewObject_CreatedAtAndUpdatedAtMatch(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "test")
+	obj, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -227,7 +271,7 @@ func TestNewObject_CreatedAtAndUpdatedAtMatch(t *testing.T) {
 func TestSaveObject_UpdatesUpdatedAt(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "test")
+	obj, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -267,7 +311,7 @@ func TestSaveObject_UpdatesUpdatedAt(t *testing.T) {
 func TestSetProperty_UpdatesUpdatedAt(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "test")
+	obj, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -400,7 +444,7 @@ func TestOrderedPropKeys_NoSchema(t *testing.T) {
 func TestNewObject_DoesNotIncludeDescription(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "test")
+	obj, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}

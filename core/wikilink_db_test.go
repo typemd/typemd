@@ -18,8 +18,8 @@ func TestVault_SyncIndex_WikiLinks(t *testing.T) {
 		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
 
 	// Create objects
-	book, _ := v.NewObject("book", "clean-code")
-	person, _ := v.NewObject("person", "robert-martin")
+	book, _ := v.NewObject("book", "clean-code", "")
+	person, _ := v.NewObject("person", "robert-martin", "")
 
 	// Edit book's body to include a wiki-link using full object ID
 	bookPath := v.ObjectPath(book.Type, book.Filename)
@@ -65,7 +65,7 @@ func TestVault_SyncIndex_WikiLinks_BrokenLink(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"),
 		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	book, _ := v.NewObject("book", "clean-code")
+	book, _ := v.NewObject("book", "clean-code", "")
 
 	// Link to a non-existent object (full ID that doesn't exist)
 	bookPath := v.ObjectPath(book.Type, book.Filename)
@@ -98,9 +98,9 @@ func TestVault_SyncIndex_WikiLinks_Updated(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"),
 		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
 
-	book, _ := v.NewObject("book", "clean-code")
-	personA, _ := v.NewObject("person", "alice")
-	personB, _ := v.NewObject("person", "bob")
+	book, _ := v.NewObject("book", "clean-code", "")
+	personA, _ := v.NewObject("person", "alice", "")
+	personB, _ := v.NewObject("person", "bob", "")
 
 	// First sync: link to alice
 	bookPath := v.ObjectPath(book.Type, book.Filename)
@@ -140,8 +140,8 @@ func TestVault_SyncIndex_WikiLinks_DisplayText(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"),
 		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
 
-	book, _ := v.NewObject("book", "clean-code")
-	person, _ := v.NewObject("person", "robert-martin")
+	book, _ := v.NewObject("book", "clean-code", "")
+	person, _ := v.NewObject("person", "robert-martin", "")
 
 	bookPath := v.ObjectPath(book.Type, book.Filename)
 	body := fmt.Sprintf("---\ntitle: Clean Code\n---\n\nBy [[%s|Uncle Bob]].\n", person.ID)
@@ -169,8 +169,8 @@ func TestVault_SyncIndex_WikiLinks_CleanedOnObjectDeletion(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"),
 		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
 
-	book, _ := v.NewObject("book", "clean-code")
-	person, _ := v.NewObject("person", "robert-martin")
+	book, _ := v.NewObject("book", "clean-code", "")
+	person, _ := v.NewObject("person", "robert-martin", "")
 
 	bookPath := v.ObjectPath(book.Type, book.Filename)
 	body := fmt.Sprintf("---\ntitle: Clean Code\n---\n\nBy [[%s]].\n", person.ID)
@@ -226,9 +226,9 @@ func TestVault_ListBacklinks_MultipleSourcesSorted(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	target, _ := v.NewObject("note", "target")
-	noteA, _ := v.NewObject("note", "alpha")
-	noteB, _ := v.NewObject("note", "beta")
+	target, _ := v.NewObject("note", "target", "")
+	noteA, _ := v.NewObject("note", "alpha", "")
+	noteB, _ := v.NewObject("note", "beta", "")
 
 	// Both notes link to target using full ID
 	os.WriteFile(v.ObjectPath(noteA.Type, noteA.Filename),

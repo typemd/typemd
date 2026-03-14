@@ -41,7 +41,7 @@ func TestVault_SyncIndex_UpdatedFile(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
 	// Create via API (body is empty in DB)
-	obj, _ := v.NewObject("book", "test-book")
+	obj, _ := v.NewObject("book", "test-book", "")
 
 	// Manually edit the file to add body
 	objPath := v.ObjectPath(obj.Type, obj.Filename)
@@ -69,7 +69,7 @@ func TestVault_SyncIndex_DeletedFile(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
 	// Create via API
-	obj, _ := v.NewObject("book", "test-book")
+	obj, _ := v.NewObject("book", "test-book", "")
 
 	// Delete the file
 	os.Remove(v.ObjectPath(obj.Type, obj.Filename))
@@ -106,8 +106,8 @@ func TestVault_SyncIndex_OrphanedRelations(t *testing.T) {
 	v := setupRelationTestVault(t)
 
 	// Create two objects and link them
-	book, _ := v.NewObject("book", "golang-in-action")
-	person, _ := v.NewObject("person", "alan-donovan")
+	book, _ := v.NewObject("book", "golang-in-action", "")
+	person, _ := v.NewObject("person", "alan-donovan", "")
 	v.LinkObjects(book.ID, "author", person.ID)
 
 	// Verify relations exist
@@ -151,8 +151,8 @@ func TestVault_SyncIndex_OrphanedRelations(t *testing.T) {
 func TestVault_SyncIndex_NoOrphansWhenAllExist(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	book, _ := v.NewObject("book", "test-book")
-	alan, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test-book", "")
+	alan, _ := v.NewObject("person", "alan", "")
 	v.LinkObjects(book.ID, "author", alan.ID)
 
 	result, err := v.SyncIndex()
@@ -175,8 +175,8 @@ func TestVault_SyncIndex_NoOrphansWhenAllExist(t *testing.T) {
 func TestVault_SyncIndex_OrphanFromSourceDeletion(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	book, _ := v.NewObject("book", "test-book")
-	alan, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test-book", "")
+	alan, _ := v.NewObject("person", "alan", "")
 	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// Delete the source (book) instead of the target

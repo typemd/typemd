@@ -88,9 +88,9 @@ func TestParseFilter_ValueWithEquals(t *testing.T) {
 func TestVault_QueryObjects_ByType(t *testing.T) {
 	v := setupTestVault(t)
 
-	v.NewObject("book", "book1")   //nolint:errcheck
-	v.NewObject("book", "book2")   //nolint:errcheck
-	v.NewObject("person", "alice") //nolint:errcheck
+	v.NewObject("book", "book1", "")   //nolint:errcheck
+	v.NewObject("book", "book2", "")   //nolint:errcheck
+	v.NewObject("person", "alice", "") //nolint:errcheck
 
 	results, err := v.QueryObjects("type=book")
 	if err != nil {
@@ -109,10 +109,10 @@ func TestVault_QueryObjects_ByType(t *testing.T) {
 func TestVault_QueryObjects_ByProperty(t *testing.T) {
 	v := setupTestVault(t)
 
-	b1, _ := v.NewObject("book", "book1")
+	b1, _ := v.NewObject("book", "book1", "")
 	v.SetProperty(b1.ID, "status", "reading") //nolint:errcheck
 
-	b2, _ := v.NewObject("book", "book2")
+	b2, _ := v.NewObject("book", "book2", "")
 	v.SetProperty(b2.ID, "status", "done") //nolint:errcheck
 
 	results, err := v.QueryObjects("type=book status=reading")
@@ -130,7 +130,7 @@ func TestVault_QueryObjects_ByProperty(t *testing.T) {
 func TestVault_QueryObjects_NoResults(t *testing.T) {
 	v := setupTestVault(t)
 
-	v.NewObject("book", "book1") //nolint:errcheck
+	v.NewObject("book", "book1", "") //nolint:errcheck
 
 	results, err := v.QueryObjects("type=person")
 	if err != nil {
@@ -144,8 +144,8 @@ func TestVault_QueryObjects_NoResults(t *testing.T) {
 func TestVault_QueryObjects_EmptyFilter(t *testing.T) {
 	v := setupTestVault(t)
 
-	v.NewObject("book", "book1")   //nolint:errcheck
-	v.NewObject("person", "alice") //nolint:errcheck
+	v.NewObject("book", "book1", "")   //nolint:errcheck
+	v.NewObject("person", "alice", "") //nolint:errcheck
 
 	results, err := v.QueryObjects("")
 	if err != nil {
@@ -181,15 +181,15 @@ func TestVault_QueryObjects_DBNotOpen(t *testing.T) {
 func TestVault_QueryObjects_MultipleConditions(t *testing.T) {
 	v := setupTestVault(t)
 
-	b1, _ := v.NewObject("book", "b1")
+	b1, _ := v.NewObject("book", "b1", "")
 	v.SetProperty(b1.ID, "status", "reading") //nolint:errcheck
 	v.SetProperty(b1.ID, "title", "Go")       //nolint:errcheck
 
-	b2, _ := v.NewObject("book", "b2")
+	b2, _ := v.NewObject("book", "b2", "")
 	v.SetProperty(b2.ID, "status", "reading") //nolint:errcheck
 	v.SetProperty(b2.ID, "title", "Rust")     //nolint:errcheck
 
-	b3, _ := v.NewObject("book", "b3")
+	b3, _ := v.NewObject("book", "b3", "")
 	v.SetProperty(b3.ID, "status", "done") //nolint:errcheck
 	v.SetProperty(b3.ID, "title", "Go")    //nolint:errcheck
 
@@ -211,8 +211,8 @@ func TestVault_QueryObjects_MultipleConditions(t *testing.T) {
 func TestVault_SearchObjects_ByFilename(t *testing.T) {
 	v := setupTestVault(t)
 
-	concurrency, _ := v.NewObject("book", "concurrency-in-go")
-	v.NewObject("book", "clean-code") //nolint:errcheck
+	concurrency, _ := v.NewObject("book", "concurrency-in-go", "")
+	v.NewObject("book", "clean-code", "") //nolint:errcheck
 
 	results, err := v.SearchObjects("concurrency")
 	if err != nil {
@@ -229,7 +229,7 @@ func TestVault_SearchObjects_ByFilename(t *testing.T) {
 func TestVault_SearchObjects_ByBody(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "mybook")
+	obj, err := v.NewObject("book", "mybook", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -238,7 +238,7 @@ func TestVault_SearchObjects_ByBody(t *testing.T) {
 		t.Fatalf("saveObjectFile() error = %v", err)
 	}
 
-	v.NewObject("book", "other") //nolint:errcheck
+	v.NewObject("book", "other", "") //nolint:errcheck
 
 	results, err := v.SearchObjects("goroutines")
 	if err != nil {
@@ -255,10 +255,10 @@ func TestVault_SearchObjects_ByBody(t *testing.T) {
 func TestVault_SearchObjects_ByProperty(t *testing.T) {
 	v := setupTestVault(t)
 
-	b1, _ := v.NewObject("book", "book1")
+	b1, _ := v.NewObject("book", "book1", "")
 	v.SetProperty(b1.ID, "title", "Mastering Go") //nolint:errcheck
 
-	b2, _ := v.NewObject("book", "book2")
+	b2, _ := v.NewObject("book", "book2", "")
 	v.SetProperty(b2.ID, "title", "Python Basics") //nolint:errcheck
 
 	results, err := v.SearchObjects("Mastering")
@@ -276,7 +276,7 @@ func TestVault_SearchObjects_ByProperty(t *testing.T) {
 func TestVault_SearchObjects_NoResults(t *testing.T) {
 	v := setupTestVault(t)
 
-	v.NewObject("book", "testbook") //nolint:errcheck
+	v.NewObject("book", "testbook", "") //nolint:errcheck
 
 	results, err := v.SearchObjects("xyzzy")
 	if err != nil {
@@ -290,7 +290,7 @@ func TestVault_SearchObjects_NoResults(t *testing.T) {
 func TestVault_SearchObjects_EmptyKeyword(t *testing.T) {
 	v := setupTestVault(t)
 
-	v.NewObject("book", "book1") //nolint:errcheck
+	v.NewObject("book", "book1", "") //nolint:errcheck
 
 	results, err := v.SearchObjects("")
 	if err != nil {
@@ -317,7 +317,7 @@ func TestVault_SearchObjects_DBNotOpen(t *testing.T) {
 func TestVault_SearchObjects_UpdateSync(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "evolving")
+	obj, err := v.NewObject("book", "evolving", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -348,7 +348,7 @@ func TestVault_SearchObjects_UpdateSync(t *testing.T) {
 func TestVault_RebuildIndex(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "golang-in-action")
+	obj, err := v.NewObject("book", "golang-in-action", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}

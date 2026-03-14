@@ -46,6 +46,21 @@ func (v *Vault) DBPath() string {
 	return filepath.Join(v.Dir(), "index.db")
 }
 
+// TemplatesDir returns the templates directory path.
+func (v *Vault) TemplatesDir() string {
+	return filepath.Join(v.Root, "templates")
+}
+
+// TypeTemplatesDir returns the directory path for a specific type's templates.
+func (v *Vault) TypeTemplatesDir(typeName string) string {
+	return filepath.Join(v.TemplatesDir(), typeName)
+}
+
+// TemplatePath returns the file path for a specific template.
+func (v *Vault) TemplatePath(typeName, templateName string) string {
+	return filepath.Join(v.TypeTemplatesDir(typeName), templateName+".md")
+}
+
 // ObjectsDir returns the objects directory path.
 func (v *Vault) ObjectsDir() string {
 	return filepath.Join(v.Root, "objects")

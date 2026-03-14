@@ -53,7 +53,7 @@ func TestValidateAllObjects_Valid(t *testing.T) {
 	schema := []byte("name: book\nproperties:\n  - name: title\n    type: string\n")
 	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), schema, 0644)
 
-	obj, err := v.NewObject("book", "test-book")
+	obj, err := v.NewObject("book", "test-book", "")
 	if err != nil {
 		t.Fatalf("NewObject error = %v", err)
 	}
@@ -70,7 +70,7 @@ func TestValidateAllObjects_Invalid(t *testing.T) {
 	schema := []byte("name: book\nproperties:\n  - name: rating\n    type: number\n")
 	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), schema, 0644)
 
-	obj, err := v.NewObject("book", "bad-book")
+	obj, err := v.NewObject("book", "bad-book", "")
 	if err != nil {
 		t.Fatalf("NewObject error = %v", err)
 	}
@@ -98,8 +98,8 @@ func TestValidateRelations_Valid(t *testing.T) {
 	personSchema := []byte("name: person\nproperties:\n  - name: name\n    type: string\n")
 	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"), personSchema, 0644)
 
-	book, _ := v.NewObject("book", "test-book")
-	alice, _ := v.NewObject("person", "alice")
+	book, _ := v.NewObject("book", "test-book", "")
+	alice, _ := v.NewObject("person", "alice", "")
 	v.LinkObjects(book.ID, "author", alice.ID)
 
 	errs := ValidateRelations(v)
@@ -159,8 +159,8 @@ func TestValidateWikiLinks_NoBrokenLinks(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	noteA, _ := v.NewObject("note", "alpha")
-	noteB, _ := v.NewObject("note", "beta")
+	noteA, _ := v.NewObject("note", "alpha", "")
+	noteB, _ := v.NewObject("note", "beta", "")
 
 	body := fmt.Sprintf("---\ntitle: Alpha\n---\n\nSee [[%s]].\n", noteB.ID)
 	os.WriteFile(v.ObjectPath(noteA.Type, noteA.Filename), []byte(body), 0644)
@@ -178,7 +178,7 @@ func TestValidateWikiLinks_BrokenLink(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	note, _ := v.NewObject("note", "alpha")
+	note, _ := v.NewObject("note", "alpha", "")
 
 	body := "---\ntitle: Alpha\n---\n\nSee [[note/nonexistent-01jjjjjjjjjjjjjjjjjjjjjjjj]].\n"
 	os.WriteFile(v.ObjectPath(note.Type, note.Filename), []byte(body), 0644)
@@ -208,8 +208,8 @@ func TestValidateWikiLinks_NoWikiLinks(t *testing.T) {
 
 func TestValidateNameUniqueness_NoDuplicates(t *testing.T) {
 	v := setupTestVault(t)
-	v.NewObject("tag", "go")
-	v.NewObject("tag", "rust")
+	v.NewObject("tag", "go", "")
+	v.NewObject("tag", "rust", "")
 
 	errs := ValidateNameUniqueness(v)
 	if len(errs) != 0 {
@@ -219,8 +219,8 @@ func TestValidateNameUniqueness_NoDuplicates(t *testing.T) {
 
 func TestValidateNameUniqueness_CaseSensitive(t *testing.T) {
 	v := setupTestVault(t)
-	v.NewObject("tag", "Go")
-	v.NewObject("tag", "go")
+	v.NewObject("tag", "Go", "")
+	v.NewObject("tag", "go", "")
 
 	errs := ValidateNameUniqueness(v)
 	if len(errs) != 0 {
@@ -230,11 +230,11 @@ func TestValidateNameUniqueness_CaseSensitive(t *testing.T) {
 
 func TestNewObject_TagNameDuplicate(t *testing.T) {
 	v := setupTestVault(t)
-	_, err := v.NewObject("tag", "go")
+	_, err := v.NewObject("tag", "go", "")
 	if err != nil {
 		t.Fatalf("first NewObject error = %v", err)
 	}
-	_, err = v.NewObject("tag", "go")
+	_, err = v.NewObject("tag", "go", "")
 	if err == nil {
 		t.Fatal("expected error for duplicate tag name, got nil")
 	}
@@ -245,11 +245,11 @@ func TestNewObject_TagNameDuplicate(t *testing.T) {
 
 func TestNewObject_NonTagDuplicateNameAllowed(t *testing.T) {
 	v := setupTestVault(t)
-	_, err := v.NewObject("book", "test")
+	_, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("first book error = %v", err)
 	}
-	_, err = v.NewObject("book", "test")
+	_, err = v.NewObject("book", "test", "")
 	if err != nil {
 		t.Errorf("second book with same name should be allowed, got %v", err)
 	}

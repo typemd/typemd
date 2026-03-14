@@ -63,7 +63,7 @@ properties:
 }
 
 func (dc *domainContext) iCreateAObjectNamed(typeName, name string) {
-	obj, err := dc.vault.NewObject(typeName, name)
+	obj, err := dc.vault.NewObject(typeName, name, "")
 	dc.lastErr = err
 	if err == nil {
 		dc.objects[name] = obj
@@ -73,7 +73,7 @@ func (dc *domainContext) iCreateAObjectNamed(typeName, name string) {
 
 func (dc *domainContext) iCreateAnotherObjectNamed(typeName, name string) {
 	dc.prevObject = dc.currentObject
-	obj, err := dc.vault.NewObject(typeName, name)
+	obj, err := dc.vault.NewObject(typeName, name, "")
 	dc.lastErr = err
 	if err == nil {
 		dc.objects[name+"_2"] = obj
@@ -139,7 +139,7 @@ func (dc *domainContext) theTwoObjectsShouldHaveDifferentIDs() error {
 }
 
 func (dc *domainContext) aObjectNamedExists(typeName, name string) {
-	obj, err := dc.vault.NewObject(typeName, name)
+	obj, err := dc.vault.NewObject(typeName, name, "")
 	if err != nil {
 		panic(fmt.Sprintf("create object %s/%s failed: %v", typeName, name, err))
 	}

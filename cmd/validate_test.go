@@ -20,7 +20,7 @@ func TestValidateCmd_TagUniqueness(t *testing.T) {
 	}
 
 	// Create one tag via normal API
-	if _, err := v.NewObject("tag", "go"); err != nil {
+	if _, err := v.NewObject("tag", "go", ""); err != nil {
 		t.Fatalf("NewObject error = %v", err)
 	}
 
@@ -56,8 +56,8 @@ func TestValidateCmd_NoDuplicateTags(t *testing.T) {
 		t.Fatalf("Open() error = %v", err)
 	}
 
-	v.NewObject("tag", "go")
-	v.NewObject("tag", "rust")
+	v.NewObject("tag", "go", "")
+	v.NewObject("tag", "rust", "")
 	v.Close()
 
 	vaultPath = dir

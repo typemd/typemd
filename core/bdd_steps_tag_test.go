@@ -21,7 +21,7 @@ func (dc *domainContext) theObjectShouldHavePropertyWithNilValue(propName string
 }
 
 func (dc *domainContext) iSetTagsOnTheObjectToATagReference() {
-	tagObj, err := dc.vault.NewObject("tag", "test-tag")
+	tagObj, err := dc.vault.NewObject("tag", "test-tag", "")
 	if err != nil {
 		panic(fmt.Sprintf("create tag object failed: %v", err))
 	}
@@ -40,7 +40,7 @@ func (dc *domainContext) aRawDuplicateTagNamedExists(name string) {
 // ── Tag resolution steps ────────────────────────────────────────────────
 
 func (dc *domainContext) aBookObjectExistsWithTagReferenceByID(bookName string) {
-	book, err := dc.vault.NewObject("book", bookName)
+	book, err := dc.vault.NewObject("book", bookName, "")
 	if err != nil {
 		panic(fmt.Sprintf("create book: %v", err))
 	}
@@ -58,7 +58,7 @@ func (dc *domainContext) aBookObjectExistsWithTagReferenceByID(bookName string) 
 }
 
 func (dc *domainContext) aBookObjectExistsWithTagReferenceByName(bookName, tagName string) {
-	book, err := dc.vault.NewObject("book", bookName)
+	book, err := dc.vault.NewObject("book", bookName, "")
 	if err != nil {
 		panic(fmt.Sprintf("create book: %v", err))
 	}

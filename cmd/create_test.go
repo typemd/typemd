@@ -3,6 +3,7 @@ package cmd
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 
 	"github.com/typemd/typemd/core"
@@ -74,3 +75,77 @@ func TestCreateCmd_SameNameTwice(t *testing.T) {
 		t.Errorf("expected 2 matching files, got %d", len(matches))
 	}
 }
+
+func TestCreateCmd_WithTemplateFlag(t *testing.T) {
+	dir := setupTestVaultDir(t)
+
+	// Create a template
+	tmplDir := filepath.Join(dir, "templates", "book")
+	os.MkdirAll(tmplDir, 0755)
+	os.WriteFile(filepath.Join(tmplDir, "review.md"), []byte("---\ntitle: Review Template\n---\n\n## Review Notes\n"), 0644)
+
+	vaultPath = dir
+	templateFlag = "review"
+	defer func() { templateFlag = "" }()
+
+	rootCmd.SetArgs([]string{"object", "create", "book", "my-book", "-t", "review"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	matches, _ := filepath.Glob(filepath.Join(dir, "objects", "book", "my-book-*.md"))
+	if len(matches) != 1 {
+		t.Fatalf("expected 1 matching file, got %d", len(matches))
+	}
+
+	data, _ := os.ReadFile(matches[0])
+	content := string(data)
+	if !strings.Contains(content, "Review Notes") {
+		t.Error("object should contain template body")
+	}
+	if !strings.Contains(content, "title: Review Template") {
+		t.Error("object should contain template property")
+	}
+}
+
+func TestCreateCmd_SingleTemplateAutoApply(t *testing.T) {
+	dir := setupTestVaultDir(t)
+
+	// Create a single template
+	tmplDir := filepath.Join(dir, "templates", "book")
+	os.MkdirAll(tmplDir, 0755)
+	os.WriteFile(filepath.Join(tmplDir, "default.md"), []byte("## Default Body\n"), 0644)
+
+	vaultPath = dir
+	templateFlag = ""
+
+	rootCmd.SetArgs([]string{"object", "create", "book", "auto-book"})
+	if err := rootCmd.Execute(); err != nil {
+		t.Fatalf("Execute() error = %v", err)
+	}
+
+	matches, _ := filepath.Glob(filepath.Join(dir, "objects", "book", "auto-book-*.md"))
+	if len(matches) != 1 {
+		t.Fatalf("expected 1 matching file, got %d", len(matches))
+	}
+
+	data, _ := os.ReadFile(matches[0])
+	if !strings.Contains(string(data), "Default Body") {
+		t.Error("single template should be auto-applied")
+	}
+}
+
+func TestCreateCmd_InvalidTemplateFlag(t *testing.T) {
+	dir := setupTestVaultDir(t)
+
+	vaultPath = dir
+	templateFlag = "nonexistent"
+	defer func() { templateFlag = "" }()
+
+	rootCmd.SetArgs([]string{"object", "create", "book", "test-book", "-t", "nonexistent"})
+	err := rootCmd.Execute()
+	if err == nil {
+		t.Fatal("expected error for nonexistent template")
+	}
+}
+

@@ -44,6 +44,9 @@ vault/
 │   ├── properties.yaml     # shared property definitions (optional)
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
+├── templates/              # object templates by type (optional)
+│   └── book/
+│       └── review.md       # template with default frontmatter + body
 └── objects/
     ├── book/
     │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md
@@ -91,6 +94,10 @@ tmd --readonly
 # Create a new object (ULID is appended automatically)
 tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+
+# Create with object template (auto-applied if only one exists)
+tmd object create book clean-code -t review
+# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz (with review template)
 
 # Create with name template (name auto-generated if type defines a template)
 tmd object create journal

@@ -27,8 +27,8 @@ func TestVault_MigrateObjects_AddProperty(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
 	// Create objects with original schema
-	objA, _ := v.NewObject("book", "book-a")
-	objB, _ := v.NewObject("book", "book-b")
+	objA, _ := v.NewObject("book", "book-a", "")
+	objB, _ := v.NewObject("book", "book-b", "")
 
 	// Update schema: add isbn with default
 	newSchema := []byte(`name: book
@@ -67,7 +67,7 @@ properties:
 func TestVault_MigrateObjects_RemoveProperty(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
-	created, _ := v.NewObject("book", "test")
+	created, _ := v.NewObject("book", "test", "")
 
 	// Update schema: remove status
 	newSchema := []byte(`name: book
@@ -98,7 +98,7 @@ properties:
 func TestVault_MigrateObjects_RenameProperty(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
-	created, _ := v.NewObject("book", "test")
+	created, _ := v.NewObject("book", "test", "")
 	v.SetProperty(created.ID, "status", "reading")
 
 	// Update schema: rename status -> reading_status
@@ -137,7 +137,7 @@ properties:
 func TestVault_MigrateObjects_DryRun(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
-	created, _ := v.NewObject("book", "test")
+	created, _ := v.NewObject("book", "test", "")
 
 	// Update schema: add isbn
 	newSchema := []byte(`name: book
@@ -171,7 +171,7 @@ properties:
 func TestVault_MigrateObjects_NoChanges(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
-	v.NewObject("book", "test")
+	v.NewObject("book", "test", "")
 
 	// Schema unchanged — no migration needed
 	result, err := v.MigrateObjects("book", MigrateOptions{})

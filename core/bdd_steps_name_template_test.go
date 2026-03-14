@@ -15,7 +15,7 @@ func (dc *domainContext) aTypeSchemaWithNameTemplate(typeName, template string) 
 }
 
 func (dc *domainContext) iCreateAObjectWithNoName(typeName string) {
-	obj, err := dc.vault.NewObject(typeName, "")
+	obj, err := dc.vault.NewObject(typeName, "", "")
 	dc.lastErr = err
 	if err == nil {
 		dc.currentObject = obj

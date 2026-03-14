@@ -217,7 +217,7 @@ func TestObject_GetName(t *testing.T) {
 func TestVault_NewObject(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "golang-in-action")
+	obj, err := v.NewObject("book", "golang-in-action", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -254,12 +254,12 @@ func TestVault_NewObject(t *testing.T) {
 func TestVault_NewObject_SameNameDifferentULID(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj1, err := v.NewObject("book", "test")
+	obj1, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("first NewObject() error = %v", err)
 	}
 
-	obj2, err := v.NewObject("book", "test")
+	obj2, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("second NewObject() should succeed with ULID, error = %v", err)
 	}
@@ -275,7 +275,7 @@ func TestVault_NewObject_SameNameDifferentULID(t *testing.T) {
 func TestVault_NewObject_UnknownType(t *testing.T) {
 	v := setupTestVault(t)
 
-	_, err := v.NewObject("nonexistent", "test")
+	_, err := v.NewObject("nonexistent", "test", "")
 	if err == nil {
 		t.Fatal("expected error for unknown type, got nil")
 	}
@@ -289,7 +289,7 @@ func TestVault_NewObject_DBNotOpen(t *testing.T) {
 	}
 	// 不呼叫 Open()
 
-	_, err := v.NewObject("book", "test")
+	_, err := v.NewObject("book", "test", "")
 	if err == nil {
 		t.Fatal("expected error when DB not opened, got nil")
 	}
@@ -312,7 +312,7 @@ properties:
 		t.Fatalf("WriteFile error = %v", err)
 	}
 
-	obj, err := v.NewObject("task", "my-task")
+	obj, err := v.NewObject("task", "my-task", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -336,7 +336,7 @@ properties:
 func TestVault_GetObject(t *testing.T) {
 	v := setupTestVault(t)
 
-	created, err := v.NewObject("book", "golang-in-action")
+	created, err := v.NewObject("book", "golang-in-action", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -378,7 +378,7 @@ func TestVault_GetObject_InvalidID(t *testing.T) {
 func TestVault_SetProperty(t *testing.T) {
 	v := setupTestVault(t)
 
-	created, err := v.NewObject("book", "test")
+	created, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -400,7 +400,7 @@ func TestVault_SetProperty(t *testing.T) {
 func TestVault_SetProperty_ValidationError(t *testing.T) {
 	v := setupTestVault(t)
 
-	created, err := v.NewObject("book", "test")
+	created, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -415,7 +415,7 @@ func TestVault_SetProperty_ValidationError(t *testing.T) {
 func TestVault_SetProperty_ExtraKey(t *testing.T) {
 	v := setupTestVault(t)
 
-	created, err := v.NewObject("book", "test")
+	created, err := v.NewObject("book", "test", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -459,7 +459,7 @@ func TestVault_SetProperty_DBNotOpen(t *testing.T) {
 
 func TestVault_SaveObject_WritesFileAndUpdatesDB(t *testing.T) {
 	v := setupTestVault(t)
-	obj, err := v.NewObject("book", "test-book")
+	obj, err := v.NewObject("book", "test-book", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -540,7 +540,7 @@ func TestVault_ResolveID_TypeDirNotExist(t *testing.T) {
 func TestVault_ResolveID_ExactMatch(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "test-resolve")
+	obj, err := v.NewObject("book", "test-resolve", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -557,7 +557,7 @@ func TestVault_ResolveID_ExactMatch(t *testing.T) {
 func TestVault_ResolveID_PrefixMatch(t *testing.T) {
 	v := setupTestVault(t)
 
-	obj, err := v.NewObject("book", "unique-prefix")
+	obj, err := v.NewObject("book", "unique-prefix", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -574,11 +574,11 @@ func TestVault_ResolveID_PrefixMatch(t *testing.T) {
 func TestVault_ResolveID_AmbiguousMatch(t *testing.T) {
 	v := setupTestVault(t)
 
-	_, err := v.NewObject("book", "ambig")
+	_, err := v.NewObject("book", "ambig", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
-	_, err = v.NewObject("book", "ambig")
+	_, err = v.NewObject("book", "ambig", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}
@@ -599,7 +599,7 @@ func TestVault_ResolveID_AmbiguousMatch(t *testing.T) {
 func TestVault_ResolveObject(t *testing.T) {
 	v := setupTestVault(t)
 
-	created, err := v.NewObject("book", "resolve-obj")
+	created, err := v.NewObject("book", "resolve-obj", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}

@@ -9,7 +9,7 @@ TypeMD uses a small set of core concepts to organize your knowledge. This page g
 
 ## Vault
 
-A Vault is a directory managed by TypeMD. It contains a `.typemd/` configuration folder and an `objects/` folder for your content. Each Vault is self-contained — you can move, copy, or version-control it like any folder.
+A Vault is a directory managed by TypeMD. It contains a `.typemd/` configuration folder, an `objects/` folder for your content, and an optional `templates/` folder for object templates. Each Vault is self-contained — you can move, copy, or version-control it like any folder.
 
 ## Object
 

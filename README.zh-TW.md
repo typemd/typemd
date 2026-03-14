@@ -44,6 +44,9 @@ vault/
 │   ├── properties.yaml     # 共用屬性定義（選用）
 │   ├── index.db            # SQLite 索引（自動更新）
 │   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
+├── templates/              # 物件範本，依 Type 分類（選用）
+│   └── book/
+│       └── review.md       # 預設 frontmatter 和 body 內容
 └── objects/
     ├── book/
     │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md
@@ -88,6 +91,10 @@ tmd --vault /path/to/vault
 # 建立新的 Object（ULID 會自動附加）
 tmd object create book clean-code
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+
+# 建立 Object 時套用範本
+tmd object create book clean-code -t review
+# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz（套用 review 範本）
 
 # 顯示 Object 詳情（支援前綴匹配，不需要輸入完整 ULID）
 tmd object show book/clean-code

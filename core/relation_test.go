@@ -42,8 +42,8 @@ properties:
 func TestVault_LinkObjects_SingleValue(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	book, _ := v.NewObject("book", "golang-in-action")
-	person, _ := v.NewObject("person", "alan-donovan")
+	book, _ := v.NewObject("book", "golang-in-action", "")
+	person, _ := v.NewObject("person", "alan-donovan", "")
 
 	err := v.LinkObjects(book.ID, "author", person.ID)
 	if err != nil {
@@ -83,9 +83,9 @@ func TestVault_LinkObjects_SingleValue(t *testing.T) {
 func TestVault_LinkObjects_MultipleValue(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	bookA, _ := v.NewObject("book", "book-a")
-	bookB, _ := v.NewObject("book", "book-b")
-	person, _ := v.NewObject("person", "alan")
+	bookA, _ := v.NewObject("book", "book-a", "")
+	bookB, _ := v.NewObject("book", "book-b", "")
+	person, _ := v.NewObject("person", "alan", "")
 
 	// Link two books to person via inverse (person.books is multiple)
 	v.LinkObjects(bookA.ID, "author", person.ID)
@@ -103,7 +103,7 @@ func TestVault_LinkObjects_MultipleValue(t *testing.T) {
 
 func TestVault_LinkObjects_TargetNotFound(t *testing.T) {
 	v := setupRelationTestVault(t)
-	book, _ := v.NewObject("book", "test")
+	book, _ := v.NewObject("book", "test", "")
 
 	err := v.LinkObjects(book.ID, "author", "person/nonexistent")
 	if err == nil {
@@ -113,8 +113,8 @@ func TestVault_LinkObjects_TargetNotFound(t *testing.T) {
 
 func TestVault_LinkObjects_RelationNotFound(t *testing.T) {
 	v := setupRelationTestVault(t)
-	book, _ := v.NewObject("book", "test")
-	person, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test", "")
+	person, _ := v.NewObject("person", "alan", "")
 
 	err := v.LinkObjects(book.ID, "nonexistent", person.ID)
 	if err == nil {
@@ -124,8 +124,8 @@ func TestVault_LinkObjects_RelationNotFound(t *testing.T) {
 
 func TestVault_LinkObjects_TypeMismatch(t *testing.T) {
 	v := setupRelationTestVault(t)
-	bookA, _ := v.NewObject("book", "book-a")
-	bookB, _ := v.NewObject("book", "book-b")
+	bookA, _ := v.NewObject("book", "book-a", "")
+	bookB, _ := v.NewObject("book", "book-b", "")
 
 	// author targets person, not book
 	err := v.LinkObjects(bookA.ID, "author", bookB.ID)
@@ -148,9 +148,9 @@ func TestVault_LinkObjects_DBNotOpen(t *testing.T) {
 func TestVault_LinkObjects_SingleValueOverwrite(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	book, _ := v.NewObject("book", "test")
-	alan, _ := v.NewObject("person", "alan")
-	brian, _ := v.NewObject("person", "brian")
+	book, _ := v.NewObject("book", "test", "")
+	alan, _ := v.NewObject("person", "alan", "")
+	brian, _ := v.NewObject("person", "brian", "")
 
 	// Link to alan first
 	v.LinkObjects(book.ID, "author", alan.ID)
@@ -170,8 +170,8 @@ func TestVault_LinkObjects_SingleValueOverwrite(t *testing.T) {
 func TestVault_LinkObjects_DuplicateMultiple(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	book, _ := v.NewObject("book", "test")
-	alan, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test", "")
+	alan, _ := v.NewObject("person", "alan", "")
 
 	v.LinkObjects(book.ID, "author", alan.ID)
 
@@ -186,8 +186,8 @@ func TestVault_LinkObjects_DuplicateMultiple(t *testing.T) {
 func TestVault_UnlinkObjects_SingleValue(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	book, _ := v.NewObject("book", "test")
-	alan, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test", "")
+	alan, _ := v.NewObject("person", "alan", "")
 	v.LinkObjects(book.ID, "author", alan.ID)
 
 	// Unlink without --both: only remove from book
@@ -212,8 +212,8 @@ func TestVault_UnlinkObjects_SingleValue(t *testing.T) {
 func TestVault_UnlinkObjects_Both(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	book, _ := v.NewObject("book", "test")
-	alan, _ := v.NewObject("person", "alan")
+	book, _ := v.NewObject("book", "test", "")
+	alan, _ := v.NewObject("person", "alan", "")
 	v.LinkObjects(book.ID, "author", alan.ID)
 
 	err := v.UnlinkObjects(book.ID, "author", alan.ID, true)
@@ -242,9 +242,9 @@ func TestVault_UnlinkObjects_Both(t *testing.T) {
 func TestVault_UnlinkObjects_MultipleRemoveOne(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	bookA, _ := v.NewObject("book", "book-a")
-	bookB, _ := v.NewObject("book", "book-b")
-	alan, _ := v.NewObject("person", "alan")
+	bookA, _ := v.NewObject("book", "book-a", "")
+	bookB, _ := v.NewObject("book", "book-b", "")
+	alan, _ := v.NewObject("person", "alan", "")
 
 	v.LinkObjects(bookA.ID, "author", alan.ID)
 	v.LinkObjects(bookB.ID, "author", alan.ID)
@@ -310,8 +310,8 @@ func TestFindSystemRelationProperty_Nonexistent(t *testing.T) {
 func TestVault_LinkObjects_SystemRelationTags(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	tag, _ := v.NewObject("tag", "go")
-	book, _ := v.NewObject("book", "golang-book")
+	tag, _ := v.NewObject("tag", "go", "")
+	book, _ := v.NewObject("book", "golang-book", "")
 
 	err := v.LinkObjects(book.ID, TagsProperty, tag.ID)
 	if err != nil {
@@ -331,8 +331,8 @@ func TestVault_LinkObjects_SystemRelationTags(t *testing.T) {
 func TestVault_UnlinkObjects_SystemRelationTags(t *testing.T) {
 	v := setupRelationTestVault(t)
 
-	tag, _ := v.NewObject("tag", "go")
-	book, _ := v.NewObject("book", "golang-book")
+	tag, _ := v.NewObject("tag", "go", "")
+	book, _ := v.NewObject("book", "golang-book", "")
 
 	v.LinkObjects(book.ID, TagsProperty, tag.ID)
 

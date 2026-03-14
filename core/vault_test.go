@@ -122,6 +122,15 @@ func TestVault_Paths(t *testing.T) {
 	if got := v.ObjectsDir(); got != filepath.Join("/some/root", "objects") {
 		t.Errorf("ObjectsDir() = %q", got)
 	}
+	if got := v.TemplatesDir(); got != filepath.Join("/some/root", "templates") {
+		t.Errorf("TemplatesDir() = %q, want %q", got, filepath.Join("/some/root", "templates"))
+	}
+	if got := v.TypeTemplatesDir("book"); got != filepath.Join("/some/root", "templates", "book") {
+		t.Errorf("TypeTemplatesDir() = %q, want %q", got, filepath.Join("/some/root", "templates", "book"))
+	}
+	if got := v.TemplatePath("book", "review"); got != filepath.Join("/some/root", "templates", "book", "review.md") {
+		t.Errorf("TemplatePath() = %q, want %q", got, filepath.Join("/some/root", "templates", "book", "review.md"))
+	}
 }
 
 func TestVault_Open_Close(t *testing.T) {
@@ -176,7 +185,7 @@ func TestVault_FTSTrigger_InsertSync(t *testing.T) {
 	v := setupTestVault(t)
 
 	// NewObject INSERT should auto-sync FTS via trigger
-	obj, err := v.NewObject("book", "golang-in-action")
+	obj, err := v.NewObject("book", "golang-in-action", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}

@@ -316,7 +316,7 @@ func (v *Vault) syncTagRelations(ctx *syncContext) error {
 					if existingID, exists := tagNameIndex[slug]; exists {
 						tagID = existingID
 					} else {
-						newTag, err := v.NewObject(TagTypeName, slug)
+						newTag, err := v.NewObject(TagTypeName, slug, "")
 						if err != nil {
 							continue
 						}

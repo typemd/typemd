@@ -688,7 +688,7 @@ func setupTestModelWithVault(t *testing.T) (model, *core.Object) {
 	}
 	t.Cleanup(func() { v.Close() })
 
-	obj, err := v.NewObject("book", "test-save")
+	obj, err := v.NewObject("book", "test-save", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}

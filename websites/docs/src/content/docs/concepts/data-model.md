@@ -17,13 +17,17 @@ All objects have five system properties managed by TypeMD:
 
 | Property | Description |
 |----------|-------------|
-| `name` | Display name, auto-populated from the slug on creation |
-| `description` | Optional single-line summary for list displays and search results |
-| `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) |
-| `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) |
-| `tags` | Array of tag references (relation to the built-in `tag` type, multiple) |
+| Property | Description | Mutable |
+|----------|-------------|---------|
+| `name` | Display name, auto-populated from the slug on creation | User-authored |
+| `description` | Optional single-line summary for list displays and search results | User-authored |
+| `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) | Auto-managed |
+| `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) | Auto-managed |
+| `tags` | Array of tag references (relation to the built-in `tag` type, multiple) | User-authored |
 
 System properties always appear first in frontmatter in the order above, followed by schema-defined properties. These names are reserved and cannot be used in type schemas or shared properties.
+
+**User-authored** properties (`name`, `description`, `tags`) can be overridden by object templates. **Auto-managed** properties (`created_at`, `updated_at`) cannot be overridden — they always reflect the actual creation and modification times.
 
 ```
 vault/
@@ -33,6 +37,9 @@ vault/
 │   │   └── person.yaml     # example: you create this
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
+├── templates/              # object templates by type (optional)
+│   └── book/
+│       └── review.md       # default frontmatter + body for new objects
 └── objects/
     ├── book/
     │   └── golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md
@@ -41,6 +48,23 @@ vault/
 ```
 
 Only the `tag` type is built-in (it backs the `tags` system property). The built-in `tag` type includes a plural form ("tags") for grammatically correct display in group headers and has `unique: true` to enforce name uniqueness. All other types must be defined via `.typemd/types/*.yaml` files.
+
+### Object templates
+
+Each type can define one or more templates at `templates/<type>/<name>.md`. Templates are regular Markdown files (frontmatter + body) that provide default content when creating objects.
+
+```bash
+# Single template — auto-applied
+tmd object create book clean-code
+
+# Explicit template selection
+tmd object create book clean-code -t review
+
+# Multiple templates, no flag — interactive selection
+tmd object create book clean-code
+```
+
+Template frontmatter properties override schema defaults. Template body becomes the initial object body. Auto-managed system properties (`created_at`, `updated_at`) in templates are ignored.
 
 ### Unique constraint
 

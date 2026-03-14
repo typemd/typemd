@@ -35,7 +35,7 @@ func setupTestVault(t *testing.T) (*core.Vault, string) {
 	}
 
 	// Create sample object
-	obj, err := v.NewObject("book", "clean-code")
+	obj, err := v.NewObject("book", "clean-code", "")
 	if err != nil {
 		t.Fatalf("NewObject() error = %v", err)
 	}

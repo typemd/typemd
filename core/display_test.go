@@ -20,7 +20,7 @@ func TestBuildDisplayProperties(t *testing.T) {
 	defer v.Close()
 
 	// Create two objects and link them
-	book, err := v.NewObject("book", "test-book")
+	book, err := v.NewObject("book", "test-book", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,11 +79,11 @@ properties:
 	}
 	defer v.Close()
 
-	article, err := v.NewObject("article", "test-article")
+	article, err := v.NewObject("article", "test-article", "")
 	if err != nil {
 		t.Fatal(err)
 	}
-	person, err := v.NewObject("person", "test-person")
+	person, err := v.NewObject("person", "test-person", "")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -137,8 +137,8 @@ func TestBuildDisplayPropertiesWithBacklinks(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	noteA, _ := v.NewObject("note", "alpha")
-	noteB, _ := v.NewObject("note", "beta")
+	noteA, _ := v.NewObject("note", "alpha", "")
+	noteB, _ := v.NewObject("note", "beta", "")
 
 	// noteA links to noteB via wiki-link
 	bodyA := fmt.Sprintf("---\ntitle: Alpha\n---\n\nSee [[%s]].\n", noteB.ID)
@@ -175,7 +175,7 @@ func TestBuildDisplayPropertiesNoBacklinks(t *testing.T) {
 	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
-	note, _ := v.NewObject("note", "lonely")
+	note, _ := v.NewObject("note", "lonely", "")
 
 	props, err := v.BuildDisplayProperties(note)
 	if err != nil {

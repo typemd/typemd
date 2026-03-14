@@ -121,7 +121,8 @@ func parseFrontmatter(data []byte) (map[string]any, string, error) {
 }
 
 // NewObject creates a new object with the given type and filename.
-func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
+// If templateName is non-empty, the specified template is loaded and applied.
+func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, error) {
 	if v.db == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
@@ -131,14 +132,32 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		return nil, fmt.Errorf("load type: %w", err)
 	}
 
+	// Load template if specified
+	var tmpl *Template
+	if templateName != "" {
+		tmpl, err = v.LoadTemplate(typeName, templateName)
+		if err != nil {
+			return nil, fmt.Errorf("load template: %w", err)
+		}
+	}
+
 	now := time.Now()
 
-	// Handle empty name: use template or error
+	// Handle empty name: check template, then name template, then error
 	if filename == "" {
-		if schema.NameTemplate != "" {
-			filename = EvaluateNameTemplate(schema.NameTemplate, now)
-		} else {
-			return nil, fmt.Errorf("name is required (type %q has no name template)", typeName)
+		if tmpl != nil {
+			if nameVal, ok := tmpl.Properties[NameProperty]; ok {
+				if s, ok := nameVal.(string); ok && s != "" {
+					filename = s
+				}
+			}
+		}
+		if filename == "" {
+			if schema.NameTemplate != "" {
+				filename = EvaluateNameTemplate(schema.NameTemplate, now)
+			} else {
+				return nil, fmt.Errorf("name is required (type %q has no name template)", typeName)
+			}
 		}
 	}
 
@@ -164,9 +183,9 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		return nil, fmt.Errorf("create directory: %w", err)
 	}
 
-	// Generate initial properties from schema
+	// Generate initial properties from schema defaults
 	props := make(map[string]any)
-	props[NameProperty] = slug // system property: display name from slug
+	props[NameProperty] = slug
 	nowStr := now.Format(time.RFC3339)
 	props[CreatedAtProperty] = nowStr
 	props[UpdatedAtProperty] = nowStr
@@ -178,8 +197,18 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		}
 	}
 
+	// Apply template properties (overrides schema defaults)
+	body := ""
+	if tmpl != nil {
+		filtered := filterTemplateProperties(tmpl.Properties, schema)
+		for key, val := range filtered {
+			props[key] = val
+		}
+		body = tmpl.Body
+	}
+
 	// Write .md file (O_EXCL ensures atomic uniqueness check)
-	data, err := writeFrontmatter(props, "", OrderedPropKeys(props, schema))
+	data, err := writeFrontmatter(props, body, OrderedPropKeys(props, schema))
 	if err != nil {
 		return nil, fmt.Errorf("write frontmatter: %w", err)
 	}
@@ -205,7 +234,7 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 	}
 	_, err = v.db.Exec(
 		"INSERT INTO objects (id, type, filename, properties, body) VALUES (?, ?, ?, ?, ?)",
-		id, typeName, filename, string(propsJSON), "",
+		id, typeName, filename, string(propsJSON), body,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("insert object: %w", err)
@@ -216,7 +245,7 @@ func (v *Vault) NewObject(typeName, filename string) (*Object, error) {
 		Type:       typeName,
 		Filename:   filename,
 		Properties: props,
-		Body:       "",
+		Body:       body,
 	}, nil
 }
 

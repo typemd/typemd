@@ -128,3 +128,15 @@ Feature: System property registry
     And a shared properties file with a system property "tags"
     When I validate all schemas
     Then shared properties should have errors
+
+  Scenario: Immutable system properties are identified
+    Then "created_at" should be an immutable system property
+    And "updated_at" should be an immutable system property
+
+  Scenario: Mutable system properties are not immutable
+    Then "name" should not be an immutable system property
+    And "description" should not be an immutable system property
+    And "tags" should not be an immutable system property
+
+  Scenario: Non-system properties are not immutable
+    Then "title" should not be an immutable system property

@@ -9,7 +9,7 @@ import (
 
 func TestResolveTagReference_ByID(t *testing.T) {
 	v := setupTestVault(t)
-	tag, _ := v.NewObject("tag", "go")
+	tag, _ := v.NewObject("tag", "go", "")
 
 	diskTags := map[string]*Object{tag.ID: tag}
 	nameIndex := map[string]string{"go": tag.ID}
@@ -24,7 +24,7 @@ func TestResolveTagReference_ByID(t *testing.T) {
 
 func TestResolveTagReference_ByName(t *testing.T) {
 	v := setupTestVault(t)
-	tag, _ := v.NewObject("tag", "go")
+	tag, _ := v.NewObject("tag", "go", "")
 
 	diskTags := map[string]*Object{tag.ID: tag}
 	nameIndex := map[string]string{"go": tag.ID}
@@ -72,10 +72,10 @@ func TestSyncIndex_TagRelationsWritten(t *testing.T) {
 	v := setupTestVault(t)
 
 	// Create a tag object
-	tag, _ := v.NewObject("tag", "go")
+	tag, _ := v.NewObject("tag", "go", "")
 
 	// Create a book with tags referencing the tag by name
-	book, _ := v.NewObject("book", "golang-book")
+	book, _ := v.NewObject("book", "golang-book", "")
 	book.Properties[TagsProperty] = []any{"tag/go"}
 	v.SaveObject(book)
 
@@ -107,7 +107,7 @@ func TestSyncIndex_AutoCreateTag(t *testing.T) {
 	v := setupTestVault(t)
 
 	// Create a book referencing a tag that doesn't exist
-	book, _ := v.NewObject("book", "golang-book")
+	book, _ := v.NewObject("book", "golang-book", "")
 	book.Properties[TagsProperty] = []any{"tag/auto-created"}
 	v.SaveObject(book)
 
@@ -142,7 +142,7 @@ func TestSyncIndex_AutoCreateTag(t *testing.T) {
 func TestSyncIndex_TagPreservedInFiltering(t *testing.T) {
 	v := setupTestVault(t)
 
-	tag, _ := v.NewObject("tag", "go")
+	tag, _ := v.NewObject("tag", "go", "")
 
 	// Write a raw book file with tags in frontmatter
 	ulid, _ := GenerateULID()

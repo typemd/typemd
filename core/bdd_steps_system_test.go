@@ -209,6 +209,20 @@ func (dc *domainContext) theFrontmatterShouldHaveBefore(first, second string) er
 	return nil
 }
 
+func (dc *domainContext) shouldBeAnImmutableSystemProperty(name string) error {
+	if !IsImmutableSystemProperty(name) {
+		return fmt.Errorf("%q should be an immutable system property", name)
+	}
+	return nil
+}
+
+func (dc *domainContext) shouldNotBeAnImmutableSystemProperty(name string) error {
+	if IsImmutableSystemProperty(name) {
+		return fmt.Errorf("%q should not be an immutable system property", name)
+	}
+	return nil
+}
+
 func initSystemSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the system property registry should contain "([^"]*)"$`, dc.theSystemPropertyRegistryShouldContain)
 	ctx.Step(`^"([^"]*)" should be a system property$`, dc.shouldBeASystemProperty)
@@ -226,4 +240,6 @@ func initSystemSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a raw object file with description exists$`, dc.aRawObjectFileWithDescriptionExists)
 	ctx.Step(`^the raw object file should not have description added$`, dc.theRawObjectFileShouldNotHaveDescriptionAdded)
 	ctx.Step(`^the frontmatter should have "([^"]*)" before "([^"]*)"$`, dc.theFrontmatterShouldHaveBefore)
+	ctx.Step(`^"([^"]*)" should be an immutable system property$`, dc.shouldBeAnImmutableSystemProperty)
+	ctx.Step(`^"([^"]*)" should not be an immutable system property$`, dc.shouldNotBeAnImmutableSystemProperty)
 }
