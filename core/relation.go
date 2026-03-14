@@ -128,7 +128,7 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 		return fmt.Errorf("target type mismatch: expected %q, got %q", relProp.Target, toObj.Type)
 	}
 
-	if err := fromObj.LinkTo(relName, toID, relProp); err != nil {
+	if _, err := fromObj.LinkTo(relName, toID, relProp); err != nil {
 		return fmt.Errorf("relation already exists: %s -[%s]-> %s", fromID, relName, toID)
 	}
 	if err := v.saveObjectFile(fromObj); err != nil {
@@ -150,7 +150,7 @@ func (v *Vault) LinkObjects(fromID, relName, toID string) error {
 			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
 		}
 
-		if err := toObj.LinkTo(relProp.Inverse, fromID, inverseProp); err != nil && !errors.Is(err, errDuplicateRelation) {
+		if _, err := toObj.LinkTo(relProp.Inverse, fromID, inverseProp); err != nil && !errors.Is(err, errDuplicateRelation) {
 			return fmt.Errorf("set inverse relation: %w", err)
 		}
 		if err := v.saveObjectFile(toObj); err != nil {
@@ -181,7 +181,7 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
 	}
 
-	fromObj.Unlink(relName, toID, relProp)
+	_ = fromObj.Unlink(relName, toID, relProp)
 	if err := v.saveObjectFile(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
@@ -201,7 +201,7 @@ func (v *Vault) UnlinkObjects(fromID, relName, toID string, both bool) error {
 			return fmt.Errorf("inverse relation %q not found in type %q", relProp.Inverse, toObj.Type)
 		}
 
-		toObj.Unlink(relProp.Inverse, fromID, inverseProp)
+		_ = toObj.Unlink(relProp.Inverse, fromID, inverseProp)
 		if err := v.saveObjectFile(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}

@@ -38,9 +38,14 @@ type Object struct {
 	Body       string
 }
 
+// ParseID returns this object's ID as a parsed ObjectID Value Object.
+func (o *Object) ParseID() ObjectID {
+	return ObjectID{Type: o.Type, Filename: o.Filename}
+}
+
 // DisplayName returns the filename with ULID suffix stripped.
 func (o *Object) DisplayName() string {
-	return StripULID(o.Filename)
+	return o.ParseID().DisplayName()
 }
 
 // GetName returns the object's display name from the NameProperty.
@@ -54,7 +59,7 @@ func (o *Object) GetName() string {
 
 // DisplayID returns the object ID with ULID suffix stripped from the filename part.
 func (o *Object) DisplayID() string {
-	return o.Type + "/" + o.DisplayName()
+	return o.ParseID().DisplayID()
 }
 
 // MarkUpdated sets the updated_at timestamp to now.
@@ -67,27 +72,31 @@ func (o *Object) Validate(schema *TypeSchema) []error {
 	return ValidateObject(o.Properties, schema)
 }
 
-// SetProperty validates and sets a single property value.
-// Returns an error if validation fails against the schema.
-func (o *Object) SetProperty(key string, value any, schema *TypeSchema) error {
+// SetProperty validates and sets a single property value, returning a domain event.
+func (o *Object) SetProperty(key string, value any, schema *TypeSchema) (DomainEvent, error) {
 	testProps := map[string]any{key: value}
 	if errs := ValidateObject(testProps, schema); len(errs) > 0 {
-		return errs[0]
+		return nil, errs[0]
 	}
+	old := o.Properties[key]
 	o.Properties[key] = value
-	return nil
+	return PropertyChanged{ObjectID: o.ID, Key: key, Old: old, New: value}, nil
 }
 
 // LinkTo appends a relation target to this object's properties.
 // For single-value relations, it overwrites. For multi-value, it appends.
-// Returns an error if the target already exists in a multi-value relation.
-func (o *Object) LinkTo(relName, targetID string, prop *Property) error {
-	return appendRelationValue(o.Properties, relName, targetID, prop.Multiple)
+// Returns an event and error; error if the target already exists in a multi-value relation.
+func (o *Object) LinkTo(relName, targetID string, prop *Property) (DomainEvent, error) {
+	if err := appendRelationValue(o.Properties, relName, targetID, prop.Multiple); err != nil {
+		return nil, err
+	}
+	return ObjectLinked{FromID: o.ID, ToID: targetID, RelName: relName}, nil
 }
 
 // Unlink removes a relation target from this object's properties.
-func (o *Object) Unlink(relName, targetID string, prop *Property) {
+func (o *Object) Unlink(relName, targetID string, prop *Property) DomainEvent {
 	removeRelationValue(o.Properties, relName, targetID, prop.Multiple)
+	return ObjectUnlinked{FromID: o.ID, ToID: targetID, RelName: relName}
 }
 
 // ApplyTemplate applies template properties and body to this object.
@@ -209,14 +218,14 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 		}
 	}
 
-	// Append ULID to filename for uniqueness
+	// Generate ObjectID with ULID suffix
 	slug := filename // preserve original slug for the name property
-	ulidStr, err := GenerateULID()
+	objID, err := NewObjectID(typeName, slug)
 	if err != nil {
 		return nil, err
 	}
-	filename = slug + "-" + ulidStr
-	id := typeName + "/" + filename
+	filename = objID.Filename
+	id := objID.String()
 
 	// Create type directory
 	if err := v.repo.EnsureDir(typeName); err != nil {
@@ -302,7 +311,7 @@ func (v *Vault) SetProperty(id, key string, value any) error {
 		return fmt.Errorf("load type: %w", err)
 	}
 
-	if err := obj.SetProperty(key, value, schema); err != nil {
+	if _, err := obj.SetProperty(key, value, schema); err != nil {
 		return err
 	}
 

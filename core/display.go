@@ -25,8 +25,8 @@ type DisplayProperty struct {
 // displayObjectID strips the ULID suffix from an object ID for human-readable display.
 // "person/robert-martin-01kk39c30y47xb1dvbs8ywqv50" → "person/robert-martin"
 func displayObjectID(id string) string {
-	if i := strings.IndexByte(id, '/'); i >= 0 {
-		return id[:i+1] + StripULID(id[i+1:])
+	if parsed, err := ParseObjectID(id); err == nil {
+		return parsed.DisplayID()
 	}
 	return StripULID(id)
 }
