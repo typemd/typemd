@@ -58,11 +58,6 @@ func (id ObjectID) DisplayID() string {
 	return id.Type + "/" + id.DisplayName()
 }
 
-// Slug returns the original slug (display name) used to create this ID.
-func (id ObjectID) Slug() string {
-	return StripULID(id.Filename)
-}
-
 // IsZero returns true if the ObjectID is uninitialized.
 func (id ObjectID) IsZero() bool {
 	return id.Type == "" && id.Filename == ""

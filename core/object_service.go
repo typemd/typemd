@@ -296,14 +296,12 @@ func (s *ObjectService) loadObjectAndSchema(id string) (*Object, *TypeSchema, er
 
 // checkNameUnique returns an error if an object with the given name already exists.
 func (s *ObjectService) checkNameUnique(typeName, name string) error {
-	results, err := s.index.Query(fmt.Sprintf("type=%s", typeName))
+	results, err := s.index.Query(fmt.Sprintf("type=%s name=%s", typeName, name))
 	if err != nil {
 		return fmt.Errorf("check name uniqueness: %w", err)
 	}
-	for _, r := range results {
-		if n, ok := r.Properties[NameProperty].(string); ok && n == name {
-			return fmt.Errorf("%s name %q already exists: %s", typeName, name, r.ID)
-		}
+	if len(results) > 0 {
+		return fmt.Errorf("%s name %q already exists: %s", typeName, name, results[0].ID)
 	}
 	return nil
 }

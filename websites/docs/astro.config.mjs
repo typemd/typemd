@@ -54,7 +54,7 @@ export default defineConfig({
 						{ label: 'Relations', slug: 'concepts/relations' },
 						{ label: 'Wiki-links', slug: 'concepts/wiki-links' },
 						{ label: 'Data Model', slug: 'concepts/data-model' },
-					{ label: 'Architecture', slug: 'concepts/architecture' },
+					    { label: 'Architecture', slug: 'concepts/architecture' },
 					],
 				},
 				{

@@ -1,26 +1,6 @@
 package core
 
-import (
-	"database/sql"
-	"fmt"
-	"strings"
-)
-
-// checkNameUnique returns an error if an object of the given type with the given name already exists.
-func (v *Vault) checkNameUnique(typeName, name string) error {
-	var id string
-	err := v.db.QueryRow(
-		"SELECT id FROM objects WHERE type = ? AND json_extract(properties, '$.name') = ? LIMIT 1",
-		typeName, name,
-	).Scan(&id)
-	if err == nil {
-		return fmt.Errorf("%s name %q already exists: %s", typeName, name, id)
-	}
-	if err == sql.ErrNoRows {
-		return nil
-	}
-	return fmt.Errorf("check name uniqueness: %w", err)
-}
+import "strings"
 
 // resolveTagReference resolves a tag reference string to an object ID.
 // If the value (after stripping "tag/" prefix) ends with a ULID suffix, it is

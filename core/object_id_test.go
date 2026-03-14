@@ -65,9 +65,6 @@ func TestNewObjectID(t *testing.T) {
 	if id.Type != "book" {
 		t.Errorf("Type = %q, want %q", id.Type, "book")
 	}
-	if id.Slug() != "clean-code" {
-		t.Errorf("Slug() = %q, want %q", id.Slug(), "clean-code")
-	}
 	if id.DisplayName() != "clean-code" {
 		t.Errorf("DisplayName() = %q, want %q", id.DisplayName(), "clean-code")
 	}
