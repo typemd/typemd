@@ -20,20 +20,20 @@
 
 ## 3. Extract LocalObjectRepository
 
-- [ ] 3.1 Create `core/local_object_repository.go` struct with root path field and constructor, encapsulating path conventions (ObjectsDir, TypesDir, ObjectPath, etc.)
-- [ ] 3.2 Move `GetObject()` file read + parse from `object.go` → `LocalObjectRepository.Get()`, returning `*Object`
-- [ ] 3.3 Move `saveObjectFile()` file write from `object.go` → `LocalObjectRepository.Save()`
-- [ ] 3.4 Move object file creation (O_EXCL write) from `NewObject()` → `LocalObjectRepository.Create()`
-- [ ] 3.5 Move `filepath.Walk` logic from `walkAndUpsertObjects()` → `LocalObjectRepository.Walk()`, returning `[]*Object`
-- [ ] 3.6 Move `ResolveID()` glob logic → `LocalObjectRepository.GlobIDs()`
-- [ ] 3.7 Move `os.Stat` for mtime → `LocalObjectRepository.ModTime()`
-- [ ] 3.8 Move `LoadType()` from `type_schema.go` → `LocalObjectRepository.GetSchema()`, move `ListTypes()` from `list.go` → `ListSchemas()`
-- [ ] 3.9 Move `LoadTemplate()` and `ListTemplates()` from `template.go` → `LocalObjectRepository.GetTemplate()` and `ListTemplates()`
-- [ ] 3.10 Move `LoadSharedProperties()` from `shared_properties.go` → `LocalObjectRepository.GetSharedProperties()`
-- [ ] 3.11 Move `MigrateSchemas()` schema file write → `LocalObjectRepository.WriteSchema()`
-- [ ] 3.12 Move `os.MkdirAll` for object dirs → `LocalObjectRepository.EnsureDir()`
-- [ ] 3.13 Write unit tests for `LocalObjectRepository` — verify all entity methods
-- [ ] 3.14 Update `Vault` to hold `ObjectRepository` interface, wire `LocalObjectRepository` in `Open()`, verify all existing tests pass
+- [x] 3.1 Create `core/local_object_repository.go` struct with root path field and constructor, encapsulating path conventions (ObjectsDir, TypesDir, ObjectPath, etc.)
+- [x] 3.2 Move `GetObject()` file read + parse from `object.go` → `LocalObjectRepository.Get()`, returning `*Object`
+- [x] 3.3 Move `saveObjectFile()` file write from `object.go` → `LocalObjectRepository.Save()`
+- [x] 3.4 Move object file creation (O_EXCL write) from `NewObject()` → `LocalObjectRepository.Create()`
+- [x] 3.5 Move `filepath.Walk` logic from `walkAndUpsertObjects()` → `LocalObjectRepository.Walk()`, returning `[]*Object`
+- [x] 3.6 Move `ResolveID()` glob logic → `LocalObjectRepository.GlobIDs()`
+- [x] 3.7 Move `os.Stat` for mtime → `LocalObjectRepository.ModTime()`
+- [x] 3.8 Move `LoadType()` from `type_schema.go` → `LocalObjectRepository.GetSchema()`, move `ListTypes()` from `list.go` → `ListSchemas()`
+- [x] 3.9 Move `LoadTemplate()` and `ListTemplates()` from `template.go` → `LocalObjectRepository.GetTemplate()` and `ListTemplates()`
+- [x] 3.10 Move `LoadSharedProperties()` from `shared_properties.go` → `LocalObjectRepository.GetSharedProperties()`
+- [x] 3.11 Move `MigrateSchemas()` schema file write → `LocalObjectRepository.WriteSchema()`
+- [x] 3.12 Move `os.MkdirAll` for object dirs → `LocalObjectRepository.EnsureDir()`
+- [x] 3.13 Write unit tests for `LocalObjectRepository` — verify all entity methods
+- [x] 3.14 Update `Vault` to hold `ObjectRepository` interface, wire `LocalObjectRepository` in `Open()`, verify all existing tests pass
 
 ## 4. Extract Projector
 

@@ -17,6 +17,7 @@ type Vault struct {
 	Root              string
 	db                *sql.DB
 	index             ObjectIndex
+	repo              ObjectRepository
 	sharedProperties  []Property
 	sharedPropsMap    map[string]Property
 	sharedPropsLoaded bool
@@ -24,7 +25,10 @@ type Vault struct {
 
 // NewVault creates a Vault rooted at the given directory.
 func NewVault(root string) *Vault {
-	return &Vault{Root: root}
+	return &Vault{
+		Root: root,
+		repo: NewLocalObjectRepository(root),
+	}
 }
 
 // Dir returns the vault metadata directory path.
@@ -92,11 +96,13 @@ func (v *Vault) Open() error {
 	}
 	v.db = db
 	v.index = NewSQLiteObjectIndex(db)
+	v.repo = NewLocalObjectRepository(v.Root)
 
 	if err := v.index.EnsureSchema(); err != nil {
 		v.db.Close()
 		v.db = nil
 		v.index = nil
+		v.repo = nil
 		return fmt.Errorf("ensure schema: %w", err)
 	}
 
@@ -105,6 +111,7 @@ func (v *Vault) Open() error {
 		v.db.Close()
 		v.db = nil
 		v.index = nil
+		v.repo = nil
 		return fmt.Errorf("check index: %w", err)
 	}
 	if sync {
@@ -112,6 +119,7 @@ func (v *Vault) Open() error {
 			v.db.Close()
 			v.db = nil
 			v.index = nil
+			v.repo = nil
 			return fmt.Errorf("auto sync index: %w", err)
 		}
 	}
@@ -127,6 +135,7 @@ func (v *Vault) Close() error {
 	err := v.db.Close()
 	v.db = nil
 	v.index = nil
+	v.repo = nil
 	return err
 }
 

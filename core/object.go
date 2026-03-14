@@ -4,8 +4,6 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 	"time"
 
@@ -176,10 +174,9 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 	}
 	filename = slug + "-" + ulidStr
 	id := typeName + "/" + filename
-	objPath := v.ObjectPath(typeName, filename)
 
 	// Create type directory
-	if err := os.MkdirAll(v.ObjectDir(typeName), 0755); err != nil {
+	if err := v.repo.EnsureDir(typeName); err != nil {
 		return nil, fmt.Errorf("create directory: %w", err)
 	}
 
@@ -207,24 +204,16 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 		body = tmpl.Body
 	}
 
-	// Write .md file (O_EXCL ensures atomic uniqueness check)
-	data, err := writeFrontmatter(props, body, OrderedPropKeys(props, schema))
-	if err != nil {
-		return nil, fmt.Errorf("write frontmatter: %w", err)
+	// Write .md file via repository (O_EXCL ensures atomic uniqueness check)
+	newObj := &Object{
+		ID:         id,
+		Type:       typeName,
+		Filename:   filename,
+		Properties: props,
+		Body:       body,
 	}
-	f, err := os.OpenFile(objPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
-	if err != nil {
-		if os.IsExist(err) {
-			return nil, fmt.Errorf("object already exists: %s", id)
-		}
-		return nil, fmt.Errorf("create file: %w", err)
-	}
-	if _, err := f.Write(data); err != nil {
-		f.Close()
-		return nil, fmt.Errorf("write file: %w", err)
-	}
-	if err := f.Close(); err != nil {
-		return nil, fmt.Errorf("close file: %w", err)
+	if err := v.repo.Create(newObj, OrderedPropKeys(props, schema)); err != nil {
+		return nil, fmt.Errorf("create object file: %w", err)
 	}
 
 	// Insert into index
@@ -236,28 +225,19 @@ func (v *Vault) NewObject(typeName, filename, templateName string) (*Object, err
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
-	return &Object{
-		ID:         id,
-		Type:       typeName,
-		Filename:   filename,
-		Properties: props,
-		Body:       body,
-	}, nil
+	return newObj, nil
 }
 
-// saveObjectFile writes object properties to both .md file and SQLite.
+// saveObjectFile writes object properties to both .md file and index.
 func (v *Vault) saveObjectFile(obj *Object) error {
 	obj.Properties[UpdatedAtProperty] = time.Now().Format(time.RFC3339)
 	// LoadType may fail for unknown types; nil schema is safe here because
 	// OrderedPropKeys falls back to map iteration order when schema is nil.
 	schema, _ := v.LoadType(obj.Type)
-	data, err := writeFrontmatter(obj.Properties, obj.Body, OrderedPropKeys(obj.Properties, schema))
-	if err != nil {
-		return fmt.Errorf("write frontmatter: %w", err)
-	}
-	objPath := v.ObjectPath(obj.Type, obj.Filename)
-	if err := os.WriteFile(objPath, data, 0644); err != nil {
-		return fmt.Errorf("write file: %w", err)
+	keyOrder := OrderedPropKeys(obj.Properties, schema)
+
+	if err := v.repo.Save(obj, keyOrder); err != nil {
+		return fmt.Errorf("save object file: %w", err)
 	}
 
 	propsJSON, err := json.Marshal(obj.Properties)
@@ -265,7 +245,7 @@ func (v *Vault) saveObjectFile(obj *Object) error {
 		return fmt.Errorf("marshal properties: %w", err)
 	}
 	if err := v.index.Upsert(obj.ID, obj.Type, obj.Filename, string(propsJSON), obj.Body); err != nil {
-		return fmt.Errorf("update object: %w", err)
+		return fmt.Errorf("update index: %w", err)
 	}
 
 	return nil
@@ -299,30 +279,7 @@ func (v *Vault) SetProperty(id, key string, value any) error {
 
 // GetObject reads an object from its Markdown file.
 func (v *Vault) GetObject(id string) (*Object, error) {
-	parts := strings.SplitN(id, "/", 2)
-	if len(parts) != 2 {
-		return nil, fmt.Errorf("invalid object ID: %s", id)
-	}
-	typeName, filename := parts[0], parts[1]
-
-	objPath := v.ObjectPath(typeName, filename)
-	data, err := os.ReadFile(objPath)
-	if err != nil {
-		return nil, fmt.Errorf("read object %s: %w", id, err)
-	}
-
-	props, body, err := parseFrontmatter(data)
-	if err != nil {
-		return nil, fmt.Errorf("parse object %s: %w", id, err)
-	}
-
-	return &Object{
-		ID:         id,
-		Type:       typeName,
-		Filename:   filename,
-		Properties: props,
-		Body:       body,
-	}, nil
+	return v.repo.Get(id)
 }
 
 // ResolveID resolves a (possibly abbreviated) object ID to the full ID.
@@ -335,15 +292,13 @@ func (v *Vault) ResolveID(prefix string) (string, error) {
 	}
 	typeName, namePrefix := parts[0], parts[1]
 
-	// 1. Exact match
-	exactPath := v.ObjectPath(typeName, namePrefix)
-	if _, err := os.Stat(exactPath); err == nil {
+	// 1. Exact match — try to get the object directly
+	if _, err := v.repo.ModTime(prefix); err == nil {
 		return prefix, nil
 	}
 
 	// 2. Glob for prefix matches
-	pattern := filepath.Join(v.ObjectDir(typeName), namePrefix+"*.md")
-	matches, err := filepath.Glob(pattern)
+	matches, err := v.repo.GlobIDs(typeName, namePrefix)
 	if err != nil {
 		return "", fmt.Errorf("glob error: %w", err)
 	}
@@ -352,18 +307,9 @@ func (v *Vault) ResolveID(prefix string) (string, error) {
 	case 0:
 		return "", fmt.Errorf("no object found matching %q", prefix)
 	case 1:
-		// Extract ID from path: strip dir prefix and .md suffix
-		base := filepath.Base(matches[0])
-		filename := strings.TrimSuffix(base, ".md")
-		return typeName + "/" + filename, nil
+		return matches[0], nil
 	default:
-		candidates := make([]string, len(matches))
-		for i, m := range matches {
-			base := filepath.Base(m)
-			filename := strings.TrimSuffix(base, ".md")
-			candidates[i] = typeName + "/" + filename
-		}
-		return "", &AmbiguousMatchError{Prefix: prefix, Matches: candidates}
+		return "", &AmbiguousMatchError{Prefix: prefix, Matches: matches}
 	}
 }
 

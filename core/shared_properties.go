@@ -1,40 +1,11 @@
 package core
 
-import (
-	"errors"
-	"fmt"
-	"os"
-
-	"gopkg.in/yaml.v3"
-)
+import "fmt"
 
 // LoadSharedProperties loads shared property definitions from .typemd/properties.yaml.
 // Returns an empty slice if the file does not exist.
-// Results are cached on the Vault for reuse across multiple LoadType() calls.
 func (v *Vault) LoadSharedProperties() ([]Property, error) {
-	if v.sharedPropsLoaded {
-		return v.sharedProperties, nil
-	}
-
-	data, err := os.ReadFile(v.SharedPropertiesPath())
-	if err != nil {
-		if errors.Is(err, os.ErrNotExist) {
-			v.sharedProperties = nil
-			v.sharedPropsLoaded = true
-			return nil, nil
-		}
-		return nil, fmt.Errorf("read shared properties: %w", err)
-	}
-
-	var file SharedPropertiesFile
-	if err := yaml.Unmarshal(data, &file); err != nil {
-		return nil, fmt.Errorf("parse shared properties: %w", err)
-	}
-
-	v.sharedProperties = file.Properties
-	v.sharedPropsMap = SharedPropertiesMap(file.Properties)
-	v.sharedPropsLoaded = true
-	return v.sharedProperties, nil
+	return v.repo.GetSharedProperties()
 }
 
 // SharedPropertiesMap returns shared properties as a map keyed by name.

@@ -3,13 +3,9 @@ package core
 import (
 	"fmt"
 	"net/url"
-	"os"
-	"path/filepath"
 	"regexp"
 	"sort"
 	"time"
-
-	"gopkg.in/yaml.v3"
 )
 
 var dateRegexp = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
@@ -135,63 +131,8 @@ var defaultTypes = map[string]TypeSchema{
 }
 
 // LoadType loads a type schema by name.
-// It first looks for a custom YAML file in .typemd/types/{name}.yaml,
-// then falls back to built-in defaults.
-// If the schema contains `use` entries, they are resolved from shared properties.
 func (v *Vault) LoadType(name string) (*TypeSchema, error) {
-	path := filepath.Join(v.TypesDir(), name+".yaml")
-
-	data, err := os.ReadFile(path)
-	if err == nil {
-		var schema TypeSchema
-		if err := yaml.Unmarshal(data, &schema); err != nil {
-			return nil, fmt.Errorf("parse type schema %s: %w", name, err)
-		}
-
-		// Extract name template from properties if present
-		filtered := schema.Properties[:0]
-		for _, prop := range schema.Properties {
-			if prop.Name == NameProperty {
-				schema.NameTemplate = prop.Template
-				continue
-			}
-			filtered = append(filtered, prop)
-		}
-		schema.Properties = filtered
-
-		// Resolve use entries if any exist
-		if err := v.resolveSchemaUseEntries(&schema); err != nil {
-			return nil, fmt.Errorf("resolve type schema %s: %w", name, err)
-		}
-
-		return &schema, nil
-	}
-
-	if schema, ok := defaultTypes[name]; ok {
-		return &schema, nil
-	}
-
-	return nil, fmt.Errorf("unknown type: %s", name)
-}
-
-// resolveSchemaUseEntries resolves use entries in a schema if any are present.
-func (v *Vault) resolveSchemaUseEntries(schema *TypeSchema) error {
-	hasUse := false
-	for _, p := range schema.Properties {
-		if p.Use != "" {
-			hasUse = true
-			break
-		}
-	}
-	if !hasUse {
-		return nil
-	}
-
-	_, err := v.LoadSharedProperties()
-	if err != nil {
-		return err
-	}
-	return resolveUseEntries(schema, v.sharedPropsMap)
+	return v.repo.GetSchema(name)
 }
 
 // validPropertyTypes lists allowed property types.
