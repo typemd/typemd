@@ -1,0 +1,27 @@
+name: CI — Docs
+
+on:
+  pull_request:
+    branches: [main]
+    paths:
+      - "websites/docs/**"
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: websites/docs/package-lock.json
+
+      - name: Install dependencies
+        working-directory: websites/docs
+        run: npm ci
+
+      - name: Build docs
+        working-directory: websites/docs
+        run: npx astro build
