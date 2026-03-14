@@ -1,13 +1,27 @@
 // @ts-check
 import { defineConfig } from 'astro/config';
 import starlight from '@astrojs/starlight';
-
 // https://astro.build/config
 export default defineConfig({
 	site: 'https://docs.typemd.io',
 	integrations: [
 		starlight({
 			title: 'TypeMD Docs',
+			head: [
+				{
+					tag: 'script',
+					attrs: { type: 'module' },
+					content: `
+						import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs';
+						document.querySelectorAll('code.language-mermaid').forEach(el => {
+							const pre = el.parentElement;
+							pre.classList.add('mermaid');
+							pre.textContent = el.textContent;
+						});
+						mermaid.initialize({ startOnLoad: true, theme: 'neutral' });
+					`,
+				},
+			],
 			defaultLocale: 'root',
 			locales: {
 				root: {
@@ -40,6 +54,7 @@ export default defineConfig({
 						{ label: 'Relations', slug: 'concepts/relations' },
 						{ label: 'Wiki-links', slug: 'concepts/wiki-links' },
 						{ label: 'Data Model', slug: 'concepts/data-model' },
+					{ label: 'Architecture', slug: 'concepts/architecture' },
 					],
 				},
 				{
