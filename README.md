@@ -129,6 +129,9 @@ tmd --reindex
 # Validate schemas, objects, and relations
 tmd type validate
 
+# Comprehensive vault health check (superset of validate)
+tmd doctor
+
 # Show type schema details
 tmd type show book
 

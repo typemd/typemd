@@ -59,6 +59,12 @@ Object IDs support **prefix matching** — `tmd object show book/clean` works if
 | `tmd type show <type>` | Display schema definition with all properties |
 | `tmd type validate` | Validate schemas, objects, relations, and wiki-links |
 
+### Diagnostics
+
+| Command | Description |
+|---------|-------------|
+| `tmd doctor` | Comprehensive vault health check (superset of validate) with auto-fix |
+
 ### Relations
 
 | Command | Description |
@@ -306,7 +312,7 @@ The right panel follows the sidebar cursor:
 ## Tips for Working with typemd
 
 - **Always read type schemas first** before creating or modifying objects — check `.typemd/types/*.yaml`
-- **Use `tmd type validate`** after making changes to catch schema/object/relation errors
+- **Use `tmd doctor`** for a comprehensive health check, or `tmd type validate` for quick schema validation
 - **Object IDs include ULIDs** — don't guess them, use `tmd object list` to find exact IDs
 - **Relations are properties** — set them in frontmatter, not as wiki-links (wiki-links are for body text references)
 - **System properties are managed** — you can set `name` and `description`, but `created_at` is immutable and `updated_at` auto-updates on save

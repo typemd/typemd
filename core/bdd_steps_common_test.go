@@ -56,6 +56,9 @@ type domainContext struct {
 	// template results
 	templateNames  []string
 	loadedTemplate *Template
+
+	// doctor results
+	doctorReport *DoctorReport
 }
 
 func newDomainContext() *domainContext {

@@ -130,15 +130,23 @@ func (r *LocalObjectRepository) Create(obj *Object, keyOrder []string) error {
 	return f.Close()
 }
 
-// Walk traverses all object files and returns parsed domain entities.
-// Unparseable files are skipped silently.
-func (r *LocalObjectRepository) Walk() ([]*Object, error) {
+// CorruptedFile represents a file that could not be parsed.
+type CorruptedFile struct {
+	Path  string // relative path like "book/broken-01abc.md"
+	Error error
+}
+
+// walkObjects is the shared implementation for Walk and WalkAll.
+// When reportCorrupted is true, unparseable files are collected; otherwise they are skipped.
+func (r *LocalObjectRepository) walkObjects(reportCorrupted bool) ([]*Object, []CorruptedFile, error) {
 	objsDir := r.objectsDir()
 	if _, err := os.Stat(objsDir); os.IsNotExist(err) {
-		return nil, nil
+		return nil, nil, nil
 	}
 
-	objects := make([]*Object, 0) // non-nil: directory exists but may be empty
+	objects := make([]*Object, 0)
+	var corrupted []CorruptedFile
+
 	err := filepath.Walk(objsDir, func(path string, info os.FileInfo, err error) error {
 		if err != nil || info.IsDir() || !strings.HasSuffix(path, ".md") {
 			return nil
@@ -155,20 +163,35 @@ func (r *LocalObjectRepository) Walk() ([]*Object, error) {
 		}
 		typeName := parts[0]
 		filename := strings.TrimSuffix(parts[1], ".md")
-		id := typeName + "/" + filename
 
-		data, err := os.ReadFile(path)
-		if err != nil {
-			return nil // skip unreadable files
+		data, readErr := os.ReadFile(path)
+		if readErr != nil {
+			if reportCorrupted {
+				corrupted = append(corrupted, CorruptedFile{Path: rel, Error: readErr})
+			}
+			return nil
 		}
 
-		props, body, err := parseFrontmatter(data)
-		if err != nil {
-			return nil // skip unparseable files
+		// Detect files without frontmatter delimiters before parsing,
+		// since the frontmatter library silently returns empty props for these.
+		if reportCorrupted && !strings.HasPrefix(string(data), "---") {
+			corrupted = append(corrupted, CorruptedFile{
+				Path:  rel,
+				Error: fmt.Errorf("missing frontmatter delimiters"),
+			})
+			return nil
+		}
+
+		props, body, parseErr := parseFrontmatter(data)
+		if parseErr != nil {
+			if reportCorrupted {
+				corrupted = append(corrupted, CorruptedFile{Path: rel, Error: parseErr})
+			}
+			return nil
 		}
 
 		objects = append(objects, &Object{
-			ID:         id,
+			ID:         typeName + "/" + filename,
 			Type:       typeName,
 			Filename:   filename,
 			Properties: props,
@@ -177,10 +200,23 @@ func (r *LocalObjectRepository) Walk() ([]*Object, error) {
 		return nil
 	})
 	if err != nil {
-		return nil, fmt.Errorf("walk objects: %w", err)
+		return nil, nil, fmt.Errorf("walk objects: %w", err)
 	}
 
-	return objects, nil
+	return objects, corrupted, nil
+}
+
+// Walk traverses all object files and returns parsed domain entities.
+// Unparseable files are skipped silently.
+func (r *LocalObjectRepository) Walk() ([]*Object, error) {
+	objects, _, err := r.walkObjects(false)
+	return objects, err
+}
+
+// WalkAll traverses all object files and returns both parsed entities and corrupted files.
+// Unlike Walk(), unparseable files are reported as CorruptedFile entries instead of silently skipped.
+func (r *LocalObjectRepository) WalkAll() ([]*Object, []CorruptedFile, error) {
+	return r.walkObjects(true)
 }
 
 // GlobIDs finds object IDs matching a prefix pattern within a type directory.

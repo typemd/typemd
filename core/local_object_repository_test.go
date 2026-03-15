@@ -347,3 +347,120 @@ func TestLocalObjectRepository_GetSharedPropertiesNoFile(t *testing.T) {
 		t.Errorf("expected nil for missing file, got %v", props)
 	}
 }
+
+// --- WalkAll tests ---
+
+func TestWalkAll_EmptyDir(t *testing.T) {
+	repo := setupTestRepo(t)
+	// Remove objects dir so it doesn't exist
+	os.RemoveAll(filepath.Join(repo.root, "objects"))
+
+	objects, corrupted, err := repo.WalkAll()
+	if err != nil {
+		t.Fatalf("WalkAll: %v", err)
+	}
+	if objects != nil {
+		t.Errorf("expected nil objects, got %d", len(objects))
+	}
+	if corrupted != nil {
+		t.Errorf("expected nil corrupted, got %d", len(corrupted))
+	}
+}
+
+func TestWalkAll_ValidFiles(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	os.MkdirAll(filepath.Join(repo.root, "objects", "book"), 0755)
+	os.MkdirAll(filepath.Join(repo.root, "objects", "note"), 0755)
+	os.WriteFile(filepath.Join(repo.root, "objects", "book", "a-01abc.md"), []byte("---\nname: A\n---\n"), 0644)
+	os.WriteFile(filepath.Join(repo.root, "objects", "note", "b-01abc.md"), []byte("---\nname: B\n---\n"), 0644)
+
+	objects, corrupted, err := repo.WalkAll()
+	if err != nil {
+		t.Fatalf("WalkAll: %v", err)
+	}
+	if len(objects) != 2 {
+		t.Errorf("expected 2 objects, got %d", len(objects))
+	}
+	if len(corrupted) != 0 {
+		t.Errorf("expected 0 corrupted, got %d", len(corrupted))
+	}
+}
+
+func TestWalkAll_MixedFiles(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	os.MkdirAll(filepath.Join(repo.root, "objects", "book"), 0755)
+	// Valid file
+	os.WriteFile(filepath.Join(repo.root, "objects", "book", "good-01abc.md"), []byte("---\nname: Good\n---\n"), 0644)
+	// Corrupted file: invalid YAML
+	os.WriteFile(filepath.Join(repo.root, "objects", "book", "bad-02def.md"), []byte("---\n: :\n  bad yaml[[\n---\n"), 0644)
+
+	objects, corrupted, err := repo.WalkAll()
+	if err != nil {
+		t.Fatalf("WalkAll: %v", err)
+	}
+	if len(objects) != 1 {
+		t.Errorf("expected 1 valid object, got %d", len(objects))
+	}
+	if len(corrupted) != 1 {
+		t.Errorf("expected 1 corrupted file, got %d", len(corrupted))
+	}
+	if len(corrupted) > 0 {
+		expected := filepath.Join("book", "bad-02def.md")
+		if corrupted[0].Path != expected {
+			t.Errorf("corrupted path = %q, want %q", corrupted[0].Path, expected)
+		}
+		if corrupted[0].Error == nil {
+			t.Error("expected non-nil error on corrupted file")
+		}
+	}
+}
+
+func TestWalkAll_MalformedYAML(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	os.MkdirAll(filepath.Join(repo.root, "objects", "note"), 0755)
+	// Frontmatter delimiters present, but YAML content is malformed
+	os.WriteFile(filepath.Join(repo.root, "objects", "note", "broken-01abc.md"), []byte("---\n[invalid: yaml: content\n---\n"), 0644)
+
+	objects, corrupted, err := repo.WalkAll()
+	if err != nil {
+		t.Fatalf("WalkAll: %v", err)
+	}
+	if len(objects) != 0 {
+		t.Errorf("expected 0 objects, got %d", len(objects))
+	}
+	if len(corrupted) != 1 {
+		t.Fatalf("expected 1 corrupted, got %d", len(corrupted))
+	}
+	if corrupted[0].Error == nil {
+		t.Error("expected non-nil error for malformed YAML")
+	}
+}
+
+func TestWalkAll_NoFrontmatterDelimiters(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	os.MkdirAll(filepath.Join(repo.root, "objects", "book"), 0755)
+	// File with no frontmatter delimiters at all
+	os.WriteFile(filepath.Join(repo.root, "objects", "book", "nofm-01abc.md"), []byte("Just some plain text with no frontmatter.\n"), 0644)
+
+	objects, corrupted, err := repo.WalkAll()
+	if err != nil {
+		t.Fatalf("WalkAll: %v", err)
+	}
+	if len(objects) != 0 {
+		t.Errorf("expected 0 objects, got %d", len(objects))
+	}
+	if len(corrupted) != 1 {
+		t.Fatalf("expected 1 corrupted, got %d", len(corrupted))
+	}
+	expected := filepath.Join("book", "nofm-01abc.md")
+	if corrupted[0].Path != expected {
+		t.Errorf("corrupted path = %q, want %q", corrupted[0].Path, expected)
+	}
+	if corrupted[0].Error == nil {
+		t.Error("expected non-nil error for file without frontmatter delimiters")
+	}
+}

@@ -150,6 +150,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initUniqueSteps(ctx, dc)
 	initTemplateSteps(ctx, dc)
 	initTypeCrudSteps(ctx, dc)
+	initDoctorSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {
