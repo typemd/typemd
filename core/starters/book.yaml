@@ -1,0 +1,13 @@
+name: book
+emoji: 📚
+properties:
+  - name: status
+    type: select
+    emoji: 📋
+    options:
+      - value: to-read
+      - value: reading
+      - value: done
+  - name: rating
+    type: number
+    emoji: ⭐

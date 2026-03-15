@@ -1,0 +1,10 @@
+name: idea
+emoji: 💡
+properties:
+  - name: status
+    type: select
+    emoji: 🌱
+    options:
+      - value: seed
+      - value: growing
+      - value: ready

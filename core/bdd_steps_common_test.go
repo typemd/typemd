@@ -63,6 +63,9 @@ type domainContext struct {
 
 	// display properties results
 	displayProps []DisplayProperty
+
+	// starter types results
+	starterTypes []StarterType
 }
 
 func newDomainContext() *domainContext {

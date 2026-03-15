@@ -79,8 +79,11 @@ Download from [GitHub Releases](https://github.com/typemd/typemd/releases).
 ## Usage
 
 ```bash
-# Initialize a new vault
+# Initialize a new vault (interactive starter type selection)
 tmd init
+
+# Initialize without starter types
+tmd init --no-starters
 
 # Open TUI (current directory)
 tmd

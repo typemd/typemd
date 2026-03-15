@@ -132,6 +132,7 @@ graph LR
 | `type_schema.go` | TypeSchema entity + validation + YAML serialization + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
 | `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
 | `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
+| `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
 
 ### TUI Architecture
 
@@ -153,6 +154,7 @@ The right panel automatically follows the sidebar cursor: moving to an object sh
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, and props visibility)
+- Starter type templates: `core/starters/*.yaml` (embedded in binary via `//go:embed`; offered during `tmd init` as opt-in type schemas — idea, note, book)
 - Object templates: `templates/<type>/<name>.md` (optional, Markdown files with frontmatter property overrides and body content applied during `tmd object create`; single template auto-applies, multiple templates prompt for selection or use `-t` flag)
 - Object files: `objects/<type>/<name>.md`
 

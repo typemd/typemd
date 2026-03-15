@@ -11,7 +11,7 @@ sidebar:
 tmd init
 ```
 
-This creates the `.typemd/` directory structure and SQLite database in the current directory.
+This creates the `.typemd/` directory structure and SQLite database in the current directory. You'll be prompted to select starter types (idea, note, book) — press **Enter** to accept the defaults, or customize your selection with **Space** to toggle and **Esc** to skip.
 
 ## 2. Open the TUI
 

@@ -199,3 +199,27 @@ func (v *Vault) Init() error {
 	return nil
 }
 
+// WriteStarterTypes writes the named starter type schemas to the vault's types directory.
+// Only names matching an available starter type are written; unknown names are ignored.
+func (v *Vault) WriteStarterTypes(names []string) error {
+	if len(names) == 0 {
+		return nil
+	}
+	starters := StarterTypes()
+	byName := make(map[string]StarterType, len(starters))
+	for _, st := range starters {
+		byName[st.Name] = st
+	}
+	for _, name := range names {
+		st, ok := byName[name]
+		if !ok {
+			continue
+		}
+		path := filepath.Join(v.TypesDir(), name+".yaml")
+		if err := os.WriteFile(path, st.YAML, 0644); err != nil {
+			return fmt.Errorf("write starter type %s: %w", name, err)
+		}
+	}
+	return nil
+}
+
