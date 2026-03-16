@@ -52,4 +52,4 @@
 - [x] 8.1 Remove old `newObjectMode`, `newObjectName`, `newObjectType` fields and `updateNewObject()` function
 - [x] 8.2 Update `Update()` mode priority chain to use `create != nil` check instead of `newObjectMode`
 - [x] 8.3 Run full test suite (`go test ./...`) and fix any regressions
-- [ ] 8.4 Manual TUI testing: verify both modes, template selection, name template skip, batch creation, error display, flash messages
+- [x] 8.4 Manual TUI testing: verify both modes, template selection, name template skip, batch creation, error display, flash messages
