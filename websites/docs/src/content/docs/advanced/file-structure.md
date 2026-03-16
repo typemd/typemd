@@ -17,6 +17,7 @@ vault/
 │   ├── types/              # user-defined type schemas (YAML)
 │   │   ├── book.yaml       # example: you create this
 │   │   └── person.yaml     # example: you create this
+│   ├── config.yaml         # vault configuration (optional)
 │   ├── properties.yaml     # shared property definitions (optional)
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
@@ -30,7 +31,7 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-- `.typemd/` — configuration and internal state (type schemas, shared properties, index, TUI state)
+- `.typemd/` — configuration and internal state (vault config, type schemas, shared properties, index, TUI state)
 - `templates/` — optional object templates organized by type
 - `objects/` — all Object files organized by type
 
@@ -60,7 +61,7 @@ All Objects have five system properties managed by TypeMD. These always appear f
 
 | Property | Description | Mutable |
 |----------|-------------|---------|
-| `name` | Display name, auto-populated from the slug on creation | User-authored |
+| `name` | Display name, preserves the original input on creation (auto-derived from slug for pre-slugified names) | User-authored |
 | `description` | Optional single-line summary for list displays and search results | User-authored |
 | `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) | Auto-managed |
 | `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) | Auto-managed |
@@ -113,13 +114,13 @@ Each type can have one or more templates at `templates/<type>/<name>.md`. Templa
 
 ```bash
 # Single template — auto-applied
-tmd object create book clean-code
+tmd object create book "Clean Code"
 
 # Explicit template selection
-tmd object create book clean-code -t review
+tmd object create book "Clean Code" -t review
 
 # Multiple templates, no flag — interactive selection
-tmd object create book clean-code
+tmd object create book "Clean Code"
 ```
 
 Template frontmatter properties override schema defaults. The template body becomes the initial Object body. Auto-managed system properties (`created_at`, `updated_at`) in templates are ignored.

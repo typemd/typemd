@@ -23,6 +23,7 @@ type Vault struct {
 	Objects           *ObjectService
 	Queries           *QueryService
 	Events            *EventDispatcher
+	config            *VaultConfig
 	sharedProperties  []Property
 	sharedPropsMap    map[string]Property
 	sharedPropsLoaded bool
@@ -71,6 +72,20 @@ func (v *Vault) TemplatePath(typeName, templateName string) string {
 	return filepath.Join(v.TypeTemplatesDir(typeName), templateName+".md")
 }
 
+// ConfigPath returns the path to the vault config file.
+func (v *Vault) ConfigPath() string {
+	return filepath.Join(v.Dir(), configFileName)
+}
+
+// DefaultType returns the configured default type for CLI commands.
+// Returns an empty string if not configured.
+func (v *Vault) DefaultType() string {
+	if v.config == nil {
+		return ""
+	}
+	return v.config.CLI.DefaultType
+}
+
 // ObjectsDir returns the objects directory path.
 func (v *Vault) ObjectsDir() string {
 	return filepath.Join(v.Root, "objects")
@@ -105,6 +120,13 @@ func (v *Vault) Open() error {
 	v.Events = NewEventDispatcher()
 	v.Objects = NewObjectService(v.repo, v.index, v.Events)
 	v.Queries = NewQueryService(v.repo, v.index)
+	cfg, err := loadVaultConfig(v.Dir())
+	if err != nil {
+		v.closeInternal()
+		return fmt.Errorf("load config: %w", err)
+	}
+	v.config = cfg
+
 	v.projector = NewProjector(v.repo, v.index, func(slug string) (*Object, error) {
 		return v.Objects.Create(TagTypeName, slug, "")
 	})
@@ -141,6 +163,7 @@ func (v *Vault) closeInternal() {
 	v.Objects = nil
 	v.Queries = nil
 	v.Events = nil
+	v.config = nil
 }
 
 // Close closes the SQLite database connection.
@@ -156,6 +179,7 @@ func (v *Vault) Close() error {
 	v.Objects = nil
 	v.Queries = nil
 	v.Events = nil
+	v.config = nil
 	return err
 }
 

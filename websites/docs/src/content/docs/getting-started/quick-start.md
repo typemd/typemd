@@ -48,9 +48,11 @@ properties:
 Use the CLI to create an object:
 
 ```bash
-tmd object create book golang-in-action
-# Created: book/golang-in-action
+tmd object create book "Go in Action"
+# Created: book/go-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 ```
+
+Names with spaces are automatically converted to slugs (e.g., "Go in Action" → `go-in-action`). The original name is preserved in the `name` frontmatter property.
 
 The CLI automatically appends a ULID to the slug for uniqueness. Alternatively, you can create a file manually at `objects/book/golang-in-action.md` — manual files do not require a ULID and are backward compatible.
 

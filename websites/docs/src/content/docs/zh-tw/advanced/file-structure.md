@@ -17,6 +17,7 @@ vault/
 │   ├── types/              # 使用者定義的 type schema（YAML）
 │   │   ├── book.yaml       # 範例：由你建立
 │   │   └── person.yaml     # 範例：由你建立
+│   ├── config.yaml         # vault 設定（選填）
 │   ├── properties.yaml     # 共用屬性定義（選填）
 │   ├── index.db            # SQLite 索引（自動更新）
 │   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
@@ -30,7 +31,7 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-- `.typemd/` — 設定與內部狀態（type schema、共用屬性、索引、TUI 狀態）
+- `.typemd/` — 設定與內部狀態（vault 設定、type schema、共用屬性、索引、TUI 狀態）
 - `templates/` — 選填的 object template，依 type 分類
 - `objects/` — 所有 Object 檔案，依 type 分類
 

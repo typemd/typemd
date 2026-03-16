@@ -64,8 +64,11 @@ func (s *ObjectService) Create(typeName, filename, templateName string) (*Object
 		}
 	}
 
-	// Generate ObjectID with ULID suffix
-	slug := filename
+	// Generate ObjectID with ULID suffix (slugify the filename for the ID)
+	slug := Slugify(filename)
+	if slug == "" {
+		return nil, fmt.Errorf("name %q must contain at least one alphanumeric character", filename)
+	}
 	objID, err := NewObjectID(typeName, slug)
 	if err != nil {
 		return nil, err
@@ -77,8 +80,9 @@ func (s *ObjectService) Create(typeName, filename, templateName string) (*Object
 	}
 
 	// Generate initial properties from schema defaults
+	// Name property preserves original input (not the slugified version)
 	props := make(map[string]any)
-	props[NameProperty] = slug
+	props[NameProperty] = filename
 	nowStr := now.Format(time.RFC3339)
 	props[CreatedAtProperty] = nowStr
 	props[UpdatedAtProperty] = nowStr

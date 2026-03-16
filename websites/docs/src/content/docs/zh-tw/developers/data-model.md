@@ -83,3 +83,21 @@ properties:
 ```
 
 唯一性在建立時透過檢查索引中是否已存在相同 type 和 name 的 Object 來強制執行。也可透過 `tmd type validate` 驗證。內建的 `tag` type 預設啟用 `unique: true`。
+
+## Vault 設定
+
+`.typemd/config.yaml` 是選填的 vault 層級設定檔，使用介面層命名空間：
+
+```yaml
+# .typemd/config.yaml
+cli:
+  default_type: idea
+```
+
+目前支援的設定：
+
+| Key | 說明 |
+|-----|------|
+| `cli.default_type` | `tmd object create` 省略 type 參數時使用的預設 object type |
+
+Config 檔在 vault 開啟時載入。若檔案不存在或為空，所有設定使用零值（不會出錯）。無效的 YAML 會產生錯誤。

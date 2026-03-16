@@ -149,3 +149,104 @@ func TestCreateCmd_InvalidTemplateFlag(t *testing.T) {
 	}
 }
 
+func TestResolveTypeAndName(t *testing.T) {
+	knownTypes := []string{"book", "idea", "note", "tag"}
+
+	tests := []struct {
+		name        string
+		args        []string
+		typeFlag    string
+		defaultType string
+		wantType    string
+		wantName    string
+		wantErr     bool
+	}{
+		{
+			name:     "two args: type and name (backward compatible)",
+			args:     []string{"book", "Clean Code"},
+			wantType: "book",
+			wantName: "Clean Code",
+		},
+		{
+			name:     "one arg: known type",
+			args:     []string{"book"},
+			wantType: "book",
+			wantName: "",
+		},
+		{
+			name:        "one arg: not a type, has default",
+			args:        []string{"Some Thought"},
+			defaultType: "idea",
+			wantType:    "idea",
+			wantName:    "Some Thought",
+		},
+		{
+			name:    "one arg: not a type, no default",
+			args:    []string{"Some Thought"},
+			wantErr: true,
+		},
+		{
+			name:        "zero args: has default type",
+			args:        []string{},
+			defaultType: "idea",
+			wantType:    "idea",
+			wantName:    "",
+		},
+		{
+			name:    "zero args: no default type",
+			args:    []string{},
+			wantErr: true,
+		},
+		{
+			name:     "type flag: with name",
+			args:     []string{"Meeting Notes"},
+			typeFlag: "note",
+			wantType: "note",
+			wantName: "Meeting Notes",
+		},
+		{
+			name:     "type flag: no name",
+			args:     []string{},
+			typeFlag: "idea",
+			wantType: "idea",
+			wantName: "",
+		},
+		{
+			name:        "type flag overrides config default",
+			args:        []string{"Meeting Notes"},
+			typeFlag:    "note",
+			defaultType: "idea",
+			wantType:    "note",
+			wantName:    "Meeting Notes",
+		},
+		{
+			name:     "type flag: multiple name args joined",
+			args:     []string{"Some", "Thought"},
+			typeFlag: "idea",
+			wantType: "idea",
+			wantName: "Some Thought",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotType, gotName, err := resolveTypeAndName(tt.args, tt.typeFlag, tt.defaultType, func() []string { return knownTypes })
+			if tt.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if gotType != tt.wantType {
+				t.Errorf("type = %q, want %q", gotType, tt.wantType)
+			}
+			if gotName != tt.wantName {
+				t.Errorf("name = %q, want %q", gotName, tt.wantName)
+			}
+		})
+	}
+}
+

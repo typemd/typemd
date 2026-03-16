@@ -88,12 +88,16 @@ tmd
 # 開啟 TUI（指定 vault 路徑）
 tmd --vault /path/to/vault
 
-# 建立新的 Object（ULID 會自動附加）
-tmd object create book clean-code
+# 建立新的 Object（名稱自動轉為 slug，ULID 自動附加）
+tmd object create book "Clean Code"
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
+# 使用 config 中的預設 type（省略 type 參數）
+tmd object create "Some Thought"
+# → Created idea/some-thought-01jqr3k5mpbvn8e0f2g7h9txyz
+
 # 建立 Object 時套用範本
-tmd object create book clean-code -t review
+tmd object create book "Clean Code" -t review
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz（套用 review 範本）
 
 # 顯示 Object 詳情（支援前綴匹配，不需要輸入完整 ULID）

@@ -94,12 +94,16 @@ tmd --vault /path/to/vault
 # Open TUI in read-only mode (editing disabled)
 tmd --readonly
 
-# Create a new object (ULID is appended automatically)
-tmd object create book clean-code
+# Create a new object (names are auto-slugified, ULID appended)
+tmd object create book "Clean Code"
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
 
-# Create with object template (auto-applied if only one exists)
-tmd object create book clean-code -t review
+# Use default type from config (omit type argument)
+tmd object create "Some Thought"
+# → Created idea/some-thought-01jqr3k5mpbvn8e0f2g7h9txyz
+
+# Create with object template
+tmd object create book "Clean Code" -t review
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz (with review template)
 
 # Create with name template (name auto-generated if type defines a template)

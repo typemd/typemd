@@ -2,9 +2,11 @@ package cmd
 
 import (
 	"fmt"
+	"slices"
 
 	tea "charm.land/bubbletea/v2"
 	"github.com/spf13/cobra"
+	"github.com/typemd/typemd/core"
 )
 
 var noStarters bool
@@ -48,6 +50,16 @@ var initCmd = &cobra.Command{
 			return err
 		}
 
+		// Write config.yaml with default_type if a quick-suitable type was selected
+		if defaultType := resolveDefaultType(names); defaultType != "" {
+			cfg := &core.VaultConfig{
+				CLI: core.CLIConfig{DefaultType: defaultType},
+			}
+			if err := vault.WriteConfig(cfg); err != nil {
+				return fmt.Errorf("write config: %w", err)
+			}
+		}
+
 		fmt.Println()
 		fmt.Printf("Created %d starter type(s):\n", len(selected))
 		for _, item := range selected {
@@ -56,6 +68,18 @@ var initCmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+// resolveDefaultType picks the best default type from selected starter names.
+// Returns "idea" if selected, then "note" as fallback, or empty if neither.
+func resolveDefaultType(names []string) string {
+	if slices.Contains(names, "idea") {
+		return "idea"
+	}
+	if slices.Contains(names, "note") {
+		return "note"
+	}
+	return ""
 }
 
 func init() {

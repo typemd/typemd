@@ -69,6 +69,24 @@ tmd search "golang" --json
 
 In the TUI, press `/` to enter search mode. Results are filtered in real-time. Press `Esc` to clear results and return to the full list.
 
+## Vault configuration
+
+An optional configuration file at `.typemd/config.yaml` provides vault-level settings. The file uses interface-layer namespacing:
+
+```yaml
+# .typemd/config.yaml
+cli:
+  default_type: idea
+```
+
+Currently supported settings:
+
+| Key | Description |
+|-----|-------------|
+| `cli.default_type` | Default object type for `tmd object create` when type argument is omitted |
+
+The config file is loaded during vault open. If the file is missing or empty, all settings use their zero values (no error). Invalid YAML produces an error.
+
 ## Unique constraint enforcement
 
 Type schemas can opt into name uniqueness by setting `unique: true`. When enabled, TypeMD prevents creating multiple Objects of the same type with identical `name` values.
