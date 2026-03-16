@@ -47,9 +47,7 @@ type model struct {
 	typeEditor  *typeEditor // non-nil when rightPanel == panelTypeEditor
 	newTypeName  textinput.Model
 	newTypeMode  bool // true when entering new type name in sidebar
-	newObjectName textinput.Model
-	newObjectMode bool   // true when entering new object name
-	newObjectType string // type for the new object
+	create       *createState // non-nil when object creation flow is active
 
 	// Left panel
 	groups       []typeGroup
@@ -162,6 +160,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.refreshData()
 		return m, nil
 
+	case flashDismissMsg:
+		if m.create != nil && msg.seq == m.create.flashSeq {
+			m.create.flash = ""
+		}
+		return m, nil
+
 	case fileChangedMsg:
 		if m.skipNextReload {
 			m.skipNextReload = false
@@ -225,8 +229,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case m.saveConflict:
 			return updateConflict(m, msg)
-		case m.newObjectMode:
-			return updateNewObject(m, msg)
+		case m.create != nil:
+			return updateCreate(m, msg)
 		case m.newTypeMode:
 			return updateNewType(m, msg)
 		case m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.focus != focusLeft:
@@ -353,20 +357,6 @@ func (m *model) selectCurrentRow() {
 			}
 		}
 	}
-}
-
-// startNewObject enters the new object name input mode for a specific type.
-func (m *model) startNewObject(groupIndex int) {
-	if m.readOnly || groupIndex >= len(m.groups) {
-		return
-	}
-	ti := textinput.New()
-	ti.Placeholder = "object name"
-	ti.CharLimit = 100
-	ti.Focus()
-	m.newObjectName = ti
-	m.newObjectMode = true
-	m.newObjectType = m.groups[groupIndex].Name
 }
 
 // startNewType enters the new type name input mode.
@@ -672,8 +662,8 @@ func (m model) View() tea.View {
 		}
 	} else {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
-		if m.newObjectMode {
-			leftContent += "\n New " + m.newObjectType + ": " + m.newObjectName.View()
+		if m.create != nil {
+			leftContent += "\n" + renderCreateUI(m.create)
 		} else if m.newTypeMode {
 			leftContent += "\n New type: " + m.newTypeName.View()
 		}
@@ -768,8 +758,8 @@ func (m model) View() tea.View {
 
 	// Help bar
 	var helpBar string
-	if m.newObjectMode {
-		helpBar = "  [NEW OBJECT]  enter: create  esc: cancel"
+	if m.create != nil {
+		helpBar = renderCreateHelpBar(m.create)
 	} else if m.newTypeMode {
 		helpBar = "  [NEW TYPE]  enter: create  esc: cancel"
 	} else if m.searchMode {

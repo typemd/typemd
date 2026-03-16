@@ -16,6 +16,8 @@ type keyMap struct {
 	Help        key.Binding
 	EnterEdit   key.Binding
 	ExitEdit    key.Binding
+	NewObject   key.Binding
+	QuickCreate key.Binding
 }
 
 var keys = keyMap{
@@ -32,4 +34,6 @@ var keys = keyMap{
 	Help:        key.NewBinding(key.WithKeys("?", "h"), key.WithHelp("?/h", "help")),
 	EnterEdit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
 	ExitEdit:    key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "exit edit")),
+	NewObject:   key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new object")),
+	QuickCreate: key.NewBinding(key.WithKeys("N"), key.WithHelp("N", "quick create (batch)")),
 }

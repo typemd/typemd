@@ -189,7 +189,8 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `Enter` | Select object / Focus type editor / Confirm |
 | `Space` | Toggle group expand/collapse |
 | `Tab` | Cycle focus between panels |
-| `n` | Create new object (in current type group) |
+| `n` | Create new object & edit body (in current type group) |
+| `N` | Quick create (batch mode — stay in input for rapid entry) |
 | `e` | Enter edit mode (body or properties panel) |
 | `/` | Search (FTS5 full-text search) |
 | `Esc` | Exit edit mode (auto-saves if changed) / Clear search results |

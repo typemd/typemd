@@ -85,7 +85,8 @@ The default mode. Browse objects and types in the sidebar.
 | `Enter` | Select object / Focus type editor |
 | `Space` | Toggle group expand/collapse |
 | `Tab` | Cycle focus between panels |
-| `n` | Create new object (in current type group) |
+| `n` | Create new object & edit body (in current type group) |
+| `N` | Quick create — batch mode (in current type group) |
 | `e` | Enter edit mode (when body panel focused) |
 | `/` | Enter search mode |
 | `p` | Toggle properties panel |
@@ -166,19 +167,49 @@ Shown when deleting a property (`d`) or type (`D`).
 | `y` | Confirm deletion |
 | `n`/`Esc` | Cancel |
 
-### `[NEW TYPE]` / `[NEW OBJECT]` — Creation Input
+### `[NEW TYPE]` — New Type Input
 
-Shown when creating a new type (`+ New Type`) or object (`n`).
+Shown when creating a new type via `+ New Type`.
 
 | Key | Action |
 |-----|--------|
-| Text keys | Type name/object name |
+| Text keys | Type name |
 | `Enter` | Create |
 | `Esc` | Cancel |
 
+### `[NEW OBJECT]` — Create & Edit Mode
+
+Triggered by pressing `n`. Creates a single object then enters body edit mode automatically.
+
+If the type has **multiple templates**, a template selection step is shown first (arrow keys to navigate, Enter to confirm, Esc to cancel). A single template is auto-applied; no templates skips the step. A `(none)` option is always available.
+
+If the type defines a **name template** (e.g. `{{ date:YYYY-MM-DD }}`), the name input is skipped and the object is created immediately with the auto-generated name.
+
+| Key | Action |
+|-----|--------|
+| Text keys | Object name |
+| `Enter` | Create & enter body edit mode |
+| `Esc` | Cancel |
+
+Duplicate name errors (for types with `unique: true`) are shown inline below the input and clear when you modify the text.
+
+### `[QUICK CREATE]` — Batch Creation Mode
+
+Triggered by pressing `N`. Stays in input mode for rapid creation of multiple objects.
+
+Template selection (if applicable) happens once at the start and applies to all objects in the batch. Name templates are not auto-applied in this mode — you always type a name.
+
+| Key | Action |
+|-----|--------|
+| Text keys | Object name |
+| `Enter` | Create object, clear input, ready for next |
+| `Esc` | Exit batch mode (selects last created object) |
+
+A success flash (e.g. `✓ Created: my-book`) appears briefly after each creation.
+
 ### `[READONLY]` — Read-Only Mode
 
-Active when launched with `--readonly`. The `e` and `n` keys are disabled, no write operations are performed, and the help popup hides edit-related keybindings.
+Active when launched with `--readonly`. The `e`, `n`, and `N` keys are disabled, no write operations are performed, and the help popup hides edit-related keybindings.
 
 ## Session State
 

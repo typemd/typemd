@@ -53,49 +53,6 @@ func updateNewType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	return m, cmd
 }
 
-// updateNewObject handles key events during new object name input.
-func updateNewObject(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
-	switch msg.String() {
-	case "enter":
-		name := strings.TrimSpace(m.newObjectName.Value())
-		if name == "" {
-			return m, nil
-		}
-		obj, err := m.vault.Objects.Create(m.newObjectType, name, "")
-		if err != nil {
-			m.saveErr = err.Error()
-			m.newObjectMode = false
-			return m, nil
-		}
-		m.saveErr = ""
-		m.newObjectMode = false
-		m.refreshData()
-		// Select the new object
-		m.selected = obj
-		m.rightPanel = panelObject
-		m.typeEditor = nil
-		m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
-		m.updateDetail()
-		// Move cursor to the new object
-		rows := m.currentRows()
-		for i, row := range rows {
-			if row.Kind == rowObject && row.Object != nil && row.Object.ID == obj.ID {
-				m.cursor = i
-				m.adjustScroll()
-				break
-			}
-		}
-		return m, nil
-	case "esc":
-		m.newObjectMode = false
-		m.saveErr = ""
-		return m, nil
-	}
-	var cmd tea.Cmd
-	m.newObjectName, cmd = m.newObjectName.Update(msg)
-	return m, cmd
-}
-
 // updateHelp handles key events when the help overlay is shown.
 func updateHelp(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	switch msg.String() {
@@ -164,12 +121,7 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			return m, nil
 		}
 		if m.focus == focusBody && m.selected != nil {
-			m.editMode = true
-			m.bodyTextarea.SetValue(m.selected.Body)
-			m.bodyEditStart = m.bodyTextarea.Value() // snapshot after sanitization
-			m.resizeBodyTextarea()
-			m.bodyTextarea.CursorEnd()
-			return m, m.bodyTextarea.Focus()
+			return m, m.enterBodyEditMode()
 		}
 		if m.focus == focusProps {
 			m.editMode = true
@@ -203,16 +155,14 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		return m, nil
 
 	case "n":
-		if m.readOnly || m.focus != focusLeft {
-			return m, nil
+		if cmd, ok := m.tryStartCreate(createModeSingle); ok {
+			return m, cmd
 		}
-		// Determine type from current cursor context
-		rows := m.currentRows()
-		if m.cursor >= 0 && m.cursor < len(rows) {
-			row := rows[m.cursor]
-			if row.Kind == rowHeader || row.Kind == rowObject {
-				m.startNewObject(row.GroupIndex)
-			}
+		return m, nil
+
+	case "N":
+		if cmd, ok := m.tryStartCreate(createModeBatch); ok {
+			return m, cmd
 		}
 		return m, nil
 

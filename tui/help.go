@@ -30,6 +30,8 @@ func helpEntries(readOnly bool) []helpEntry {
 	}
 	if !readOnly {
 		entries = append(entries, helpEntry{keys.EnterEdit.Help().Key, keys.EnterEdit.Help().Desc})
+		entries = append(entries, helpEntry{keys.NewObject.Help().Key, keys.NewObject.Help().Desc})
+		entries = append(entries, helpEntry{keys.QuickCreate.Help().Key, keys.QuickCreate.Help().Desc})
 	}
 	entries = append(entries,
 		helpEntry{keys.Search.Help().Key, keys.Search.Help().Desc},
