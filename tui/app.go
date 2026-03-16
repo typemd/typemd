@@ -557,7 +557,7 @@ func (m model) defaultPropsWidth() int {
 
 // hasTitlePanel returns true when the right side should show a title panel.
 func (m model) hasTitlePanel() bool {
-	return m.selected != nil || (m.rightPanel == panelTypeEditor && m.typeEditor != nil)
+	return m.selected != nil || (m.rightPanel == panelTypeEditor && m.typeEditor != nil) || m.create != nil
 }
 
 // bodyWidth calculates the body panel width from remaining space.
@@ -662,9 +662,7 @@ func (m model) View() tea.View {
 		}
 	} else {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
-		if m.create != nil {
-			leftContent += "\n" + renderCreateUI(m.create)
-		} else if m.newTypeMode {
+		if m.newTypeMode {
 			leftContent += "\n New type: " + m.newTypeName.View()
 		}
 	}
@@ -742,7 +740,13 @@ func (m model) View() tea.View {
 				Border(lipgloss.RoundedBorder()).
 				Width(titleW).
 				Height(titlePanelHeight)
-			titleContent := renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
+			var titleContent string
+			if m.create != nil {
+				titleContent = renderCreateTitleContent(m.create, titleW-bdr)
+				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
+			} else if m.selected != nil {
+				titleContent = renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
+			}
 			rightSide = lipgloss.JoinVertical(lipgloss.Left,
 				titleStyle.Render(titleContent),
 				rightSide,

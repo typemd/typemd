@@ -10,12 +10,12 @@ import (
 	tea "charm.land/bubbletea/v2"
 )
 
-// createStep represents the current step in the object creation flow.
-type createStep int
+// createField represents which field is focused in the title panel creation form.
+type createField int
 
 const (
-	createStepTemplate createStep = iota // selecting a template
-	createStepName                       // entering object name
+	createFieldName     createField = iota // name text input (default)
+	createFieldTemplate                    // template cycling selector
 )
 
 // createMode represents the type of creation flow.
@@ -33,33 +33,52 @@ type flashDismissMsg struct {
 }
 
 // createState holds all state for the object creation flow.
+// Both name input and template selector are active simultaneously in the title panel.
 type createState struct {
-	mode             createMode
-	step             createStep
-	typeName         string
-	templates        []string       // available templates for this type
-	cursor           int            // template selection cursor
-	template         string         // selected template name (empty = none)
-	nameInput        textinput.Model
-	flash            string       // success message (batch mode)
-	flashSeq         int          // monotonic counter for flash dismiss correlation
-	errMsg           string       // validation/creation error
-	lastObj          *core.Object // last created object (for batch mode exit)
-	nameTemplateSkip bool         // true when name template auto-skip is active
+	mode      createMode
+	field     createField    // which field is focused
+	typeName  string
+	emoji     string         // type emoji for title panel rendering
+	schema    *core.TypeSchema // cached schema (loaded once in startCreate)
+	templates []string       // available templates for this type (empty = no templates)
+	cursor    int            // current template index (into templates + "(none)")
+	nameInput textinput.Model
+	flash     string         // success message (batch mode)
+	flashSeq  int            // monotonic counter for flash dismiss correlation
+	errMsg    string         // validation/creation error
+	lastObj   *core.Object   // last created object (for batch mode exit)
+
+	// Preview state — updated when template changes
+	previewBody  string
+	previewProps []core.DisplayProperty
+
+	// Template cache to avoid repeated disk reads
+	templateCache map[string]*core.Template
 }
 
-// noneOption is the label for the "no template" option in the template selection list.
+// noneOption is the label for the "no template" option in the template selector.
 const noneOption = "(none)"
 
-// templateOptions returns the template list plus a "(none)" option at the end.
-func (cs *createState) templateOptions() []string {
-	opts := make([]string, len(cs.templates))
-	copy(opts, cs.templates)
-	return append(opts, noneOption)
+// templateOptionCount returns the total number of template options including "(none)".
+func (cs *createState) templateOptionCount() int {
+	return len(cs.templates) + 1
 }
 
-// selectedTemplateName returns the template name based on cursor position.
-// Returns empty string if "(none)" is selected (last item in the list).
+// hasTemplateSelector returns true if the template selector should be interactive.
+func (cs *createState) hasTemplateSelector() bool {
+	return len(cs.templates) >= 2
+}
+
+// currentTemplateName returns the display name of the currently selected template.
+func (cs *createState) currentTemplateName() string {
+	if cs.cursor >= 0 && cs.cursor < len(cs.templates) {
+		return cs.templates[cs.cursor]
+	}
+	return noneOption
+}
+
+// selectedTemplateName returns the template name for object creation.
+// Returns empty string if "(none)" is selected.
 func (cs *createState) selectedTemplateName() string {
 	if cs.cursor >= 0 && cs.cursor < len(cs.templates) {
 		return cs.templates[cs.cursor]
@@ -76,27 +95,14 @@ func initNameInput() textinput.Model {
 	return ti
 }
 
-// tryNameTemplateSkip checks if the type has a name template and auto-creates in single mode.
-// Returns the tea.Cmd and true if auto-skip was triggered, or nil and false otherwise.
-func (m *model) tryNameTemplateSkip(cs *createState) (tea.Cmd, bool) {
-	if cs.mode != createModeSingle || m.vault == nil {
-		return nil, false
-	}
-	schema, err := m.vault.LoadType(cs.typeName)
-	if err != nil || schema.NameTemplate == "" {
-		return nil, false
-	}
-	cs.nameTemplateSkip = true
-	return m.executeCreate(cs), true
-}
-
 // startCreate initializes the creation flow for the given type group and mode.
 func (m *model) startCreate(groupIndex int, mode createMode) tea.Cmd {
 	if m.readOnly || groupIndex >= len(m.groups) {
 		return nil
 	}
 
-	typeName := m.groups[groupIndex].Name
+	g := m.groups[groupIndex]
+	typeName := g.Name
 
 	// Fetch available templates
 	var templates []string
@@ -104,41 +110,48 @@ func (m *model) startCreate(groupIndex int, mode createMode) tea.Cmd {
 		templates, _ = m.vault.ListTemplates(typeName)
 	}
 
+	// Load schema once (cached for the entire creation flow)
+	var schema *core.TypeSchema
+	if m.vault != nil {
+		schema, _ = m.vault.LoadType(typeName)
+	}
+
 	cs := &createState{
-		mode:     mode,
-		typeName: typeName,
+		mode:          mode,
+		field:         createFieldName,
+		typeName:      typeName,
+		emoji:         g.Emoji,
+		schema:        schema,
+		nameInput:     initNameInput(),
+		templateCache: make(map[string]*core.Template),
 	}
 
 	switch len(templates) {
 	case 0:
-		// No templates — skip to name step
-		cs.step = createStepName
-		cs.nameInput = initNameInput()
+		// No templates
 	case 1:
-		// Single template — auto-select
-		cs.template = templates[0]
-		cs.step = createStepName
-		cs.nameInput = initNameInput()
-	default:
-		// Multiple templates — show selection
+		// Single template — auto-select, show as static label
 		cs.templates = templates
-		cs.step = createStepTemplate
+		cs.cursor = 0
+	default:
+		// Multiple templates — interactive selector
+		cs.templates = templates
 		cs.cursor = 0
 	}
 
-	// Check for name template auto-skip in single mode
-	if cs.step == createStepName {
-		if cmd, ok := m.tryNameTemplateSkip(cs); ok {
-			return cmd
-		}
+	// Pre-fill name from name template if applicable
+	if schema != nil && schema.NameTemplate != "" {
+		prefill := core.EvaluateNameTemplate(schema.NameTemplate, time.Now())
+		cs.nameInput.SetValue(prefill)
+		cs.nameInput.CursorEnd()
 	}
 
 	m.create = cs
+	m.updateCreatePreview()
 	return textinput.Blink
 }
 
 // tryStartCreate attempts to start object creation from the current cursor position.
-// Returns the model and command, or false if the cursor is not on a valid row.
 func (m *model) tryStartCreate(mode createMode) (tea.Cmd, bool) {
 	if m.readOnly || m.focus != focusLeft {
 		return nil, false
@@ -153,26 +166,166 @@ func (m *model) tryStartCreate(mode createMode) (tea.Cmd, bool) {
 	return nil, false
 }
 
-// executeCreate creates the object using the current createState settings.
-// Returns a tea.Cmd (possibly a Tick for flash dismiss).
-func (m *model) executeCreate(cs *createState) tea.Cmd {
-	name := ""
-	if cs.step == createStepName && !cs.nameTemplateSkip {
-		name = strings.TrimSpace(cs.nameInput.Value())
-		if name == "" {
-			return nil
+// updateCreatePreview loads the current template and updates preview state.
+func (m *model) updateCreatePreview() {
+	cs := m.create
+	if cs == nil || m.vault == nil {
+		return
+	}
+
+	tmplName := cs.selectedTemplateName()
+	if tmplName != "" {
+		tmpl := cs.loadTemplate(m.vault, tmplName)
+		if tmpl != nil {
+			cs.previewBody = tmpl.Body
+			cs.previewProps = buildPreviewProps(cs.schema, tmpl.Properties)
+		} else {
+			cs.previewBody = ""
+			cs.previewProps = buildPreviewProps(cs.schema, nil)
+		}
+	} else {
+		cs.previewBody = ""
+		cs.previewProps = buildPreviewProps(cs.schema, nil)
+	}
+
+	// Update viewports with preview content
+	m.bodyViewport.SetContent(renderPreviewBody(cs.previewBody))
+	m.propsViewport.SetContent(renderProperties(nil, cs.previewProps))
+}
+
+// loadTemplate loads a template with caching.
+func (cs *createState) loadTemplate(vault *core.Vault, name string) *core.Template {
+	if tmpl, ok := cs.templateCache[name]; ok {
+		return tmpl
+	}
+	tmpl, err := vault.LoadTemplate(cs.typeName, name)
+	if err != nil {
+		return nil
+	}
+	cs.templateCache[name] = tmpl
+	return tmpl
+}
+
+// buildPreviewProps builds display properties from a schema with optional template overrides.
+func buildPreviewProps(schema *core.TypeSchema, overrides map[string]any) []core.DisplayProperty {
+	if schema == nil {
+		return nil
+	}
+	var props []core.DisplayProperty
+	for _, p := range schema.Properties {
+		dp := core.DisplayProperty{
+			Key:   p.Name,
+			Emoji: p.Emoji,
+			Pin:   p.Pin,
+		}
+		if overrides != nil {
+			if val, ok := overrides[p.Name]; ok {
+				dp.Value = fmt.Sprintf("%v", val)
+				props = append(props, dp)
+				continue
+			}
+		}
+		if p.Default != nil {
+			dp.Value = fmt.Sprintf("%v", p.Default)
+		}
+		props = append(props, dp)
+	}
+	return props
+}
+
+// renderPreviewBody renders a template body for preview in the body viewport.
+func renderPreviewBody(body string) string {
+	body = strings.TrimSpace(body)
+	if body == "" {
+		return " (empty)\n"
+	}
+	var b strings.Builder
+	for _, line := range strings.Split(body, "\n") {
+		b.WriteString(fmt.Sprintf(" %s\n", line))
+	}
+	return b.String()
+}
+
+// renderCreateTitleContent renders the title panel content during creation mode.
+func renderCreateTitleContent(cs *createState, width int) string {
+	if cs == nil {
+		return ""
+	}
+
+	// Flash takes priority in batch mode
+	if cs.flash != "" {
+		prefix := ""
+		if cs.emoji != "" {
+			prefix = padEmoji(cs.emoji) + " "
+		}
+		return fmt.Sprintf(" %s%s · %s", prefix, cs.typeName, cs.flash)
+	}
+
+	var b strings.Builder
+
+	// Type prefix: "📚 book · "
+	if cs.emoji != "" {
+		b.WriteString(fmt.Sprintf(" %s %s · ", padEmoji(cs.emoji), cs.typeName))
+	} else {
+		b.WriteString(fmt.Sprintf(" %s · ", cs.typeName))
+	}
+
+	// Name input
+	b.WriteString(cs.nameInput.View())
+
+	// Template selector (if templates exist)
+	if len(cs.templates) > 0 {
+		tmplLabel := cs.currentTemplateName()
+		if cs.field == createFieldTemplate {
+			b.WriteString(fmt.Sprintf("  [📝 %s]", tmplLabel))
+		} else {
+			b.WriteString(fmt.Sprintf("  📝 %s", tmplLabel))
 		}
 	}
 
-	obj, err := m.vault.Objects.Create(cs.typeName, name, cs.template)
+	// Error message
+	if cs.errMsg != "" {
+		b.WriteString(fmt.Sprintf("  ✗ %s", cs.errMsg))
+	}
+
+	return b.String()
+}
+
+// renderCreateHelpBar returns the help bar text for the current creation state.
+func renderCreateHelpBar(cs *createState) string {
+	mode := "NEW OBJECT"
+	if cs.mode == createModeBatch {
+		mode = "QUICK CREATE"
+	}
+
+	var hints []string
+	if cs.field == createFieldName {
+		if cs.hasTemplateSelector() {
+			hints = append(hints, "tab: template")
+		}
+	} else {
+		hints = append(hints, "◀▶: switch", "tab: name")
+	}
+	if cs.mode == createModeBatch {
+		hints = append(hints, "enter: create", "esc: done")
+	} else {
+		hints = append(hints, "enter: create & edit", "esc: cancel")
+	}
+
+	return fmt.Sprintf("  [%s]  %s", mode, strings.Join(hints, "  "))
+}
+
+// executeCreate creates the object using the current createState settings.
+func (m *model) executeCreate(cs *createState) tea.Cmd {
+	name := strings.TrimSpace(cs.nameInput.Value())
+	if name == "" {
+		return nil
+	}
+
+	tmpl := cs.selectedTemplateName()
+	obj, err := m.vault.Objects.Create(cs.typeName, name, tmpl)
 	if err != nil {
 		cs.errMsg = err.Error()
-		if cs.step != createStepName {
-			// Error during auto-create (name template) — need to show it somewhere
-			m.saveErr = err.Error()
-			m.create = nil
-			return nil
-		}
 		m.create = cs
 		return nil
 	}
@@ -180,8 +333,7 @@ func (m *model) executeCreate(cs *createState) tea.Cmd {
 	cs.errMsg = ""
 	m.saveErr = ""
 
-	// Rebuild groups from index (ObjectService.Create already indexed the object,
-	// so we skip the expensive SyncIndex filesystem walk).
+	// Rebuild groups from index
 	objects, qErr := m.vault.QueryObjects("")
 	if qErr == nil {
 		m.groups = buildGroups(objects, m.vault)
@@ -197,7 +349,6 @@ func (m *model) executeCreate(cs *createState) tea.Cmd {
 	m.moveCursorToObject(obj)
 
 	if cs.mode == createModeSingle {
-		// Create & Edit: enter body edit mode
 		m.create = nil
 		return m.enterBodyEditMode()
 	}
@@ -226,51 +377,6 @@ func (m *model) enterBodyEditMode() tea.Cmd {
 	return m.bodyTextarea.Focus()
 }
 
-// renderCreateUI renders the creation flow UI for the sidebar.
-func renderCreateUI(cs *createState) string {
-	var lines []string
-
-	// Flash message (batch mode)
-	if cs.flash != "" {
-		lines = append(lines, " "+cs.flash)
-	}
-
-	switch cs.step {
-	case createStepTemplate:
-		lines = append(lines, " Select template:")
-		opts := cs.templateOptions()
-		for i, opt := range opts {
-			prefix := "   "
-			if i == cs.cursor {
-				prefix = " > "
-			}
-			lines = append(lines, prefix+opt)
-		}
-
-	case createStepName:
-		lines = append(lines, " New "+cs.typeName+": "+cs.nameInput.View())
-		if cs.errMsg != "" {
-			lines = append(lines, " ✗ "+cs.errMsg)
-		}
-	}
-
-	return strings.Join(lines, "\n")
-}
-
-// renderCreateHelpBar returns the help bar text for the current creation state.
-func renderCreateHelpBar(cs *createState) string {
-	switch cs.step {
-	case createStepTemplate:
-		return "  [NEW OBJECT]  ↑↓: select  enter: confirm  esc: cancel"
-	case createStepName:
-		if cs.mode == createModeBatch {
-			return "  [QUICK CREATE]  enter: create  esc: done"
-		}
-		return "  [NEW OBJECT]  enter: create & edit  esc: cancel"
-	}
-	return ""
-}
-
 // moveCursorToObject moves the sidebar cursor to the given object.
 func (m *model) moveCursorToObject(obj *core.Object) {
 	rows := m.currentRows()
@@ -283,65 +389,14 @@ func (m *model) moveCursorToObject(obj *core.Object) {
 	}
 }
 
-// updateCreate dispatches key events to the appropriate creation step handler.
+// updateCreate dispatches key events to the appropriate field handler.
 func updateCreate(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
-	if m.create == nil {
-		return m, nil
-	}
-
-	switch m.create.step {
-	case createStepTemplate:
-		return updateCreateTemplate(m, msg)
-	case createStepName:
-		return updateCreateName(m, msg)
-	}
-	return m, nil
-}
-
-// updateCreateTemplate handles key events during template selection.
-func updateCreateTemplate(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	cs := m.create
-	opts := cs.templateOptions()
-
-	switch msg.String() {
-	case "up", "k":
-		cs.cursor--
-		if cs.cursor < 0 {
-			cs.cursor = len(opts) - 1
-		}
-		return m, nil
-
-	case "down", "j":
-		cs.cursor++
-		if cs.cursor >= len(opts) {
-			cs.cursor = 0
-		}
-		return m, nil
-
-	case "enter":
-		cs.template = cs.selectedTemplateName()
-		cs.step = createStepName
-		cs.nameInput = initNameInput()
-
-		// Check for name template auto-skip in single mode
-		if cmd, ok := m.tryNameTemplateSkip(cs); ok {
-			return m, cmd
-		}
-
-		return m, textinput.Blink
-
-	case "esc":
-		m.create = nil
+	if cs == nil {
 		return m, nil
 	}
 
-	return m, nil
-}
-
-// updateCreateName handles key events during name input.
-func updateCreateName(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
-	cs := m.create
-
+	// Global keys (both fields)
 	switch msg.String() {
 	case "enter":
 		cmd := m.executeCreate(cs)
@@ -349,14 +404,48 @@ func updateCreateName(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 
 	case "esc":
 		if cs.mode == createModeBatch && cs.lastObj != nil {
-			// Exit batch mode — select last created object
 			m.moveCursorToObject(cs.lastObj)
 		}
 		m.create = nil
+		// Restore normal view
+		if m.selected != nil {
+			m.displayProps, _ = m.vault.BuildDisplayProperties(m.selected)
+			m.updateDetail()
+		} else {
+			m.bodyViewport.SetContent(renderBody(nil, m.bodyViewport.Width(), nil))
+			m.propsViewport.SetContent("")
+		}
+		return m, nil
+
+	case "tab":
+		if cs.hasTemplateSelector() {
+			if cs.field == createFieldName {
+				cs.field = createFieldTemplate
+				cs.nameInput.Blur()
+			} else {
+				cs.field = createFieldName
+				cs.nameInput.Focus()
+			}
+		}
 		return m, nil
 	}
 
-	// Clear error on any other key input
+	// Field-specific keys
+	switch cs.field {
+	case createFieldName:
+		return updateCreateNameField(m, msg)
+	case createFieldTemplate:
+		return updateCreateTemplateField(m, msg)
+	}
+
+	return m, nil
+}
+
+// updateCreateNameField handles key events when the name field is focused.
+func updateCreateNameField(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
+	cs := m.create
+
+	// Clear error on any input
 	if cs.errMsg != "" {
 		cs.errMsg = ""
 	}
@@ -364,4 +453,30 @@ func updateCreateName(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	var cmd tea.Cmd
 	cs.nameInput, cmd = cs.nameInput.Update(msg)
 	return m, cmd
+}
+
+// updateCreateTemplateField handles key events when the template field is focused.
+func updateCreateTemplateField(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
+	cs := m.create
+	total := cs.templateOptionCount()
+
+	switch msg.String() {
+	case "left", "up", "k":
+		cs.cursor--
+		if cs.cursor < 0 {
+			cs.cursor = total - 1
+		}
+		m.updateCreatePreview()
+		return m, nil
+
+	case "right", "down", "j":
+		cs.cursor++
+		if cs.cursor >= total {
+			cs.cursor = 0
+		}
+		m.updateCreatePreview()
+		return m, nil
+	}
+
+	return m, nil
 }

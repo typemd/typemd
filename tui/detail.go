@@ -85,8 +85,10 @@ func pinnedProperties(props []core.DisplayProperty) []core.DisplayProperty {
 }
 
 // renderProperties builds the properties panel content using display properties.
+// When obj is nil but displayProps is provided (e.g., template preview), it still renders.
+// Returns empty string only when both obj and displayProps are nil/empty.
 func renderProperties(obj *core.Object, displayProps []core.DisplayProperty) string {
-	if obj == nil {
+	if obj == nil && len(displayProps) == 0 {
 		return ""
 	}
 

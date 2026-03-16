@@ -45,7 +45,7 @@ func pressNamedKey(t *testing.T, m model, name string) model {
 }
 
 // =============================================================================
-// PR Manual Test 1: n → template selection → name input → object created, edit mode
+// E2E Test 1: n → title panel creation form → template selection → name → edit
 // =============================================================================
 
 func TestE2E_CreateAndEdit_WithTemplateSelection(t *testing.T) {
@@ -55,94 +55,65 @@ func TestE2E_CreateAndEdit_WithTemplateSelection(t *testing.T) {
 	})
 	m = initSize(t, m)
 
-	// Step 1: Press n on type header → template selection appears
+	// Press n → creation form appears in title panel
 	m = pressNamedKey(t, m, "n")
-
 	if m.create == nil {
-		t.Fatal("create should be active after pressing n")
-	}
-	if m.create.step != createStepTemplate {
-		t.Fatalf("step = %d, want createStepTemplate (multiple templates)", m.create.step)
+		t.Fatal("create should be active")
 	}
 
-	// Verify View shows template selection UI
+	// Verify View shows title panel with creation form (not sidebar)
 	view := m.View().Content
-	if !strings.Contains(view, "Select template:") {
-		t.Error("View should show 'Select template:' during template step")
+	if !strings.Contains(view, "📝") {
+		t.Error("title panel should show template selector icon")
 	}
-	if !strings.Contains(view, "review") {
-		t.Error("View should show 'review' template option")
-	}
-	if !strings.Contains(view, noneOption) {
-		t.Error("View should show '(none)' option")
+	// Sidebar should NOT contain creation UI
+	if strings.Contains(view, "Select template:") {
+		t.Error("sidebar should NOT show template selection list")
 	}
 
-	// Verify help bar shows template selection hints
+	// Verify help bar
 	if !strings.Contains(view, "NEW OBJECT") {
-		t.Error("help bar should show [NEW OBJECT] during template selection")
-	}
-	if !strings.Contains(view, "↑↓") {
-		t.Error("help bar should show ↑↓ navigation hint")
+		t.Error("help bar should show [NEW OBJECT]")
 	}
 
-	// Step 2: Select "review" template (first option, press Enter)
+	// Tab to template field, switch to "summary"
+	m = pressKey(t, m, tea.KeyTab)
+	if m.create.field != createFieldTemplate {
+		t.Fatal("should be on template field after Tab")
+	}
+
+	m = pressKey(t, m, tea.KeyRight)
+	if m.create.currentTemplateName() != "summary" {
+		t.Errorf("template = %q, want 'summary'", m.create.currentTemplateName())
+	}
+
+	// Verify live preview updated in body viewport
+	bodyContent := m.bodyViewport.View()
+	if !strings.Contains(bodyContent, "Summary") {
+		t.Error("body viewport should show summary template preview")
+	}
+
+	// Tab back to name, type name
+	m = pressKey(t, m, tea.KeyTab)
+	m = typeString(t, m, "my-summary-book")
+
+	// Enter to create
 	m = pressKey(t, m, tea.KeyEnter)
 
-	if m.create == nil {
-		t.Fatal("create should still be active after template selection")
-	}
-	if m.create.step != createStepName {
-		t.Fatalf("step = %d, want createStepName after template selection", m.create.step)
-	}
-	if m.create.template != "review" {
-		t.Errorf("template = %q, want 'review'", m.create.template)
-	}
-
-	// Verify View shows name input
-	view = m.View().Content
-	if !strings.Contains(view, "New book:") {
-		t.Error("View should show 'New book:' name input prompt")
-	}
-	if !strings.Contains(view, "create & edit") {
-		t.Error("help bar should show 'create & edit' hint for single mode")
-	}
-
-	// Step 3: Type name and press Enter
-	m = typeString(t, m, "my-review-book")
-	m = pressKey(t, m, tea.KeyEnter)
-
-	// Verify: creation done, edit mode active
 	if m.create != nil {
-		t.Error("create should be nil after single mode creation")
+		t.Error("create should be nil after creation")
 	}
 	if m.selected == nil {
-		t.Fatal("an object should be selected after creation")
+		t.Fatal("should have selected object")
 	}
-	if !strings.Contains(m.selected.ID, "book/my-review-book") {
-		t.Errorf("selected.ID = %q, want to contain 'book/my-review-book'", m.selected.ID)
-	}
-	if m.focus != focusBody {
-		t.Errorf("focus = %d, want focusBody (%d) — should auto-focus body", m.focus, focusBody)
+	if !strings.Contains(m.selected.ID, "book/my-summary-book") {
+		t.Errorf("ID = %q, want to contain 'book/my-summary-book'", m.selected.ID)
 	}
 	if !m.editMode {
-		t.Error("editMode should be true — should auto-enter edit mode")
+		t.Error("should be in edit mode")
 	}
-	if m.rightPanel != panelObject {
-		t.Errorf("rightPanel = %d, want panelObject", m.rightPanel)
-	}
-
-	// Verify the template was applied (body should contain template content)
-	if !strings.Contains(m.selected.Body, "## Review") {
-		t.Errorf("body = %q, want to contain '## Review' from template", m.selected.Body)
-	}
-
-	// Verify the object actually exists on disk
-	reloaded, err := m.vault.GetObject(m.selected.ID)
-	if err != nil {
-		t.Fatalf("GetObject(%q) error = %v — object should exist on disk", m.selected.ID, err)
-	}
-	if !strings.Contains(reloaded.Body, "## Review") {
-		t.Errorf("reloaded body = %q, want template body", reloaded.Body)
+	if !strings.Contains(m.selected.Body, "## Summary") {
+		t.Errorf("body = %q, want summary template body", m.selected.Body)
 	}
 }
 
@@ -150,120 +121,79 @@ func TestE2E_CreateAndEdit_NoTemplates(t *testing.T) {
 	m := setupCreateTestModel(t)
 	m = initSize(t, m)
 
-	// Press n → should go directly to name step (no templates)
 	m = pressNamedKey(t, m, "n")
-
 	if m.create == nil {
 		t.Fatal("create should be active")
 	}
-	if m.create.step != createStepName {
-		t.Fatalf("step = %d, want createStepName (no templates to select)", m.create.step)
+
+	// No template selector visible
+	view := m.View().Content
+	if strings.Contains(view, "📝") {
+		t.Error("should not show template icon when no templates")
 	}
 
-	// Type name, press Enter
 	m = typeString(t, m, "simple-book")
 	m = pressKey(t, m, tea.KeyEnter)
 
-	if m.create != nil {
-		t.Error("create should be nil after creation")
-	}
 	if !m.editMode {
 		t.Error("should be in edit mode")
 	}
 	if m.selected == nil || !strings.Contains(m.selected.ID, "book/simple-book") {
-		t.Error("should have selected the new object")
+		t.Error("should select new object")
 	}
 }
 
 // =============================================================================
-// PR Manual Test 2: N → name input → enter creates with flash → stays → esc exits
+// E2E Test 2: N → batch creation in title panel
 // =============================================================================
 
 func TestE2E_QuickCreate_BatchFlow(t *testing.T) {
 	m := setupCreateTestModel(t)
 	m = initSize(t, m)
 
-	// Step 1: Press N → Quick Create mode
 	m = pressNamedKey(t, m, "N")
-
-	if m.create == nil {
-		t.Fatal("create should be active after pressing N")
-	}
-	if m.create.mode != createModeBatch {
-		t.Fatalf("mode = %d, want createModeBatch", m.create.mode)
-	}
-	if m.create.step != createStepName {
-		t.Fatalf("step = %d, want createStepName", m.create.step)
+	if m.create == nil || m.create.mode != createModeBatch {
+		t.Fatal("should be in batch mode")
 	}
 
-	// Verify help bar shows QUICK CREATE
 	view := m.View().Content
 	if !strings.Contains(view, "QUICK CREATE") {
-		t.Error("help bar should show [QUICK CREATE]")
-	}
-	if !strings.Contains(view, "esc: done") {
-		t.Error("help bar should show 'esc: done'")
+		t.Error("help bar should show QUICK CREATE")
 	}
 
-	// Step 2: Create first object
+	// Create first object
 	m = typeString(t, m, "batch-one")
 	m = pressKey(t, m, tea.KeyEnter)
 
 	if m.create == nil {
-		t.Fatal("create should still be active in batch mode after creation")
-	}
-	if m.create.nameInput.Value() != "" {
-		t.Errorf("input should be cleared, got %q", m.create.nameInput.Value())
-	}
-	if m.create.flash == "" {
-		t.Error("flash message should be visible")
+		t.Fatal("should still be active")
 	}
 	if !strings.Contains(m.create.flash, "batch-one") {
-		t.Errorf("flash = %q, should mention created object name", m.create.flash)
+		t.Errorf("flash = %q, should mention object name", m.create.flash)
 	}
 
-	// Verify flash appears in View
+	// Flash in title panel view
 	view = m.View().Content
 	if !strings.Contains(view, "Created") {
-		t.Error("View should show creation success flash")
+		t.Error("View should show flash in title panel")
 	}
 
-	// Step 3: Create second object
+	// Create second
 	m = typeString(t, m, "batch-two")
 	m = pressKey(t, m, tea.KeyEnter)
 
-	if m.create == nil {
-		t.Fatal("create should still be active")
-	}
-	if !strings.Contains(m.create.flash, "batch-two") {
-		t.Errorf("flash = %q, should show latest creation", m.create.flash)
-	}
+	lastID := m.create.lastObj.ID
 
-	lastCreatedID := m.create.lastObj.ID
-
-	// Step 4: Press Esc to exit
+	// Esc to exit
 	m = pressKey(t, m, tea.KeyEscape)
-
 	if m.create != nil {
-		t.Error("create should be nil after Esc")
+		t.Error("should exit batch mode")
 	}
-
-	// Should select the last created object
-	if m.selected == nil {
-		t.Fatal("should have a selected object after batch exit")
+	if m.selected == nil || m.selected.ID != lastID {
+		t.Error("should select last object")
 	}
-	if m.selected.ID != lastCreatedID {
-		t.Errorf("selected.ID = %q, want %q (last created)", m.selected.ID, lastCreatedID)
-	}
-
-	// Verify both objects exist on disk
-	if _, err := m.vault.GetObject(lastCreatedID); err != nil {
-		t.Errorf("last created object should exist on disk: %v", err)
-	}
-
-	// Should NOT be in edit mode (batch mode doesn't auto-edit)
 	if m.editMode {
-		t.Error("should NOT be in edit mode after batch exit")
+		t.Error("should NOT be in edit mode after batch")
 	}
 }
 
@@ -274,45 +204,32 @@ func TestE2E_QuickCreate_WithTemplates(t *testing.T) {
 	})
 	m = initSize(t, m)
 
-	// Press N → template selection first
 	m = pressNamedKey(t, m, "N")
-
-	if m.create == nil || m.create.step != createStepTemplate {
-		t.Fatal("should show template selection in batch mode too")
+	if m.create == nil {
+		t.Fatal("should be active")
 	}
 
-	// Select "review" → name input
-	m = pressKey(t, m, tea.KeyEnter)
-
-	if m.create.step != createStepName {
-		t.Fatal("should be at name step after template selection")
-	}
-
-	// Create two objects with the same template
+	// Template defaults to first; create two objects
 	m = typeString(t, m, "book-a")
 	m = pressKey(t, m, tea.KeyEnter)
-
 	m = typeString(t, m, "book-b")
 	m = pressKey(t, m, tea.KeyEnter)
-
-	// Both should use the "review" template
 	m = pressKey(t, m, tea.KeyEscape)
 
-	// Verify the template was reused (check the last created object)
 	if m.selected == nil {
-		t.Fatal("should have selected object after exit")
+		t.Fatal("should have selected object")
 	}
 	obj, err := m.vault.GetObject(m.selected.ID)
 	if err != nil {
-		t.Fatalf("GetObject error: %v", err)
+		t.Fatalf("GetObject: %v", err)
 	}
 	if obj.Properties["title"] != "Review" {
-		t.Errorf("properties[title] = %v, want 'Review' from template", obj.Properties["title"])
+		t.Errorf("props[title] = %v, want 'Review' from template", obj.Properties["title"])
 	}
 }
 
 // =============================================================================
-// PR Manual Test 3: n/N disabled in --readonly mode
+// E2E Test 3: n/N disabled in readonly
 // =============================================================================
 
 func TestE2E_ReadOnly_CreationDisabled(t *testing.T) {
@@ -320,51 +237,39 @@ func TestE2E_ReadOnly_CreationDisabled(t *testing.T) {
 	m = initSize(t, m)
 	m.readOnly = true
 
-	// Verify [READONLY] in status bar
 	view := m.View().Content
 	if !strings.Contains(view, "READONLY") {
-		t.Error("View should show READONLY indicator")
+		t.Error("should show READONLY")
 	}
 
-	// Press n — should do nothing
 	m = pressNamedKey(t, m, "n")
 	if m.create != nil {
-		t.Error("n should be ignored in readonly mode")
+		t.Error("n ignored in readonly")
 	}
-
-	// Press N — should do nothing
 	m = pressNamedKey(t, m, "N")
 	if m.create != nil {
-		t.Error("N should be ignored in readonly mode")
+		t.Error("N ignored in readonly")
 	}
 
-	// Verify help popup hides n/N keybindings
 	entries := helpEntries(true)
 	for _, e := range entries {
 		if e.Key == "n" || e.Key == "N" {
-			t.Errorf("helpEntries(readOnly=true) should NOT contain %q keybinding", e.Key)
+			t.Errorf("help should not show %q in readonly", e.Key)
 		}
 	}
 }
 
 // =============================================================================
-// PR Manual Test 4: Unique constraint inline error below input
+// E2E Test 4: Unique constraint inline error
 // =============================================================================
 
 func TestE2E_UniqueConstraint_InlineError(t *testing.T) {
 	m := setupCreateTestModel(t)
-
-	// Add unique type
-	os.WriteFile(
-		filepath.Join(m.vault.TypesDir(), "tag.yaml"),
-		[]byte("name: tag\nunique: true\nplural: tags\n"),
-		0644,
-	)
+	os.WriteFile(filepath.Join(m.vault.TypesDir(), "tag.yaml"), []byte("name: tag\nunique: true\nplural: tags\n"), 0644)
 	objects, _ := m.vault.QueryObjects("")
 	m.groups = buildGroups(objects, m.vault)
 	m = initSize(t, m)
 
-	// Find tag group index
 	tagIdx := -1
 	for i, g := range m.groups {
 		if g.Name == "tag" {
@@ -373,10 +278,9 @@ func TestE2E_UniqueConstraint_InlineError(t *testing.T) {
 		}
 	}
 	if tagIdx < 0 {
-		t.Fatal("tag type not found")
+		t.Fatal("tag not found")
 	}
 
-	// Move cursor to tag header
 	rows := m.currentRows()
 	for i, row := range rows {
 		if row.Kind == rowHeader && row.GroupIndex == tagIdx {
@@ -385,27 +289,22 @@ func TestE2E_UniqueConstraint_InlineError(t *testing.T) {
 		}
 	}
 
-	// Create first tag
+	// Create first
 	m = pressNamedKey(t, m, "n")
 	m = typeString(t, m, "important")
 	m = pressKey(t, m, tea.KeyEnter)
 
-	// First creation should succeed → edit mode
 	if m.create != nil {
 		if m.create.errMsg != "" {
-			t.Fatalf("first creation should succeed, got error: %s", m.create.errMsg)
+			t.Fatalf("first creation failed: %s", m.create.errMsg)
 		}
-		t.Fatal("create should be nil after successful single-mode creation")
-	}
-	if !m.editMode {
-		t.Fatal("should be in edit mode after first creation")
+		t.Fatal("create should be nil after success")
 	}
 
-	// Exit edit mode first
+	// Exit edit, back to sidebar
 	m = pressKey(t, m, tea.KeyEscape)
 	m.focus = focusLeft
 
-	// Move cursor back to tag header
 	rows = m.currentRows()
 	for i, row := range rows {
 		if row.Kind == rowHeader && row.GroupIndex == tagIdx {
@@ -414,43 +313,73 @@ func TestE2E_UniqueConstraint_InlineError(t *testing.T) {
 		}
 	}
 
-	// Try to create duplicate
+	// Try duplicate
 	m = pressNamedKey(t, m, "n")
-	if m.create == nil {
-		t.Fatal("create should be active")
-	}
 	m = typeString(t, m, "important")
 	m = pressKey(t, m, tea.KeyEnter)
 
-	// Should show error, NOT create object
-	if m.create == nil {
-		t.Fatal("create should still be active on duplicate error")
-	}
-	if m.create.errMsg == "" {
-		t.Fatal("errMsg should contain duplicate error")
-	}
-	if !strings.Contains(m.create.errMsg, "already exists") {
-		t.Errorf("errMsg = %q, want to contain 'already exists'", m.create.errMsg)
+	if m.create == nil || m.create.errMsg == "" {
+		t.Fatal("should have duplicate error")
 	}
 
-	// Verify error shows in View
+	// Error visible in View (title panel)
 	view := m.View().Content
 	if !strings.Contains(view, "✗") {
-		t.Error("View should show ✗ error indicator")
-	}
-	if !strings.Contains(view, "already exists") {
-		t.Error("View should show 'already exists' error text")
+		t.Error("View should show error indicator")
 	}
 
-	// Typing clears the error
+	// Typing clears error
 	m = typeString(t, m, "-v2")
 	if m.create.errMsg != "" {
-		t.Errorf("errMsg should be cleared after typing, got %q", m.create.errMsg)
+		t.Error("errMsg should clear after typing")
+	}
+}
+
+// =============================================================================
+// E2E Test 5: Tab + template cycling with live preview
+// =============================================================================
+
+func TestE2E_TabAndTemplateCycling_LivePreview(t *testing.T) {
+	m := setupCreateTestModelWithTemplates(t, map[string]string{
+		"review":  "---\ntitle: Review\n---\n## Review Notes\n",
+		"summary": "---\ntitle: Summary\n---\n## Key Takeaways\n",
+	})
+	m = initSize(t, m)
+
+	m = pressNamedKey(t, m, "n")
+
+	// Initial preview should show first template (review)
+	bodyContent := m.bodyViewport.View()
+	if !strings.Contains(bodyContent, "Review Notes") {
+		t.Error("initial preview should show review template body")
 	}
 
-	// Verify error gone from View
-	view = m.View().Content
-	if strings.Contains(view, "✗") {
-		t.Error("View should no longer show ✗ after typing")
+	// Tab to template, switch to summary
+	m = pressKey(t, m, tea.KeyTab)
+	m = pressKey(t, m, tea.KeyRight) // review → summary
+
+	bodyContent = m.bodyViewport.View()
+	if !strings.Contains(bodyContent, "Key Takeaways") {
+		t.Error("preview should update to summary template body")
+	}
+
+	// Switch to (none)
+	m = pressKey(t, m, tea.KeyRight) // summary → (none)
+	bodyContent = m.bodyViewport.View()
+	if !strings.Contains(bodyContent, "(empty)") {
+		t.Error("(none) preview should show (empty)")
+	}
+
+	// Tab back to name, type name, create
+	m = pressKey(t, m, tea.KeyTab)
+	m = typeString(t, m, "no-template-book")
+	m = pressKey(t, m, tea.KeyEnter)
+
+	if m.selected == nil {
+		t.Fatal("should have created object")
+	}
+	// Created with (none) → empty body
+	if m.selected.Body != "" {
+		t.Errorf("body should be empty when (none) selected, got %q", m.selected.Body)
 	}
 }

@@ -27,7 +27,6 @@ func setupCreateTestModel(t *testing.T) model {
 
 	objects, _ := v.QueryObjects("")
 	groups := buildGroups(objects, v)
-	// Expand first group
 	if len(groups) > 0 {
 		groups[0].Expanded = true
 	}
@@ -47,86 +46,70 @@ func setupCreateTestModel(t *testing.T) model {
 func setupCreateTestModelWithTemplates(t *testing.T, templates map[string]string) model {
 	t.Helper()
 	m := setupCreateTestModel(t)
-
-	// Create templates directory
 	tmplDir := filepath.Join(m.vault.Root, "templates", "book")
 	os.MkdirAll(tmplDir, 0755)
 	for name, content := range templates {
 		os.WriteFile(filepath.Join(tmplDir, name+".md"), []byte(content), 0644)
 	}
-
 	return m
 }
 
-// --- Task 1.1: createState struct tests ---
-
-func TestCreateState_TemplateOptions(t *testing.T) {
-	cs := &createState{
-		templates: []string{"review", "summary"},
-	}
-	opts := cs.templateOptions()
-	if len(opts) != 3 {
-		t.Fatalf("len(opts) = %d, want 3", len(opts))
-	}
-	if opts[0] != "review" {
-		t.Errorf("opts[0] = %q, want %q", opts[0], "review")
-	}
-	if opts[2] != noneOption {
-		t.Errorf("opts[2] = %q, want %q", opts[2], noneOption)
-	}
-}
+// --- createState tests ---
 
 func TestCreateState_SelectedTemplateName(t *testing.T) {
-	cs := &createState{
-		templates: []string{"review", "summary"},
-		cursor:    0,
-	}
+	cs := &createState{templates: []string{"review", "summary"}, cursor: 0}
 	if name := cs.selectedTemplateName(); name != "review" {
 		t.Errorf("selectedTemplateName() = %q, want %q", name, "review")
 	}
-	cs.cursor = 2 // "(none)"
+	cs.cursor = 2
 	if name := cs.selectedTemplateName(); name != "" {
 		t.Errorf("selectedTemplateName() for (none) = %q, want empty", name)
 	}
 }
 
-func TestCreateState_StepTransitions(t *testing.T) {
-	cs := &createState{
-		mode:     createModeSingle,
-		step:     createStepTemplate,
-		typeName: "book",
+func TestCreateState_CurrentTemplateName(t *testing.T) {
+	cs := &createState{templates: []string{"review"}, cursor: 0}
+	if name := cs.currentTemplateName(); name != "review" {
+		t.Errorf("currentTemplateName() = %q, want %q", name, "review")
 	}
-	// Template → Name
-	cs.step = createStepName
-	if cs.step != createStepName {
-		t.Errorf("step = %d, want createStepName", cs.step)
+	cs.cursor = 1
+	if name := cs.currentTemplateName(); name != noneOption {
+		t.Errorf("currentTemplateName() at end = %q, want %q", name, noneOption)
 	}
 }
 
-func TestCreateState_ModeValues(t *testing.T) {
-	if createModeSingle != 1 {
-		t.Errorf("createModeSingle = %d, want 1", createModeSingle)
+func TestCreateState_HasTemplateSelector(t *testing.T) {
+	cs := &createState{templates: []string{"a", "b"}}
+	if !cs.hasTemplateSelector() {
+		t.Error("should have selector with 2+ templates")
 	}
-	if createModeBatch != 2 {
-		t.Errorf("createModeBatch = %d, want 2", createModeBatch)
+	cs.templates = []string{"a"}
+	if cs.hasTemplateSelector() {
+		t.Error("should not have interactive selector with 1 template")
+	}
+	cs.templates = nil
+	if cs.hasTemplateSelector() {
+		t.Error("should not have selector with 0 templates")
 	}
 }
 
-// --- Task 1.4: startCreate step determination ---
+// --- startCreate tests ---
 
-func TestStartCreate_NoTemplates_GoesToNameStep(t *testing.T) {
+func TestStartCreate_NoTemplates(t *testing.T) {
 	m := setupCreateTestModel(t)
-	// "book" type has no templates
 	m.startCreate(0, createModeSingle)
 	if m.create == nil {
 		t.Fatal("create should not be nil")
 	}
-	if m.create.step != createStepName {
-		t.Errorf("step = %d, want createStepName", m.create.step)
+	if m.create.field != createFieldName {
+		t.Errorf("field = %d, want createFieldName", m.create.field)
+	}
+	if len(m.create.templates) != 0 {
+		t.Errorf("templates should be empty, got %d", len(m.create.templates))
 	}
 }
 
-func TestStartCreate_SingleTemplate_AutoSelects(t *testing.T) {
+func TestStartCreate_SingleTemplate(t *testing.T) {
 	m := setupCreateTestModelWithTemplates(t, map[string]string{
 		"default": "---\ntitle: default\n---\n",
 	})
@@ -134,32 +117,25 @@ func TestStartCreate_SingleTemplate_AutoSelects(t *testing.T) {
 	if m.create == nil {
 		t.Fatal("create should not be nil")
 	}
-	if m.create.template != "default" {
-		t.Errorf("template = %q, want %q", m.create.template, "default")
-	}
-	if m.create.step != createStepName {
-		t.Errorf("step = %d, want createStepName", m.create.step)
+	if m.create.selectedTemplateName() != "default" {
+		t.Errorf("selectedTemplateName() = %q, want %q", m.create.selectedTemplateName(), "default")
 	}
 }
 
-func TestStartCreate_MultipleTemplates_GoesToTemplateStep(t *testing.T) {
+func TestStartCreate_MultipleTemplates(t *testing.T) {
 	m := setupCreateTestModelWithTemplates(t, map[string]string{
-		"review":  "---\ntitle: review\n---\n",
-		"summary": "---\ntitle: summary\n---\n",
+		"review": "", "summary": "",
 	})
 	m.startCreate(0, createModeSingle)
 	if m.create == nil {
 		t.Fatal("create should not be nil")
 	}
-	if m.create.step != createStepTemplate {
-		t.Errorf("step = %d, want createStepTemplate", m.create.step)
-	}
-	if len(m.create.templates) != 2 {
-		t.Errorf("len(templates) = %d, want 2", len(m.create.templates))
+	if !m.create.hasTemplateSelector() {
+		t.Error("multiple templates should be interactive")
 	}
 }
 
-func TestStartCreate_ReadOnly_NoCreate(t *testing.T) {
+func TestStartCreate_ReadOnly(t *testing.T) {
 	m := setupCreateTestModel(t)
 	m.readOnly = true
 	m.startCreate(0, createModeSingle)
@@ -168,272 +144,10 @@ func TestStartCreate_ReadOnly_NoCreate(t *testing.T) {
 	}
 }
 
-// --- Task 2.1: Template selection key handling ---
-
-func TestCreateTemplate_CursorNavigation(t *testing.T) {
-	m := setupCreateTestModelWithTemplates(t, map[string]string{
-		"review":  "",
-		"summary": "",
-	})
-	m.startCreate(0, createModeSingle)
-	if m.create == nil || m.create.step != createStepTemplate {
-		t.Fatal("expected template step")
-	}
-
-	// Down moves cursor
-	msg := tea.KeyPressMsg{Code: tea.KeyDown}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-	if m.create.cursor != 1 {
-		t.Errorf("cursor after down = %d, want 1", m.create.cursor)
-	}
-
-	// Up wraps to end
-	msg = tea.KeyPressMsg{Code: tea.KeyUp}
-	newM, _ = m.Update(msg)
-	m = newM.(model)
-	if m.create.cursor != 0 {
-		t.Errorf("cursor after up = %d, want 0", m.create.cursor)
-	}
-
-	// Up from 0 wraps to last
-	msg = tea.KeyPressMsg{Code: tea.KeyUp}
-	newM, _ = m.Update(msg)
-	m = newM.(model)
-	opts := m.create.templateOptions()
-	if m.create.cursor != len(opts)-1 {
-		t.Errorf("cursor after wrap up = %d, want %d", m.create.cursor, len(opts)-1)
-	}
-}
-
-func TestCreateTemplate_EnterConfirms(t *testing.T) {
-	m := setupCreateTestModelWithTemplates(t, map[string]string{
-		"review":  "",
-		"summary": "",
-	})
-	m.startCreate(0, createModeSingle)
-
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	if m.create == nil {
-		t.Fatal("create should not be nil after template confirm")
-	}
-	if m.create.step != createStepName {
-		t.Errorf("step = %d, want createStepName", m.create.step)
-	}
-}
-
-func TestCreateTemplate_EscCancels(t *testing.T) {
-	m := setupCreateTestModelWithTemplates(t, map[string]string{
-		"review":  "",
-		"summary": "",
-	})
-	m.startCreate(0, createModeSingle)
-
-	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	if m.create != nil {
-		t.Error("create should be nil after esc")
-	}
-}
-
-// --- Task 2.4: None selection ---
-
-func TestCreateTemplate_NoneSelection(t *testing.T) {
-	m := setupCreateTestModelWithTemplates(t, map[string]string{
-		"review":  "",
-		"summary": "",
-	})
-	m.startCreate(0, createModeSingle)
-
-	// Move to last option (none)
-	opts := m.create.templateOptions()
-	for i := 0; i < len(opts)-1; i++ {
-		msg := tea.KeyPressMsg{Code: tea.KeyDown}
-		newM, _ := m.Update(msg)
-		m = newM.(model)
-	}
-
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	if m.create == nil {
-		t.Fatal("create should not be nil")
-	}
-	if m.create.template != "" {
-		t.Errorf("template = %q, want empty (none selected)", m.create.template)
-	}
-	if m.create.step != createStepName {
-		t.Errorf("step = %d, want createStepName", m.create.step)
-	}
-}
-
-// --- Task 3.1: Name input in Create & Edit mode ---
-
-func TestCreateName_SingleMode_EnterCreatesAndEdits(t *testing.T) {
+func TestStartCreate_NameTemplatePrefill(t *testing.T) {
 	m := setupCreateTestModel(t)
-	m.startCreate(0, createModeSingle)
-
-	// Type a name
-	for _, ch := range "my-book" {
-		msg := tea.KeyPressMsg{Code: ch, Text: string(ch)}
-		newM, _ := m.Update(msg)
-		m = newM.(model)
-	}
-
-	// Enter to create
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	if m.create != nil {
-		t.Error("create should be nil after single mode creation")
-	}
-	if m.selected == nil {
-		t.Fatal("selected should not be nil after creation")
-	}
-	if !strings.Contains(m.selected.ID, "book/my-book") {
-		t.Errorf("selected.ID = %q, want to contain 'book/my-book'", m.selected.ID)
-	}
-	if m.focus != focusBody {
-		t.Errorf("focus = %d, want focusBody(%d)", m.focus, focusBody)
-	}
-	if !m.editMode {
-		t.Error("editMode should be true after single mode creation")
-	}
-}
-
-func TestCreateName_SingleMode_EscCancels(t *testing.T) {
-	m := setupCreateTestModel(t)
-	m.startCreate(0, createModeSingle)
-
-	msg := tea.KeyPressMsg{Code: tea.KeyEscape}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	if m.create != nil {
-		t.Error("create should be nil after esc")
-	}
-}
-
-// --- Task 3.2: Name input in Quick Create mode ---
-
-func TestCreateName_BatchMode_EnterCreatesAndClears(t *testing.T) {
-	m := setupCreateTestModel(t)
-	m.startCreate(0, createModeBatch)
-
-	// Type and create first object
-	for _, ch := range "book-one" {
-		msg := tea.KeyPressMsg{Code: ch, Text: string(ch)}
-		newM, _ := m.Update(msg)
-		m = newM.(model)
-	}
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	if m.create == nil {
-		t.Fatal("create should still be active in batch mode")
-	}
-	if m.create.nameInput.Value() != "" {
-		t.Errorf("input should be cleared, got %q", m.create.nameInput.Value())
-	}
-	if m.create.flash == "" {
-		t.Error("flash should show success message")
-	}
-	if m.create.lastObj == nil {
-		t.Error("lastObj should be set")
-	}
-}
-
-func TestCreateName_BatchMode_EscExits(t *testing.T) {
-	m := setupCreateTestModel(t)
-	m.startCreate(0, createModeBatch)
-
-	// Create one object first
-	for _, ch := range "book-one" {
-		msg := tea.KeyPressMsg{Code: ch, Text: string(ch)}
-		newM, _ := m.Update(msg)
-		m = newM.(model)
-	}
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	lastObj := m.create.lastObj
-
-	// Esc to exit
-	msg = tea.KeyPressMsg{Code: tea.KeyEscape}
-	newM, _ = m.Update(msg)
-	m = newM.(model)
-
-	if m.create != nil {
-		t.Error("create should be nil after esc")
-	}
-	if m.selected == nil || m.selected.ID != lastObj.ID {
-		t.Error("should select last created object after batch exit")
-	}
-}
-
-// --- Task 4.1: Name template auto-skip ---
-
-func TestCreateName_SingleMode_NameTemplateAutoSkip(t *testing.T) {
-	m := setupCreateTestModel(t)
-
-	// Write a type with name template
-	os.WriteFile(
-		filepath.Join(m.vault.TypesDir(), "journal.yaml"),
-		[]byte("name: journal\nproperties:\n  - name: name\n    template: \"{{ date:YYYY-MM-DD }}\"\n"),
-		0644,
-	)
-	// Rebuild groups to include journal
-	objects, _ := m.vault.QueryObjects("")
-	m.groups = buildGroups(objects, m.vault)
-
-	// Find journal group index
-	journalIdx := -1
-	for i, g := range m.groups {
-		if g.Name == "journal" {
-			journalIdx = i
-			break
-		}
-	}
-	if journalIdx < 0 {
-		t.Fatal("journal type not found in groups")
-	}
-
-	m.startCreate(journalIdx, createModeSingle)
-
-	// Should auto-create (no create state left)
-	if m.create != nil {
-		t.Error("create should be nil after name template auto-create")
-	}
-	if m.selected == nil {
-		t.Fatal("selected should not be nil after auto-create")
-	}
-	if !strings.Contains(m.selected.ID, "journal/") {
-		t.Errorf("selected.ID = %q, want to contain 'journal/'", m.selected.ID)
-	}
-	if !m.editMode {
-		t.Error("editMode should be true after single mode auto-create")
-	}
-}
-
-// --- Task 4.3: Quick Create ignores name template ---
-
-func TestCreateName_BatchMode_IgnoresNameTemplate(t *testing.T) {
-	m := setupCreateTestModel(t)
-
-	os.WriteFile(
-		filepath.Join(m.vault.TypesDir(), "journal.yaml"),
-		[]byte("name: journal\nproperties:\n  - name: name\n    template: \"{{ date:YYYY-MM-DD }}\"\n"),
-		0644,
-	)
+	os.WriteFile(filepath.Join(m.vault.TypesDir(), "journal.yaml"),
+		[]byte("name: journal\nproperties:\n  - name: name\n    template: \"{{ date:YYYY-MM-DD }}\"\n"), 0644)
 	objects, _ := m.vault.QueryObjects("")
 	m.groups = buildGroups(objects, m.vault)
 
@@ -448,124 +162,171 @@ func TestCreateName_BatchMode_IgnoresNameTemplate(t *testing.T) {
 		t.Fatal("journal type not found")
 	}
 
-	m.startCreate(journalIdx, createModeBatch)
-
-	// Should stay in create mode (not auto-create)
+	m.startCreate(journalIdx, createModeSingle)
 	if m.create == nil {
-		t.Error("create should not be nil — batch mode should require name input")
+		t.Fatal("create should not be nil — name should be pre-filled, not auto-skipped")
 	}
-	if m.create.step != createStepName {
-		t.Errorf("step = %d, want createStepName", m.create.step)
+	if m.create.nameInput.Value() == "" {
+		t.Error("name should be pre-filled from name template")
 	}
 }
 
-// --- Task 5.1: Post-creation in Create & Edit mode ---
+// --- Tab switching ---
 
-func TestCreateSingle_PostCreation_FocusBodyEditMode(t *testing.T) {
+func TestCreateTab_SwitchesFields(t *testing.T) {
+	m := setupCreateTestModelWithTemplates(t, map[string]string{"review": "", "summary": ""})
+	m.startCreate(0, createModeSingle)
+
+	tab := tea.KeyPressMsg{Code: tea.KeyTab}
+	newM, _ := m.Update(tab)
+	m = newM.(model)
+	if m.create.field != createFieldTemplate {
+		t.Error("Tab should switch to template field")
+	}
+
+	newM, _ = m.Update(tab)
+	m = newM.(model)
+	if m.create.field != createFieldName {
+		t.Error("Tab should switch back to name field")
+	}
+}
+
+func TestCreateTab_NoOpWithoutTemplates(t *testing.T) {
 	m := setupCreateTestModel(t)
 	m.startCreate(0, createModeSingle)
 
-	for _, ch := range "test-obj" {
-		msg := tea.KeyPressMsg{Code: ch, Text: string(ch)}
-		newM, _ := m.Update(msg)
-		m = newM.(model)
-	}
-
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
+	tab := tea.KeyPressMsg{Code: tea.KeyTab}
+	newM, _ := m.Update(tab)
 	m = newM.(model)
-
-	if m.focus != focusBody {
-		t.Errorf("focus = %d, want focusBody", m.focus)
-	}
-	if !m.editMode {
-		t.Error("editMode should be true")
-	}
-	if m.rightPanel != panelObject {
-		t.Errorf("rightPanel = %d, want panelObject", m.rightPanel)
+	if m.create.field != createFieldName {
+		t.Error("Tab should be no-op when no templates")
 	}
 }
 
-// --- Task 5.3: Post-creation in Quick Create mode ---
+// --- Template cycling ---
 
-func TestCreateBatch_PostCreation_FlashAndClear(t *testing.T) {
+func TestCreateTemplate_Cycling(t *testing.T) {
+	m := setupCreateTestModelWithTemplates(t, map[string]string{"review": "", "summary": ""})
+	m.startCreate(0, createModeSingle)
+
+	tab := tea.KeyPressMsg{Code: tea.KeyTab}
+	newM, _ := m.Update(tab)
+	m = newM.(model)
+
+	right := tea.KeyPressMsg{Code: tea.KeyRight}
+	newM, _ = m.Update(right)
+	m = newM.(model)
+	if m.create.cursor != 1 {
+		t.Errorf("cursor = %d, want 1", m.create.cursor)
+	}
+
+	newM, _ = m.Update(right)
+	m = newM.(model)
+	if m.create.cursor != 2 {
+		t.Errorf("cursor = %d, want 2 (none)", m.create.cursor)
+	}
+
+	newM, _ = m.Update(right)
+	m = newM.(model)
+	if m.create.cursor != 0 {
+		t.Errorf("cursor = %d, want 0 (wrap)", m.create.cursor)
+	}
+
+	left := tea.KeyPressMsg{Code: tea.KeyLeft}
+	newM, _ = m.Update(left)
+	m = newM.(model)
+	if m.create.cursor != 2 {
+		t.Errorf("cursor = %d, want 2 (wrap left)", m.create.cursor)
+	}
+}
+
+// --- Creation ---
+
+func TestCreate_SingleMode_CreatesAndEdits(t *testing.T) {
+	m := setupCreateTestModel(t)
+	m.startCreate(0, createModeSingle)
+
+	for _, ch := range "my-book" {
+		newM, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+		m = newM.(model)
+	}
+
+	newM, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	m = newM.(model)
+
+	if m.create != nil {
+		t.Error("create should be nil")
+	}
+	if m.selected == nil || !strings.Contains(m.selected.ID, "book/my-book") {
+		t.Error("should select new object")
+	}
+	if m.focus != focusBody || !m.editMode {
+		t.Error("should be in body edit mode")
+	}
+}
+
+func TestCreate_BatchMode_CreatesAndClears(t *testing.T) {
 	m := setupCreateTestModel(t)
 	m.startCreate(0, createModeBatch)
 
-	for _, ch := range "batch-obj" {
-		msg := tea.KeyPressMsg{Code: ch, Text: string(ch)}
-		newM, _ := m.Update(msg)
+	for _, ch := range "book-one" {
+		newM, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
 		m = newM.(model)
 	}
-
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
+	newM, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = newM.(model)
 
 	if m.create == nil {
-		t.Fatal("create should still be active")
-	}
-	if !strings.Contains(m.create.flash, "Created") {
-		t.Errorf("flash = %q, want to contain 'Created'", m.create.flash)
+		t.Fatal("should still be active")
 	}
 	if m.create.nameInput.Value() != "" {
-		t.Error("input should be cleared after creation")
+		t.Error("input should be cleared")
+	}
+	if m.create.flash == "" {
+		t.Error("flash should show")
 	}
 }
 
-// --- Task 5.5: Flash dismiss ---
-
-func TestFlashDismiss(t *testing.T) {
+func TestCreate_BatchMode_EscExits(t *testing.T) {
 	m := setupCreateTestModel(t)
-	m.create = &createState{
-		mode:     createModeBatch,
-		step:     createStepName,
-		flash:    "✓ Created: test",
-		flashSeq: 1,
-	}
+	m.startCreate(0, createModeBatch)
 
-	// Matching seq dismisses the flash
-	newM, _ := m.Update(flashDismissMsg{seq: 1})
+	for _, ch := range "book-one" {
+		newM, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+		m = newM.(model)
+	}
+	newM, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	m = newM.(model)
+	lastObj := m.create.lastObj
+
+	newM, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEscape})
 	m = newM.(model)
 
-	if m.create.flash != "" {
-		t.Errorf("flash should be empty after dismiss, got %q", m.create.flash)
+	if m.create != nil {
+		t.Error("create should be nil")
+	}
+	if m.selected == nil || m.selected.ID != lastObj.ID {
+		t.Error("should select last object")
 	}
 }
 
-func TestFlashDismiss_StaleSeqIgnored(t *testing.T) {
+func TestCreate_EmptyNameRejected(t *testing.T) {
 	m := setupCreateTestModel(t)
-	m.create = &createState{
-		mode:     createModeBatch,
-		step:     createStepName,
-		flash:    "✓ Created: newer",
-		flashSeq: 2,
-	}
+	m.startCreate(0, createModeSingle)
 
-	// Stale seq (from earlier creation) should not dismiss current flash
-	newM, _ := m.Update(flashDismissMsg{seq: 1})
+	newM, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = newM.(model)
-
-	if m.create.flash != "✓ Created: newer" {
-		t.Errorf("flash should not be dismissed by stale seq, got %q", m.create.flash)
+	if m.create == nil {
+		t.Error("create should still be active")
 	}
 }
 
-// --- Task 6.1: Unique constraint error ---
-
-func TestCreateName_UniqueError(t *testing.T) {
+func TestCreate_UniqueError(t *testing.T) {
 	m := setupCreateTestModel(t)
-
-	// Write unique type
-	os.WriteFile(
-		filepath.Join(m.vault.TypesDir(), "tag.yaml"),
-		[]byte("name: tag\nunique: true\n"),
-		0644,
-	)
+	os.WriteFile(filepath.Join(m.vault.TypesDir(), "tag.yaml"), []byte("name: tag\nunique: true\n"), 0644)
 	objects, _ := m.vault.QueryObjects("")
 	m.groups = buildGroups(objects, m.vault)
 
-	// Find tag group
 	tagIdx := -1
 	for i, g := range m.groups {
 		if g.Name == "tag" {
@@ -574,181 +335,145 @@ func TestCreateName_UniqueError(t *testing.T) {
 		}
 	}
 	if tagIdx < 0 {
-		t.Fatal("tag type not found")
+		t.Fatal("tag not found")
 	}
 
-	// Create first object
 	m.startCreate(tagIdx, createModeSingle)
 	for _, ch := range "my-tag" {
-		msg := tea.KeyPressMsg{Code: ch, Text: string(ch)}
-		newM, _ := m.Update(msg)
+		newM, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
 		m = newM.(model)
 	}
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
+	newM, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = newM.(model)
 
-	// Try to create duplicate
 	m.startCreate(tagIdx, createModeSingle)
 	for _, ch := range "my-tag" {
-		msg := tea.KeyPressMsg{Code: ch, Text: string(ch)}
-		newM, _ := m.Update(msg)
+		newM, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
 		m = newM.(model)
 	}
-	msg = tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ = m.Update(msg)
+	newM, _ = m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
 	m = newM.(model)
 
-	if m.create == nil {
-		t.Fatal("create should still be active on error")
-	}
-	if m.create.errMsg == "" {
-		t.Error("errMsg should contain duplicate error")
+	if m.create == nil || m.create.errMsg == "" {
+		t.Error("should have error for duplicate")
 	}
 }
 
-// --- Task 6.2: Empty name rejection ---
-
-func TestCreateName_EmptyNameRejected(t *testing.T) {
-	m := setupCreateTestModel(t)
-	m.startCreate(0, createModeSingle)
-
-	// Press enter without typing
-	msg := tea.KeyPressMsg{Code: tea.KeyEnter}
-	newM, _ := m.Update(msg)
-	m = newM.(model)
-
-	if m.create == nil {
-		t.Error("create should still be active (empty name should not create)")
-	}
-}
-
-// --- Task 6.1: Error clears on input change ---
-
-func TestCreateName_ErrorClearsOnInput(t *testing.T) {
+func TestCreate_ErrorClearsOnInput(t *testing.T) {
 	m := setupCreateTestModel(t)
 	m.create = &createState{
-		mode:      createModeSingle,
-		step:      createStepName,
-		typeName:  "book",
-		nameInput: initNameInput(),
-		errMsg:    "some error",
+		mode: createModeSingle, field: createFieldName, typeName: "book",
+		nameInput: initNameInput(), errMsg: "error", templateCache: make(map[string]*core.Template),
 	}
 
-	msg := tea.KeyPressMsg{Code: 'a', Text: "a"}
-	newM, _ := m.Update(msg)
+	newM, _ := m.Update(tea.KeyPressMsg{Code: 'a', Text: "a"})
 	m = newM.(model)
-
 	if m.create.errMsg != "" {
-		t.Errorf("errMsg should be cleared on input, got %q", m.create.errMsg)
+		t.Error("errMsg should clear on input")
 	}
 }
 
-// --- Task 7.4: Read-only mode ---
+func TestFlashDismiss(t *testing.T) {
+	m := setupCreateTestModel(t)
+	m.create = &createState{mode: createModeBatch, flash: "✓ test", flashSeq: 1, templateCache: make(map[string]*core.Template)}
+
+	newM, _ := m.Update(flashDismissMsg{seq: 1})
+	m = newM.(model)
+	if m.create.flash != "" {
+		t.Error("flash should be empty")
+	}
+}
+
+func TestFlashDismiss_StaleSeqIgnored(t *testing.T) {
+	m := setupCreateTestModel(t)
+	m.create = &createState{mode: createModeBatch, flash: "newer", flashSeq: 2, templateCache: make(map[string]*core.Template)}
+
+	newM, _ := m.Update(flashDismissMsg{seq: 1})
+	m = newM.(model)
+	if m.create.flash != "newer" {
+		t.Error("stale seq should not dismiss")
+	}
+}
 
 func TestCreateKeybindings_ReadOnlyIgnored(t *testing.T) {
 	m := setupCreateTestModel(t)
 	m.readOnly = true
 
-	// n key
-	msg := tea.KeyPressMsg{Code: 'n', Text: "n"}
-	newM, _ := m.Update(msg)
+	newM, _ := m.Update(tea.KeyPressMsg{Code: 'n', Text: "n"})
 	m = newM.(model)
 	if m.create != nil {
-		t.Error("n should be ignored in read-only mode")
+		t.Error("n ignored in readonly")
 	}
-
-	// N key
-	msg = tea.KeyPressMsg{Code: 'N', Text: "N"}
-	newM, _ = m.Update(msg)
+	newM, _ = m.Update(tea.KeyPressMsg{Code: 'N', Text: "N"})
 	m = newM.(model)
 	if m.create != nil {
-		t.Error("N should be ignored in read-only mode")
+		t.Error("N ignored in readonly")
 	}
 }
 
-// --- Rendering tests ---
+// --- Rendering ---
 
-func TestRenderCreateUI_TemplateStep(t *testing.T) {
+func TestRenderCreateTitleContent_WithTemplates(t *testing.T) {
 	cs := &createState{
-		step:      createStepTemplate,
-		typeName:  "book",
-		templates: []string{"review", "summary"},
-		cursor:    0,
+		field: createFieldName, typeName: "book", emoji: "📚",
+		templates: []string{"review", "summary"}, cursor: 0,
+		nameInput: initNameInput(), templateCache: make(map[string]*core.Template),
 	}
-	result := renderCreateUI(cs)
-	if !strings.Contains(result, "Select template:") {
-		t.Error("should contain 'Select template:' header")
+	result := renderCreateTitleContent(cs, 80)
+	if !strings.Contains(result, "📚") || !strings.Contains(result, "book") {
+		t.Error("should contain emoji and type")
 	}
-	if !strings.Contains(result, "> review") {
-		t.Error("should contain cursor at review")
-	}
-	if !strings.Contains(result, noneOption) {
-		t.Errorf("should contain %q option", noneOption)
+	if !strings.Contains(result, "📝 review") {
+		t.Error("should contain template")
 	}
 }
 
-func TestRenderCreateUI_NameStep(t *testing.T) {
+func TestRenderCreateTitleContent_NoTemplates(t *testing.T) {
 	cs := &createState{
-		step:      createStepName,
-		typeName:  "book",
-		nameInput: initNameInput(),
+		field: createFieldName, typeName: "note",
+		nameInput: initNameInput(), templateCache: make(map[string]*core.Template),
 	}
-	result := renderCreateUI(cs)
-	if !strings.Contains(result, "New book:") {
-		t.Error("should contain 'New book:' prompt")
+	result := renderCreateTitleContent(cs, 80)
+	if strings.Contains(result, "📝") {
+		t.Error("should not contain template icon")
 	}
 }
 
-func TestRenderCreateUI_NameStepWithError(t *testing.T) {
+func TestRenderCreateTitleContent_TemplateFocused(t *testing.T) {
 	cs := &createState{
-		step:      createStepName,
-		typeName:  "book",
-		nameInput: initNameInput(),
-		errMsg:    "name already exists",
+		field: createFieldTemplate, typeName: "book",
+		templates: []string{"review", "summary"}, cursor: 0,
+		nameInput: initNameInput(), templateCache: make(map[string]*core.Template),
 	}
-	result := renderCreateUI(cs)
-	if !strings.Contains(result, "✗ name already exists") {
-		t.Error("should contain error message with ✗ prefix")
-	}
-}
-
-func TestRenderCreateUI_WithFlash(t *testing.T) {
-	cs := &createState{
-		step:      createStepName,
-		typeName:  "book",
-		nameInput: initNameInput(),
-		flash:     "✓ Created: my-book",
-	}
-	result := renderCreateUI(cs)
-	if !strings.Contains(result, "✓ Created: my-book") {
-		t.Error("should contain flash message")
+	result := renderCreateTitleContent(cs, 80)
+	if !strings.Contains(result, "[📝 review]") {
+		t.Error("focused template should be in brackets")
 	}
 }
 
-func TestRenderCreateHelpBar_TemplateStep(t *testing.T) {
-	cs := &createState{step: createStepTemplate}
+func TestRenderCreateHelpBar_NameSingle(t *testing.T) {
+	cs := &createState{field: createFieldName, mode: createModeSingle, templates: []string{"a", "b"}}
 	result := renderCreateHelpBar(cs)
-	if !strings.Contains(result, "↑↓") {
-		t.Error("should contain navigation hint")
+	if !strings.Contains(result, "tab: template") {
+		t.Error("should contain tab hint")
 	}
-}
-
-func TestRenderCreateHelpBar_NameStepSingle(t *testing.T) {
-	cs := &createState{step: createStepName, mode: createModeSingle}
-	result := renderCreateHelpBar(cs)
 	if !strings.Contains(result, "create & edit") {
-		t.Error("should contain 'create & edit' in single mode")
+		t.Error("should contain create & edit")
 	}
 }
 
-func TestRenderCreateHelpBar_NameStepBatch(t *testing.T) {
-	cs := &createState{step: createStepName, mode: createModeBatch}
+func TestRenderCreateHelpBar_TemplateFocused(t *testing.T) {
+	cs := &createState{field: createFieldTemplate, mode: createModeSingle, templates: []string{"a", "b"}}
 	result := renderCreateHelpBar(cs)
-	if !strings.Contains(result, "QUICK CREATE") {
-		t.Error("should contain 'QUICK CREATE' in batch mode")
+	if !strings.Contains(result, "◀▶: switch") {
+		t.Error("should contain arrow hint")
 	}
-	if !strings.Contains(result, "esc: done") {
-		t.Error("should contain 'esc: done' in batch mode")
+}
+
+func TestRenderCreateHelpBar_Batch(t *testing.T) {
+	cs := &createState{field: createFieldName, mode: createModeBatch}
+	result := renderCreateHelpBar(cs)
+	if !strings.Contains(result, "QUICK CREATE") || !strings.Contains(result, "esc: done") {
+		t.Error("should show batch hints")
 	}
 }

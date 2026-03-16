@@ -179,33 +179,38 @@ Shown when creating a new type via `+ New Type`.
 
 ### `[NEW OBJECT]` — Create & Edit Mode
 
-Triggered by pressing `n`. Creates a single object then enters body edit mode automatically.
+Triggered by pressing `n`. The **title panel** transforms into an inline creation form with a name input and (when templates exist) a template cycling selector. The body and properties panels show a **live preview** of the selected template's content.
 
-If the type has **multiple templates**, a template selection step is shown first (arrow keys to navigate, Enter to confirm, Esc to cancel). A single template is auto-applied; no templates skips the step. A `(none)` option is always available.
-
-If the type defines a **name template** (e.g. `{{ date:YYYY-MM-DD }}`), the name input is skipped and the object is created immediately with the auto-generated name.
+The form layout: `📚 book · [name█] 📝 review`
 
 | Key | Action |
 |-----|--------|
 | Text keys | Object name |
-| `Enter` | Create & enter body edit mode |
+| `Tab` | Switch focus between name and template fields |
+| `←`/`→` | Cycle templates (when template field focused) |
+| `Enter` | Create object & enter body edit mode |
 | `Esc` | Cancel |
 
-Duplicate name errors (for types with `unique: true`) are shown inline below the input and clear when you modify the text.
+- If the type has **multiple templates**, `Tab` switches to the template selector where `←`/`→` cycles through templates plus a `(none)` option. A single template is auto-selected and shown as a static label.
+- If the type defines a **name template** (e.g. `{{ date:YYYY-MM-DD }}`), the name is pre-filled with the evaluated value. You can edit it or press Enter to accept.
+- Switching templates updates the body and properties panels in real time as a preview.
+- Duplicate name errors (for types with `unique: true`) are shown inline in the title panel and clear when you modify the text.
 
 ### `[QUICK CREATE]` — Batch Creation Mode
 
-Triggered by pressing `N`. Stays in input mode for rapid creation of multiple objects.
+Triggered by pressing `N`. Same title panel form as Create & Edit, but stays in input mode for rapid creation of multiple objects.
 
-Template selection (if applicable) happens once at the start and applies to all objects in the batch. Name templates are not auto-applied in this mode — you always type a name.
+The template (if selected) persists across the batch — all objects use the same template. Name templates pre-fill but are always editable.
 
 | Key | Action |
 |-----|--------|
 | Text keys | Object name |
+| `Tab` | Switch focus between name and template fields |
+| `←`/`→` | Cycle templates (when template field focused) |
 | `Enter` | Create object, clear input, ready for next |
 | `Esc` | Exit batch mode (selects last created object) |
 
-A success flash (e.g. `✓ Created: my-book`) appears briefly after each creation.
+A success flash (e.g. `✓ Created: my-book`) appears briefly in the title panel after each creation.
 
 ### `[READONLY]` — Read-Only Mode
 
