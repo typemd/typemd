@@ -70,17 +70,17 @@ func (v *Vault) WriteConfig(cfg *VaultConfig) error {
 }
 
 // GetConfigValue returns the value for a dot-notation config key.
-// Returns (value, true) if the key is known, ("", false) if unknown.
-func (v *Vault) GetConfigValue(key string) (string, bool) {
+// Returns an error if the key is unknown.
+func (v *Vault) GetConfigValue(key string) (string, error) {
 	entry, ok := configKeyRegistry[key]
 	if !ok {
-		return "", false
+		return "", fmt.Errorf("unknown config key %q. Known keys: %s", key, strings.Join(ConfigKeys(), ", "))
 	}
 	cfg := v.config
 	if cfg == nil {
 		cfg = &VaultConfig{}
 	}
-	return entry.Get(cfg), true
+	return entry.Get(cfg), nil
 }
 
 // SetConfigValue sets a value for a dot-notation config key.

@@ -99,9 +99,9 @@ func TestSetConfigValue_EmptyValue(t *testing.T) {
 	if err := v.SetConfigValue("cli.default_type", ""); err != nil {
 		t.Fatalf("SetConfigValue empty error: %v", err)
 	}
-	val, known := v.GetConfigValue("cli.default_type")
-	if !known {
-		t.Fatal("expected key to be known")
+	val, err := v.GetConfigValue("cli.default_type")
+	if err != nil {
+		t.Fatalf("GetConfigValue error: %v", err)
 	}
 	if val != "" {
 		t.Errorf("expected empty value, got %q", val)
@@ -134,12 +134,12 @@ func TestGetConfigValue_UnknownKey(t *testing.T) {
 	v.Open()
 	defer v.Close()
 
-	val, known := v.GetConfigValue("nonexistent")
-	if known {
-		t.Fatal("expected unknown key to return known=false")
+	_, err := v.GetConfigValue("nonexistent")
+	if err == nil {
+		t.Fatal("expected error for unknown key")
 	}
-	if val != "" {
-		t.Errorf("expected empty value for unknown key, got %q", val)
+	if !strings.Contains(err.Error(), "unknown config key") {
+		t.Errorf("error should mention 'unknown config key', got: %v", err)
 	}
 }
 
@@ -150,9 +150,9 @@ func TestGetConfigValue_UnsetKnownKey(t *testing.T) {
 	v.Open()
 	defer v.Close()
 
-	val, known := v.GetConfigValue("cli.default_type")
-	if !known {
-		t.Fatal("expected cli.default_type to be known")
+	val, err := v.GetConfigValue("cli.default_type")
+	if err != nil {
+		t.Fatalf("GetConfigValue error: %v", err)
 	}
 	if val != "" {
 		t.Errorf("expected empty value for unset key, got %q", val)

@@ -13,9 +13,9 @@ func (dc *domainContext) iSetConfigTo(key, value string) {
 }
 
 func (dc *domainContext) theConfigValueShouldBe(key, expected string) error {
-	val, known := dc.vault.GetConfigValue(key)
-	if !known {
-		return fmt.Errorf("config key %q is not known", key)
+	val, err := dc.vault.GetConfigValue(key)
+	if err != nil {
+		return fmt.Errorf("config key %q: %w", key, err)
 	}
 	if val != expected {
 		return fmt.Errorf("expected config %q = %q, got %q", key, expected, val)
@@ -24,9 +24,9 @@ func (dc *domainContext) theConfigValueShouldBe(key, expected string) error {
 }
 
 func (dc *domainContext) theConfigKeyShouldNotBeKnown(key string) error {
-	_, known := dc.vault.GetConfigValue(key)
-	if known {
-		return fmt.Errorf("expected config key %q to not be known, but it was", key)
+	_, err := dc.vault.GetConfigValue(key)
+	if err == nil {
+		return fmt.Errorf("expected config key %q to return error, but it didn't", key)
 	}
 	return nil
 }

@@ -38,9 +38,9 @@ var configGetCmd = &cobra.Command{
 		}
 		defer vault.Close()
 
-		val, known := vault.GetConfigValue(args[0])
-		if !known {
-			return fmt.Errorf("unknown config key %q. Known keys: %s", args[0], joinKeys())
+		val, err := vault.GetConfigValue(args[0])
+		if err != nil {
+			return err
 		}
 		if val != "" {
 			fmt.Println(val)
@@ -68,18 +68,6 @@ var configListCmd = &cobra.Command{
 		}
 		return nil
 	},
-}
-
-func joinKeys() string {
-	keys := core.ConfigKeys()
-	result := ""
-	for i, k := range keys {
-		if i > 0 {
-			result += ", "
-		}
-		result += k
-	}
-	return result
 }
 
 func init() {
