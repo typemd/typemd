@@ -652,7 +652,7 @@ func (m model) View() tea.View {
 
 	var rightSide string
 
-	if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
+	if m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.createType == nil {
 		// Type editor uses full right-side width (no props panel)
 		editorW := m.width - m.leftWidth() - 4 // left border + body border
 		if editorW < 10 {

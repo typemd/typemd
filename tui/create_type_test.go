@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/typemd/typemd/core"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -380,5 +381,29 @@ func TestHasTitlePanel_CreateType(t *testing.T) {
 	m.startCreateType()
 	if !m.hasTitlePanel() {
 		t.Error("should be true when createType is active")
+	}
+}
+
+// --- View rendering priority ---
+
+func TestCreateType_OverridesTypeEditor(t *testing.T) {
+	m := setupCreateTestModel(t)
+	m.width = 120
+	m.height = 24
+
+	// Simulate being on a type header with type editor open
+	m.rightPanel = panelTypeEditor
+	ts := &core.TypeSchema{Name: "book", Emoji: "📚"}
+	m.typeEditor = newTypeEditor(ts, "book", false, m.vault)
+
+	// Start type creation — should override type editor in View()
+	m.startCreateType()
+
+	v := m.View()
+	if !strings.Contains(v.Content, "new type") {
+		t.Error("View should show type creation form, not type editor")
+	}
+	if !strings.Contains(v.Content, "NEW TYPE") {
+		t.Error("help bar should show NEW TYPE mode")
 	}
 }
