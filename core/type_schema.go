@@ -5,6 +5,8 @@ import (
 	"net/url"
 	"regexp"
 	"sort"
+	"strconv"
+	"strings"
 	"time"
 
 	"gopkg.in/yaml.v3"
@@ -61,13 +63,16 @@ func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
 	return append(prefix, keys...)
 }
 
+// DefaultSchemaVersion is the default version for type schemas without an explicit version.
+const DefaultSchemaVersion = "0.0"
+
 // TypeSchema defines the schema for a type.
 type TypeSchema struct {
 	Name         string     `yaml:"name"`
 	Plural       string     `yaml:"plural,omitempty"`
 	Emoji        string     `yaml:"emoji,omitempty"`
 	Unique       bool       `yaml:"unique,omitempty"`
-	Version      int        `yaml:"version,omitempty"`
+	Version      string     `yaml:"version,omitempty"`
 	Properties   []Property `yaml:"properties"`
 	NameTemplate string     `yaml:"-"` // extracted from name property entry during load
 }
@@ -247,8 +252,10 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 	if schema.Name == "" {
 		errs = append(errs, fmt.Errorf("schema missing required field: name"))
 	}
-	if schema.Version < 0 {
-		errs = append(errs, fmt.Errorf("schema version must be non-negative, got %d", schema.Version))
+	if schema.Version != "" && schema.Version != DefaultSchemaVersion {
+		if err := validateVersion(schema.Version); err != nil {
+			errs = append(errs, err)
+		}
 	}
 
 	// Build shared properties map if provided
@@ -579,7 +586,7 @@ type marshalSchema struct {
 	Plural     string     `yaml:"plural,omitempty"`
 	Emoji      string     `yaml:"emoji,omitempty"`
 	Unique     bool       `yaml:"unique,omitempty"`
-	Version    int        `yaml:"version,omitempty"`
+	Version    string     `yaml:"version,omitempty"`
 	Properties []Property `yaml:"properties"`
 }
 
@@ -587,12 +594,16 @@ type marshalSchema struct {
 // writing to .typemd/types/<name>.yaml. It handles the NameTemplate →
 // name property entry conversion that yaml:"-" would otherwise drop.
 func MarshalTypeSchema(schema *TypeSchema) ([]byte, error) {
+	version := schema.Version
+	if version == DefaultSchemaVersion {
+		version = "" // omit default version from YAML
+	}
 	ms := marshalSchema{
 		Name:    schema.Name,
 		Plural:  schema.Plural,
 		Emoji:   schema.Emoji,
 		Unique:  schema.Unique,
-		Version: schema.Version,
+		Version: version,
 	}
 
 	// Re-introduce name template as a name property entry if set
@@ -606,4 +617,52 @@ func MarshalTypeSchema(schema *TypeSchema) ([]byte, error) {
 	ms.Properties = append(ms.Properties, schema.Properties...)
 
 	return yaml.Marshal(&ms)
+}
+
+// parseVersion parses a "major.minor" version string into two integers.
+func parseVersion(v string) (int, int, error) {
+	parts := strings.SplitN(v, ".", 3)
+	if len(parts) != 2 {
+		return 0, 0, fmt.Errorf("version must be in \"major.minor\" format, got %q", v)
+	}
+	major, err := strconv.Atoi(parts[0])
+	if err != nil || major < 0 {
+		return 0, 0, fmt.Errorf("version must be in \"major.minor\" format, got %q", v)
+	}
+	minor, err := strconv.Atoi(parts[1])
+	if err != nil || minor < 0 {
+		return 0, 0, fmt.Errorf("version must be in \"major.minor\" format, got %q", v)
+	}
+	// Reject leading zeros (e.g. "01.0" or "0.01")
+	if parts[0] != strconv.Itoa(major) || parts[1] != strconv.Itoa(minor) {
+		return 0, 0, fmt.Errorf("version must be in \"major.minor\" format, got %q", v)
+	}
+	return major, minor, nil
+}
+
+// validateVersion checks that a version string is a valid "major.minor" format.
+func validateVersion(v string) error {
+	_, _, err := parseVersion(v)
+	return err
+}
+
+// CompareVersions compares two "major.minor" version strings.
+// Returns -1 if a < b, 0 if a == b, 1 if a > b.
+// Both versions must be valid; invalid versions are treated as "0.0".
+func CompareVersions(a, b string) int {
+	aMajor, aMinor, _ := parseVersion(a)
+	bMajor, bMinor, _ := parseVersion(b)
+	if aMajor != bMajor {
+		if aMajor < bMajor {
+			return -1
+		}
+		return 1
+	}
+	if aMinor != bMinor {
+		if aMinor < bMinor {
+			return -1
+		}
+		return 1
+	}
+	return 0
 }

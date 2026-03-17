@@ -1104,7 +1104,7 @@ func TestValidateSchema_NameWithNoFieldsRejected(t *testing.T) {
 func TestTypeSchema_VersionField(t *testing.T) {
 	data := []byte(`
 name: book
-version: 2
+version: "2.3"
 properties:
   - name: title
     type: string
@@ -1113,12 +1113,12 @@ properties:
 	if err := yaml.Unmarshal(data, &schema); err != nil {
 		t.Fatalf("Unmarshal error = %v", err)
 	}
-	if schema.Version != 2 {
-		t.Errorf("Version = %d, want 2", schema.Version)
+	if schema.Version != "2.3" {
+		t.Errorf("Version = %q, want %q", schema.Version, "2.3")
 	}
 }
 
-func TestTypeSchema_VersionOmittedDefaultsToZero(t *testing.T) {
+func TestTypeSchema_VersionOmittedDefaultsToEmpty(t *testing.T) {
 	data := []byte(`
 name: book
 properties:
@@ -1129,13 +1129,13 @@ properties:
 	if err := yaml.Unmarshal(data, &schema); err != nil {
 		t.Fatalf("Unmarshal error = %v", err)
 	}
-	if schema.Version != 0 {
-		t.Errorf("Version = %d, want 0", schema.Version)
+	if schema.Version != "" {
+		t.Errorf("Version = %q, want empty string", schema.Version)
 	}
 }
 
-func TestTypeSchema_VersionZeroOmittedFromYAML(t *testing.T) {
-	schema := &TypeSchema{Name: "note", Version: 0}
+func TestTypeSchema_DefaultVersionOmittedFromYAML(t *testing.T) {
+	schema := &TypeSchema{Name: "note", Version: "0.0"}
 	data, err := MarshalTypeSchema(schema)
 	if err != nil {
 		t.Fatalf("MarshalTypeSchema error = %v", err)
@@ -1145,67 +1145,92 @@ func TestTypeSchema_VersionZeroOmittedFromYAML(t *testing.T) {
 	}
 }
 
-func TestTypeSchema_VersionOnePresent(t *testing.T) {
-	schema := &TypeSchema{Name: "book", Version: 1}
+func TestTypeSchema_EmptyVersionOmittedFromYAML(t *testing.T) {
+	schema := &TypeSchema{Name: "note"}
 	data, err := MarshalTypeSchema(schema)
 	if err != nil {
 		t.Fatalf("MarshalTypeSchema error = %v", err)
 	}
-	if !strings.Contains(string(data), "version: 1") {
-		t.Errorf("expected YAML to contain 'version: 1', got:\n%s", string(data))
+	if strings.Contains(string(data), "version:") {
+		t.Errorf("expected version to be omitted from YAML, got:\n%s", string(data))
 	}
 }
 
-func TestTypeSchema_LargeVersionNumber(t *testing.T) {
-	schema := &TypeSchema{Name: "book", Version: 999}
+func TestTypeSchema_VersionPresent(t *testing.T) {
+	schema := &TypeSchema{Name: "book", Version: "1.0"}
 	data, err := MarshalTypeSchema(schema)
 	if err != nil {
 		t.Fatalf("MarshalTypeSchema error = %v", err)
 	}
-	if !strings.Contains(string(data), "version: 999") {
-		t.Errorf("expected YAML to contain 'version: 999', got:\n%s", string(data))
+	if !strings.Contains(string(data), `version: "1.0"`) {
+		t.Errorf("expected YAML to contain 'version: \"1.0\"', got:\n%s", string(data))
 	}
 }
 
-func TestValidateSchema_NegativeVersionRejected(t *testing.T) {
-	schema := &TypeSchema{
-		Name:    "bad",
-		Version: -1,
-	}
-	errs := ValidateSchema(schema)
-	if len(errs) != 1 {
-		t.Fatalf("expected 1 error for negative version, got %d: %v", len(errs), errs)
-	}
-	if !strings.Contains(errs[0].Error(), "non-negative") {
-		t.Errorf("expected error mentioning 'non-negative', got %q", errs[0].Error())
-	}
-}
-
-func TestValidateSchema_ZeroVersionAccepted(t *testing.T) {
-	schema := &TypeSchema{
-		Name:    "book",
-		Version: 0,
-		Properties: []Property{
-			{Name: "title", Type: "string"},
-		},
-	}
-	errs := ValidateSchema(schema)
-	if len(errs) != 0 {
-		t.Errorf("expected no errors for version 0, got %v", errs)
+func TestValidateSchema_ValidVersionAccepted(t *testing.T) {
+	tests := []string{"0.0", "1.0", "2.3", "10.99"}
+	for _, v := range tests {
+		schema := &TypeSchema{
+			Name:    "book",
+			Version: v,
+			Properties: []Property{
+				{Name: "title", Type: "string"},
+			},
+		}
+		errs := ValidateSchema(schema)
+		if len(errs) != 0 {
+			t.Errorf("expected no errors for version %q, got %v", v, errs)
+		}
 	}
 }
 
-func TestValidateSchema_PositiveVersionAccepted(t *testing.T) {
-	schema := &TypeSchema{
-		Name:    "book",
-		Version: 5,
-		Properties: []Property{
-			{Name: "title", Type: "string"},
-		},
+func TestValidateSchema_InvalidVersionRejected(t *testing.T) {
+	tests := []struct {
+		version string
+		desc    string
+	}{
+		{"1", "single number"},
+		{"1.0.0", "three segments"},
+		{"01.0", "leading zero in major"},
+		{"0.01", "leading zero in minor"},
+		{"-1.0", "negative major"},
+		{"abc", "non-numeric"},
+		{"1.x", "non-numeric minor"},
 	}
-	errs := ValidateSchema(schema)
-	if len(errs) != 0 {
-		t.Errorf("expected no errors for version 5, got %v", errs)
+	for _, tc := range tests {
+		schema := &TypeSchema{Name: "bad", Version: tc.version}
+		errs := ValidateSchema(schema)
+		found := false
+		for _, err := range errs {
+			if strings.Contains(err.Error(), "major.minor") {
+				found = true
+				break
+			}
+		}
+		if !found {
+			t.Errorf("version %q (%s): expected error mentioning 'major.minor', got %v", tc.version, tc.desc, errs)
+		}
+	}
+}
+
+func TestCompareVersions(t *testing.T) {
+	tests := []struct {
+		a, b string
+		want int
+	}{
+		{"2.0", "1.3", 1},
+		{"1.2", "1.1", 1},
+		{"1.1", "1.1", 0},
+		{"0.1", "1.0", -1},
+		{"0.0", "0.0", 0},
+		{"0.0", "0.1", -1},
+		{"10.0", "9.99", 1},
+	}
+	for _, tc := range tests {
+		got := CompareVersions(tc.a, tc.b)
+		if got != tc.want {
+			t.Errorf("CompareVersions(%q, %q) = %d, want %d", tc.a, tc.b, got, tc.want)
+		}
 	}
 }
 

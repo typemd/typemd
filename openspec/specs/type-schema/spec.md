@@ -291,43 +291,87 @@ After resolving all `use` entries, the type schema SHALL NOT have duplicate prop
 
 ### Requirement: Type schema supports optional version field
 
-The TypeSchema struct SHALL support an optional `version` field that stores a non-negative integer value. When a type schema YAML file includes a `version` field, it SHALL be parsed and stored. When the field is omitted, the version SHALL default to `0` (meaning "unversioned"). The version field provides a foundation for future schema migration tracking.
+The TypeSchema struct SHALL support an optional `version` field that stores a semver-style `"major.minor"` string value. Major indicates breaking changes; minor indicates backward-compatible changes. When a type schema YAML file includes a `version` field, it SHALL be parsed and stored as a string. When the field is omitted, the version SHALL default to `"0.0"` (meaning "unversioned"). The version field provides a foundation for future schema migration tracking.
 
 #### Scenario: Type schema with version defined
 
-- **WHEN** a type schema YAML file contains `version: 1`
-- **THEN** the loaded TypeSchema SHALL have its Version field set to 1
+- **WHEN** a type schema YAML file contains `version: "1.0"`
+- **THEN** the loaded TypeSchema SHALL have its Version field set to "1.0"
 
 #### Scenario: Type schema without version defined
 
 - **WHEN** a type schema YAML file does not contain a `version` field
-- **THEN** the loaded TypeSchema SHALL have its Version field set to 0
+- **THEN** the loaded TypeSchema SHALL have its Version field set to "0.0"
 
-#### Scenario: Version zero omitted from YAML output
+#### Scenario: Default version omitted from YAML output
 
-- **WHEN** a TypeSchema with Version 0 is serialized to YAML
+- **WHEN** a TypeSchema with Version "0.0" is serialized to YAML
 - **THEN** the output SHALL NOT contain a `version:` line
 
-#### Scenario: Positive version included in YAML output
+#### Scenario: Non-default version included in YAML output
 
-- **WHEN** a TypeSchema with Version 1 is serialized to YAML
-- **THEN** the output SHALL contain `version: 1`
+- **WHEN** a TypeSchema with Version "1.0" is serialized to YAML
+- **THEN** the output SHALL contain `version: "1.0"`
 
-### Requirement: Version must be non-negative
+### Requirement: Version format must be valid major.minor
 
-Schema validation SHALL reject negative version values. Zero and positive integers are accepted.
+Schema validation SHALL enforce the `"major.minor"` format. Both major and minor SHALL be non-negative integers without leading zeros. An empty string SHALL be treated as `"0.0"`.
 
-#### Scenario: Positive version accepted
+#### Scenario: Valid version accepted
 
-- **WHEN** a type schema has `version: 3`
+- **WHEN** a type schema has `version: "2.3"`
 - **THEN** schema validation SHALL accept without error
 
 #### Scenario: Zero version accepted
 
-- **WHEN** a type schema has `version: 0`
+- **WHEN** a type schema has `version: "0.0"`
 - **THEN** schema validation SHALL accept without error
 
-#### Scenario: Negative version rejected
+#### Scenario: Single number rejected
 
-- **WHEN** a type schema has `version: -1`
-- **THEN** schema validation SHALL return an error indicating version must be non-negative
+- **WHEN** a type schema has `version: "1"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Three segments rejected
+
+- **WHEN** a type schema has `version: "1.0.0"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Leading zeros rejected
+
+- **WHEN** a type schema has `version: "01.0"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Negative numbers rejected
+
+- **WHEN** a type schema has `version: "-1.0"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Non-numeric values rejected
+
+- **WHEN** a type schema has `version: "abc"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+### Requirement: Version comparison
+
+A `CompareVersions(a, b string)` function SHALL compare two version strings. It SHALL compare major first, then minor. It SHALL return -1 if a < b, 0 if a == b, and 1 if a > b.
+
+#### Scenario: Higher major is greater
+
+- **WHEN** comparing version "2.0" with "1.3"
+- **THEN** CompareVersions SHALL return 1
+
+#### Scenario: Higher minor is greater
+
+- **WHEN** comparing version "1.2" with "1.1"
+- **THEN** CompareVersions SHALL return 1
+
+#### Scenario: Equal versions
+
+- **WHEN** comparing version "1.1" with "1.1"
+- **THEN** CompareVersions SHALL return 0
+
+#### Scenario: Lower version is less
+
+- **WHEN** comparing version "0.1" with "1.0"
+- **THEN** CompareVersions SHALL return -1

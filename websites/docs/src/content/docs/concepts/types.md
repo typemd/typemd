@@ -36,7 +36,7 @@ The optional `plural` field provides a grammatically correct display name for th
 
 The optional `emoji` field provides a visual icon for the type in CLI and TUI output.
 
-The optional `version` field is a non-negative integer for tracking schema evolution (e.g., `version: 1`). When omitted, it defaults to 0 (unversioned). You can manually increment this when making breaking changes to a type schema, providing a foundation for future migration tooling.
+The optional `version` field is a semver-style `"major.minor"` string for tracking schema evolution (e.g., `version: "1.0"`). When omitted, it defaults to `"0.0"` (unversioned). Increment the major number for breaking changes, and the minor number for backward-compatible changes, providing a foundation for future migration tooling.
 
 ## Why Types matter
 
