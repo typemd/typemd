@@ -133,7 +133,7 @@ graph LR
 | `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
 | `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
 | `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
-| `vault_config.go` | VaultConfig struct + YAML loading + WriteConfig + Vault.DefaultType() accessor |
+| `vault_config.go` | VaultConfig struct + YAML loading + WriteConfig + DefaultType() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
 | `slugify.go` | Slugify() function for converting natural-language names to valid slugs |
 
 ### TUI Architecture

@@ -3,6 +3,7 @@ package core
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 )
 
@@ -80,5 +81,119 @@ func TestLoadVaultConfig_InvalidYAML(t *testing.T) {
 	_, err := loadVaultConfig(dir)
 	if err == nil {
 		t.Fatal("expected error for invalid YAML, got nil")
+	}
+}
+
+func TestSetConfigValue_EmptyValue(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+	v.Open()
+	defer v.Close()
+
+	// Set a value first
+	if err := v.SetConfigValue("cli.default_type", "idea"); err != nil {
+		t.Fatalf("SetConfigValue error: %v", err)
+	}
+	// Set to empty string
+	if err := v.SetConfigValue("cli.default_type", ""); err != nil {
+		t.Fatalf("SetConfigValue empty error: %v", err)
+	}
+	val, known := v.GetConfigValue("cli.default_type")
+	if !known {
+		t.Fatal("expected key to be known")
+	}
+	if val != "" {
+		t.Errorf("expected empty value, got %q", val)
+	}
+}
+
+func TestSetConfigValue_UnknownKey(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+	v.Open()
+	defer v.Close()
+
+	err := v.SetConfigValue("foo.bar", "baz")
+	if err == nil {
+		t.Fatal("expected error for unknown key")
+	}
+	if !strings.Contains(err.Error(), "unknown config key") {
+		t.Errorf("error should mention 'unknown config key', got: %v", err)
+	}
+	if !strings.Contains(err.Error(), "cli.default_type") {
+		t.Errorf("error should list known keys, got: %v", err)
+	}
+}
+
+func TestGetConfigValue_UnknownKey(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+	v.Open()
+	defer v.Close()
+
+	val, known := v.GetConfigValue("nonexistent")
+	if known {
+		t.Fatal("expected unknown key to return known=false")
+	}
+	if val != "" {
+		t.Errorf("expected empty value for unknown key, got %q", val)
+	}
+}
+
+func TestGetConfigValue_UnsetKnownKey(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+	v.Open()
+	defer v.Close()
+
+	val, known := v.GetConfigValue("cli.default_type")
+	if !known {
+		t.Fatal("expected cli.default_type to be known")
+	}
+	if val != "" {
+		t.Errorf("expected empty value for unset key, got %q", val)
+	}
+}
+
+func TestConfigKeys_Sorted(t *testing.T) {
+	keys := ConfigKeys()
+	if len(keys) == 0 {
+		t.Fatal("expected at least one config key")
+	}
+	for i := 1; i < len(keys); i++ {
+		if keys[i] < keys[i-1] {
+			t.Errorf("keys not sorted: %v", keys)
+			break
+		}
+	}
+}
+
+func TestSetConfigValue_CreatesConfigFile(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+	v.Open()
+	defer v.Close()
+
+	configPath := filepath.Join(v.Dir(), configFileName)
+	if _, err := os.Stat(configPath); !os.IsNotExist(err) {
+		t.Fatal("config file should not exist before set")
+	}
+
+	if err := v.SetConfigValue("cli.default_type", "idea"); err != nil {
+		t.Fatalf("SetConfigValue error: %v", err)
+	}
+
+	if _, err := os.Stat(configPath); os.IsNotExist(err) {
+		t.Fatal("config file should exist after set")
+	}
+
+	data, _ := os.ReadFile(configPath)
+	if !strings.Contains(string(data), "default_type: idea") {
+		t.Errorf("config file should contain default_type: idea, got:\n%s", data)
 	}
 }

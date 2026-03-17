@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"sort"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -18,6 +20,20 @@ type VaultConfig struct {
 // CLIConfig holds CLI-specific configuration.
 type CLIConfig struct {
 	DefaultType string `yaml:"default_type"`
+}
+
+// configKeyEntry maps a dot-notation key to getter/setter on VaultConfig.
+type configKeyEntry struct {
+	Get func(cfg *VaultConfig) string
+	Set func(cfg *VaultConfig, value string)
+}
+
+// configKeyRegistry maps dot-notation config keys to VaultConfig struct fields.
+var configKeyRegistry = map[string]configKeyEntry{
+	"cli.default_type": {
+		Get: func(cfg *VaultConfig) string { return cfg.CLI.DefaultType },
+		Set: func(cfg *VaultConfig, value string) { cfg.CLI.DefaultType = value },
+	},
 }
 
 // loadVaultConfig reads and parses the vault config file.
@@ -51,4 +67,43 @@ func (v *Vault) WriteConfig(cfg *VaultConfig) error {
 	}
 	v.config = cfg
 	return nil
+}
+
+// GetConfigValue returns the value for a dot-notation config key.
+// Returns (value, true) if the key is known, ("", false) if unknown.
+func (v *Vault) GetConfigValue(key string) (string, bool) {
+	entry, ok := configKeyRegistry[key]
+	if !ok {
+		return "", false
+	}
+	cfg := v.config
+	if cfg == nil {
+		cfg = &VaultConfig{}
+	}
+	return entry.Get(cfg), true
+}
+
+// SetConfigValue sets a value for a dot-notation config key.
+// Returns an error if the key is unknown. Creates config.yaml if it doesn't exist.
+func (v *Vault) SetConfigValue(key, value string) error {
+	entry, ok := configKeyRegistry[key]
+	if !ok {
+		return fmt.Errorf("unknown config key %q. Known keys: %s", key, strings.Join(ConfigKeys(), ", "))
+	}
+	cfg := v.config
+	if cfg == nil {
+		cfg = &VaultConfig{}
+	}
+	entry.Set(cfg, value)
+	return v.WriteConfig(cfg)
+}
+
+// ConfigKeys returns all known config keys sorted alphabetically.
+func ConfigKeys() []string {
+	keys := make([]string, 0, len(configKeyRegistry))
+	for k := range configKeyRegistry {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys
 }
