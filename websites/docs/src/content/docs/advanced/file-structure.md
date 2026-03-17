@@ -91,7 +91,7 @@ properties:
     target: person
 ```
 
-Only the `tag` type is built-in (it backs the `tags` system property). The built-in `tag` type includes a plural form ("tags") and has `unique: true` to enforce name uniqueness. All other types must be defined via `.typemd/types/*.yaml` files.
+Two types are built-in: `tag` (backs the `tags` system property, plural "tags", `unique: true`) and `page` (general-purpose content container, plural "pages", emoji 📄). Built-in types cannot be deleted but can be overridden by custom `.typemd/types/<name>.yaml` files. All other types must be defined via `.typemd/types/*.yaml` files.
 
 For the full type schema format, see [Types](/concepts/types).
 

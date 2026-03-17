@@ -221,7 +221,7 @@ The TUI automatically watches the `objects/` directory and refreshes when files 
 
 ## Type Schema
 
-Define your types in `.typemd/types/` (only `tag` is built-in — all others are user-defined):
+Define your types in `.typemd/types/` (`tag` and `page` are built-in — all others are user-defined):
 
 ```yaml
 # .typemd/types/book.yaml
@@ -252,6 +252,8 @@ The optional `plural` field specifies the grammatically correct plural form for 
 The optional `unique` field (boolean, defaults to `false`) enforces that no two objects of the same type can share the same `name` value. When set to `true`, attempting to create an object with a duplicate name will fail. The built-in `tag` type has `unique: true` enabled by default.
 
 Types and properties both support an optional `emoji` field for visual identification in CLI and TUI output. Properties also support an optional `default` field to specify a default value.
+
+The optional `version` field (semver-style `"major.minor"` string, defaults to `"0.0"`) tracks schema evolution. Increment the major number for breaking changes, and the minor number for backward-compatible changes, providing a foundation for future migration tooling.
 
 ## Relations
 

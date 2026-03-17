@@ -91,7 +91,7 @@ properties:
     target: person
 ```
 
-只有 `tag` type 是內建的（支援 `tags` 系統屬性）。內建的 `tag` type 包含複數形式（「tags」）並預設啟用 `unique: true` 以強制 name 唯一性。其他所有 type 都必須透過 `.typemd/types/*.yaml` 檔案定義。
+有兩個內建 type：`tag`（支援 `tags` 系統屬性，複數形式「tags」，`unique: true`）和 `page`（通用內容容器，複數形式「pages」，emoji 📄）。內建 type 無法刪除，但可以透過自訂 `.typemd/types/<name>.yaml` 檔案覆蓋。其他所有 type 都必須透過 `.typemd/types/*.yaml` 檔案定義。
 
 完整的 type schema 格式請參閱 [Type](/zh-tw/concepts/types)。
 

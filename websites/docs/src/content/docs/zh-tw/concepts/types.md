@@ -46,13 +46,14 @@ Type 為你的知識庫帶來**一致性**和**可查詢性**：
 
 ## 內建 Type
 
-TypeMD 只有一個內建 Type：
+TypeMD 有兩個內建 Type：
 
 | Type | 屬性 | 用途 |
 |------|------|------|
 | 🏷️ `tag` | color (string)、icon (string) | 支援 `tags` 系統屬性；具有 `unique: true` 以強制 name 唯一性 |
+| 📄 `page` | _（無）_ | 通用內容容器，用於自由形式的寫作 |
 
-`tag` 是唯一的內建 type，因為它是唯一支撐系統屬性（`tags`）的 type。所有其他 type 都由使用者透過 `.typemd/types/*.yaml` 檔案自行定義。TypeMD 刻意不預設附帶 `book` 或 `note` 等帶有主觀用途的 type——你可以設計符合自己領域的 type。
+內建 type 存在於每個 vault 中，無法刪除。你可以透過建立自訂的 `.typemd/types/<name>.yaml` 檔案來覆蓋它們並新增屬性。所有其他 type 都由使用者透過 `.typemd/types/*.yaml` 檔案自行定義。TypeMD 刻意不預設附帶 `book` 或 `note` 等帶有主觀用途的 type——你可以設計符合自己領域的 type。
 
 關於標籤的詳細說明，請參閱[標籤](/zh-tw/basics/tags)。
 

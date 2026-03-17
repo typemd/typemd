@@ -279,6 +279,11 @@ func (r *LocalObjectRepository) GetSchema(name string) (*TypeSchema, error) {
 		}
 		schema.Properties = filtered
 
+		// Normalize empty version to default
+		if schema.Version == "" {
+			schema.Version = DefaultSchemaVersion
+		}
+
 		// Resolve use entries if any exist
 		if err := r.resolveSchemaUseEntries(&schema); err != nil {
 			return nil, fmt.Errorf("resolve type schema %s: %w", name, err)
@@ -288,6 +293,9 @@ func (r *LocalObjectRepository) GetSchema(name string) (*TypeSchema, error) {
 	}
 
 	if schema, ok := defaultTypes[name]; ok {
+		if schema.Version == "" {
+			schema.Version = DefaultSchemaVersion
+		}
 		return &schema, nil
 	}
 

@@ -20,7 +20,7 @@ The TypeSchema struct SHALL support an optional `emoji` field that stores a stri
 
 ### Requirement: Custom type emoji overrides built-in default
 
-When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type. Since only `tag` remains as a built-in type, this override behavior only applies to the `tag` type.
+When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type. This applies to any built-in type (`tag`, `page`) when a custom schema is defined.
 
 #### Scenario: Custom tag type with different emoji
 
@@ -163,28 +163,6 @@ When a custom type schema overrides a built-in type (e.g., `tag.yaml`), the `uni
 - **WHEN** `.typemd/types/tag.yaml` exists without a `unique` field
 - **THEN** the loaded tag type SHALL have Unique false (overriding built-in default)
 
-### Requirement: Only tag is a built-in type
-
-The `defaultTypes` map SHALL contain only the `tag` type. All other types MUST be defined via `.typemd/types/*.yaml` files. The built-in `tag` type SHALL have `Unique: true` in its default schema.
-
-#### Scenario: Loading an undefined type returns error
-
-- **WHEN** no `.typemd/types/book.yaml` exists and no built-in `book` type is defined
-- **AND** `LoadType("book")` is called
-- **THEN** it SHALL return an error containing "unknown type: book"
-
-#### Scenario: Tag type loads without custom schema
-
-- **WHEN** no `.typemd/types/tag.yaml` exists
-- **AND** `LoadType("tag")` is called
-- **THEN** it SHALL return the built-in tag type schema with emoji "🏷️" and Unique true
-
-#### Scenario: User-defined type loads from YAML
-
-- **WHEN** `.typemd/types/book.yaml` exists with a valid schema
-- **AND** `LoadType("book")` is called
-- **THEN** it SHALL return the schema from the YAML file
-
 ### Requirement: Type schema supports use keyword for shared properties
 
 The Property struct SHALL support an optional `use` field. When a property entry has `use: <name>`, it references a shared property from `.typemd/properties.yaml`. The `use` and `name` fields are mutually exclusive — a property entry SHALL have exactly one of them.
@@ -288,3 +266,90 @@ After resolving all `use` entries, the type schema SHALL NOT have duplicate prop
 
 - **WHEN** a type schema contains both `- use: due_date` and `- use: due_date`
 - **THEN** schema validation SHALL return an error indicating duplicate property name "due_date"
+
+### Requirement: Type schema supports optional version field
+
+The TypeSchema struct SHALL support an optional `version` field that stores a semver-style `"major.minor"` string value. Major indicates breaking changes; minor indicates backward-compatible changes. When a type schema YAML file includes a `version` field, it SHALL be parsed and stored as a string. When the field is omitted, the version SHALL default to `"0.0"` (meaning "unversioned"). The version field provides a foundation for future schema migration tracking.
+
+#### Scenario: Type schema with version defined
+
+- **WHEN** a type schema YAML file contains `version: "1.0"`
+- **THEN** the loaded TypeSchema SHALL have its Version field set to "1.0"
+
+#### Scenario: Type schema without version defined
+
+- **WHEN** a type schema YAML file does not contain a `version` field
+- **THEN** the loaded TypeSchema SHALL have its Version field set to "0.0"
+
+#### Scenario: Default version omitted from YAML output
+
+- **WHEN** a TypeSchema with Version "0.0" is serialized to YAML
+- **THEN** the output SHALL NOT contain a `version:` line
+
+#### Scenario: Non-default version included in YAML output
+
+- **WHEN** a TypeSchema with Version "1.0" is serialized to YAML
+- **THEN** the output SHALL contain `version: "1.0"`
+
+### Requirement: Version format must be valid major.minor
+
+Schema validation SHALL enforce the `"major.minor"` format. Both major and minor SHALL be non-negative integers without leading zeros. An empty string SHALL be treated as `"0.0"`.
+
+#### Scenario: Valid version accepted
+
+- **WHEN** a type schema has `version: "2.3"`
+- **THEN** schema validation SHALL accept without error
+
+#### Scenario: Zero version accepted
+
+- **WHEN** a type schema has `version: "0.0"`
+- **THEN** schema validation SHALL accept without error
+
+#### Scenario: Single number rejected
+
+- **WHEN** a type schema has `version: "1"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Three segments rejected
+
+- **WHEN** a type schema has `version: "1.0.0"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Leading zeros rejected
+
+- **WHEN** a type schema has `version: "01.0"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Negative numbers rejected
+
+- **WHEN** a type schema has `version: "-1.0"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+#### Scenario: Non-numeric values rejected
+
+- **WHEN** a type schema has `version: "abc"`
+- **THEN** schema validation SHALL return an error indicating version must be in "major.minor" format
+
+### Requirement: Version comparison
+
+A `CompareVersions(a, b string)` function SHALL compare two version strings. It SHALL compare major first, then minor. It SHALL return -1 if a < b, 0 if a == b, and 1 if a > b.
+
+#### Scenario: Higher major is greater
+
+- **WHEN** comparing version "2.0" with "1.3"
+- **THEN** CompareVersions SHALL return 1
+
+#### Scenario: Higher minor is greater
+
+- **WHEN** comparing version "1.2" with "1.1"
+- **THEN** CompareVersions SHALL return 1
+
+#### Scenario: Equal versions
+
+- **WHEN** comparing version "1.1" with "1.1"
+- **THEN** CompareVersions SHALL return 0
+
+#### Scenario: Lower version is less
+
+- **WHEN** comparing version "0.1" with "1.0"
+- **THEN** CompareVersions SHALL return -1

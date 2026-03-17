@@ -36,6 +36,8 @@ The optional `plural` field provides a grammatically correct display name for th
 
 The optional `emoji` field provides a visual icon for the type in CLI and TUI output.
 
+The optional `version` field is a semver-style `"major.minor"` string for tracking schema evolution (e.g., `version: "1.0"`). When omitted, it defaults to `"0.0"` (unversioned). Increment the major number for breaking changes, and the minor number for backward-compatible changes, providing a foundation for future migration tooling.
+
 ## Why Types matter
 
 Types give your knowledge base **consistency** and **queryability**:
@@ -46,13 +48,14 @@ Types give your knowledge base **consistency** and **queryability**:
 
 ## Built-in Types
 
-TypeMD has one built-in Type:
+TypeMD has two built-in Types:
 
 | Type | Properties | Purpose |
 |------|------------|---------|
 | 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property; has `unique: true` to enforce name uniqueness |
+| 📄 `page` | _(none)_ | General-purpose content container for free-form writing |
 
-`tag` is the only built-in type because it is the only type that backs a system property (`tags`). All other types are user-defined via `.typemd/types/*.yaml` files. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
+Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `.typemd/types/<name>.yaml` file with additional properties. All other types are user-defined via `.typemd/types/*.yaml` files. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
 
 For details on tags, see [Tags](/basics/tags).
 

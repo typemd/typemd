@@ -91,7 +91,7 @@ properties:
 ```yaml
 # .typemd/config.yaml
 cli:
-  default_type: idea
+  default_type: page
 ```
 
 目前支援的設定：

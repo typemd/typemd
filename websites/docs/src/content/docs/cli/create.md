@@ -40,12 +40,12 @@ If `cli.default_type` is configured in `.typemd/config.yaml`, you can omit the t
 ```yaml
 # .typemd/config.yaml
 cli:
-  default_type: idea
+  default_type: page
 ```
 
 ```bash
-# These are equivalent when default_type is "idea":
-tmd object create idea "Some Thought"
+# These are equivalent when default_type is "page":
+tmd object create page "Some Thought"
 tmd object create "Some Thought"
 ```
 

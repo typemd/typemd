@@ -201,7 +201,7 @@ TUI 會自動監控 `objects/` 目錄，當檔案被建立、修改或刪除時�
 
 ## Type Schema
 
-在 `.typemd/types/` 定義你的 Type（只有 `tag` 是內建型別，其他皆由使用者自訂）：
+在 `.typemd/types/` 定義你的 Type（`tag` 和 `page` 是內建型別，其他皆由使用者自訂）：
 
 ```yaml
 # .typemd/types/book.yaml
@@ -230,6 +230,8 @@ properties:
 可選的 `plural` 欄位用於指定在 TUI 群組標題和 CLI 輸出中顯示的正確複數形式。若未設定，則使用 type 名稱作為預設值。
 
 Type 和屬性都支援可選的 `emoji` 欄位，用於在 CLI 和 TUI 輸出中視覺辨識。屬性還支援可選的 `default` 欄位來指定預設值。
+
+可選的 `version` 欄位（semver 風格的 `"major.minor"` 字串，預設為 `"0.0"`）用於追蹤 schema 演進。Major 代表破壞性變更，minor 代表向下相容的變更，為未來的遷移工具奠定基礎。
 
 ## Relation
 
