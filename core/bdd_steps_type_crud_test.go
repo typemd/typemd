@@ -13,11 +13,12 @@ import (
 // ── Type CRUD step state ────────────────────────────────────────────────────
 
 type typeCrudContext struct {
-	dc             *domainContext
-	schema         *TypeSchema
-	yamlOutput     []byte
+	dc              *domainContext
+	schema          *TypeSchema
+	yamlOutput      []byte
 	roundTripSchema *TypeSchema
-	objectCount    int
+	objectCount     int
+	validationErrs  []error
 }
 
 func newTypeCrudContext(dc *domainContext) *typeCrudContext {
@@ -252,6 +253,42 @@ func (tc *typeCrudContext) theCountShouldBe(expected int) error {
 	return nil
 }
 
+// ── Version steps ───────────────────────────────────────────────────────────
+
+func (tc *typeCrudContext) theSchemaHasVersion(version int) {
+	tc.schema.Version = version
+}
+
+func (tc *typeCrudContext) iValidateTheTypeSchema() {
+	tc.validationErrs = ValidateSchema(tc.schema)
+}
+
+func (tc *typeCrudContext) theRoundTripSchemaVersionShouldBe(expected int) error {
+	if tc.roundTripSchema.Version != expected {
+		return fmt.Errorf("expected version %d, got %d", expected, tc.roundTripSchema.Version)
+	}
+	return nil
+}
+
+func (tc *typeCrudContext) noSchemaValidationErrorsShouldOccur() error {
+	if len(tc.validationErrs) != 0 {
+		return fmt.Errorf("expected no validation errors, got %v", tc.validationErrs)
+	}
+	return nil
+}
+
+func (tc *typeCrudContext) aSchemaValidationErrorShouldMention(substr string) error {
+	if len(tc.validationErrs) == 0 {
+		return fmt.Errorf("expected validation errors, got none")
+	}
+	for _, err := range tc.validationErrs {
+		if strings.Contains(err.Error(), substr) {
+			return nil
+		}
+	}
+	return fmt.Errorf("expected error mentioning %q, got %v", substr, tc.validationErrs)
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 
 func initTypeCrudSteps(ctx *godog.ScenarioContext, dc *domainContext) {
@@ -289,4 +326,11 @@ func initTypeCrudSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^loading type "([^"]*)" should return a schema with (\d+) propert(?:y|ies)$`, tc.loadingTypeShouldReturnASchemaWithNProperties)
 	ctx.Step(`^the error message should contain "([^"]*)"$`, tc.theErrorMessageShouldContain)
 	ctx.Step(`^the count should be (\d+)$`, tc.theCountShouldBe)
+
+	// Version steps
+	ctx.Step(`^the schema has version (-?\d+)$`, tc.theSchemaHasVersion)
+	ctx.Step(`^I validate the type schema$`, tc.iValidateTheTypeSchema)
+	ctx.Step(`^the round-trip schema version should be (-?\d+)$`, tc.theRoundTripSchemaVersionShouldBe)
+	ctx.Step(`^no schema validation errors should occur$`, tc.noSchemaValidationErrorsShouldOccur)
+	ctx.Step(`^a schema validation error should mention "([^"]*)"$`, tc.aSchemaValidationErrorShouldMention)
 }
