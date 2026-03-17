@@ -195,7 +195,7 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | Key | Action |
 |-----|--------|
 | `↑`/`k`, `↓`/`j` | Navigate list / scroll content |
-| `Enter` | Select object / Focus type editor / Confirm |
+| `Enter` | Select object / Focus type editor / New type (on `+ New Type`) |
 | `Space` | Toggle group expand/collapse |
 | `Tab` | Cycle focus between panels |
 | `n` | Create new object & edit body (in current type group) |
@@ -208,6 +208,8 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `[`/`]` | Shrink/grow focused panel |
 | `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
+
+Navigate to `+ New Type` at the bottom of the sidebar and press `Enter` to create a new type. A creation form appears in the title panel with fields for emoji, name, and plural — press `Tab` to cycle between fields.
 
 Moving the cursor to a type group header automatically shows the **type editor** in the right panel, where you can edit type metadata (plural, emoji, unique), manage properties (add, delete, reorder, pin), and delete the type. The type editor has its own keybindings shown in the status bar.
 

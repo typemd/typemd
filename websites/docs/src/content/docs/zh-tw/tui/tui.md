@@ -145,14 +145,26 @@ Type 編輯器面板取得焦點時啟用。在 type 標題上按 `Tab` 或 `Ent
 | `y` | 確認刪除 |
 | `n`/`Esc` | 取消 |
 
-### `[NEW TYPE]` / `[NEW OBJECT]` — 建立輸入
+### `[NEW TYPE]` — 建立新 Type
 
-建立新 type（`+ New Type`）或 Object（`n`）時顯示。
+透過 `+ New Type` 觸發。**標題面板**會變成行內建立表單，包含三個欄位：emoji（選填）、name（必填）、plural（選填）。右側面板會顯示 type schema 的**即時預覽**。
 
 | 按鍵 | 動作 |
 |------|------|
-| 文字按鍵 | 輸入 type 名稱 / Object 名稱 |
-| `Enter` | 建立 |
+| 文字按鍵 | 在聚焦的欄位中輸入 |
+| `Tab` | 循環聚焦：name → plural → emoji |
+| `Enter` | 建立 type 並開啟 type editor |
+| `Esc` | 取消 |
+
+### `[NEW OBJECT]` — 建立新 Object
+
+按 `n` 觸發。**標題面板**會變成行內建立表單，包含名稱輸入和（有樣板時）樣板循環選擇器。內文和屬性面板會顯示所選樣板的**即時預覽**。
+
+| 按鍵 | 動作 |
+|------|------|
+| 文字按鍵 | 輸入 Object 名稱 |
+| `Tab` | 切換名稱 / 樣板欄位 |
+| `Enter` | 建立並編輯 |
 | `Esc` | 取消 |
 
 ### `[READONLY]` — 唯讀模式

@@ -1,7 +1,7 @@
 # tui-type-creation Specification
 
 ## Purpose
-TBD - created by archiving change issue-230-tui-new-type-ux. Update Purpose after archive.
+Defines the TUI "New Type" creation wizard — title panel multi-field form (emoji, name, plural), Tab navigation, live preview, validation, and post-creation behavior.
 ## Requirements
 ### Requirement: Type creation form renders in title panel
 
