@@ -1,57 +1,9 @@
 package tui
 
 import (
-	"strings"
-
-	"github.com/typemd/typemd/core"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 )
-
-// updateNewType handles key events during new type name input.
-func updateNewType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
-	switch msg.String() {
-	case "enter":
-		name := strings.TrimSpace(m.newTypeName.Value())
-		if name == "" {
-			return m, nil
-		}
-		// Check if type already exists
-		existing := m.vault.ListTypes()
-		for _, t := range existing {
-			if t == name {
-				m.saveErr = "type \"" + name + "\" already exists"
-				return m, nil
-			}
-		}
-		// Create empty type schema
-		schema := &core.TypeSchema{Name: name}
-		if err := m.vault.SaveType(schema); err != nil {
-			m.saveErr = err.Error()
-			m.newTypeMode = false
-			return m, nil
-		}
-		m.saveErr = ""
-		m.newTypeMode = false
-		// Refresh sidebar
-		m.refreshData()
-		// Open type editor for new type
-		if ts, err := m.vault.LoadType(name); err == nil {
-			m.typeEditor = newTypeEditor(ts, name, true, m.vault)
-			m.rightPanel = panelTypeEditor
-			m.selected = nil
-			m.focus = focusBody
-		}
-		return m, nil
-	case "esc":
-		m.newTypeMode = false
-		m.saveErr = ""
-		return m, nil
-	}
-	var cmd tea.Cmd
-	m.newTypeName, cmd = m.newTypeName.Update(msg)
-	return m, cmd
-}
 
 // updateHelp handles key events when the help overlay is shown.
 func updateHelp(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
@@ -248,8 +200,8 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 					}
 				case rowObject:
 					m.selectCurrentRow()
-					case rowNewType:
-					m.startNewType()
+				case rowNewType:
+					return m, m.startCreateType()
 				}
 			}
 		}
@@ -269,8 +221,8 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 					m.adjustScroll()
 				case rowObject:
 					m.selectCurrentRow()
-					case rowNewType:
-					m.startNewType()
+				case rowNewType:
+					return m, m.startCreateType()
 				}
 			}
 		}

@@ -167,14 +167,15 @@ Shown when deleting a property (`d`) or type (`D`).
 | `y` | Confirm deletion |
 | `n`/`Esc` | Cancel |
 
-### `[NEW TYPE]` — New Type Input
+### `[NEW TYPE]` — New Type Creation
 
-Shown when creating a new type via `+ New Type`.
+Shown when creating a new type via `+ New Type`. The **title panel** transforms into an inline creation form with three fields: emoji (optional), name (required), and plural (optional). The right panel shows a **live preview** of the type schema being created.
 
 | Key | Action |
 |-----|--------|
-| Text keys | Type name |
-| `Enter` | Create |
+| Text keys | Type in the focused field |
+| `Tab` | Cycle focus: name → plural → emoji |
+| `Enter` | Create type and open type editor |
 | `Esc` | Cancel |
 
 ### `[NEW OBJECT]` — Create & Edit Mode

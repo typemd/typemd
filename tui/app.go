@@ -45,9 +45,8 @@ type model struct {
 	// Right panel mode
 	rightPanel  rightPanelMode
 	typeEditor  *typeEditor // non-nil when rightPanel == panelTypeEditor
-	newTypeName  textinput.Model
-	newTypeMode  bool // true when entering new type name in sidebar
-	create       *createState // non-nil when object creation flow is active
+	createType   *createTypeState // non-nil when type creation flow is active
+	create       *createState    // non-nil when object creation flow is active
 
 	// Left panel
 	groups       []typeGroup
@@ -231,8 +230,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return updateConflict(m, msg)
 		case m.create != nil:
 			return updateCreate(m, msg)
-		case m.newTypeMode:
-			return updateNewType(m, msg)
+		case m.createType != nil:
+			return updateCreateType(m, msg)
 		case m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.focus != focusLeft:
 			// q/ctrl+c quits globally unless in an interactive mode
 			if (msg.String() == "q" || msg.String() == "ctrl+c") && m.typeEditor.CanQuit() {
@@ -357,19 +356,6 @@ func (m *model) selectCurrentRow() {
 			}
 		}
 	}
-}
-
-// startNewType enters the new type name input mode.
-func (m *model) startNewType() {
-	if m.readOnly {
-		return
-	}
-	ti := textinput.New()
-	ti.Placeholder = "type name"
-	ti.CharLimit = 50
-	ti.Focus()
-	m.newTypeName = ti
-	m.newTypeMode = true
 }
 
 // doSave executes the actual vault write and resets save state on success.
@@ -557,7 +543,7 @@ func (m model) defaultPropsWidth() int {
 
 // hasTitlePanel returns true when the right side should show a title panel.
 func (m model) hasTitlePanel() bool {
-	return m.selected != nil || (m.rightPanel == panelTypeEditor && m.typeEditor != nil) || m.create != nil
+	return m.selected != nil || (m.rightPanel == panelTypeEditor && m.typeEditor != nil) || m.create != nil || m.createType != nil
 }
 
 // bodyWidth calculates the body panel width from remaining space.
@@ -662,9 +648,6 @@ func (m model) View() tea.View {
 		}
 	} else {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
-		if m.newTypeMode {
-			leftContent += "\n New type: " + m.newTypeName.View()
-		}
 	}
 
 	var rightSide string
@@ -709,7 +692,9 @@ func (m model) View() tea.View {
 	} else {
 		// Object detail view (existing behavior)
 		var bodyPanelContent string
-		if m.editMode && m.focus == focusBody {
+		if m.createType != nil {
+			bodyPanelContent = renderCreateTypePreview(m.createType)
+		} else if m.editMode && m.focus == focusBody {
 			bodyPanelContent = m.bodyTextarea.View()
 		} else {
 			bodyPanelContent = m.bodyViewport.View()
@@ -744,6 +729,9 @@ func (m model) View() tea.View {
 			if m.create != nil {
 				titleContent = renderCreateTitleContent(m.create, titleW-bdr)
 				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
+			} else if m.createType != nil {
+				titleContent = renderCreateTypeTitleContent(m.createType, titleW-bdr)
+				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
 			} else if m.selected != nil {
 				titleContent = renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
 			}
@@ -764,8 +752,8 @@ func (m model) View() tea.View {
 	var helpBar string
 	if m.create != nil {
 		helpBar = renderCreateHelpBar(m.create)
-	} else if m.newTypeMode {
-		helpBar = "  [NEW TYPE]  enter: create  esc: cancel"
+	} else if m.createType != nil {
+		helpBar = renderCreateTypeHelpBar()
 	} else if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
 	} else if m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.focus != focusLeft {
