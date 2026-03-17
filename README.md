@@ -248,6 +248,8 @@ The optional `unique` field (boolean, defaults to `false`) enforces that no two 
 
 Types and properties both support an optional `emoji` field for visual identification in CLI and TUI output. Properties also support an optional `default` field to specify a default value.
 
+The optional `version` field (non-negative integer, defaults to `0`) tracks schema evolution. Increment it manually when making breaking changes to a type schema, providing a foundation for future migration tooling.
+
 ## Relations
 
 Relations are defined as `type: relation` properties within type schemas. Use `bidirectional` and `inverse` to auto-sync both sides:

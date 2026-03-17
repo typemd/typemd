@@ -226,6 +226,8 @@ properties:
 
 Type 和屬性都支援可選的 `emoji` 欄位，用於在 CLI 和 TUI 輸出中視覺辨識。屬性還支援可選的 `default` 欄位來指定預設值。
 
+可選的 `version` 欄位（非負整數，預設為 `0`）用於追蹤 schema 演進。當 type schema 有重大變更時，可手動遞增版本號，為未來的遷移工具奠定基礎。
+
 ## Relation
 
 Relation 在 Type schema 中定義為 `type: relation` 屬性。使用 `bidirectional` 和 `inverse` 來自動同步兩端：
