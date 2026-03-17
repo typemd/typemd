@@ -139,6 +139,11 @@ tmd type validate
 # Comprehensive vault health check (superset of validate)
 tmd doctor
 
+# Manage vault configuration
+tmd config set cli.default_type idea
+tmd config get cli.default_type
+tmd config list
+
 # Show type schema details
 tmd type show book
 

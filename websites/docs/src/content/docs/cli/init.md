@@ -41,6 +41,6 @@ When starter types are selected, `tmd init` also creates `.typemd/config.yaml` w
 - If **note** is selected (without idea) → `cli.default_type: note`
 - If only **book** is selected → no config file is created
 
-This enables `tmd object create "Some Thought"` without specifying a type. See [tmd object create](/cli/create) for details.
+This enables `tmd object create "Some Thought"` without specifying a type. See [tmd object create](/cli/create) for details. To change the default type later, use [`tmd config set`](/cli/config/).
 
 Running `tmd init` on an already-initialized vault will return an error.

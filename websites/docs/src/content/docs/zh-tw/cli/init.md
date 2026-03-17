@@ -41,6 +41,6 @@ tmd init --no-starters
 - 選取 **note**（沒有 idea）→ `cli.default_type: note`
 - 只選取 **book** → 不建立 config 檔
 
-這讓你可以直接執行 `tmd object create "Some Thought"` 而不需指定 type。詳見 [tmd object create](/zh-tw/cli/create)。
+這讓你可以直接執行 `tmd object create "Some Thought"` 而不需指定 type。詳見 [tmd object create](/zh-tw/cli/create)。若要之後更改預設 type，使用 [`tmd config set`](/zh-tw/cli/config/)。
 
 在已初始化的 vault 上執行 `tmd init` 會回傳錯誤。

@@ -8,7 +8,7 @@ The system SHALL maintain a registry of known config keys that maps dot-notation
 
 - **WHEN** `SetConfigValue("cli.default_type", "idea")` is called
 - **THEN** the operation SHALL succeed
-- **AND** `GetConfigValue("cli.default_type")` SHALL return `("idea", true)`
+- **AND** `GetConfigValue("cli.default_type")` SHALL return `("idea", nil)`
 
 #### Scenario: Unknown key is rejected
 
@@ -20,7 +20,8 @@ The system SHALL maintain a registry of known config keys that maps dot-notation
 #### Scenario: Get unknown key is rejected
 
 - **WHEN** `GetConfigValue("nonexistent")` is called
-- **THEN** the result SHALL be `("", false)`
+- **THEN** the result SHALL be `("", error)`
+- **AND** the error message SHALL contain `unknown config key`
 
 ### Requirement: SetConfigValue creates config file if missing
 
@@ -41,13 +42,13 @@ When `SetConfigValue` is called and no `.typemd/config.yaml` exists, the system 
 
 ### Requirement: GetConfigValue returns empty for unset keys
 
-When a known key is not set in the config, `GetConfigValue` SHALL return an empty string with `true` (key is known but unset).
+When a known key is not set in the config, `GetConfigValue` SHALL return an empty string with `nil` error (key is known but unset).
 
 #### Scenario: Get on unset known key
 
 - **GIVEN** a vault with empty config
 - **WHEN** `GetConfigValue("cli.default_type")` is called
-- **THEN** the result SHALL be `("", true)`
+- **THEN** the result SHALL be `("", nil)`
 
 ### Requirement: ConfigKeys returns all known keys
 

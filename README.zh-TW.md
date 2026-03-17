@@ -126,6 +126,11 @@ tmd --reindex
 # 驗證 schema、Object 和 Relation
 tmd type validate
 
+# 管理 vault 設定
+tmd config set cli.default_type idea
+tmd config get cli.default_type
+tmd config list
+
 # 顯示 Type schema 詳情
 tmd type show book
 
