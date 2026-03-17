@@ -242,6 +242,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			te, cmd := m.typeEditor.Update(msg)
 			m.typeEditor = te
+			m.syncTypeGroupMeta(te.typeName, te.schema)
 			return m, cmd
 		case m.editMode:
 			return updateEdit(m, msg)

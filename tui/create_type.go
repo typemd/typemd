@@ -115,12 +115,13 @@ func updateCreateType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		// Refresh sidebar
 		m.refreshData()
 
-		// Open type editor for new type
+		// Open type editor for new type and move cursor to its header
 		if ts, err := m.vault.LoadType(name); err == nil {
 			m.typeEditor = newTypeEditor(ts, name, true, m.vault)
 			m.rightPanel = panelTypeEditor
 			m.selected = nil
 			m.focus = focusBody
+			m.moveCursorToType(name)
 		}
 		return m, nil
 
@@ -149,6 +150,32 @@ func updateCreateType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		cts.pluralInput, cmd = cts.pluralInput.Update(msg)
 	}
 	return m, cmd
+}
+
+// syncTypeGroupMeta updates a type group's display metadata from a schema.
+func (m *model) syncTypeGroupMeta(typeName string, schema *core.TypeSchema) {
+	if schema == nil {
+		return
+	}
+	for i := range m.groups {
+		if m.groups[i].Name == typeName {
+			m.groups[i].Emoji = schema.Emoji
+			m.groups[i].Plural = schema.PluralName()
+			break
+		}
+	}
+}
+
+// moveCursorToType moves the sidebar cursor to the header row for the given type name.
+func (m *model) moveCursorToType(typeName string) {
+	rows := m.currentRows()
+	for i, row := range rows {
+		if row.Kind == rowHeader && row.GroupIndex < len(m.groups) && m.groups[row.GroupIndex].Name == typeName {
+			m.cursor = i
+			m.adjustScroll()
+			break
+		}
+	}
 }
 
 // renderCreateTypeTitleContent renders the title panel content during type creation.

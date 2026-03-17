@@ -384,6 +384,34 @@ func TestHasTitlePanel_CreateType(t *testing.T) {
 	}
 }
 
+// --- Cursor position after creation ---
+
+func TestCreateType_CursorMovesToNewType(t *testing.T) {
+	m := setupCreateTestModel(t)
+	m.startCreateType()
+
+	for _, ch := range "zebra" {
+		newM, _ := m.Update(tea.KeyPressMsg{Code: ch, Text: string(ch)})
+		m = newM.(model)
+	}
+
+	newM, _ := m.Update(tea.KeyPressMsg{Code: tea.KeyEnter})
+	m = newM.(model)
+
+	// Cursor should be on the "zebra" type header (last alphabetically)
+	rows := m.currentRows()
+	if m.cursor < 0 || m.cursor >= len(rows) {
+		t.Fatalf("cursor %d out of range", m.cursor)
+	}
+	row := rows[m.cursor]
+	if row.Kind != rowHeader {
+		t.Errorf("cursor should be on header row, got kind %d", row.Kind)
+	}
+	if m.groups[row.GroupIndex].Name != "zebra" {
+		t.Errorf("cursor on %q, want %q", m.groups[row.GroupIndex].Name, "zebra")
+	}
+}
+
 // --- View rendering priority ---
 
 func TestCreateType_OverridesTypeEditor(t *testing.T) {
