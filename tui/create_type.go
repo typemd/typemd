@@ -112,8 +112,12 @@ func updateCreateType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 
 		m.createType = nil
 
-		// Refresh sidebar
-		m.refreshData()
+		// Rebuild groups directly (avoid refreshData which calls selectCurrentRow)
+		objects, qErr := m.vault.QueryObjects("")
+		if qErr == nil {
+			m.groups = buildGroups(objects, m.vault)
+			m.searchResults = nil
+		}
 
 		// Open type editor for new type and move cursor to its header
 		if ts, err := m.vault.LoadType(name); err == nil {
