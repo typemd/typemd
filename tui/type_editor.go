@@ -38,8 +38,8 @@ const (
 )
 
 // metaFieldCount is the number of meta fields at the top of the editor:
-// Name (0), Plural (1), Emoji (2), Unique (3)
-const metaFieldCount = 4
+// Name (0), Plural (1), Emoji (2), Color (3), Unique (4), Description (5)
+const metaFieldCount = 6
 
 // typeEditor is an independent sub-model for editing type schemas.
 type typeEditor struct {
@@ -175,13 +175,13 @@ const addTemplateSentinel = -200
 const templateSentinelBase = -300 // templates use -300, -301, -302, ...
 
 // displayItems returns the flat list of cursor-addressable items.
-// Items 0..3 are meta fields, then pinned properties, then unpinned properties,
+// Items 0..5 are meta fields, then pinned properties, then unpinned properties,
 // then the "+ Add Property" action row.
 // Section separators are not included (they're visual only).
 func (te *typeEditor) displayItems() []int {
 	pinned, unpinned := te.orderedProperties()
 	items := make([]int, 0, metaFieldCount+len(pinned)+len(unpinned)+1+len(te.templates)+1)
-	// Meta fields use negative sentinel values: -1=Name, -2=Plural, -3=Emoji, -4=Unique
+	// Meta fields use negative sentinel values: -1=Name, -2=Plural, -3=Emoji, -4=Color, -5=Unique, -6=Description
 	for i := 0; i < metaFieldCount; i++ {
 		items = append(items, -(i + 1))
 	}
@@ -330,9 +330,19 @@ func (te *typeEditor) startEdit() {
 		te.editField = te.cursor
 		te.editInput.SetValue(te.schema.Emoji)
 		te.editInput.Focus()
-	case -4: // Unique — toggle
+	case -4: // Color
+		te.mode = teModeEditMeta
+		te.editField = te.cursor
+		te.editInput.SetValue(te.schema.Color)
+		te.editInput.Focus()
+	case -5: // Unique — toggle
 		te.schema.Unique = !te.schema.Unique
 		te.save()
+	case -6: // Description
+		te.mode = teModeEditMeta
+		te.editField = te.cursor
+		te.editInput.SetValue(te.schema.Description)
+		te.editInput.Focus()
 	default: // Property — e does nothing, use enter for detail panel
 		return
 	}
@@ -368,6 +378,10 @@ func (te *typeEditor) confirmEdit() {
 		te.schema.Plural = val
 	case -3: // Emoji
 		te.schema.Emoji = val
+	case -4: // Color
+		te.schema.Color = val
+	case -6: // Description
+		te.schema.Description = val
 	}
 	te.save()
 
@@ -966,7 +980,7 @@ func (te *typeEditor) View() string {
 	pinned, unpinned := te.orderedProperties()
 
 	// Meta fields
-	metaLabels := []string{"Name", "Plural", "Emoji", "Unique"}
+	metaLabels := []string{"Name", "Plural", "Emoji", "Color", "Unique", "Description"}
 	emojiDisplay := te.schema.Emoji
 	if emojiDisplay != "" {
 		emojiDisplay = padEmoji(emojiDisplay)
@@ -975,7 +989,9 @@ func (te *typeEditor) View() string {
 		te.schema.Name,
 		te.schema.Plural,
 		emojiDisplay,
+		te.schema.Color,
 		formatBool(te.schema.Unique),
+		te.schema.Description,
 	}
 
 

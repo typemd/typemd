@@ -1,9 +1,7 @@
 ## Purpose
 
 Type schemas define the structure and metadata for object types in typemd. This specification defines how type schemas are loaded, validated, and applied.
-
 ## Requirements
-
 ### Requirement: Type schema supports optional emoji field
 
 The TypeSchema struct SHALL support an optional `emoji` field that stores a string value. When a type schema YAML file includes an `emoji` field, it SHALL be parsed and stored. When the field is omitted, the emoji SHALL default to an empty string.
@@ -179,7 +177,7 @@ The Property struct SHALL support an optional `use` field. When a property entry
 
 ### Requirement: Use entries only allow pin and emoji overrides
 
-A `use` property entry SHALL only contain the fields `use`, `pin`, and `emoji`. Any other fields (type, options, default, target, etc.) SHALL be rejected by validation.
+A `use` property entry SHALL only contain the fields `use`, `pin`, `emoji`, and `description`. Any other fields (type, options, default, target, etc.) SHALL be rejected by validation.
 
 #### Scenario: Use with pin override accepted
 
@@ -196,15 +194,25 @@ A `use` property entry SHALL only contain the fields `use`, `pin`, and `emoji`. 
 - **WHEN** a type schema contains `- use: due_date` with `pin: 1` and `emoji: 🗓️`
 - **THEN** schema validation SHALL accept without error
 
+#### Scenario: Use with description override accepted
+
+- **WHEN** a type schema contains `- use: due_date` with `description: "Project deadline"`
+- **THEN** schema validation SHALL accept without error
+
+#### Scenario: Use with all allowed overrides accepted
+
+- **WHEN** a type schema contains `- use: due_date` with `pin: 1`, `emoji: 🗓️`, and `description: "Project deadline"`
+- **THEN** schema validation SHALL accept without error
+
 #### Scenario: Use with type field rejected
 
 - **WHEN** a type schema contains `- use: due_date` with `type: string`
-- **THEN** schema validation SHALL return an error indicating only `pin` and `emoji` overrides are allowed on `use` entries
+- **THEN** schema validation SHALL return an error indicating only `pin`, `emoji`, and `description` overrides are allowed on `use` entries
 
 #### Scenario: Use with options field rejected
 
 - **WHEN** a type schema contains `- use: priority` with `options: [{value: urgent}]`
-- **THEN** schema validation SHALL return an error indicating only `pin` and `emoji` overrides are allowed on `use` entries
+- **THEN** schema validation SHALL return an error indicating only `pin`, `emoji`, and `description` overrides are allowed on `use` entries
 
 ### Requirement: Use must reference existing shared property
 
@@ -353,3 +361,4 @@ A `CompareVersions(a, b string)` function SHALL compare two version strings. It 
 
 - **WHEN** comparing version "0.1" with "1.0"
 - **THEN** CompareVersions SHALL return -1
+

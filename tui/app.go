@@ -47,9 +47,8 @@ type model struct {
 	rightPanel  rightPanelMode
 	typeEditor  *typeEditor          // non-nil when rightPanel == panelTypeEditor
 	tmplEditor  *templateEditor      // non-nil when rightPanel == panelTemplate
-	newTypeName  textinput.Model
-	newTypeMode  bool // true when entering new type name in sidebar
-	create       *createState // non-nil when object creation flow is active
+	createType   *createTypeState    // non-nil when type creation flow is active
+	create       *createState        // non-nil when object creation flow is active
 
 	// Left panel
 	groups       []typeGroup
@@ -277,8 +276,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return updateConflict(m, msg)
 		case m.create != nil:
 			return updateCreate(m, msg)
-		case m.newTypeMode:
-			return updateNewType(m, msg)
+		case m.createType != nil:
+			return updateCreateType(m, msg)
 		case m.rightPanel == panelTemplate && m.tmplEditor != nil && m.focus != focusLeft:
 			// q/ctrl+c quits globally unless in an interactive mode
 			if (msg.String() == "q" || msg.String() == "ctrl+c") && m.tmplEditor.CanQuit() {
@@ -307,6 +306,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			te, cmd := m.typeEditor.Update(msg)
 			m.typeEditor = te
+			m.syncTypeGroupMeta(te.typeName, te.schema)
 			return m, cmd
 		case m.editMode:
 			return updateEdit(m, msg)
@@ -323,6 +323,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// rebuildGroups reloads objects and rebuilds type groups from the vault.
+func (m *model) rebuildGroups() {
+	if m.vault == nil {
+		return
+	}
+	objects, err := m.vault.QueryObjects("")
+	if err != nil {
+		return
+	}
+	m.groups = buildGroups(objects, m.vault)
+	m.searchResults = nil
+}
+
 // refreshData syncs the index from disk and reloads all objects, preserving cursor position when possible.
 func (m *model) refreshData() {
 	if m.vault == nil {
@@ -332,19 +345,13 @@ func (m *model) refreshData() {
 	// Sync filesystem to DB first
 	m.vault.SyncIndex()
 
-	objects, err := m.vault.QueryObjects("")
-	if err != nil {
-		return
-	}
+	m.rebuildGroups()
 
 	// Remember selected object ID to restore selection
 	var selectedID string
 	if m.selected != nil {
 		selectedID = m.selected.ID
 	}
-
-	m.groups = buildGroups(objects, m.vault)
-	m.searchResults = nil
 
 	// Try to restore cursor to previously selected object
 	rows := visibleRows(m.groups)
@@ -421,19 +428,6 @@ func (m *model) selectCurrentRow() {
 			}
 		}
 	}
-}
-
-// startNewType enters the new type name input mode.
-func (m *model) startNewType() {
-	if m.readOnly {
-		return
-	}
-	ti := textinput.New()
-	ti.Placeholder = "type name"
-	ti.CharLimit = 50
-	ti.Focus()
-	m.newTypeName = ti
-	m.newTypeMode = true
 }
 
 // doSave executes the actual vault write and resets save state on success.
@@ -624,7 +618,7 @@ func (m model) hasTitlePanel() bool {
 	return m.selected != nil ||
 		(m.rightPanel == panelTypeEditor && m.typeEditor != nil) ||
 		(m.rightPanel == panelTemplate && m.tmplEditor != nil) ||
-		m.create != nil
+		m.create != nil || m.createType != nil
 }
 
 // bodyWidth calculates the body panel width from remaining space.
@@ -729,9 +723,6 @@ func (m model) View() tea.View {
 		}
 	} else {
 		leftContent = renderList(m.groups, m.cursor, m.scrollOffset, m.focus == focusLeft, leftW, contentH)
-		if m.newTypeMode {
-			leftContent += "\n New type: " + m.newTypeName.View()
-		}
 	}
 
 	var rightSide string
@@ -764,7 +755,7 @@ func (m model) View() tea.View {
 			titleStyle.Render(titleText),
 			editorStyle.Render(te.View()),
 		)
-	} else if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
+	} else if m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.createType == nil {
 		// Type editor uses full right-side width (no props panel)
 		editorW := m.width - m.leftWidth() - 4 // left border + body border
 		if editorW < 10 {
@@ -804,7 +795,9 @@ func (m model) View() tea.View {
 	} else {
 		// Object detail view (existing behavior)
 		var bodyPanelContent string
-		if m.editMode && m.focus == focusBody {
+		if m.createType != nil {
+			bodyPanelContent = renderCreateTypePreview(m.createType)
+		} else if m.editMode && m.focus == focusBody {
 			bodyPanelContent = m.bodyTextarea.View()
 		} else {
 			bodyPanelContent = m.bodyViewport.View()
@@ -839,6 +832,9 @@ func (m model) View() tea.View {
 			if m.create != nil {
 				titleContent = renderCreateTitleContent(m.create, titleW-bdr)
 				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
+			} else if m.createType != nil {
+				titleContent = renderCreateTypeTitleContent(m.createType)
+				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
 			} else if m.selected != nil {
 				titleContent = renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
 			}
@@ -859,8 +855,8 @@ func (m model) View() tea.View {
 	var helpBar string
 	if m.create != nil {
 		helpBar = renderCreateHelpBar(m.create)
-	} else if m.newTypeMode {
-		helpBar = "  [NEW TYPE]  enter: create  esc: cancel"
+	} else if m.createType != nil {
+		helpBar = renderCreateTypeHelpBar()
 	} else if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
 	} else if m.rightPanel == panelTemplate && m.tmplEditor != nil && m.focus != focusLeft {

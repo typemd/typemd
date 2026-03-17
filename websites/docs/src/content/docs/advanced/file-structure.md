@@ -81,6 +81,8 @@ Types are defined as YAML files in `.typemd/types/`. Each file describes a type'
 # .typemd/types/book.yaml
 name: book
 plural: books
+color: blue
+description: "Books I've read or want to read"
 unique: false
 properties:
   - name: status

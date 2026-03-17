@@ -157,6 +157,8 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initSlugIntegrationSteps(ctx, dc)
 	initConfigMgmtSteps(ctx, dc)
 	initPageSteps(ctx, dc)
+	initColorSteps(ctx, dc)
+	initDescriptionSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

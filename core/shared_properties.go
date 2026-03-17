@@ -68,6 +68,9 @@ func resolveUseEntries(schema *TypeSchema, sharedMap map[string]Property) error 
 		if prop.Emoji != "" {
 			resolved.Emoji = prop.Emoji
 		}
+		if prop.Description != "" {
+			resolved.Description = prop.Description
+		}
 		schema.Properties[i] = resolved
 	}
 	return nil

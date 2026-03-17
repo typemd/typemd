@@ -36,6 +36,10 @@ The optional `plural` field provides a grammatically correct display name for th
 
 The optional `emoji` field provides a visual icon for the type in CLI and TUI output.
 
+The optional `color` field assigns a color for visual theming in TUI and Web UI. Accepts preset names (`red`, `blue`, `green`, `yellow`, `purple`, `orange`, `pink`, `cyan`, `gray`, `brown`) or custom hex codes (`#RGB` or `#RRGGBB`).
+
+The optional `description` field provides free-text documentation of the type's purpose (e.g., `description: "Books I've read or want to read"`). This is distinct from the `description` system property on objects.
+
 The optional `version` field is a semver-style `"major.minor"` string for tracking schema evolution (e.g., `version: "1.0"`). When omitted, it defaults to `"0.0"` (unversioned). Increment the major number for breaking changes, and the minor number for backward-compatible changes, providing a foundation for future migration tooling.
 
 ## Why Types matter

@@ -71,8 +71,10 @@ type TypeSchema struct {
 	Name         string     `yaml:"name"`
 	Plural       string     `yaml:"plural,omitempty"`
 	Emoji        string     `yaml:"emoji,omitempty"`
+	Color        string     `yaml:"color,omitempty"`
 	Unique       bool       `yaml:"unique,omitempty"`
 	Version      string     `yaml:"version,omitempty"`
+	Description  string     `yaml:"description,omitempty"`
 	Properties   []Property `yaml:"properties"`
 	NameTemplate string     `yaml:"-"` // extracted from name property entry during load
 }
@@ -97,6 +99,7 @@ type Property struct {
 	Use           string   `yaml:"use,omitempty"`
 	Type          string   `yaml:"type"`
 	Emoji         string   `yaml:"emoji,omitempty"`
+	Description   string   `yaml:"description,omitempty"`
 	Pin           int      `yaml:"pin,omitempty"`
 	Options       []Option `yaml:"options,omitempty"`
 	Target        string   `yaml:"target,omitempty"`
@@ -262,6 +265,11 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 			errs = append(errs, err)
 		}
 	}
+	if schema.Color != "" {
+		if err := validateColor(schema.Color); err != nil {
+			errs = append(errs, err)
+		}
+	}
 
 	// Build shared properties map if provided
 	var sharedMap map[string]Property
@@ -280,7 +288,7 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 				continue
 			}
 
-			// Validate only pin and emoji overrides are present
+			// Validate only pin, emoji, and description overrides are present
 			if err := validateUseOverrides(i, prop); err != nil {
 				errs = append(errs, err)
 				continue
@@ -337,7 +345,7 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 		if prop.Name == NameProperty {
 			// Allow name entry with only template set
 			onlyTemplate := prop.Template != "" &&
-				prop.Type == "" && prop.Emoji == "" && prop.Pin == 0 &&
+				prop.Type == "" && prop.Emoji == "" && prop.Description == "" && prop.Pin == 0 &&
 				len(prop.Options) == 0 && prop.Target == "" && prop.Default == nil &&
 				!prop.Multiple && !prop.Bidirectional && prop.Inverse == ""
 			if !onlyTemplate {
@@ -384,7 +392,7 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 
 // validateUseOverrides checks that a `use` property entry only has allowed override fields.
 func validateUseOverrides(index int, prop Property) error {
-	// Only pin and emoji overrides are allowed on use entries.
+	// Only pin, emoji, and description overrides are allowed on use entries.
 	disallowed := []struct {
 		fieldName string
 		isSet     bool
@@ -401,7 +409,7 @@ func validateUseOverrides(index int, prop Property) error {
 
 	for _, f := range disallowed {
 		if f.isSet {
-			return fmt.Errorf("property[%d] use %q: only \"pin\" and \"emoji\" overrides are allowed on \"use\" entries, got %q", index, prop.Use, f.fieldName)
+			return fmt.Errorf("property[%d] use %q: only \"pin\", \"emoji\", and \"description\" overrides are allowed on \"use\" entries, got %q", index, prop.Use, f.fieldName)
 		}
 	}
 	return nil
@@ -587,12 +595,14 @@ func (p Property) OptionValues() []string {
 // It re-introduces the name property entry when NameTemplate is set,
 // since NameTemplate is excluded from standard yaml marshaling (yaml:"-").
 type marshalSchema struct {
-	Name       string     `yaml:"name"`
-	Plural     string     `yaml:"plural,omitempty"`
-	Emoji      string     `yaml:"emoji,omitempty"`
-	Unique     bool       `yaml:"unique,omitempty"`
-	Version    string     `yaml:"version,omitempty"`
-	Properties []Property `yaml:"properties"`
+	Name        string     `yaml:"name"`
+	Plural      string     `yaml:"plural,omitempty"`
+	Emoji       string     `yaml:"emoji,omitempty"`
+	Color       string     `yaml:"color,omitempty"`
+	Unique      bool       `yaml:"unique,omitempty"`
+	Version     string     `yaml:"version,omitempty"`
+	Description string     `yaml:"description,omitempty"`
+	Properties  []Property `yaml:"properties"`
 }
 
 // MarshalTypeSchema serializes a TypeSchema to YAML bytes suitable for
@@ -604,11 +614,13 @@ func MarshalTypeSchema(schema *TypeSchema) ([]byte, error) {
 		version = "" // omit default version from YAML
 	}
 	ms := marshalSchema{
-		Name:    schema.Name,
-		Plural:  schema.Plural,
-		Emoji:   schema.Emoji,
-		Unique:  schema.Unique,
-		Version: version,
+		Name:        schema.Name,
+		Plural:      schema.Plural,
+		Emoji:       schema.Emoji,
+		Color:       schema.Color,
+		Unique:      schema.Unique,
+		Version:     version,
+		Description: schema.Description,
 	}
 
 	// Re-introduce name template as a name property entry if set
@@ -649,6 +661,42 @@ func parseVersion(v string) (int, int, error) {
 func validateVersion(v string) error {
 	_, _, err := parseVersion(v)
 	return err
+}
+
+// validColorPresets contains the list of allowed preset color names.
+var validColorPresets = []string{
+	"red", "blue", "green", "yellow", "purple",
+	"orange", "pink", "cyan", "gray", "brown",
+}
+
+// validColorPresetSet is a lookup set for validColorPresets.
+var validColorPresetSet = func() map[string]bool {
+	m := make(map[string]bool, len(validColorPresets))
+	for _, c := range validColorPresets {
+		m[c] = true
+	}
+	return m
+}()
+
+// hexColorRegexp matches #RGB or #RRGGBB (case-insensitive hex digits).
+var hexColorRegexp = regexp.MustCompile(`^#(?:[0-9a-fA-F]{3}|[0-9a-fA-F]{6})$`)
+
+// ValidColorPresets returns the list of valid preset color names.
+func ValidColorPresets() []string {
+	result := make([]string, len(validColorPresets))
+	copy(result, validColorPresets)
+	return result
+}
+
+// validateColor checks that a color value is either a valid preset name or a valid hex code.
+func validateColor(color string) error {
+	if validColorPresetSet[color] {
+		return nil
+	}
+	if hexColorRegexp.MatchString(color) {
+		return nil
+	}
+	return fmt.Errorf("invalid color %q (valid: preset name or #RGB/#RRGGBB hex)", color)
 }
 
 // CompareVersions compares two "major.minor" version strings.

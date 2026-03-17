@@ -129,7 +129,7 @@ graph LR
 | `projector.go` | Projector (file→index sync) |
 | `domain_event.go` | Domain event types + EventDispatcher |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `type_schema.go` | TypeSchema entity + validation + YAML serialization + version handling (DefaultSchemaVersion, CompareVersions) + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
+| `type_schema.go` | TypeSchema entity + validation + YAML serialization + version handling (DefaultSchemaVersion, CompareVersions) + color validation (ValidColorPresets, validateColor) + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
 | `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
 | `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
 | `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
@@ -148,13 +148,15 @@ The TUI uses a three-panel layout (sidebar, body, properties) with a **right pan
 
 The right panel automatically follows the sidebar cursor: moving to an object shows its detail, moving to a type header shows the type editor. The `typeEditor` sub-model has its own `Update()`/`View()` methods and internal mode state (view, edit, move, add wizard, delete confirmation, property detail popup). The type editor includes a Templates section listing available templates; pressing Enter on a template transitions to `panelTemplate` mode. The `templateEditor` sub-model supports viewing, inline editing (body + properties), creating, and deleting templates.
 
+Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_type.go`): triggered via `+ New Type`, it transforms the title panel into a multi-field form (emoji, name, plural) with Tab cycling and a live type schema preview in the right panel. After creation, the type editor opens automatically.
+
 ## Data Model
 
 - Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
 - All objects have system properties managed by typemd: `name` (preserves original input on creation; auto-populated from slug for pre-slugified names, or from name template if defined), `description` (optional, user-authored), `created_at` (set on creation, immutable), `updated_at` (updated on save, immutable), `tags` (relation to built-in `tag` type, multiple). These appear first in frontmatter in that order. System properties are either **user-authored** (`name`, `description`, `tags` — can be overridden by templates) or **auto-managed** (`created_at`, `updated_at` — cannot be overridden).
-- Type schemas: `.typemd/types/*.yaml` (cannot define properties named `description`, `created_at`, `updated_at`, or `tags` — they're reserved system properties; `name` can appear in `properties` with only a `template` field for auto-generated names). Type schemas support optional `plural` (for display in collection contexts), `unique` (to enforce name uniqueness), and `version` (semver-style `"major.minor"` string for schema migration tracking, default `"0.0"`) fields.
+- Type schemas: `.typemd/types/*.yaml` (cannot define properties named `description`, `created_at`, `updated_at`, or `tags` — they're reserved system properties; `name` can appear in `properties` with only a `template` field for auto-generated names). Type schemas support optional `plural` (for display in collection contexts), `unique` (to enforce name uniqueness), `version` (semver-style `"major.minor"` string for schema migration tracking, default `"0.0"`), `color` (preset name or `#RGB`/`#RRGGBB` hex for visual theming), and `description` (free-text type documentation) fields. Properties also support an optional `description` field for documenting their purpose.
 - Built-in types: `tag` (🏷️, plural "tags", unique, backs `tags` system property) and `page` (📄, plural "pages", general-purpose content container). Built-in types exist without YAML files, cannot be deleted, but can be overridden by custom `.typemd/types/<name>.yaml`.
-- Shared properties: `.typemd/properties.yaml` (optional, defines reusable property definitions referenced via `use` in type schemas)
+- Shared properties: `.typemd/properties.yaml` (optional, defines reusable property definitions referenced via `use` in type schemas; `use` entries can override `pin`, `emoji`, and `description`)
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
