@@ -131,14 +131,16 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	case "tab":
 		switch m.focus {
 		case focusLeft:
-			if m.rightPanel == panelTypeEditor {
-				m.focus = focusBody // focusBody doubles as "right panel focus" for type editor
+			if m.rightPanel == panelTypeEditor || m.rightPanel == panelTemplate {
+				m.focus = focusBody // focusBody doubles as "right panel focus" for type/template editor
 			} else {
 				m.focus = focusBody
 			}
 		case focusBody:
 			if m.rightPanel == panelTypeEditor {
 				m.focus = focusLeft
+			} else if m.rightPanel == panelTemplate {
+				m.focus = focusBody // template editor handles tab internally for body/props
 			} else if m.propsVisible {
 				m.focus = focusProps
 			} else {

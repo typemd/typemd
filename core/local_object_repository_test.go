@@ -464,3 +464,189 @@ func TestWalkAll_NoFrontmatterDelimiters(t *testing.T) {
 		t.Error("expected non-nil error for file without frontmatter delimiters")
 	}
 }
+
+// --- SaveTemplate tests ---
+
+func TestLocalObjectRepository_SaveTemplate_OverwriteExisting(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	// Create an initial template
+	dir := filepath.Join(repo.root, "templates", "book")
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(filepath.Join(dir, "review.md"), []byte("## Old Content\n"), 0644)
+
+	// Overwrite with new content via SaveTemplate
+	tmpl := &Template{
+		Name:       "review",
+		Properties: map[string]any{"status": "draft"},
+		Body:       "## New Content\n",
+	}
+	if err := repo.SaveTemplate("book", "review", tmpl); err != nil {
+		t.Fatalf("SaveTemplate: %v", err)
+	}
+
+	// Verify the file was overwritten
+	got, err := repo.GetTemplate("book", "review")
+	if err != nil {
+		t.Fatalf("GetTemplate after overwrite: %v", err)
+	}
+	if got.Properties["status"] != "draft" {
+		t.Errorf("status = %v, want %q", got.Properties["status"], "draft")
+	}
+	if got.Body != "## New Content\n" {
+		t.Errorf("Body = %q, want %q", got.Body, "## New Content\n")
+	}
+}
+
+func TestLocalObjectRepository_SaveTemplate_CreatesDirectory(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	tmpl := &Template{
+		Name: "first",
+		Body: "## First\n",
+	}
+	if err := repo.SaveTemplate("article", "first", tmpl); err != nil {
+		t.Fatalf("SaveTemplate: %v", err)
+	}
+
+	// Verify directory and file were created
+	info, err := os.Stat(filepath.Join(repo.root, "templates", "article"))
+	if err != nil {
+		t.Fatalf("template directory should exist: %v", err)
+	}
+	if !info.IsDir() {
+		t.Error("expected a directory")
+	}
+
+	got, err := repo.GetTemplate("article", "first")
+	if err != nil {
+		t.Fatalf("GetTemplate: %v", err)
+	}
+	if got.Body != "## First\n" {
+		t.Errorf("Body = %q, want %q", got.Body, "## First\n")
+	}
+}
+
+func TestLocalObjectRepository_SaveTemplate_BodyOnly(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	tmpl := &Template{
+		Name: "simple",
+		Body: "## Simple\n",
+	}
+	if err := repo.SaveTemplate("book", "simple", tmpl); err != nil {
+		t.Fatalf("SaveTemplate: %v", err)
+	}
+
+	// Read raw file to verify no frontmatter delimiters
+	data, err := os.ReadFile(filepath.Join(repo.root, "templates", "book", "simple.md"))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	content := string(data)
+	if content != "## Simple\n" {
+		t.Errorf("raw content = %q, want %q", content, "## Simple\n")
+	}
+}
+
+func TestLocalObjectRepository_SaveTemplate_WithProperties(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	tmpl := &Template{
+		Name:       "review",
+		Properties: map[string]any{"status": "draft"},
+		Body:       "## Review\n",
+	}
+	if err := repo.SaveTemplate("book", "review", tmpl); err != nil {
+		t.Fatalf("SaveTemplate: %v", err)
+	}
+
+	// Read raw file to verify frontmatter is present
+	data, err := os.ReadFile(filepath.Join(repo.root, "templates", "book", "review.md"))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	content := string(data)
+	if content[:3] != "---" {
+		t.Errorf("expected frontmatter delimiters, got %q", content[:20])
+	}
+
+	// Verify round-trip
+	got, err := repo.GetTemplate("book", "review")
+	if err != nil {
+		t.Fatalf("GetTemplate: %v", err)
+	}
+	if got.Properties["status"] != "draft" {
+		t.Errorf("status = %v, want %q", got.Properties["status"], "draft")
+	}
+	if got.Body != "## Review\n" {
+		t.Errorf("Body = %q, want %q", got.Body, "## Review\n")
+	}
+}
+
+// --- DeleteTemplate tests ---
+
+func TestLocalObjectRepository_DeleteTemplate_CleansEmptyDir(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	// Create a single template
+	tmpl := &Template{
+		Name: "only",
+		Body: "## Only\n",
+	}
+	if err := repo.SaveTemplate("book", "only", tmpl); err != nil {
+		t.Fatalf("SaveTemplate: %v", err)
+	}
+
+	// Delete it
+	if err := repo.DeleteTemplate("book", "only"); err != nil {
+		t.Fatalf("DeleteTemplate: %v", err)
+	}
+
+	// Verify directory was removed
+	dir := filepath.Join(repo.root, "templates", "book")
+	if _, err := os.Stat(dir); err == nil {
+		t.Error("expected template directory to be removed after deleting last template")
+	}
+}
+
+func TestLocalObjectRepository_DeleteTemplate_KeepsDirWithRemaining(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	// Create two templates
+	for _, name := range []string{"a", "b"} {
+		tmpl := &Template{Name: name, Body: "## " + name + "\n"}
+		if err := repo.SaveTemplate("book", name, tmpl); err != nil {
+			t.Fatalf("SaveTemplate(%s): %v", name, err)
+		}
+	}
+
+	// Delete one
+	if err := repo.DeleteTemplate("book", "a"); err != nil {
+		t.Fatalf("DeleteTemplate: %v", err)
+	}
+
+	// Verify directory still exists
+	dir := filepath.Join(repo.root, "templates", "book")
+	if _, err := os.Stat(dir); err != nil {
+		t.Error("template directory should still exist when other templates remain")
+	}
+
+	// Verify the remaining template is intact
+	names, err := repo.ListTemplates("book")
+	if err != nil {
+		t.Fatalf("ListTemplates: %v", err)
+	}
+	if len(names) != 1 || names[0] != "b" {
+		t.Errorf("remaining templates = %v, want [b]", names)
+	}
+}
+
+func TestLocalObjectRepository_DeleteTemplate_Nonexistent(t *testing.T) {
+	repo := setupTestRepo(t)
+
+	err := repo.DeleteTemplate("book", "nonexistent")
+	if err == nil {
+		t.Error("expected error when deleting nonexistent template")
+	}
+}

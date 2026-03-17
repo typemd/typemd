@@ -29,6 +29,8 @@ type ObjectRepository interface {
 	// Template operations
 	GetTemplate(typeName, name string) (*Template, error)
 	ListTemplates(typeName string) ([]string, error)
+	SaveTemplate(typeName, name string, tmpl *Template) error
+	DeleteTemplate(typeName, name string) error
 
 	// Shared property operations
 	GetSharedProperties() ([]Property, error)

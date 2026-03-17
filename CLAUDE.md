@@ -135,6 +135,7 @@ graph LR
 | `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
 | `vault_config.go` | VaultConfig struct + YAML loading + WriteConfig + DefaultType() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
 | `slugify.go` | Slugify() function for converting natural-language names to valid slugs |
+| `template.go` | Template entity + Vault facade methods (ListTemplates/LoadTemplate/SaveTemplate/DeleteTemplate) |
 
 ### TUI Architecture
 
@@ -143,8 +144,9 @@ The TUI uses a three-panel layout (sidebar, body, properties) with a **right pan
 - `panelEmpty` — no content selected
 - `panelObject` — object detail view (body + properties)
 - `panelTypeEditor` — type schema editor (independent sub-model `typeEditor` in `tui/type_editor.go`)
+- `panelTemplate` — template detail view (independent sub-model `templateEditor` in `tui/template_editor.go`)
 
-The right panel automatically follows the sidebar cursor: moving to an object shows its detail, moving to a type header shows the type editor. The `typeEditor` sub-model has its own `Update()`/`View()` methods and internal mode state (view, edit, move, add wizard, delete confirmation, property detail popup).
+The right panel automatically follows the sidebar cursor: moving to an object shows its detail, moving to a type header shows the type editor. The `typeEditor` sub-model has its own `Update()`/`View()` methods and internal mode state (view, edit, move, add wizard, delete confirmation, property detail popup). The type editor includes a Templates section listing available templates; pressing Enter on a template transitions to `panelTemplate` mode. The `templateEditor` sub-model supports viewing, inline editing (body + properties), creating, and deleting templates.
 
 ## Data Model
 

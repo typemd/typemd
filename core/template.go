@@ -17,6 +17,16 @@ func (v *Vault) LoadTemplate(typeName, templateName string) (*Template, error) {
 	return v.repo.GetTemplate(typeName, templateName)
 }
 
+// SaveTemplate writes a template file for the given type and template name.
+func (v *Vault) SaveTemplate(typeName, templateName string, tmpl *Template) error {
+	return v.repo.SaveTemplate(typeName, templateName, tmpl)
+}
+
+// DeleteTemplate removes a template file for the given type and template name.
+func (v *Vault) DeleteTemplate(typeName, templateName string) error {
+	return v.repo.DeleteTemplate(typeName, templateName)
+}
+
 // filterTemplateProperties returns only the template properties that should be applied.
 // It excludes immutable system properties and properties not defined in the schema.
 func filterTemplateProperties(tmplProps map[string]any, schema *TypeSchema) map[string]any {

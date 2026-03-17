@@ -23,7 +23,7 @@ The TUI uses a multi-panel layout:
 | **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). All defined types appear even if they have no objects. A `+ New Type` row appears at the bottom. |
 | **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). When a type header is selected, shows the type name instead. Hidden when nothing is selected. |
 | **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content. When a type header is selected, replaced by the **type editor**. |
-| **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor is active. |
+| **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor or template editor is active. |
 
 The title panel spans the full width of the right side (body + properties area).
 
@@ -36,14 +36,15 @@ Moving the cursor to a type group header automatically opens the **type editor**
 - **Pin toggle** — Press `p` on a property to move it between Pinned and Properties sections.
 - **Property detail** — Press `Enter` on a property to open a popup for editing metadata (emoji).
 - **Delete type** — Press `D` (shift+d) to delete the type (with confirmation). The built-in `tag` type cannot be deleted.
+- **Templates** — A Templates section lists available templates for the type. Press `Enter` on a template to open the **template editor**. Press `Enter` on `+ Add Template` to create a new template by name.
 
 Changes are saved immediately on each operation (no explicit save step).
 
 | Key | Action (in type editor) |
 |-----|-------------------------|
 | `e` | Edit meta field (Plural/Emoji: text input; Unique: toggle) |
-| `Enter` | Open property detail popup |
-| `a` | Add property (multi-step wizard) |
+| `Enter` | Open property detail popup / Open template / Start add wizard |
+| `a` | Add property (starts wizard) |
 | `d` | Delete property (with confirmation) |
 | `D` | Delete type (with confirmation) |
 | `m` | Enter move mode (`↑`/`↓` to reorder, `Enter`/`Esc` to exit) |
@@ -158,9 +159,35 @@ A popup overlay for editing property metadata. Press `Enter` on a property in TY
 
 When editing a field: `Enter` saves, `Esc` cancels (reverts).
 
+### `[TEMPLATE]` — Template Editor
+
+Active when viewing or editing a template. Press `Enter` on a template in the type editor to enter this mode.
+
+| Key | Action |
+|-----|--------|
+| `e` | Edit template body (enters textarea edit mode) |
+| `d` | Delete template (with confirmation) |
+| `Tab` | Switch focus between body and properties panels |
+| `↑`/`k`, `↓`/`j` | Scroll body (body focused) / Navigate properties (props focused) |
+| `Enter` | Edit property value (when props focused) |
+| `Esc` | Return to type editor |
+| `q`/`Ctrl+C` | Quit |
+
+When editing the body: `Esc` saves, `Ctrl+C` cancels. When editing a property: `Enter` confirms, `Esc` cancels. Clearing a property value removes it from the template frontmatter.
+
+### `[NEW TEMPLATE]` — New Template Input
+
+Shown when creating a template via `+ Add Template` in the type editor.
+
+| Key | Action |
+|-----|--------|
+| Text keys | Template name |
+| `Enter` | Create empty template |
+| `Esc` | Cancel |
+
 ### `[DELETE]` / `[DELETE TYPE]` — Deletion Confirmation
 
-Shown when deleting a property (`d`) or type (`D`).
+Shown when deleting a property (`d`), type (`D`), or template (`d` in template editor).
 
 | Key | Action |
 |-----|--------|

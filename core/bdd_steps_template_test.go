@@ -137,6 +137,42 @@ func (dc *domainContext) theObjectCreationShouldFail() error {
 	return nil
 }
 
+func (dc *domainContext) iSaveTemplateForTypeWithPropertiesAndBody(templateName, typeName, propsStr, body string) {
+	props := make(map[string]any)
+	for _, pair := range strings.Split(propsStr, ", ") {
+		parts := strings.SplitN(pair, ": ", 2)
+		if len(parts) == 2 {
+			props[parts[0]] = parts[1]
+		}
+	}
+	tmpl := &Template{
+		Name:       templateName,
+		Properties: props,
+		Body:       body + "\n",
+	}
+	dc.lastErr = dc.vault.SaveTemplate(typeName, templateName, tmpl)
+}
+
+func (dc *domainContext) iSaveTemplateForTypeWithBody(templateName, typeName, body string) {
+	tmpl := &Template{
+		Name: templateName,
+		Body: body + "\n",
+	}
+	dc.lastErr = dc.vault.SaveTemplate(typeName, templateName, tmpl)
+}
+
+func (dc *domainContext) iDeleteTemplateForType(templateName, typeName string) {
+	dc.lastErr = dc.vault.DeleteTemplate(typeName, templateName)
+}
+
+func (dc *domainContext) theTemplateDirForTypeShouldNotExist(typeName string) error {
+	dir := dc.vault.TypeTemplatesDir(typeName)
+	if _, err := os.Stat(dir); err == nil {
+		return fmt.Errorf("expected template directory for type %q to not exist, but it does", typeName)
+	}
+	return nil
+}
+
 func initTemplateSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a template "([^"]*)" for type "([^"]*)" with body "([^"]*)"$`, dc.aTemplateForTypeWithBody)
 	ctx.Step(`^a template "([^"]*)" for type "([^"]*)" with frontmatter "([^"]*)" and body "([^"]*)"$`, dc.aTemplateForTypeWithFrontmatterAndBody)
@@ -151,4 +187,8 @@ func initTemplateSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^I create a "([^"]*)" object named "([^"]*)" with template "([^"]*)"$`, dc.iCreateAObjectNamedWithTemplate)
 	ctx.Step(`^the object body should be "([^"]*)"$`, dc.theObjectBodyShouldBe)
 	ctx.Step(`^the object creation should fail$`, dc.theObjectCreationShouldFail)
+	ctx.Step(`^I save template "([^"]*)" for type "([^"]*)" with properties "([^"]*)" and body "([^"]*)"$`, dc.iSaveTemplateForTypeWithPropertiesAndBody)
+	ctx.Step(`^I save template "([^"]*)" for type "([^"]*)" with body "([^"]*)"$`, dc.iSaveTemplateForTypeWithBody)
+	ctx.Step(`^I delete template "([^"]*)" for type "([^"]*)"$`, dc.iDeleteTemplateForType)
+	ctx.Step(`^the template directory for type "([^"]*)" should not exist$`, dc.theTemplateDirForTypeShouldNotExist)
 }

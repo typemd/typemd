@@ -429,6 +429,60 @@ func (r *LocalObjectRepository) ListTemplates(typeName string) ([]string, error)
 	return names, nil
 }
 
+// SaveTemplate writes a template file for the given type.
+// If properties are non-empty, they are written as YAML frontmatter.
+// The type template directory is created if it doesn't exist.
+func (r *LocalObjectRepository) SaveTemplate(typeName, name string, tmpl *Template) error {
+	dir := r.typeTemplatesDir(typeName)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		return fmt.Errorf("create template directory: %w", err)
+	}
+
+	var buf strings.Builder
+	if len(tmpl.Properties) > 0 {
+		buf.WriteString("---\n")
+		yamlData, err := yaml.Marshal(tmpl.Properties)
+		if err != nil {
+			return fmt.Errorf("marshal template properties: %w", err)
+		}
+		buf.Write(yamlData)
+		buf.WriteString("---\n")
+		if tmpl.Body != "" {
+			buf.WriteString("\n")
+			buf.WriteString(tmpl.Body)
+		}
+	} else {
+		buf.WriteString(tmpl.Body)
+	}
+
+	path := r.templatePath(typeName, name)
+	if err := os.WriteFile(path, []byte(buf.String()), 0644); err != nil {
+		return fmt.Errorf("write template file: %w", err)
+	}
+	return nil
+}
+
+// DeleteTemplate removes a template file for the given type.
+// If the type template directory becomes empty after deletion, it is also removed.
+func (r *LocalObjectRepository) DeleteTemplate(typeName, name string) error {
+	path := r.templatePath(typeName, name)
+	if err := os.Remove(path); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return fmt.Errorf("template %q not found for type %q", name, typeName)
+		}
+		return fmt.Errorf("delete template: %w", err)
+	}
+
+	// Clean up empty type template directory
+	dir := r.typeTemplatesDir(typeName)
+	entries, err := os.ReadDir(dir)
+	if err == nil && len(entries) == 0 {
+		os.Remove(dir)
+	}
+
+	return nil
+}
+
 // --- Shared property operations ---
 
 // GetSharedProperties loads shared property definitions, with caching.

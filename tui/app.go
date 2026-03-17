@@ -28,6 +28,7 @@ const (
 	panelEmpty      rightPanelMode = iota // no content selected
 	panelObject                           // object detail view (existing behavior)
 	panelTypeEditor                       // type editor view
+	panelTemplate                         // template detail view
 )
 
 type typeGroup struct {
@@ -44,7 +45,8 @@ type model struct {
 
 	// Right panel mode
 	rightPanel  rightPanelMode
-	typeEditor  *typeEditor // non-nil when rightPanel == panelTypeEditor
+	typeEditor  *typeEditor          // non-nil when rightPanel == panelTypeEditor
+	tmplEditor  *templateEditor      // non-nil when rightPanel == panelTemplate
 	newTypeName  textinput.Model
 	newTypeMode  bool // true when entering new type name in sidebar
 	create       *createState // non-nil when object creation flow is active
@@ -160,6 +162,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.refreshData()
 		return m, nil
 
+	case openTemplateMsg:
+		// Transition from type editor to template detail view
+		if m.vault != nil {
+			tmpl, err := m.vault.LoadTemplate(msg.TypeName, msg.TemplateName)
+			if err != nil {
+				return m, nil
+			}
+			schema, _ := m.vault.LoadType(msg.TypeName)
+			m.tmplEditor = newTemplateEditor(msg.TypeName, msg.TemplateName, tmpl, schema, m.vault)
+			m.rightPanel = panelTemplate
+			m.focus = focusBody
+		}
+		return m, nil
+
+	case templateDeletedMsg:
+		// Template already deleted by templateEditor; clean up and return to type editor
+		m.tmplEditor = nil
+		m.rightPanel = panelTypeEditor
+		m.focus = focusBody
+		if m.typeEditor != nil {
+			m.typeEditor.refreshTemplates()
+		}
+		return m, nil
+
 	case flashDismissMsg:
 		if m.create != nil && msg.seq == m.create.flashSeq {
 			m.create.flash = ""
@@ -233,6 +259,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return updateCreate(m, msg)
 		case m.newTypeMode:
 			return updateNewType(m, msg)
+		case m.rightPanel == panelTemplate && m.tmplEditor != nil && m.focus != focusLeft:
+			// q/ctrl+c quits globally unless in an interactive mode
+			if (msg.String() == "q" || msg.String() == "ctrl+c") && m.tmplEditor.CanQuit() {
+				if m.vault != nil {
+					saveSessionState(m.vault.Root, m.captureState())
+				}
+				return m, tea.Quit
+			}
+			// Esc in view mode returns to type editor
+			if msg.String() == "esc" && m.tmplEditor.CanQuit() {
+				m.tmplEditor = nil
+				m.rightPanel = panelTypeEditor
+				m.focus = focusBody
+				return m, nil
+			}
+			te, cmd := m.tmplEditor.Update(msg)
+			m.tmplEditor = te
+			return m, cmd
 		case m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.focus != focusLeft:
 			// q/ctrl+c quits globally unless in an interactive mode
 			if (msg.String() == "q" || msg.String() == "ctrl+c") && m.typeEditor.CanQuit() {
@@ -557,7 +601,10 @@ func (m model) defaultPropsWidth() int {
 
 // hasTitlePanel returns true when the right side should show a title panel.
 func (m model) hasTitlePanel() bool {
-	return m.selected != nil || (m.rightPanel == panelTypeEditor && m.typeEditor != nil) || m.create != nil
+	return m.selected != nil ||
+		(m.rightPanel == panelTypeEditor && m.typeEditor != nil) ||
+		(m.rightPanel == panelTemplate && m.tmplEditor != nil) ||
+		m.create != nil
 }
 
 // bodyWidth calculates the body panel width from remaining space.
@@ -669,7 +716,35 @@ func (m model) View() tea.View {
 
 	var rightSide string
 
-	if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
+	if m.rightPanel == panelTemplate && m.tmplEditor != nil {
+		// Template detail view — uses full right-side width like type editor
+		te := m.tmplEditor
+		editorW := m.width - m.leftWidth() - 4
+		if editorW < 10 {
+			editorW = 10
+		}
+		editorStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(editorW + bdr).
+			Height(bodyPropsPanelH).
+			MaxHeight(bodyPropsPanelH)
+		if m.focus != focusLeft {
+			editorStyle = editorStyle.BorderForeground(activeBorderColor)
+		}
+
+		// Title panel
+		titleW := m.width - leftW - bdr
+		titleStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(titleW).
+			Height(titlePanelHeight)
+		titleText := te.titleContent(titleW - bdr)
+
+		rightSide = lipgloss.JoinVertical(lipgloss.Left,
+			titleStyle.Render(titleText),
+			editorStyle.Render(te.View()),
+		)
+	} else if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
 		// Type editor uses full right-side width (no props panel)
 		editorW := m.width - m.leftWidth() - 4 // left border + body border
 		if editorW < 10 {
@@ -768,6 +843,8 @@ func (m model) View() tea.View {
 		helpBar = "  [NEW TYPE]  enter: create  esc: cancel"
 	} else if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
+	} else if m.rightPanel == panelTemplate && m.tmplEditor != nil && m.focus != focusLeft {
+		helpBar = m.tmplEditor.HelpBar()
 	} else if m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.focus != focusLeft {
 		helpBar = m.typeEditor.HelpBar()
 	} else if m.saveConflict {

@@ -17,17 +17,24 @@ type focusLeftMsg struct{}
 // typeDeletedMsg signals that the current type was deleted.
 type typeDeletedMsg struct{}
 
+// openTemplateMsg signals the parent model to open a template in panelTemplate mode.
+type openTemplateMsg struct {
+	TypeName     string
+	TemplateName string
+}
+
 // teMode represents the current mode of the type editor.
 type teMode int
 
 const (
-	teModeView       teMode = iota // viewing type schema
-	teModeEditMeta                 // editing a meta field inline
-	teModeEditProp                 // property detail panel
-	teModeMove                     // reordering properties
-	teModeAddWizard                // add property wizard
-	teModeDeleteProp               // delete property confirmation
-	teModeDeleteType               // delete type confirmation
+	teModeView        teMode = iota // viewing type schema
+	teModeEditMeta                  // editing a meta field inline
+	teModeEditProp                  // property detail panel
+	teModeMove                      // reordering properties
+	teModeAddWizard                 // add property wizard
+	teModeDeleteProp                // delete property confirmation
+	teModeDeleteType                // delete type confirmation
+	teModeAddTemplate               // entering new template name
 )
 
 // metaFieldCount is the number of meta fields at the top of the editor:
@@ -58,6 +65,11 @@ type typeEditor struct {
 
 	// Add property wizard
 	wizard *addPropWizard
+
+	// Template management
+	templates     []string         // cached template names for this type
+	tmplCursor    int              // cursor within templates list
+	tmplNameInput textinput.Model  // name input for adding template
 
 	// Layout
 	width  int
@@ -107,12 +119,24 @@ var propertyTypeList = core.ValidPropertyTypeNames()
 func newTypeEditor(schema *core.TypeSchema, typeName string, isNew bool, vault *core.Vault) *typeEditor {
 	ti := textinput.New()
 	ti.CharLimit = 100
+
+	tmplInput := textinput.New()
+	tmplInput.Placeholder = "template name"
+	tmplInput.CharLimit = 50
+
+	var templates []string
+	if vault != nil {
+		templates, _ = vault.ListTemplates(typeName)
+	}
+
 	return &typeEditor{
-		schema:   schema,
-		typeName: typeName,
-		isNew:    isNew,
-		vault:    vault,
-		editInput: ti,
+		schema:        schema,
+		typeName:      typeName,
+		isNew:         isNew,
+		vault:         vault,
+		editInput:     ti,
+		templates:     templates,
+		tmplNameInput: tmplInput,
 	}
 }
 
@@ -146,13 +170,17 @@ func maxPinValue(props []core.Property) int {
 // Sentinel value for the "+ Add Property" row in displayItems.
 const addPropertySentinel = -100
 
+// Sentinel values for template management in displayItems.
+const addTemplateSentinel = -200
+const templateSentinelBase = -300 // templates use -300, -301, -302, ...
+
 // displayItems returns the flat list of cursor-addressable items.
 // Items 0..3 are meta fields, then pinned properties, then unpinned properties,
 // then the "+ Add Property" action row.
 // Section separators are not included (they're visual only).
 func (te *typeEditor) displayItems() []int {
 	pinned, unpinned := te.orderedProperties()
-	items := make([]int, 0, metaFieldCount+len(pinned)+len(unpinned)+1)
+	items := make([]int, 0, metaFieldCount+len(pinned)+len(unpinned)+1+len(te.templates)+1)
 	// Meta fields use negative sentinel values: -1=Name, -2=Plural, -3=Emoji, -4=Unique
 	for i := 0; i < metaFieldCount; i++ {
 		items = append(items, -(i + 1))
@@ -160,12 +188,18 @@ func (te *typeEditor) displayItems() []int {
 	items = append(items, pinned...)
 	items = append(items, unpinned...)
 	items = append(items, addPropertySentinel)
+	// Template items
+	for i := range te.templates {
+		items = append(items, templateSentinelBase-i)
+	}
+	items = append(items, addTemplateSentinel)
 	return items
 }
 
 // totalItems returns the total number of cursor-addressable items.
 func (te *typeEditor) totalItems() int {
-	return metaFieldCount + len(te.schema.Properties) + 1 // +1 for "+ Add Property"
+	return metaFieldCount + len(te.schema.Properties) + 1 + len(te.templates) + 1
+	// meta + properties + addProperty + templates + addTemplate
 }
 
 // save persists the current schema to disk.
@@ -202,6 +236,8 @@ func (te *typeEditor) Update(msg tea.Msg) (*typeEditor, tea.Cmd) {
 		return te.updateDeleteProp(keyMsg)
 	case teModeDeleteType:
 		return te.updateDeleteType(keyMsg)
+	case teModeAddTemplate:
+		return te.updateAddTemplate(keyMsg)
 	}
 	return te, nil
 }
@@ -240,6 +276,19 @@ func (te *typeEditor) updateView(msg tea.KeyPressMsg) (*typeEditor, tea.Cmd) {
 			switch {
 			case item == addPropertySentinel:
 				te.startAddWizard()
+			case item == addTemplateSentinel:
+				te.startAddTemplate()
+			case item <= templateSentinelBase:
+				// Template item — signal parent to open template
+				tmplIdx := templateSentinelBase - item
+				if tmplIdx >= 0 && tmplIdx < len(te.templates) {
+					return te, tea.Sequence(func() tea.Msg {
+						return openTemplateMsg{
+							TypeName:     te.typeName,
+							TemplateName: te.templates[tmplIdx],
+						}
+					})
+				}
 			case item >= 0: // property
 				te.openPropDetail()
 			}
@@ -264,7 +313,7 @@ func (te *typeEditor) startEdit() {
 		return
 	}
 	item := items[te.cursor]
-	if item == addPropertySentinel {
+	if item == addPropertySentinel || item == addTemplateSentinel || item <= templateSentinelBase {
 		return
 	}
 
@@ -435,7 +484,7 @@ func (te *typeEditor) startDelete() {
 	}
 	item := items[te.cursor]
 	if item < 0 {
-		return // can't delete meta fields
+		return // can't delete meta fields, sentinels, or templates
 	}
 	te.mode = teModeDeleteProp
 }
@@ -850,6 +899,62 @@ func (te *typeEditor) cancelWizard() {
 	te.saveErr = ""
 }
 
+// ── Template Management ─────────────────────────────────────────────────────
+
+func (te *typeEditor) startAddTemplate() {
+	te.tmplNameInput.SetValue("")
+	te.tmplNameInput.Focus()
+	te.mode = teModeAddTemplate
+	te.saveErr = ""
+}
+
+func (te *typeEditor) updateAddTemplate(msg tea.KeyPressMsg) (*typeEditor, tea.Cmd) {
+	switch msg.String() {
+	case "enter":
+		name := strings.TrimSpace(te.tmplNameInput.Value())
+		if name == "" {
+			return te, nil
+		}
+		// Check for duplicate
+		for _, t := range te.templates {
+			if t == name {
+				te.saveErr = fmt.Sprintf("template %q already exists", name)
+				return te, nil
+			}
+		}
+		// Create empty template
+		if te.vault != nil {
+			tmpl := &core.Template{
+				Name:       name,
+				Properties: make(map[string]any),
+			}
+			if err := te.vault.SaveTemplate(te.typeName, name, tmpl); err != nil {
+				te.saveErr = err.Error()
+				return te, nil
+			}
+		}
+		te.saveErr = ""
+		te.refreshTemplates()
+		te.tmplNameInput.Blur()
+		te.mode = teModeView
+		return te, nil
+	case "esc":
+		te.tmplNameInput.Blur()
+		te.mode = teModeView
+		te.saveErr = ""
+		return te, nil
+	}
+	var cmd tea.Cmd
+	te.tmplNameInput, cmd = te.tmplNameInput.Update(msg)
+	return te, cmd
+}
+
+func (te *typeEditor) refreshTemplates() {
+	if te.vault != nil {
+		te.templates, _ = te.vault.ListTemplates(te.typeName)
+	}
+}
+
 // View renders the type editor panel.
 func (te *typeEditor) View() string {
 	if te.mode == teModeAddWizard && te.wizard != nil {
@@ -925,6 +1030,48 @@ func (te *typeEditor) View() string {
 		b.WriteString(" " + highlightStyle.Render(" "+addPropContent+" ") + "\n")
 	} else {
 		b.WriteString("  " + addPropContent + "\n")
+	}
+
+	// Templates section
+	b.WriteString("\n")
+	b.WriteString(" ── Templates ──\n")
+	if len(te.templates) == 0 {
+		b.WriteString("  (none)\n")
+	} else {
+		for tmplI, tmplName := range te.templates {
+			sentinel := templateSentinelBase - tmplI
+			cursorPos := -1
+			for i, item := range items {
+				if item == sentinel {
+					cursorPos = i
+					break
+				}
+			}
+			isCurrent := te.cursor == cursorPos
+			lineContent := fmt.Sprintf("📝 %s", tmplName)
+			if isCurrent {
+				b.WriteString(" " + highlightStyle.Render(" "+lineContent+" ") + "\n")
+			} else {
+				b.WriteString("  " + lineContent + "\n")
+			}
+		}
+	}
+
+	// "+ Add Template" row
+	addTmplContent := "+ Add Template"
+	isAddTmplCurrent := false
+	for i, item := range items {
+		if item == addTemplateSentinel && te.cursor == i {
+			isAddTmplCurrent = true
+			break
+		}
+	}
+	if te.mode == teModeAddTemplate {
+		b.WriteString(fmt.Sprintf("  + %s\n", te.tmplNameInput.View()))
+	} else if isAddTmplCurrent {
+		b.WriteString(" " + highlightStyle.Render(" "+addTmplContent+" ") + "\n")
+	} else {
+		b.WriteString("  " + addTmplContent + "\n")
 	}
 
 	// Delete confirmation
@@ -1085,6 +1232,8 @@ func (te *typeEditor) HelpBar() string {
 		return "  [DELETE]  y: confirm  n/esc: cancel"
 	case teModeDeleteType:
 		return "  [DELETE TYPE]  y: confirm  n/esc: cancel"
+	case teModeAddTemplate:
+		return "  [NEW TEMPLATE]  enter: create  esc: cancel"
 	}
 	return ""
 }

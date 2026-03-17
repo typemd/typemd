@@ -67,9 +67,9 @@ func TestTypeEditor_CursorNavigation(t *testing.T) {
 
 func TestTypeEditor_TotalItems(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
-	// 4 meta fields + 4 properties + 1 add property = 9
-	if te.totalItems() != 9 {
-		t.Errorf("totalItems = %d, want 9", te.totalItems())
+	// 4 meta fields + 4 properties + 1 add property + 0 templates + 1 add template = 10
+	if te.totalItems() != 10 {
+		t.Errorf("totalItems = %d, want 10", te.totalItems())
 	}
 }
 
@@ -77,9 +77,9 @@ func TestTypeEditor_DisplayItems(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
 	items := te.displayItems()
 
-	// Should have 9 items: 4 meta + 2 pinned + 2 unpinned + 1 add property
-	if len(items) != 9 {
-		t.Fatalf("len(displayItems) = %d, want 9", len(items))
+	// Should have 10 items: 4 meta + 2 pinned + 2 unpinned + 1 add property + 1 add template
+	if len(items) != 10 {
+		t.Fatalf("len(displayItems) = %d, want 10", len(items))
 	}
 
 	// First 4 are meta sentinels
