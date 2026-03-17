@@ -10,7 +10,8 @@ const (
 
 // Built-in type name constants.
 const (
-	TagTypeName = "tag"
+	TagTypeName  = "tag"
+	PageTypeName = "page"
 )
 
 // SystemProperty defines a system-managed property that is automatically

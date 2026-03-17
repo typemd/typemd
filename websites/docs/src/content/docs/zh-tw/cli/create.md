@@ -40,12 +40,12 @@ tmd object create book
 ```yaml
 # .typemd/config.yaml
 cli:
-  default_type: idea
+  default_type: page
 ```
 
 ```bash
-# 當 default_type 是 "idea" 時，以下兩種寫法等效：
-tmd object create idea "Some Thought"
+# 當 default_type 是 "page" 時，以下兩種寫法等效：
+tmd object create page "Some Thought"
 tmd object create "Some Thought"
 ```
 

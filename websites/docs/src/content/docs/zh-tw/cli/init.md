@@ -35,11 +35,7 @@ tmd init --no-starters
 
 ### Vault 設定
 
-選取 starter types 時，`tmd init` 也會建立 `.typemd/config.yaml`，設定快速建立 object 的預設 type：
-
-- 選取 **idea** → `cli.default_type: idea`
-- 選取 **note**（沒有 idea）→ `cli.default_type: note`
-- 只選取 **book** → 不建立 config 檔
+`tmd init` 會自動建立 `.typemd/config.yaml` 並設定 `cli.default_type: page`。內建的 `page` type 作為快速建立 object 的預設 type。
 
 這讓你可以直接執行 `tmd object create "Some Thought"` 而不需指定 type。詳見 [tmd object create](/zh-tw/cli/create)。
 

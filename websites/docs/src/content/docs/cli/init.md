@@ -35,11 +35,7 @@ tmd init --no-starters
 
 ### Vault configuration
 
-When starter types are selected, `tmd init` also creates `.typemd/config.yaml` with a default type for quick object creation:
-
-- If **idea** is selected → `cli.default_type: idea`
-- If **note** is selected (without idea) → `cli.default_type: note`
-- If only **book** is selected → no config file is created
+`tmd init` always creates `.typemd/config.yaml` with `cli.default_type: page`. The built-in `page` type serves as the default for quick object creation.
 
 This enables `tmd object create "Some Thought"` without specifying a type. See [tmd object create](/cli/create) for details.
 

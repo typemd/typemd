@@ -54,21 +54,16 @@ The Vault SHALL provide a `DefaultType()` method that returns the configured `cl
 - **WHEN** config does not have `cli.default_type`
 - **THEN** `vault.DefaultType()` SHALL return `""`
 
-### Requirement: Init creates config.yaml when starter types are selected
+### Requirement: Init always creates config.yaml with page as default type
 
-When `tmd init` writes starter types and the user selects the `idea` or `note` type, it SHALL also create `.typemd/config.yaml` with `cli.default_type` set to `idea` (if selected) or `note` (if selected without idea). If neither is selected, no config file SHALL be created.
+`tmd init` SHALL always create `.typemd/config.yaml` with `cli.default_type` set to `page`. The built-in `page` type serves as the default for quick object creation, regardless of which starter types are selected.
 
-#### Scenario: Init with idea starter selected
+#### Scenario: Init creates config with page default
 
-- **WHEN** `tmd init` is run and user selects the `idea` starter type
-- **THEN** `.typemd/config.yaml` SHALL be created with `cli:\n  default_type: idea`
+- **WHEN** `tmd init` is run
+- **THEN** `.typemd/config.yaml` SHALL be created with `cli:\n  default_type: page`
 
-#### Scenario: Init with note starter selected but not idea
+#### Scenario: Init with --no-starters still creates config
 
-- **WHEN** `tmd init` is run and user selects the `note` starter type but not `idea`
-- **THEN** `.typemd/config.yaml` SHALL be created with `cli:\n  default_type: note`
-
-#### Scenario: Init with no quick-suitable starter selected
-
-- **WHEN** `tmd init` is run and user selects only the `book` starter type
-- **THEN** no `.typemd/config.yaml` SHALL be created
+- **WHEN** `tmd init --no-starters` is run
+- **THEN** `.typemd/config.yaml` SHALL be created with `cli:\n  default_type: page`

@@ -151,12 +151,13 @@ The right panel automatically follows the sidebar cursor: moving to an object sh
 - Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
 - All objects have system properties managed by typemd: `name` (preserves original input on creation; auto-populated from slug for pre-slugified names, or from name template if defined), `description` (optional, user-authored), `created_at` (set on creation, immutable), `updated_at` (updated on save, immutable), `tags` (relation to built-in `tag` type, multiple). These appear first in frontmatter in that order. System properties are either **user-authored** (`name`, `description`, `tags` — can be overridden by templates) or **auto-managed** (`created_at`, `updated_at` — cannot be overridden).
 - Type schemas: `.typemd/types/*.yaml` (cannot define properties named `description`, `created_at`, `updated_at`, or `tags` — they're reserved system properties; `name` can appear in `properties` with only a `template` field for auto-generated names). Type schemas support optional `plural` (for display in collection contexts), `unique` (to enforce name uniqueness), and `version` (semver-style `"major.minor"` string for schema migration tracking, default `"0.0"`) fields.
+- Built-in types: `tag` (🏷️, plural "tags", unique, backs `tags` system property) and `page` (📄, plural "pages", general-purpose content container). Built-in types exist without YAML files, cannot be deleted, but can be overridden by custom `.typemd/types/<name>.yaml`.
 - Shared properties: `.typemd/properties.yaml` (optional, defines reusable property definitions referenced via `use` in type schemas)
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, and props visibility)
-- Vault config: `.typemd/config.yaml` (optional, interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`)
+- Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`)
 - Starter type templates: `core/starters/*.yaml` (embedded in binary via `//go:embed`; offered during `tmd init` as opt-in type schemas — idea, note, book)
 - Object templates: `templates/<type>/<name>.md` (optional, Markdown files with frontmatter property overrides and body content applied during `tmd object create`; single template auto-applies, multiple templates prompt for selection or use `-t` flag)
 - Object files: `objects/<type>/<name>.md`

@@ -61,6 +61,9 @@ type domainContext struct {
 	// doctor results
 	doctorReport *DoctorReport
 
+	// type listing results
+	typeList []string
+
 	// display properties results
 	displayProps []DisplayProperty
 

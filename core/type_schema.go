@@ -144,7 +144,7 @@ func (s *TypeSchema) PropertyNames() map[string]bool {
 }
 
 // defaultTypes contains built-in type schemas.
-// Only "tag" is built-in because it backs the "tags" system property.
+// "tag" backs the "tags" system property; "page" is a general-purpose content container.
 // All other types must be defined via .typemd/types/*.yaml files.
 var defaultTypes = map[string]TypeSchema{
 	TagTypeName: {
@@ -156,6 +156,11 @@ var defaultTypes = map[string]TypeSchema{
 			{Name: "color", Type: "string", Emoji: "🎨"},
 			{Name: "icon", Type: "string", Emoji: "✨"},
 		},
+	},
+	PageTypeName: {
+		Name:   PageTypeName,
+		Plural: "pages",
+		Emoji:  "📄",
 	},
 }
 

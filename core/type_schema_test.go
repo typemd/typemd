@@ -87,21 +87,45 @@ properties:
 	}
 }
 
-func TestDefaultTypes_OnlyTag(t *testing.T) {
-	// Only tag should be a built-in type
-	if len(defaultTypes) != 1 {
-		t.Errorf("len(defaultTypes) = %d, want 1 (tag only)", len(defaultTypes))
+func TestDefaultTypes_BuiltInTypes(t *testing.T) {
+	// tag and page should be built-in types
+	if len(defaultTypes) != 2 {
+		t.Errorf("len(defaultTypes) = %d, want 2 (tag + page)", len(defaultTypes))
 	}
-	schema, ok := defaultTypes[TagTypeName]
+
+	// Verify tag
+	tag, ok := defaultTypes[TagTypeName]
 	if !ok {
 		t.Fatal("defaultTypes missing tag")
 	}
-	if schema.Name != TagTypeName {
-		t.Errorf("tag schema Name = %q, want %q", schema.Name, TagTypeName)
+	if tag.Name != TagTypeName {
+		t.Errorf("tag schema Name = %q, want %q", tag.Name, TagTypeName)
 	}
-	if !schema.Unique {
+	if !tag.Unique {
 		t.Errorf("tag schema Unique = false, want true")
 	}
+
+	// Verify page
+	page, ok := defaultTypes[PageTypeName]
+	if !ok {
+		t.Fatal("defaultTypes missing page")
+	}
+	if page.Name != PageTypeName {
+		t.Errorf("page schema Name = %q, want %q", page.Name, PageTypeName)
+	}
+	if page.Emoji != "📄" {
+		t.Errorf("page schema Emoji = %q, want %q", page.Emoji, "📄")
+	}
+	if page.Plural != "pages" {
+		t.Errorf("page schema Plural = %q, want %q", page.Plural, "pages")
+	}
+	if page.Unique {
+		t.Errorf("page schema Unique = true, want false")
+	}
+	if len(page.Properties) != 0 {
+		t.Errorf("page schema Properties = %d, want 0", len(page.Properties))
+	}
+
 	// book, person, note should NOT be built-in
 	for _, name := range []string{"book", "person", "note"} {
 		if _, ok := defaultTypes[name]; ok {

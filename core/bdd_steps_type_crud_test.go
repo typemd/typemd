@@ -94,9 +94,9 @@ func (tc *typeCrudContext) iAddANumberPropertyToTheSchema(propName string) {
 	})
 }
 
-func (tc *typeCrudContext) aCustomTagTypeSchemaWithEmoji(emoji string) {
-	data := fmt.Sprintf("name: tag\nemoji: %s\nproperties:\n  - name: color\n    type: string\n  - name: icon\n    type: string\n", emoji)
-	path := filepath.Join(tc.dc.vault.TypesDir(), "tag.yaml")
+func (tc *typeCrudContext) aCustomTypeSchemaWithEmoji(typeName, emoji string) {
+	data := fmt.Sprintf("name: %s\nemoji: %s\nproperties: []\n", typeName, emoji)
+	path := filepath.Join(tc.dc.vault.TypesDir(), typeName+".yaml")
 	os.WriteFile(path, []byte(data), 0644)
 }
 
@@ -316,7 +316,7 @@ func initTypeCrudSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the schema has a name template "([^"]*)"$`, tc.theSchemaHasANameTemplate)
 	ctx.Step(`^a type schema file "([^"]*)" exists on disk$`, tc.aTypeSchemaFileExistsOnDisk)
 	ctx.Step(`^I add a "([^"]*)" number property to the schema$`, tc.iAddANumberPropertyToTheSchema)
-	ctx.Step(`^a custom tag type schema with emoji "([^"]*)"$`, tc.aCustomTagTypeSchemaWithEmoji)
+	ctx.Step(`^a custom "([^"]*)" type schema with emoji "([^"]*)"$`, tc.aCustomTypeSchemaWithEmoji)
 	ctx.Step(`^a custom tag type schema without unique field$`, tc.aCustomTagTypeSchemaWithoutUniqueField)
 
 	// When

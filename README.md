@@ -216,7 +216,7 @@ The TUI automatically watches the `objects/` directory and refreshes when files 
 
 ## Type Schema
 
-Define your types in `.typemd/types/` (only `tag` is built-in — all others are user-defined):
+Define your types in `.typemd/types/` (`tag` and `page` are built-in — all others are user-defined):
 
 ```yaml
 # .typemd/types/book.yaml

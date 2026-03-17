@@ -76,7 +76,7 @@ An optional configuration file at `.typemd/config.yaml` provides vault-level set
 ```yaml
 # .typemd/config.yaml
 cli:
-  default_type: idea
+  default_type: page
 ```
 
 Currently supported settings:

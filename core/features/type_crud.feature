@@ -116,7 +116,7 @@ Feature: Type CRUD
 
   Scenario: Custom type emoji overrides built-in default
     Given a vault is ready
-    And a custom tag type schema with emoji "🔖"
+    And a custom "tag" type schema with emoji "🔖"
     When I load type "tag"
     Then no error should occur
     And the loaded schema should have emoji "🔖"

@@ -20,7 +20,7 @@ The TypeSchema struct SHALL support an optional `emoji` field that stores a stri
 
 ### Requirement: Custom type emoji overrides built-in default
 
-When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type. Since only `tag` remains as a built-in type, this override behavior only applies to the `tag` type.
+When a custom type schema defines its own emoji, it SHALL override the built-in default emoji for that type. This applies to any built-in type (`tag`, `page`) when a custom schema is defined.
 
 #### Scenario: Custom tag type with different emoji
 
@@ -162,28 +162,6 @@ When a custom type schema overrides a built-in type (e.g., `tag.yaml`), the `uni
 
 - **WHEN** `.typemd/types/tag.yaml` exists without a `unique` field
 - **THEN** the loaded tag type SHALL have Unique false (overriding built-in default)
-
-### Requirement: Only tag is a built-in type
-
-The `defaultTypes` map SHALL contain only the `tag` type. All other types MUST be defined via `.typemd/types/*.yaml` files. The built-in `tag` type SHALL have `Unique: true` in its default schema.
-
-#### Scenario: Loading an undefined type returns error
-
-- **WHEN** no `.typemd/types/book.yaml` exists and no built-in `book` type is defined
-- **AND** `LoadType("book")` is called
-- **THEN** it SHALL return an error containing "unknown type: book"
-
-#### Scenario: Tag type loads without custom schema
-
-- **WHEN** no `.typemd/types/tag.yaml` exists
-- **AND** `LoadType("tag")` is called
-- **THEN** it SHALL return the built-in tag type schema with emoji "🏷️" and Unique true
-
-#### Scenario: User-defined type loads from YAML
-
-- **WHEN** `.typemd/types/book.yaml` exists with a valid schema
-- **AND** `LoadType("book")` is called
-- **THEN** it SHALL return the schema from the YAML file
 
 ### Requirement: Type schema supports use keyword for shared properties
 
