@@ -170,7 +170,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				return m, nil
 			}
 			schema, _ := m.vault.LoadType(msg.TypeName)
-			m.tmplEditor = newTemplateEditor(msg.TypeName, msg.TemplateName, tmpl, schema, m.vault)
+			te := newTemplateEditor(msg.TypeName, msg.TemplateName, tmpl, schema, m.vault)
+			// Size viewports so content is visible
+			contentH := m.height - 3 - titlePanelHeight
+			if contentH < 0 {
+				contentH = 0
+			}
+			editorW := m.width - m.leftWidth() - 4
+			if editorW < 10 {
+				editorW = 10
+			}
+			te.SetSize(editorW, contentH, m.defaultPropsWidth(), true)
+			m.tmplEditor = te
 			m.rightPanel = panelTemplate
 			m.focus = focusBody
 		}
@@ -237,6 +248,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.propsViewport.SetWidth(m.propsWidth)
 		m.propsViewport.SetHeight(bodyPropsH)
 		m.resizeBodyTextarea()
+
+		// Resize template editor if active (always show props for templates)
+		if m.tmplEditor != nil {
+			editorW := m.width - m.leftWidth() - 4
+			if editorW < 10 {
+				editorW = 10
+			}
+			m.tmplEditor.SetSize(editorW, bodyPropsH, m.defaultPropsWidth(), true)
+		}
 
 		m.updateDetail()
 		return m, nil

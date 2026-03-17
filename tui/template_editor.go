@@ -173,9 +173,23 @@ func (te *templateEditor) Update(msg tea.Msg) (*templateEditor, tea.Cmd) {
 }
 
 func (te *templateEditor) updateView(msg tea.KeyPressMsg) (*templateEditor, tea.Cmd) {
+	// When props panel is focused, route most keys there
+	if te.focus == tmplFocusProps {
+		switch msg.String() {
+		case "tab":
+			te.focus = tmplFocusBody
+			return te, nil
+		case "d":
+			te.mode = tmplModeDelete
+			return te, nil
+		default:
+			return te.updatePropsNav(msg)
+		}
+	}
+
+	// Body panel focused
 	switch msg.String() {
 	case "e":
-		// Enter edit body mode
 		te.mode = tmplModeEditBody
 		te.bodyEditStart = te.template.Body
 		te.bodyTextarea.SetValue(te.template.Body)
@@ -188,18 +202,11 @@ func (te *templateEditor) updateView(msg tea.KeyPressMsg) (*templateEditor, tea.
 
 	case "tab":
 		if te.propsVisible {
-			if te.focus == tmplFocusBody {
-				te.focus = tmplFocusProps
-			} else {
-				te.focus = tmplFocusBody
-			}
+			te.focus = tmplFocusProps
 		}
 		return te, nil
 
 	default:
-		if te.focus == tmplFocusProps {
-			return te.updatePropsNav(msg)
-		}
 		return te.updateBodyNav(msg)
 	}
 }
@@ -219,10 +226,12 @@ func (te *templateEditor) updatePropsNav(msg tea.KeyPressMsg) (*templateEditor, 
 	case "j", "down":
 		if te.propsCursor < len(te.propsList)-1 {
 			te.propsCursor++
+			te.propsViewport.SetContent(te.renderProps())
 		}
 	case "k", "up":
 		if te.propsCursor > 0 {
 			te.propsCursor--
+			te.propsViewport.SetContent(te.renderProps())
 		}
 	case "enter":
 		if len(te.propsList) > 0 && te.propsCursor < len(te.propsList) {
@@ -230,6 +239,7 @@ func (te *templateEditor) updatePropsNav(msg tea.KeyPressMsg) (*templateEditor, 
 			te.propEditInput.SetValue(te.propsList[te.propsCursor].Value)
 			te.propEditInput.Focus()
 			te.mode = tmplModeEditProp
+			te.propsViewport.SetContent(te.renderProps())
 			return te, te.propEditInput.Focus()
 		}
 	}
@@ -288,6 +298,7 @@ func (te *templateEditor) updateEditProp(msg tea.KeyPressMsg) (*templateEditor, 
 		// Cancel
 		te.propEditInput.Blur()
 		te.mode = tmplModeView
+		te.propsViewport.SetContent(te.renderProps())
 		return te, nil
 	}
 
