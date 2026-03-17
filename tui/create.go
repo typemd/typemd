@@ -334,11 +334,7 @@ func (m *model) executeCreate(cs *createState) tea.Cmd {
 	m.saveErr = ""
 
 	// Rebuild groups from index
-	objects, qErr := m.vault.QueryObjects("")
-	if qErr == nil {
-		m.groups = buildGroups(objects, m.vault)
-		m.searchResults = nil
-	}
+	m.rebuildGroups()
 
 	// Select the new object and move cursor
 	m.selected = obj

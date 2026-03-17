@@ -269,7 +269,7 @@ func TestRenderCreateTypeTitleContent_WithEmoji(t *testing.T) {
 	}
 	cts.emojiInput.SetValue("📝")
 
-	result := renderCreateTypeTitleContent(cts, 80)
+	result := renderCreateTypeTitleContent(cts)
 	if !strings.Contains(result, "📝") {
 		t.Error("should contain emoji")
 	}
@@ -290,7 +290,7 @@ func TestRenderCreateTypeTitleContent_EmojiFieldFocused(t *testing.T) {
 	}
 	cts.emojiInput.Focus()
 
-	result := renderCreateTypeTitleContent(cts, 80)
+	result := renderCreateTypeTitleContent(cts)
 	if !strings.Contains(result, "[") {
 		t.Error("focused emoji field should be in brackets")
 	}
@@ -305,7 +305,7 @@ func TestRenderCreateTypeTitleContent_WithError(t *testing.T) {
 		errMsg:      "type \"book\" already exists",
 	}
 
-	result := renderCreateTypeTitleContent(cts, 80)
+	result := renderCreateTypeTitleContent(cts)
 	if !strings.Contains(result, "✗") {
 		t.Error("should contain error marker")
 	}

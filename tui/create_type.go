@@ -113,11 +113,7 @@ func updateCreateType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		m.createType = nil
 
 		// Rebuild groups directly (avoid refreshData which calls selectCurrentRow)
-		objects, qErr := m.vault.QueryObjects("")
-		if qErr == nil {
-			m.groups = buildGroups(objects, m.vault)
-			m.searchResults = nil
-		}
+		m.rebuildGroups()
 
 		// Open type editor for new type and move cursor to its header
 		if ts, err := m.vault.LoadType(name); err == nil {
@@ -139,9 +135,7 @@ func updateCreateType(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	}
 
 	// Clear error on any input
-	if cts.errMsg != "" {
-		cts.errMsg = ""
-	}
+	cts.errMsg = ""
 
 	// Route to the focused field's text input
 	var cmd tea.Cmd
@@ -183,7 +177,7 @@ func (m *model) moveCursorToType(typeName string) {
 }
 
 // renderCreateTypeTitleContent renders the title panel content during type creation.
-func renderCreateTypeTitleContent(cts *createTypeState, width int) string {
+func renderCreateTypeTitleContent(cts *createTypeState) string {
 	if cts == nil {
 		return ""
 	}

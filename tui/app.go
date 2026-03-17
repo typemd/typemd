@@ -259,6 +259,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
+// rebuildGroups reloads objects and rebuilds type groups from the vault.
+func (m *model) rebuildGroups() {
+	if m.vault == nil {
+		return
+	}
+	objects, err := m.vault.QueryObjects("")
+	if err != nil {
+		return
+	}
+	m.groups = buildGroups(objects, m.vault)
+	m.searchResults = nil
+}
+
 // refreshData syncs the index from disk and reloads all objects, preserving cursor position when possible.
 func (m *model) refreshData() {
 	if m.vault == nil {
@@ -268,19 +281,13 @@ func (m *model) refreshData() {
 	// Sync filesystem to DB first
 	m.vault.SyncIndex()
 
-	objects, err := m.vault.QueryObjects("")
-	if err != nil {
-		return
-	}
+	m.rebuildGroups()
 
 	// Remember selected object ID to restore selection
 	var selectedID string
 	if m.selected != nil {
 		selectedID = m.selected.ID
 	}
-
-	m.groups = buildGroups(objects, m.vault)
-	m.searchResults = nil
 
 	// Try to restore cursor to previously selected object
 	rows := visibleRows(m.groups)
@@ -731,7 +738,7 @@ func (m model) View() tea.View {
 				titleContent = renderCreateTitleContent(m.create, titleW-bdr)
 				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
 			} else if m.createType != nil {
-				titleContent = renderCreateTypeTitleContent(m.createType, titleW-bdr)
+				titleContent = renderCreateTypeTitleContent(m.createType)
 				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
 			} else if m.selected != nil {
 				titleContent = renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
