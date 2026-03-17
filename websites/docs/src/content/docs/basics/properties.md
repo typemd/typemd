@@ -85,6 +85,7 @@ Beyond `name` and `type`, properties support optional attributes:
 | Attribute | Type | Description |
 |-----------|------|-------------|
 | `emoji` | string | Visual icon for compact display (must be unique within the type) |
+| `description` | string | Free-text documentation of the property's purpose |
 | `pin` | integer | Positive integer for prominent display at the top of the TUI body panel. Lower values appear first. Pinned properties are excluded from the Properties panel. |
 | `default` | any | Default value assigned when creating a new object |
 
@@ -154,12 +155,13 @@ When the type is loaded, each `use` entry is resolved to the full property defin
 
 ### Overriding fields
 
-When referencing a shared property via `use`, you can override two fields:
+When referencing a shared property via `use`, you can override three fields:
 
 | Field | Description |
 |-------|-------------|
 | `pin` | Override the pin position for this type |
 | `emoji` | Override the display emoji for this type |
+| `description` | Override the description for type-specific documentation |
 
 All other fields cannot be overridden — they come from the shared definition.
 

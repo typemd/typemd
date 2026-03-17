@@ -224,6 +224,32 @@ func (dc *domainContext) theLoadedPropertyShouldHavePin(propName string, expecte
 	return fmt.Errorf("loaded property %q not found", propName)
 }
 
+func (dc *domainContext) aTypeSchemaWithUseAndDescription(typeName, useName, description string) {
+	content := fmt.Sprintf(`name: %s
+properties:
+  - use: %s
+    description: %q
+`, typeName, useName, description)
+	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+}
+
+func (dc *domainContext) aSharedPropertiesFileWithDescribedProperties() {
+	content := `properties:
+  - name: due_date
+    type: date
+    emoji: 📅
+    description: "A date something is due"
+  - name: priority
+    type: select
+    description: "How important this is"
+    options:
+      - value: high
+      - value: medium
+      - value: low
+`
+	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
+}
+
 func (dc *domainContext) aTypeSchemaWithMixedUseAndNameProperties(typeName string) {
 	content := fmt.Sprintf(`name: %s
 properties:
@@ -284,6 +310,8 @@ func initSharedSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the loaded property "([^"]*)" should have type "([^"]*)"$`, dc.theLoadedPropertyShouldHaveType)
 	ctx.Step(`^the loaded property "([^"]*)" should have emoji "([^"]*)"$`, dc.theLoadedPropertyShouldHaveEmoji)
 	ctx.Step(`^the loaded property "([^"]*)" should have pin (\d+)$`, dc.theLoadedPropertyShouldHavePin)
+	ctx.Step(`^a type schema "([^"]*)" with use "([^"]*)" and description "([^"]*)"$`, dc.aTypeSchemaWithUseAndDescription)
+	ctx.Step(`^a shared properties file with described properties$`, dc.aSharedPropertiesFileWithDescribedProperties)
 	ctx.Step(`^a type schema "([^"]*)" with mixed use and name properties$`, dc.aTypeSchemaWithMixedUseAndNameProperties)
 	ctx.Step(`^the loaded schema should have emoji "([^"]*)"$`, dc.theLoadedSchemaShouldHaveEmoji)
 	ctx.Step(`^the loaded property at index (\d+) should be "([^"]*)"$`, dc.theLoadedPropertyAtIndexShouldBe)

@@ -182,7 +182,7 @@ func TestValidateSchema_UseWithTypeField(t *testing.T) {
 	if len(errs) == 0 {
 		t.Fatal("expected error for use with type field")
 	}
-	if !strings.Contains(errs[0].Error(), "only \"pin\" and \"emoji\"") {
+	if !strings.Contains(errs[0].Error(), "only \"pin\", \"emoji\", and \"description\"") {
 		t.Errorf("error = %v", errs[0])
 	}
 }
@@ -464,3 +464,76 @@ func TestValidateAllSchemas_SharedPropertiesErrors(t *testing.T) {
 		t.Fatal("expected _shared_properties errors")
 	}
 }
+
+func TestLoadType_UseDescriptionOverride(t *testing.T) {
+	v := setupSharedPropsTestVault(t)
+	if err := v.Open(); err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer v.Close()
+
+	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
+  - name: due_date
+    type: date
+    emoji: 📅
+    description: "A date something is due"
+`), 0644)
+
+	os.WriteFile(filepath.Join(v.TypesDir(), "project.yaml"), []byte(`name: project
+properties:
+  - use: due_date
+    description: "Project deadline"
+`), 0644)
+
+	schema, err := v.LoadType("project")
+	if err != nil {
+		t.Fatalf("LoadType error = %v", err)
+	}
+	dd := schema.Properties[0]
+	if dd.Description != "Project deadline" {
+		t.Errorf("description = %q, want %q", dd.Description, "Project deadline")
+	}
+}
+
+func TestLoadType_UseDescriptionPreservedWhenNoOverride(t *testing.T) {
+	v := setupSharedPropsTestVault(t)
+	if err := v.Open(); err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer v.Close()
+
+	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
+  - name: due_date
+    type: date
+    description: "A date something is due"
+`), 0644)
+
+	os.WriteFile(filepath.Join(v.TypesDir(), "project.yaml"), []byte(`name: project
+properties:
+  - use: due_date
+`), 0644)
+
+	schema, err := v.LoadType("project")
+	if err != nil {
+		t.Fatalf("LoadType error = %v", err)
+	}
+	dd := schema.Properties[0]
+	if dd.Description != "A date something is due" {
+		t.Errorf("description = %q, want %q", dd.Description, "A date something is due")
+	}
+}
+
+func TestValidateUseOverrides_DescriptionAllowed(t *testing.T) {
+	prop := Property{Use: "due_date", Description: "Project deadline"}
+	if err := validateUseOverrides(0, prop); err != nil {
+		t.Errorf("validateUseOverrides() = %v, want nil", err)
+	}
+}
+
+func TestValidateUseOverrides_AllAllowedOverrides(t *testing.T) {
+	prop := Property{Use: "due_date", Pin: 1, Emoji: "🗓️", Description: "Project deadline"}
+	if err := validateUseOverrides(0, prop); err != nil {
+		t.Errorf("validateUseOverrides() = %v, want nil", err)
+	}
+}
+

@@ -67,9 +67,9 @@ func TestTypeEditor_CursorNavigation(t *testing.T) {
 
 func TestTypeEditor_TotalItems(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
-	// 4 meta fields + 4 properties + 1 add property = 9
-	if te.totalItems() != 9 {
-		t.Errorf("totalItems = %d, want 9", te.totalItems())
+	// 6 meta fields + 4 properties + 1 add property = 11
+	if te.totalItems() != 11 {
+		t.Errorf("totalItems = %d, want 11", te.totalItems())
 	}
 }
 
@@ -77,26 +77,26 @@ func TestTypeEditor_DisplayItems(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
 	items := te.displayItems()
 
-	// Should have 9 items: 4 meta + 2 pinned + 2 unpinned + 1 add property
-	if len(items) != 9 {
-		t.Fatalf("len(displayItems) = %d, want 9", len(items))
+	// Should have 11 items: 6 meta + 2 pinned + 2 unpinned + 1 add property
+	if len(items) != 11 {
+		t.Fatalf("len(displayItems) = %d, want 11", len(items))
 	}
 
-	// First 4 are meta sentinels
-	for i := 0; i < 4; i++ {
+	// First 6 are meta sentinels
+	for i := 0; i < 6; i++ {
 		if items[i] >= 0 {
 			t.Errorf("items[%d] = %d, want negative sentinel", i, items[i])
 		}
 	}
 
-	// Items 4-5 should be pinned properties (indices 0,1 — author pin:1, genre pin:2)
-	if items[4] != 0 || items[5] != 1 {
-		t.Errorf("pinned items = [%d, %d], want [0, 1]", items[4], items[5])
+	// Items 6-7 should be pinned properties (indices 0,1 — author pin:1, genre pin:2)
+	if items[6] != 0 || items[7] != 1 {
+		t.Errorf("pinned items = [%d, %d], want [0, 1]", items[6], items[7])
 	}
 
-	// Items 6-7 should be unpinned properties (indices 2,3 — rating, isbn)
-	if items[6] != 2 || items[7] != 3 {
-		t.Errorf("unpinned items = [%d, %d], want [2, 3]", items[6], items[7])
+	// Items 8-9 should be unpinned properties (indices 2,3 — rating, isbn)
+	if items[8] != 2 || items[9] != 3 {
+		t.Errorf("unpinned items = [%d, %d], want [2, 3]", items[8], items[9])
 	}
 }
 
@@ -113,7 +113,7 @@ func TestTypeEditor_NameNotEditable(t *testing.T) {
 
 func TestTypeEditor_UniqueToggle(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
-	te.cursor = 3 // Unique field
+	te.cursor = 4 // Unique field
 
 	if te.schema.Unique {
 		t.Error("Unique should start as false")
@@ -133,11 +133,11 @@ func TestTypeEditor_UniqueToggle(t *testing.T) {
 func TestTypeEditor_PinToggle(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
 
-	// Move to "rating" (unpinned) — it's at display index 6
-	te.cursor = 6
+	// Move to "rating" (unpinned) — it's at display index 8
+	te.cursor = 8
 
 	items := te.displayItems()
-	propIdx := items[6]
+	propIdx := items[8]
 	if te.schema.Properties[propIdx].Pin != 0 {
 		t.Fatalf("rating should start unpinned")
 	}
@@ -176,7 +176,7 @@ func TestTypeEditor_EscReturnsFocusLeft(t *testing.T) {
 
 func TestTypeEditor_DeletePropertyConfirm(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
-	te.cursor = 7 // last unpinned property (isbn, index 3)
+	te.cursor = 9 // last unpinned property (isbn, index 3)
 
 	te.Update(keyMsg("d"))
 	if te.mode != teModeDeleteProp {
@@ -194,7 +194,7 @@ func TestTypeEditor_DeletePropertyConfirm(t *testing.T) {
 
 func TestTypeEditor_DeletePropertyCancel(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
-	te.cursor = 7
+	te.cursor = 9
 
 	te.Update(keyMsg("d"))
 	te.Update(keyMsg("n"))
@@ -207,8 +207,8 @@ func TestTypeEditor_DeletePropertyCancel(t *testing.T) {
 func TestTypeEditor_MoveMode(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
 
-	// Move to first unpinned property (rating, display index 6)
-	te.cursor = 6
+	// Move to first unpinned property (rating, display index 8)
+	te.cursor = 8
 
 	te.Update(keyMsg("m"))
 	if te.mode != teModeMove {

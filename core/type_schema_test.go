@@ -1258,3 +1258,148 @@ func TestCompareVersions(t *testing.T) {
 	}
 }
 
+// ── Color validation tests ──────────────────────────────────────────────────
+
+func TestValidateColor_Presets(t *testing.T) {
+	for _, preset := range ValidColorPresets() {
+		if err := validateColor(preset); err != nil {
+			t.Errorf("validateColor(%q) = %v, want nil", preset, err)
+		}
+	}
+}
+
+func TestValidateColor_HexFormats(t *testing.T) {
+	valid := []string{"#FFF", "#000", "#ff5733", "#FF5733", "#Ff5733", "#abc", "#ABC"}
+	for _, hex := range valid {
+		if err := validateColor(hex); err != nil {
+			t.Errorf("validateColor(%q) = %v, want nil", hex, err)
+		}
+	}
+}
+
+func TestValidateColor_Invalid(t *testing.T) {
+	invalid := []string{"magenta", "Red", "GREEN", "#FF57", "#FFFFFFF", "FF5733", "#GGG", "#GGGGGG", "", " "}
+	for _, c := range invalid {
+		// Empty string should not error (it's handled before calling validateColor)
+		if c == "" {
+			continue
+		}
+		if err := validateColor(c); err == nil {
+			t.Errorf("validateColor(%q) = nil, want error", c)
+		}
+	}
+}
+
+func TestValidColorPresets_ReturnsCopy(t *testing.T) {
+	a := ValidColorPresets()
+	b := ValidColorPresets()
+	if &a[0] == &b[0] {
+		t.Error("ValidColorPresets should return a new slice each time")
+	}
+}
+
+func TestValidColorPresets_Contains10Colors(t *testing.T) {
+	presets := ValidColorPresets()
+	if len(presets) != 10 {
+		t.Errorf("ValidColorPresets() returned %d presets, want 10", len(presets))
+	}
+	expected := map[string]bool{
+		"red": true, "blue": true, "green": true, "yellow": true, "purple": true,
+		"orange": true, "pink": true, "cyan": true, "gray": true, "brown": true,
+	}
+	for _, p := range presets {
+		if !expected[p] {
+			t.Errorf("unexpected preset: %q", p)
+		}
+	}
+}
+
+func TestMarshalTypeSchema_WithColor(t *testing.T) {
+	schema := &TypeSchema{
+		Name:  "item",
+		Color: "green",
+	}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		t.Fatalf("MarshalTypeSchema() error = %v", err)
+	}
+	if !strings.Contains(string(data), "color: green") {
+		t.Errorf("expected YAML to contain 'color: green', got:\n%s", string(data))
+	}
+}
+
+func TestMarshalTypeSchema_EmptyColor(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "item",
+	}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		t.Fatalf("MarshalTypeSchema() error = %v", err)
+	}
+	if strings.Contains(string(data), "color:") {
+		t.Errorf("expected YAML to omit color, got:\n%s", string(data))
+	}
+}
+
+// ── Description tests ────────────────────────────────────────────────────────
+
+func TestMarshalTypeSchema_WithDescription(t *testing.T) {
+	schema := &TypeSchema{
+		Name:        "item",
+		Description: "A general item",
+	}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		t.Fatalf("MarshalTypeSchema() error = %v", err)
+	}
+	if !strings.Contains(string(data), "description: A general item") {
+		t.Errorf("expected YAML to contain description, got:\n%s", string(data))
+	}
+}
+
+func TestMarshalTypeSchema_EmptyDescription(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "item",
+	}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		t.Fatalf("MarshalTypeSchema() error = %v", err)
+	}
+	if strings.Contains(string(data), "description:") {
+		t.Errorf("expected YAML to omit description, got:\n%s", string(data))
+	}
+}
+
+func TestMarshalTypeSchema_PropertyDescription(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "presentation",
+		Properties: []Property{
+			{Name: "speaker", Type: "string", Description: "The presenter"},
+		},
+	}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		t.Fatalf("MarshalTypeSchema() error = %v", err)
+	}
+	if !strings.Contains(string(data), "description: The presenter") {
+		t.Errorf("expected YAML to contain property description, got:\n%s", string(data))
+	}
+}
+
+func TestMarshalTypeSchema_PropertyDescriptionOmittedWhenEmpty(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "item",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+		},
+	}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		t.Fatalf("MarshalTypeSchema() error = %v", err)
+	}
+	// The word "description" should not appear at all
+	if strings.Contains(string(data), "description") {
+		t.Errorf("expected YAML to omit description, got:\n%s", string(data))
+	}
+}
+
