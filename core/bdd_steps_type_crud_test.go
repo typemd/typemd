@@ -120,6 +120,7 @@ func (tc *typeCrudContext) iDeserializeTheYAMLOutputBackToATypeSchema() error {
 		Plural     string     `yaml:"plural,omitempty"`
 		Emoji      string     `yaml:"emoji,omitempty"`
 		Unique     bool       `yaml:"unique,omitempty"`
+		Version    int        `yaml:"version,omitempty"`
 		Properties []Property `yaml:"properties"`
 	}
 	if err := yaml.Unmarshal(tc.yamlOutput, &raw); err != nil {
@@ -130,6 +131,7 @@ func (tc *typeCrudContext) iDeserializeTheYAMLOutputBackToATypeSchema() error {
 		Plural:     raw.Plural,
 		Emoji:      raw.Emoji,
 		Unique:     raw.Unique,
+		Version:    raw.Version,
 		Properties: raw.Properties,
 	}
 	// Extract NameTemplate like GetSchema does

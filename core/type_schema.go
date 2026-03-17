@@ -67,6 +67,7 @@ type TypeSchema struct {
 	Plural       string     `yaml:"plural,omitempty"`
 	Emoji        string     `yaml:"emoji,omitempty"`
 	Unique       bool       `yaml:"unique,omitempty"`
+	Version      int        `yaml:"version,omitempty"`
 	Properties   []Property `yaml:"properties"`
 	NameTemplate string     `yaml:"-"` // extracted from name property entry during load
 }
@@ -245,6 +246,9 @@ func ValidateSchema(schema *TypeSchema, sharedProps ...[]Property) []error {
 	var errs []error
 	if schema.Name == "" {
 		errs = append(errs, fmt.Errorf("schema missing required field: name"))
+	}
+	if schema.Version < 0 {
+		errs = append(errs, fmt.Errorf("schema version must be non-negative, got %d", schema.Version))
 	}
 
 	// Build shared properties map if provided
@@ -575,6 +579,7 @@ type marshalSchema struct {
 	Plural     string     `yaml:"plural,omitempty"`
 	Emoji      string     `yaml:"emoji,omitempty"`
 	Unique     bool       `yaml:"unique,omitempty"`
+	Version    int        `yaml:"version,omitempty"`
 	Properties []Property `yaml:"properties"`
 }
 
@@ -583,10 +588,11 @@ type marshalSchema struct {
 // name property entry conversion that yaml:"-" would otherwise drop.
 func MarshalTypeSchema(schema *TypeSchema) ([]byte, error) {
 	ms := marshalSchema{
-		Name:   schema.Name,
-		Plural: schema.Plural,
-		Emoji:  schema.Emoji,
-		Unique: schema.Unique,
+		Name:    schema.Name,
+		Plural:  schema.Plural,
+		Emoji:   schema.Emoji,
+		Unique:  schema.Unique,
+		Version: schema.Version,
 	}
 
 	// Re-introduce name template as a name property entry if set
