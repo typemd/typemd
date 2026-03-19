@@ -1,14 +1,16 @@
 ---
 title: tmd migrate
-description: 更新物件以符合當前的 type schema。
+description: 遷移 type schemas 和物件。
 sidebar:
   order: 8.5
 ---
 
-將指定 type 的所有物件遷移至符合當前 schema。新增缺少的屬性（帶預設值）、移除過時的屬性，並可選擇性地重命名屬性。
+遷移 type schemas 和物件。根據是否提供 type 參數，指令有兩種模式。
 
 ```bash
-tmd migrate book
+tmd migrate                          # 遷移 schemas (enum → select)
+tmd migrate --dry-run                # 預覽 schema 遷移
+tmd migrate book                     # 遷移 book 物件以符合 schema
 tmd migrate book --dry-run
 tmd migrate book --rename old_field:new_field
 ```
@@ -18,11 +20,23 @@ tmd migrate book --rename old_field:new_field
 | Flag | 說明 |
 |------|------|
 | `--dry-run` | 預覽變更，不修改檔案 |
-| `--rename old:new` | 重命名屬性（可重複使用） |
+| `--rename old:new` | 重命名屬性（可重複使用，僅適用於有 type 參數時） |
 
-## 運作方式
+## Schema 遷移（無 type 參數）
 
-對指定 type 的每個物件：
+不帶參數執行時，`tmd migrate` 會掃描所有 type schemas — 包括單檔格式（`.typemd/types/<name>.yaml`）和目錄格式（`.typemd/types/<name>/schema.yaml`）— 將舊版 `enum` 屬性類型（含 `values`）轉換為當前的 `select` 類型（含 `options`）。
+
+```bash
+tmd migrate
+#   book: converted enum → select for [status]
+# Schema migration complete: 1 type(s) updated.
+```
+
+若所有 schemas 已是最新版本，則不會進行任何變更。
+
+## 物件遷移（有 type 參數）
+
+提供 type 名稱時，`tmd migrate <type>` 會更新該 type 的所有物件以符合當前 schema。對每個物件：
 
 1. **重命名** — 若提供 `--rename`，將舊屬性的值搬移到新名稱
 2. **新增** — schema 中有但物件中缺少的屬性，以預設值新增
