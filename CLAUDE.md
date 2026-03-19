@@ -9,7 +9,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **core/** — Core library: objects, types, relations, index
 - **cmd/** — CLI commands (Cobra)
 - **tui/** — Terminal UI (Bubble Tea)
-  - **tui/widget/** — Shared UI primitives (popup, scroll) used across TUI components
+  - **tui/widget/** — Shared UI primitives (CenteredPopup, OverlayPopup via Layer/Compositor, scroll) used across TUI components
 - **mcp/** — MCP server
 - **web/** — Web UI: React + shadcn/ui (future)
 - **app/** — Desktop app via Wails + shared React frontend (future)
