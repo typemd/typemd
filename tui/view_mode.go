@@ -541,19 +541,31 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 				name = row.object.Filename
 			}
 
-			line := "  " + padRight(truncate(name, nameW), nameW)
-			for _, col := range cols {
-				val := vm.displayPropValue(row.object, col)
-				if val == "" {
-					line += "  " + dimStyle.Render(padRight("·", colW))
-				} else {
-					line += "  " + padRight(truncate(val, colW), colW)
-				}
-			}
+			namePart := "  " + padRight(truncate(name, nameW), nameW)
 
 			if isCurrent {
+				// Build plain text line (no embedded styles) for clean highlight
+				line := namePart
+				for _, col := range cols {
+					val := vm.displayPropValue(row.object, col)
+					if val == "" {
+						line += "  " + padRight("·", colW)
+					} else {
+						line += "  " + padRight(truncate(val, colW), colW)
+					}
+				}
 				b.WriteString(highlightStyle.Render(padRight(line, vm.width)) + "\n")
 			} else {
+				// Build styled line with dim empty cells
+				line := namePart
+				for _, col := range cols {
+					val := vm.displayPropValue(row.object, col)
+					if val == "" {
+						line += "  " + dimStyle.Render(padRight("·", colW))
+					} else {
+						line += "  " + padRight(truncate(val, colW), colW)
+					}
+				}
 				b.WriteString(line + "\n")
 			}
 		}
