@@ -18,12 +18,12 @@ tmd stats
 ### 輸出範例
 
 ```
-📚 books      12   2026-03-15
-👤 people      8   2026-03-14
-💡 ideas       5   2026-03-10
-🏷️ tags        3   2026-02-28
-
-Total: 28 objects
+📚 books       12   last updated 2026-03-15
+👤 people       8   last updated 2026-03-14
+💡 ideas        5   last updated 2026-03-10
+🏷️  tags         3   last updated 2026-02-28
+────────────────────────────
+  Total         28
 ```
 
 ## 指定 Type 的屬性統計
@@ -45,22 +45,30 @@ tmd stats --type book
 ### 輸出範例
 
 ```
-📚 books（12 個 object）
+📚 book (12 objects)
+────────────────────────────────────────
 
-  rating (number)
-    sum: 46.5  avg: 3.88  min: 2  max: 5
+rating (number)
+  filled: 12/12
+  sum: 46.5  avg: 3.88  min: 2  max: 5
 
-  status (select)
-    reading: 4  done: 6  to-read: 2
+status (select)
+  filled: 12/12
+  reading         ████ 4
+  done            ██████ 6
+  to-read         ██ 2
 
-  favorite (checkbox)
-    true: 3  false: 9
+favorite (checkbox)
+  filled: 12/12
+  true: 3  false: 9
 
-  published (date)
-    earliest: 2008-08-01  latest: 2024-11-15
+published (date)
+  filled: 12/12
+  earliest: 2008-08-01  latest: 2024-11-15
 
-  author (relation)
-    8 links
+author (relation)
+  filled: 8/12
+  links: 8
 ```
 
 ## JSON 輸出

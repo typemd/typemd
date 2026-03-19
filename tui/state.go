@@ -5,6 +5,7 @@ import (
 	"path/filepath"
 	"strings"
 
+	"github.com/typemd/typemd/core"
 	"gopkg.in/yaml.v3"
 )
 
@@ -18,6 +19,13 @@ type SessionState struct {
 	LeftPanelWidth   int      `yaml:"left_panel_width,omitempty"`
 	PropsPanelWidth  int      `yaml:"props_panel_width,omitempty"`
 	PropsVisible     bool     `yaml:"props_visible"`
+
+	// View mode state (present only when TUI was in view mode on exit)
+	ViewTypeName      string   `yaml:"view_type_name,omitempty"`
+	ViewName          string   `yaml:"view_name,omitempty"`
+	ViewCursor        int      `yaml:"view_cursor,omitempty"`
+	ViewScroll        int      `yaml:"view_scroll,omitempty"`
+	ViewExpandedGroups []string `yaml:"view_expanded_groups,omitempty"`
 }
 
 const stateFileName = "tui-state.yaml"
@@ -54,8 +62,8 @@ func saveSessionState(vaultRoot string, state SessionState) {
 // captureState extracts the current TUI state into a SessionState for persistence.
 func (m model) captureState() SessionState {
 	state := SessionState{
-		ScrollOffset:  m.scrollOffset,
-		Focus:         focusPanelToString(m.focus),
+		ScrollOffset:    m.scrollOffset,
+		Focus:           focusPanelToString(m.focus),
 		LeftPanelWidth:  m.leftW,
 		PropsPanelWidth: m.propsWidth,
 		PropsVisible:    m.propsVisible,
@@ -71,6 +79,15 @@ func (m model) captureState() SessionState {
 		if g.Expanded {
 			state.ExpandedGroups = append(state.ExpandedGroups, g.Name)
 		}
+	}
+
+	// Capture view mode state when active
+	if m.rightPanel == panelView && m.viewMode != nil {
+		state.ViewTypeName = m.viewMode.typeName
+		state.ViewName = m.viewMode.viewName
+		state.ViewCursor = m.viewMode.cursor
+		state.ViewScroll = m.viewMode.scroll
+		state.ViewExpandedGroups = m.viewMode.expandedGroupLabels()
 	}
 
 	return state
@@ -145,6 +162,44 @@ func applySessionState(state SessionState, groups []typeGroup) (cursor int, sele
 	}
 
 	return 0, ""
+}
+
+// restoreViewMode attempts to restore view mode from saved session state.
+// Returns a non-nil *viewMode if restoration succeeds, nil otherwise (fallback to sidebar).
+func restoreViewMode(state SessionState, v *core.Vault) *viewMode {
+	if state.ViewTypeName == "" || state.ViewName == "" {
+		return nil
+	}
+
+	// Check type exists before creating view mode
+	if _, err := v.LoadType(state.ViewTypeName); err != nil {
+		return nil
+	}
+
+	// Reuse newViewMode which handles view loading, querying, and group building
+	vm := newViewMode(state.ViewTypeName, state.ViewName, v)
+
+	// Apply expanded groups from state
+	if len(state.ViewExpandedGroups) > 0 {
+		expandedSet := make(map[string]bool, len(state.ViewExpandedGroups))
+		for _, label := range state.ViewExpandedGroups {
+			expandedSet[label] = true
+		}
+		for i := range vm.groups {
+			if vm.groups[i].Label != "" {
+				vm.groups[i].Expanded = expandedSet[vm.groups[i].Label]
+			}
+		}
+	}
+
+	// Clamp cursor and scroll to valid range
+	totalRows := len(vm.visibleRows())
+	if totalRows > 0 {
+		vm.cursor = min(state.ViewCursor, totalRows-1)
+		vm.scroll = min(state.ViewScroll, totalRows-1)
+	}
+
+	return vm
 }
 
 // focusPanelToString converts a focusPanel value to its string representation.

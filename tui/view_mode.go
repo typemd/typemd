@@ -172,6 +172,17 @@ func (vm *viewMode) CanQuit() bool {
 	return vm.detailObject == nil
 }
 
+// expandedGroupLabels returns the labels of currently expanded groups.
+func (vm *viewMode) expandedGroupLabels() []string {
+	var labels []string
+	for _, g := range vm.groups {
+		if g.Expanded && g.Label != "" {
+			labels = append(labels, g.Label)
+		}
+	}
+	return labels
+}
+
 // HasEditor returns true if the view editor is open.
 func (vm *viewMode) HasEditor() bool {
 	return vm.editor != nil

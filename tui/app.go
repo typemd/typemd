@@ -600,7 +600,13 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 	// Determine initial right panel mode and type editor
 	var initialRightPanel rightPanelMode
 	var initialTypeEditor *typeEditor
-	if selected != nil {
+	var initialViewMode *viewMode
+
+	// Try to restore view mode first (takes precedence over sidebar selection)
+	if vm := restoreViewMode(savedState, v); vm != nil {
+		initialRightPanel = panelView
+		initialViewMode = vm
+	} else if selected != nil {
 		initialRightPanel = panelObject
 	} else if selectedID == "" && savedState.SelectedTypeName != "" {
 		// Cursor on a type header — open type editor
@@ -610,11 +616,17 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		}
 	}
 
+	initialFocus := focusLeft
+	if initialViewMode != nil {
+		initialFocus = focusBody
+	}
+
 	m := model{
 		vault:         v,
-		focus:         focusLeft, // always start with focus on sidebar
+		focus:         initialFocus,
 		rightPanel:    initialRightPanel,
 		typeEditor:    initialTypeEditor,
+		viewMode:      initialViewMode,
 		groups:        groups,
 		cursor:        initialCursor,
 		scrollOffset:  savedState.ScrollOffset,
