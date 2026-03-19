@@ -130,6 +130,7 @@ graph LR
 | `domain_event.go` | Domain event types + EventDispatcher |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
 | `type_schema.go` | TypeSchema entity + validation + YAML serialization + version handling (DefaultSchemaVersion, CompareVersions) + color validation (ValidColorPresets, validateColor) + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
+| `stats.go` | VaultStats/TypeSummary/TypeStats/PropertyStats structs + QueryService.VaultStats()/TypeStats() methods + TypeSummary.DisplayName() |
 | `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
 | `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
 | `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |

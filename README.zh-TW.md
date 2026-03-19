@@ -126,6 +126,11 @@ tmd --reindex
 # 驗證 schema、Object 和 Relation
 tmd type validate
 
+# Vault 統計摘要
+tmd stats                # 整體統計摘要
+tmd stats --type book    # 指定 Type 的屬性統計
+tmd stats --json         # JSON 輸出
+
 # 管理 vault 設定
 tmd config set cli.default_type idea
 tmd config get cli.default_type

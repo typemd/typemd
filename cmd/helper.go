@@ -40,18 +40,23 @@ func openVault(path string, reindex bool) (*core.Vault, error) {
 	return vault, nil
 }
 
+// printJSON marshals any value as indented JSON and prints it.
+func printJSON(v any) error {
+	data, err := json.MarshalIndent(v, "", "  ")
+	if err != nil {
+		return fmt.Errorf("marshal JSON: %w", err)
+	}
+	fmt.Println(string(data))
+	return nil
+}
+
 // printObjects prints objects as JSON or one DisplayID per line.
 func printObjects(objects []*core.Object, asJSON bool) error {
 	if asJSON {
-		data, err := json.MarshalIndent(objects, "", "  ")
-		if err != nil {
-			return fmt.Errorf("marshal JSON: %w", err)
-		}
-		fmt.Println(string(data))
-	} else {
-		for _, obj := range objects {
-			fmt.Printf("%s/%s\n", obj.Type, obj.GetName())
-		}
+		return printJSON(objects)
+	}
+	for _, obj := range objects {
+		fmt.Printf("%s/%s\n", obj.Type, obj.GetName())
 	}
 	return nil
 }
