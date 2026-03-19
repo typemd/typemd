@@ -1,61 +1,164 @@
 #!/usr/bin/env bash
-# Find the nearest open Release issue and its open sub-issues.
-# If no Release issue exists, outputs all open issues.
+# Find open Release issues (issueType: Release).
 #
-# Usage: bash find-release-issues.sh [owner/repo]
-# Output: JSON object with { release: {...} | null, issues: [...] }
+# Two modes:
+#   No version  → list all open Release issues (number + title)
+#   With version → expand that release's open sub-issues (with body)
+#
+# Usage: find-release-issues [version] [owner/repo]
+#   find-release-issues              # list all Release issues
+#   find-release-issues 0.5.0        # expand v0.5.0 sub-issues
+#   find-release-issues v0.5.0       # also works with 'v' prefix
+#
+# Output (no version):
+#   { "releases": [{ "number": 218, "title": "v0.5.0 — ..." }, ...] }
+#
+# Output (with version):
+#   { "release": { "number": 218, "title": "..." },
+#     "issues": [{ "number": 74, "title": "...", "labels": [...], "body": "..." }, ...] }
 
 set -euo pipefail
 
-REPO="${1:-typemd/typemd}"
+RELEASE_TYPE="Release"
+VERSION=""
+REPO="typemd/typemd"
 
-# Fetch all open issues with sub-issues in one query
-ALL_ISSUES=$(gh api graphql -f query='query($repo: String!, $owner: String!) {
-  repository(owner: $owner, name: $repo) {
-    issues(first: 50, states: OPEN, orderBy: {field: CREATED_AT, direction: ASC}) {
-      nodes {
-        number
-        title
-        labels(first: 5) { nodes { name } }
-        subIssues(first: 30) {
-          nodes {
-            number
-            title
-            state
-            labels(first: 5) { nodes { name } }
-          }
-        }
-      }
-    }
-  }
-}' -f owner="${REPO%%/*}" -f repo="${REPO##*/}")
+# Parse arguments: version (optional), repo (optional)
+for arg in "$@"; do
+  if [[ "$arg" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    VERSION="${arg#v}"  # strip leading 'v' if present
+  elif [[ "$arg" == */* ]]; then
+    REPO="$arg"
+  fi
+done
 
-# Try to find a Release issue (title matches "vX.Y.Z —")
-RELEASE=$(echo "$ALL_ISSUES" | jq '
-  .data.repository.issues.nodes
-  | map(select(.title | test("^v[0-9]+\\.[0-9]+\\.[0-9]+ —")))
-  | sort_by(.number)
-  | first // null
-')
+OWNER="${REPO%%/*}"
+REPONAME="${REPO##*/}"
 
-if [ "$RELEASE" != "null" ]; then
-  # Extract open sub-issues from the Release issue
-  echo "$RELEASE" | jq '{
-    release: { number: .number, title: .title },
-    issues: [.subIssues.nodes[] | select(.state == "OPEN") | {
-      number: .number,
-      title: .title,
-      labels: [.labels.nodes[].name]
-    }]
-  }'
+# Find candidates matching release title pattern via REST search
+if [ -n "$VERSION" ]; then
+  if ! CANDIDATES=$(gh issue list \
+    --repo "$REPO" \
+    --search "v${VERSION} in:title" \
+    --state open \
+    --json number,title \
+    --jq "[.[] | select(.title | test(\"^v${VERSION} —\"))]"); then
+    echo "Error: failed to search issues in $REPO" >&2
+    exit 1
+  fi
 else
-  # No Release issue — return all open issues
-  echo "$ALL_ISSUES" | jq '{
-    release: null,
-    issues: [.data.repository.issues.nodes[] | {
-      number: .number,
-      title: .title,
-      labels: [.labels.nodes[].name]
-    }]
-  }'
+  if ! CANDIDATES=$(gh issue list \
+    --repo "$REPO" \
+    --state open \
+    --limit 200 \
+    --json number,title \
+    --jq '[.[] | select(.title | test("^v[0-9]+\\.[0-9]+\\.[0-9]+ —"))] | sort_by(.number)'); then
+    echo "Error: failed to search issues in $REPO" >&2
+    exit 1
+  fi
 fi
+
+NUMBERS=$(echo "$CANDIDATES" | jq -r '.[].number')
+
+if [ -z "$NUMBERS" ]; then
+  if [ -n "$VERSION" ]; then
+    echo '{"release": null, "issues": []}' | jq .
+  else
+    echo '{"releases": []}' | jq .
+  fi
+  exit 0
+fi
+
+# Build batch GraphQL query with field aliases for all candidate issues
+build_query() {
+  local include_sub_issues="$1"
+  shift
+  local numbers=("$@")
+
+  local fields=""
+  for num in "${numbers[@]}"; do
+    fields+="    i${num}: issue(number: ${num}) {"
+    fields+=$'\n'"      number"
+    fields+=$'\n'"      title"
+    fields+=$'\n'"      issueType { name }"
+    if [ "$include_sub_issues" = true ]; then
+      fields+=$'\n'"      subIssues(first: 50) {"
+      fields+=$'\n'"        nodes {"
+      fields+=$'\n'"          number"
+      fields+=$'\n'"          title"
+      fields+=$'\n'"          state"
+      fields+=$'\n'"          body"
+      fields+=$'\n'"          labels(first: 5) { nodes { name } }"
+      fields+=$'\n'"        }"
+      fields+=$'\n'"      }"
+    fi
+    fields+=$'\n'"    }"$'\n'
+  done
+
+  cat <<EOF
+query(\$repo: String!, \$owner: String!) {
+  repository(owner: \$owner, name: \$repo) {
+${fields}  }
+}
+EOF
+}
+
+# Convert space-separated numbers to array
+NUM_ARRAY=()
+for n in $NUMBERS; do
+  NUM_ARRAY+=("$n")
+done
+
+# --- Mode 1: List all Release issues (no version specified) ---
+if [ -z "$VERSION" ]; then
+  QUERY=$(build_query false "${NUM_ARRAY[@]}")
+
+  if ! RESULT=$(gh api graphql \
+    -f query="$QUERY" \
+    -f owner="$OWNER" \
+    -f repo="$REPONAME"); then
+    echo "Error: GraphQL query failed for $REPO" >&2
+    exit 1
+  fi
+
+  echo "$RESULT" | jq --arg type "$RELEASE_TYPE" '
+    [.data.repository | to_entries[] | .value |
+     select(.issueType.name == $type) |
+     { number: .number, title: .title }
+    ] | { releases: . }'
+  exit 0
+fi
+
+# --- Mode 2: Expand specific version's sub-issues (version specified) ---
+QUERY=$(build_query true "${NUM_ARRAY[@]}")
+
+if ! RESULT=$(gh api graphql \
+  -f query="$QUERY" \
+  -f owner="$OWNER" \
+  -f repo="$REPONAME"); then
+  echo "Error: GraphQL query failed for $REPO" >&2
+  exit 1
+fi
+
+MATCH=$(echo "$RESULT" | jq --arg type "$RELEASE_TYPE" '
+  [.data.repository | to_entries[] | .value |
+   select(.issueType.name == $type)
+  ] | first // empty')
+
+if [ -z "$MATCH" ] || [ "$MATCH" = "null" ]; then
+  echo '{"release": null, "issues": []}' | jq .
+  exit 0
+fi
+
+echo "$MATCH" | jq '{
+  release: {
+    number: .number,
+    title: .title
+  },
+  issues: [.subIssues.nodes[] | select(.state == "OPEN") | {
+    number: .number,
+    title: .title,
+    labels: [.labels.nodes[].name],
+    body: (.body[:300])
+  }]
+}'
