@@ -40,7 +40,7 @@ func TestViewConfig_YAML_RoundTrip(t *testing.T) {
 		Sort: []SortRule{
 			{Property: "rating", Direction: "desc"},
 		},
-		GroupBy: "genre",
+		GroupBy: []GroupRule{{Property: "genre"}},
 	}
 
 	data, err := yaml.Marshal(&original)
@@ -71,8 +71,8 @@ func TestViewConfig_YAML_RoundTrip(t *testing.T) {
 	if restored.Sort[0].Direction != "desc" {
 		t.Errorf("Sort[0].Direction = %q, want %q", restored.Sort[0].Direction, "desc")
 	}
-	if restored.GroupBy != "genre" {
-		t.Errorf("GroupBy = %q, want %q", restored.GroupBy, "genre")
+	if len(restored.GroupBy) != 1 || restored.GroupBy[0].Property != "genre" {
+		t.Errorf("GroupBy = %v, want [{Property: genre}]", restored.GroupBy)
 	}
 }
 

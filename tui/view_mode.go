@@ -37,6 +37,9 @@ type viewMode struct {
 	// Preview: the object under cursor for side panel preview
 	previewObject *core.Object
 
+	// View editor: shown as right split panel (mutually exclusive with preview)
+	editor *viewEditor
+
 	width  int
 	height int
 }
@@ -69,8 +72,11 @@ func (vm *viewMode) load() {
 	}
 
 	vm.schema, _ = vm.vault.LoadType(vm.typeName)
+	vm.queryAndGroup()
+}
 
-	// Query objects using vault facade, combining type filter with view filter rules
+// queryAndGroup re-queries objects using the current view config and rebuilds groups.
+func (vm *viewMode) queryAndGroup() {
 	filter := append(core.TypeFilter(vm.typeName), vm.view.Filter...)
 	objects, err := vm.vault.QueryObjects(filter, vm.view.Sort...)
 	if err != nil {
@@ -78,14 +84,13 @@ func (vm *viewMode) load() {
 	} else {
 		vm.objects = objects
 	}
-
-	// Build groups
 	vm.buildGroups()
 }
 
-// buildGroups organizes objects by group_by property or as a flat list.
+// buildGroups organizes objects by group_by rules or as a flat list.
+// Supports multi-level grouping with compound labels joined by " · ".
 func (vm *viewMode) buildGroups() {
-	if vm.view.GroupBy == "" {
+	if len(vm.view.GroupBy) == 0 {
 		// Flat list — single unnamed group
 		vm.groups = []viewGroup{{
 			Label:    "",
@@ -95,21 +100,15 @@ func (vm *viewMode) buildGroups() {
 		return
 	}
 
-	// Group by property value
+	// Build compound group key for each object
 	groupMap := make(map[string][]*core.Object)
 	var groupOrder []string
 	for _, obj := range vm.objects {
-		val := ""
-		if v, ok := obj.Properties[vm.view.GroupBy]; ok && v != nil {
-			val = fmt.Sprintf("%v", v)
+		key := vm.compoundGroupKey(obj)
+		if _, exists := groupMap[key]; !exists {
+			groupOrder = append(groupOrder, key)
 		}
-		if val == "" {
-			val = "(none)"
-		}
-		if _, exists := groupMap[val]; !exists {
-			groupOrder = append(groupOrder, val)
-		}
-		groupMap[val] = append(groupMap[val], obj)
+		groupMap[key] = append(groupMap[key], obj)
 	}
 
 	vm.groups = make([]viewGroup, 0, len(groupOrder))
@@ -122,11 +121,25 @@ func (vm *viewMode) buildGroups() {
 	}
 }
 
+// compoundGroupKey builds a compound group label from all GroupBy rules.
+// Values are joined with " · ". Missing values become "(none)".
+func (vm *viewMode) compoundGroupKey(obj *core.Object) string {
+	parts := make([]string, len(vm.view.GroupBy))
+	for i, rule := range vm.view.GroupBy {
+		val := vm.displayPropValue(obj, rule.Property)
+		if val == "" {
+			val = "(none)"
+		}
+		parts[i] = val
+	}
+	return strings.Join(parts, " · ")
+}
+
 // visibleRows returns the flattened list of displayable rows.
 func (vm *viewMode) visibleRows() []viewRow {
 	var rows []viewRow
 	for gi, g := range vm.groups {
-		if vm.view.GroupBy != "" {
+		if len(vm.view.GroupBy) > 0 {
 			rows = append(rows, viewRow{isHeader: true, groupIdx: gi, label: g.Label})
 		}
 		if g.Expanded {
@@ -153,6 +166,9 @@ func (vm *viewMode) SetSize(width, height int) {
 
 // CanQuit returns true if the view mode can safely exit.
 func (vm *viewMode) CanQuit() bool {
+	if vm.editor != nil {
+		return vm.editor.CanQuit()
+	}
 	return vm.detailObject == nil
 }
 
@@ -167,8 +183,60 @@ func (vm *viewMode) expandedGroupLabels() []string {
 	return labels
 }
 
+// HasEditor returns true if the view editor is open.
+func (vm *viewMode) HasEditor() bool {
+	return vm.editor != nil
+}
+
+// EditorView renders the editor panel content.
+func (vm *viewMode) EditorView() string {
+	if vm.editor == nil {
+		return ""
+	}
+	return vm.editor.View()
+}
+
+// SetEditorSize sets the editor panel dimensions.
+func (vm *viewMode) SetEditorSize(width, height int) {
+	if vm.editor != nil {
+		vm.editor.SetSize(width, height)
+	}
+}
+
+// EditorHelpBar returns the editor's help bar text.
+func (vm *viewMode) EditorHelpBar() string {
+	if vm.editor == nil {
+		return ""
+	}
+	return vm.editor.HelpBar()
+}
+
 // Update handles messages for the view mode.
 func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
+	// Handle editor messages
+	switch msg.(type) {
+	case viewEditorChangedMsg:
+		// Editor changed the view config — reload objects
+		vm.reloadObjects()
+		return vm, nil
+	case viewEditorDeletedMsg:
+		// Handled by parent (app.go)
+		return vm, nil
+	}
+
+	// Delegate to editor if open
+	if vm.editor != nil {
+		keyMsg, ok := msg.(tea.KeyPressMsg)
+		if ok && keyMsg.String() == "esc" && vm.editor.CanQuit() {
+			// Close editor
+			vm.editor = nil
+			return vm, nil
+		}
+		var cmd tea.Cmd
+		vm.editor, cmd = vm.editor.Update(msg)
+		return vm, cmd
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
@@ -198,15 +266,30 @@ func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
 				}
 			}
 		case "p":
-			// Toggle preview panel
+			// Toggle preview panel (close editor if open)
 			if vm.previewObject != nil {
 				vm.previewObject = nil
 			} else {
+				vm.editor = nil
 				vm.updatePreview()
 			}
+		case "e":
+			// Open view editor (close preview)
+			vm.previewObject = nil
+			vm.editor = newViewEditor(vm.typeName, vm.viewName, vm.view, vm.schema, vm.vault)
 		}
 	}
 	return vm, nil
+}
+
+// reloadObjects re-queries objects using the current view config.
+func (vm *viewMode) reloadObjects() {
+	vm.queryAndGroup()
+	// Reset cursor if it's out of bounds
+	rows := vm.visibleRows()
+	if vm.cursor >= len(rows) {
+		vm.cursor = max(0, len(rows)-1)
+	}
 }
 
 // updatePreview sets the preview to the object under the cursor.
@@ -448,11 +531,14 @@ func (vm *viewMode) HasPreview() bool {
 
 // HelpBar returns the context-sensitive help text.
 func (vm *viewMode) HelpBar() string {
+	if vm.editor != nil {
+		return vm.editor.HelpBar()
+	}
 	if vm.detailObject != nil {
 		return "esc: back to list"
 	}
 	if vm.previewObject != nil {
-		return "↑/↓: navigate  enter: open  p: close preview  esc: exit view"
+		return "↑/↓: navigate  enter: open  p: close preview  e: edit view  esc: exit view"
 	}
-	return "↑/↓: navigate  enter: open  p: preview  esc: exit view"
+	return "↑/↓: navigate  enter: open  p: preview  e: edit view  esc: exit view"
 }

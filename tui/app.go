@@ -160,6 +160,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case viewEditorDeletedMsg:
+		// View was deleted by the editor; exit view mode
+		if m.vault != nil {
+			_ = m.vault.DeleteView(msg.TypeName, msg.ViewName)
+		}
+		m.viewMode = nil
+		m.rightPanel = panelTypeEditor
+		m.focus = focusBody
+		if m.typeEditor != nil {
+			m.typeEditor.refreshViews()
+		}
+		return m, nil
+
 	case openViewMsg:
 		// Transition to full-width view mode
 		if m.vault != nil {
@@ -261,8 +274,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, tea.Quit
 			}
-			// Esc navigates back: detail → list → sidebar
+			// Esc navigates back: editor → detail → list → sidebar
 			if msg.String() == "esc" {
+				if m.viewMode.HasEditor() {
+					// Let viewMode.Update handle closing the editor
+					vm, cmd := m.viewMode.Update(msg)
+					m.viewMode = vm
+					return m, cmd
+				}
 				if m.viewMode.detailObject != nil {
 					// Return from object detail to view list
 					m.viewMode.detailObject = nil

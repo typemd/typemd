@@ -793,7 +793,7 @@ func TestRestoreViewMode_StaleExpandedGroups(t *testing.T) {
 	}
 
 	// Save a view with group_by
-	vc := &core.ViewConfig{Name: "by-genre", GroupBy: "genre"}
+	vc := &core.ViewConfig{Name: "by-genre", GroupBy: []core.GroupRule{{Property: "genre"}}}
 	if err := v.SaveView("book", vc); err != nil {
 		t.Fatalf("SaveView() error = %v", err)
 	}
