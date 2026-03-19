@@ -96,6 +96,22 @@ func (v *Vault) SearchObjects(keyword string) ([]*Object, error) {
 	return v.Queries.Search(keyword)
 }
 
+// VaultStats returns aggregate statistics for all types. Delegates to QueryService.
+func (v *Vault) VaultStats() (*VaultStats, error) {
+	if v.Queries == nil {
+		return nil, fmt.Errorf("vault not opened")
+	}
+	return v.Queries.VaultStats()
+}
+
+// TypeStats returns per-property statistics for a type. Delegates to QueryService.
+func (v *Vault) TypeStats(typeName string) (*TypeStats, error) {
+	if v.Queries == nil {
+		return nil, fmt.Errorf("vault not opened")
+	}
+	return v.Queries.TypeStats(typeName)
+}
+
 // RebuildIndex rebuilds the FTS5 index.
 func (v *Vault) RebuildIndex() error {
 	if v.index == nil {
