@@ -32,9 +32,11 @@ The user must provide a version number (e.g. `v0.2.0`). If not provided, ask bef
 PREV_TAG=$(git tag --sort=-version:refname | head -2 | tail -1)
 
 # Closed issues in the Release issue (find by title matching version)
+# Note: GitHub GraphQL filterBy does NOT support issueType filtering.
+# Use --jq to filter Release issues by title pattern instead.
 gh api graphql -f query='query {
   repository(owner:"typemd", name:"typemd") {
-    issues(first: 10, states: [OPEN, CLOSED], filterBy: {issueType: "Release"}, orderBy: {field: CREATED_AT, direction: DESC}) {
+    issues(first: 50, states: [OPEN, CLOSED], orderBy: {field: CREATED_AT, direction: DESC}) {
       nodes {
         number title state
         subIssues(first: 30) {
@@ -43,7 +45,7 @@ gh api graphql -f query='query {
       }
     }
   }
-}'
+}' --jq '.data.repository.issues.nodes | map(select(.title | test("^v[0-9]+\\.[0-9]+\\.[0-9]+ —")))'
 # Filter for the Release issue matching v<VERSION> and extract its closed sub-issues
 
 # Commits since last tag — exclude chore, skill, and docs-only commits

@@ -84,18 +84,18 @@ Suggest labels based on context. Ask for confirmation if ambiguous.
 Fetch open Release issues:
 
 ```bash
-gh api graphql -f query='query {
-  repository(owner:"typemd", name:"typemd") {
-    issues(first: 10, states: OPEN, filterBy: {issueType: "Release"}, orderBy: {field: CREATED_AT, direction: ASC}) {
-      nodes { number title }
-    }
-  }
-}'
+# Note: GitHub GraphQL filterBy does NOT support issueType filtering.
+# Fetch issues and filter by title pattern or issueType field in results.
+gh issue list --state open --json number,title --limit 50 --jq '.[] | select(.title | test("^v[0-9]+\\.[0-9]+\\.[0-9]+ —"))'
 ```
 
 Present the Release issues as options using AskUserQuestion. Always include a "None" option for issues that don't belong to any release.
 
-**Note:** The issue will be linked as a sub-issue of the selected Release issue in Step 8. However, if the issue already has a parent (e.g. an Epic), GitHub only allows one parent — in that case, reference it in the Release issue body instead.
+**Note:** The issue will be linked as a sub-issue of the selected Release issue in Step 8. GitHub sub-issues only allow **one parent per issue**:
+
+- If the issue has **no parent** → add as sub-issue of the Release directly.
+- If the issue has a parent that is **CLOSED** (e.g. a completed epic or block issue) → suggest removing the stale parent first, then add as sub-issue of the Release.
+- If the issue has a parent that is **OPEN** (e.g. an active Epic) → cannot add as sub-issue of the Release. Reference it in the Release issue body instead.
 
 ### Step 6: Relationships (optional)
 
@@ -188,23 +188,17 @@ If the issue already has a parent (e.g. an Epic), skip the sub-issue link and in
 ```bash
 # Get the newly created issue's node ID
 ISSUE_ID=$(gh issue view <number> --json id --jq '.id')
-BLOCKING_ID=$(gh issue view <blocking_number> --json id --jq '.id')
+BLOCKER_ID=$(gh issue view <blocking_number> --json id --jq '.id')
 
-cat > /tmp/add_blocked.json << 'EOF'
-{
-  "query": "mutation($issueId: ID!, $blockingId: ID!) { addBlockedBy(input: { issueId: $issueId, blockingIssueId: $blockingId }) { clientMutationId } }",
-  "variables": {
-    "issueId": "<ISSUE_ID>",
-    "blockingId": "<BLOCKING_ID>"
-  }
-}
-EOF
-
-gh api graphql --input /tmp/add_blocked.json
-rm -f /tmp/add_blocked.json
+# addBlockedBy: issueId = the blocked issue, blockingIssueId = the blocker
+gh api graphql -f query="mutation { addBlockedBy(input: { issueId: \"$ISSUE_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }"
 ```
 
-Repeat for each blocking issue. The return field is `clientMutationId` (NOT `blockedIssue`).
+Repeat for each blocking issue. To remove a blocking relationship:
+
+```bash
+gh api graphql -f query="mutation { removeBlockedBy(input: { issueId: \"$ISSUE_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }"
+```
 
 ### Body Templates
 

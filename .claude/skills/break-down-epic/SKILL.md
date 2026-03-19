@@ -101,21 +101,10 @@ Create sub-issues **sequentially** (not in parallel) to ensure consistent orderi
 If sub-issues have dependencies on each other, ask the user whether to set blocking relationships between them.
 
 ```bash
-ISSUE_ID=$(gh issue view <number> --json id --jq '.id')
-BLOCKING_ID=$(gh issue view <blocking_number> --json id --jq '.id')
-
-cat > /tmp/add_blocked.json << 'EOF'
-{
-  "query": "mutation($issueId: ID!, $blockingId: ID!) { addBlockedBy(input: { issueId: $issueId, blockingIssueId: $blockingId }) { clientMutationId } }",
-  "variables": {
-    "issueId": "<ISSUE_ID>",
-    "blockingId": "<BLOCKING_ID>"
-  }
-}
-EOF
-
-gh api graphql --input /tmp/add_blocked.json
-rm -f /tmp/add_blocked.json
+# addBlockedBy: issueId = the blocked issue, blockingIssueId = the blocker
+BLOCKED_ID=$(gh issue view <number> --json id --jq '.id')
+BLOCKER_ID=$(gh issue view <blocking_number> --json id --jq '.id')
+gh api graphql -f query="mutation { addBlockedBy(input: { issueId: \"$BLOCKED_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }"
 ```
 
 ### Step 7: Report

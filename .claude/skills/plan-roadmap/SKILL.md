@@ -58,12 +58,12 @@ Filter out issues that are already sub-issues of a Release to identify unassigne
 
 ### Step 2: Analyze relationships
 
-For all release sub-issues, query parent, sub-issues, and blocking relationships in parallel:
+For all open issues (not just release sub-issues), query parent, sub-issues, and blocking relationships. Batch into groups of ~20 per GraphQL query:
 
 ```bash
 gh api graphql -f query='query {
   repository(owner:"typemd", name:"typemd") {
-    issue(number: <N>) {
+    i<N>: issue(number: <N>) {
       number title state
       parent { number title state }
       subIssues(first: 20) { nodes { number title state } }
@@ -74,11 +74,28 @@ gh api graphql -f query='query {
 }'
 ```
 
-Build a dependency map:
+Build a dependency map and flag issues that need cleanup:
 
 - **Epic groups** — parent + children should move together
 - **Block chains** — if A blocks B, A must ship first (same or earlier release)
 - **Cross-release blockers** — flag as problems
+- **Orphaned children** — issues whose parent is CLOSED (completed epic, finished block issue, etc.). These are leftover sub-issues that were never unlinked. **Flag these for cleanup**: suggest removing the stale parent so the issue can be freely added as a sub-issue of a Release.
+- **Stale blockedBy** — issues blocked by a CLOSED issue. These don't affect functionality but add noise. Report them for awareness.
+- **Missing blocking relationships** — review issue descriptions for implicit dependencies that aren't set as formal `blockedBy` relationships (e.g. "infrastructure" issues that must precede "feature" issues in the same domain).
+
+Present all findings to the user before proceeding. Execute cleanup (unparent orphaned children, add/remove blocking relationships) with user confirmation.
+
+#### Blocking relationship mutations
+
+```bash
+# Add: issueId = the blocked issue, blockingIssueId = the blocker
+BLOCKED_ID=$(gh issue view <blocked_number> --json id --jq '.id')
+BLOCKER_ID=$(gh issue view <blocker_number> --json id --jq '.id')
+gh api graphql -f query="mutation { addBlockedBy(input: { issueId: \"$BLOCKED_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }"
+
+# Remove a blocking relationship
+gh api graphql -f query="mutation { removeBlockedBy(input: { issueId: \"$BLOCKED_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }"
+```
 
 ### Step 3: Define themes for the next 5 releases
 
@@ -140,7 +157,12 @@ gh issue close <number> --comment "<reason>"
 # Create new Release issue if needed (use create-milestone skill)
 ```
 
-**Note:** GitHub sub-issues only allow one parent per issue. If an issue already has a parent (e.g. an Epic), it cannot be added as a sub-issue of the Release. In that case, reference it in the Release issue body instead.
+**GitHub sub-issues only allow one parent per issue.** When an issue already has a parent, handle it as follows (in order of preference):
+
+1. **Parent is CLOSED** → remove the stale parent first (`removeSubIssue`), then add as sub-issue of the Release. This is the preferred approach — completed epics/block issues should not hold orphaned children.
+2. **Parent is an OPEN Epic** → cannot add as sub-issue of the Release. Reference it in the Release issue body instead as a last resort.
+
+Never leave issues orphaned under closed parents when they need to be tracked in a Release.
 
 ### Step 6: Report
 

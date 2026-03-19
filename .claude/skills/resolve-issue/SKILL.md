@@ -53,13 +53,15 @@ If the user does not specify an issue number, automatically select the best issu
 **Step 1: Find the nearest open Release issue**
 
 ```bash
+# Note: GitHub GraphQL filterBy does NOT support issueType filtering.
+# Fetch open issues and filter by title pattern to find Release issues.
 gh api graphql -f query='query {
   repository(owner:"typemd", name:"typemd") {
-    issues(first: 1, states: OPEN, filterBy: {type: "Release"}, orderBy: {field: CREATED_AT, direction: ASC}) {
+    issues(first: 50, states: OPEN, orderBy: {field: CREATED_AT, direction: ASC}) {
       nodes { number title subIssues(first: 30) { nodes { number title state labels(first: 5) { nodes { name } } } } }
     }
   }
-}'
+}' --jq '.data.repository.issues.nodes | map(select(.title | test("^v[0-9]+\\.[0-9]+\\.[0-9]+ —"))) | sort_by(.number) | first'
 ```
 
 If no open Release issue exists, fall back to all open issues.
