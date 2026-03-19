@@ -156,6 +156,17 @@ func (vm *viewMode) CanQuit() bool {
 	return vm.detailObject == nil
 }
 
+// expandedGroupLabels returns the labels of currently expanded groups.
+func (vm *viewMode) expandedGroupLabels() []string {
+	var labels []string
+	for _, g := range vm.groups {
+		if g.Expanded && g.Label != "" {
+			labels = append(labels, g.Label)
+		}
+	}
+	return labels
+}
+
 // Update handles messages for the view mode.
 func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
 	switch msg := msg.(type) {

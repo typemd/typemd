@@ -465,6 +465,400 @@ func TestApplySessionState_PanelWidthsClampedByTerminal(t *testing.T) {
 	// This test documents that width clamping is NOT applySessionState's responsibility
 }
 
+// --- View mode persistence tests ---
+
+func TestSessionState_ViewModeFields_MarshalRoundTrip(t *testing.T) {
+	state := SessionState{
+		SelectedObjectID:   "book/test-01abc",
+		ViewTypeName:       "book",
+		ViewName:           "by-rating",
+		ViewCursor:         3,
+		ViewScroll:         2,
+		ViewExpandedGroups: []string{"5 stars", "4 stars"},
+	}
+
+	data, err := yaml.Marshal(&state)
+	if err != nil {
+		t.Fatalf("Marshal error: %v", err)
+	}
+
+	var loaded SessionState
+	if err := yaml.Unmarshal(data, &loaded); err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	if loaded.ViewTypeName != "book" {
+		t.Errorf("ViewTypeName = %q, want %q", loaded.ViewTypeName, "book")
+	}
+	if loaded.ViewName != "by-rating" {
+		t.Errorf("ViewName = %q, want %q", loaded.ViewName, "by-rating")
+	}
+	if loaded.ViewCursor != 3 {
+		t.Errorf("ViewCursor = %d, want 3", loaded.ViewCursor)
+	}
+	if loaded.ViewScroll != 2 {
+		t.Errorf("ViewScroll = %d, want 2", loaded.ViewScroll)
+	}
+	if len(loaded.ViewExpandedGroups) != 2 || loaded.ViewExpandedGroups[0] != "5 stars" || loaded.ViewExpandedGroups[1] != "4 stars" {
+		t.Errorf("ViewExpandedGroups = %v, want [5 stars, 4 stars]", loaded.ViewExpandedGroups)
+	}
+}
+
+func TestSessionState_ViewModeFields_OmittedWhenEmpty(t *testing.T) {
+	state := SessionState{
+		SelectedObjectID: "book/test",
+		PropsVisible:     true,
+	}
+	data, err := yaml.Marshal(&state)
+	if err != nil {
+		t.Fatalf("Marshal error: %v", err)
+	}
+
+	yamlStr := string(data)
+	if strings.Contains(yamlStr, "view_type_name") {
+		t.Errorf("empty ViewTypeName should be omitted, got:\n%s", yamlStr)
+	}
+	if strings.Contains(yamlStr, "view_name") {
+		t.Errorf("empty ViewName should be omitted, got:\n%s", yamlStr)
+	}
+	if strings.Contains(yamlStr, "view_cursor") {
+		t.Errorf("zero ViewCursor should be omitted, got:\n%s", yamlStr)
+	}
+}
+
+func TestSessionState_ViewModeFields_BackwardCompatible(t *testing.T) {
+	// Old YAML without view fields should deserialize cleanly
+	yamlData := `
+selected_object_id: "book/test"
+expanded_groups:
+  - book
+focus: "left"
+props_visible: true
+`
+	var state SessionState
+	if err := yaml.Unmarshal([]byte(yamlData), &state); err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+	if state.SelectedObjectID != "book/test" {
+		t.Errorf("SelectedObjectID = %q, want %q", state.SelectedObjectID, "book/test")
+	}
+	if state.ViewTypeName != "" {
+		t.Errorf("ViewTypeName = %q, want empty (missing field)", state.ViewTypeName)
+	}
+	if state.ViewName != "" {
+		t.Errorf("ViewName = %q, want empty (missing field)", state.ViewName)
+	}
+}
+
+func TestCaptureState_InViewMode(t *testing.T) {
+	m := setupTestModel(t)
+	m.rightPanel = panelView
+	m.viewMode = &viewMode{
+		typeName: "book",
+		viewName: "by-rating",
+		cursor:   5,
+		scroll:   2,
+		groups: []viewGroup{
+			{Label: "5 stars", Expanded: true},
+			{Label: "4 stars", Expanded: false},
+			{Label: "3 stars", Expanded: true},
+		},
+	}
+
+	state := m.captureState()
+
+	if state.ViewTypeName != "book" {
+		t.Errorf("ViewTypeName = %q, want %q", state.ViewTypeName, "book")
+	}
+	if state.ViewName != "by-rating" {
+		t.Errorf("ViewName = %q, want %q", state.ViewName, "by-rating")
+	}
+	if state.ViewCursor != 5 {
+		t.Errorf("ViewCursor = %d, want 5", state.ViewCursor)
+	}
+	if state.ViewScroll != 2 {
+		t.Errorf("ViewScroll = %d, want 2", state.ViewScroll)
+	}
+	if len(state.ViewExpandedGroups) != 2 {
+		t.Fatalf("ViewExpandedGroups len = %d, want 2", len(state.ViewExpandedGroups))
+	}
+	if state.ViewExpandedGroups[0] != "5 stars" || state.ViewExpandedGroups[1] != "3 stars" {
+		t.Errorf("ViewExpandedGroups = %v, want [5 stars, 3 stars]", state.ViewExpandedGroups)
+	}
+}
+
+func TestCaptureState_NotInViewMode(t *testing.T) {
+	m := setupTestModel(t)
+	m.rightPanel = panelObject
+	m.viewMode = nil
+
+	state := m.captureState()
+
+	if state.ViewTypeName != "" {
+		t.Errorf("ViewTypeName = %q, want empty (not in view mode)", state.ViewTypeName)
+	}
+	if state.ViewName != "" {
+		t.Errorf("ViewName = %q, want empty (not in view mode)", state.ViewName)
+	}
+}
+
+func TestCaptureState_ViewModeWithFlatList(t *testing.T) {
+	// Flat list (no group_by) has groups with empty labels — should not appear in expanded list
+	m := setupTestModel(t)
+	m.rightPanel = panelView
+	m.viewMode = &viewMode{
+		typeName: "book",
+		viewName: "default",
+		cursor:   0,
+		groups: []viewGroup{
+			{Label: "", Expanded: true, Objects: []*core.Object{{ID: "book/a"}}},
+		},
+	}
+
+	state := m.captureState()
+
+	if len(state.ViewExpandedGroups) != 0 {
+		t.Errorf("ViewExpandedGroups = %v, want empty (flat list has empty labels)", state.ViewExpandedGroups)
+	}
+}
+
+func TestExpandedGroupLabels(t *testing.T) {
+	vm := &viewMode{
+		groups: []viewGroup{
+			{Label: "fiction", Expanded: true},
+			{Label: "non-fiction", Expanded: false},
+			{Label: "science", Expanded: true},
+			{Label: "", Expanded: true}, // empty label (flat list) should be excluded
+		},
+	}
+
+	labels := vm.expandedGroupLabels()
+
+	if len(labels) != 2 {
+		t.Fatalf("expandedGroupLabels() len = %d, want 2", len(labels))
+	}
+	if labels[0] != "fiction" || labels[1] != "science" {
+		t.Errorf("expandedGroupLabels() = %v, want [fiction science]", labels)
+	}
+}
+
+func TestRestoreViewMode_NoViewState(t *testing.T) {
+	state := SessionState{SelectedObjectID: "book/test"}
+	vm := restoreViewMode(state, nil)
+	if vm != nil {
+		t.Error("restoreViewMode should return nil when no view state fields")
+	}
+}
+
+func TestRestoreViewMode_EmptyViewName(t *testing.T) {
+	state := SessionState{ViewTypeName: "book"} // ViewName is empty
+	vm := restoreViewMode(state, nil)
+	if vm != nil {
+		t.Error("restoreViewMode should return nil when ViewName is empty")
+	}
+}
+
+func TestRestoreViewMode_TypeDeleted(t *testing.T) {
+	dir := t.TempDir()
+	v := core.NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("vault Init() error = %v", err)
+	}
+	if err := v.Open(); err != nil {
+		t.Fatalf("vault Open() error = %v", err)
+	}
+	defer v.Close()
+
+	state := SessionState{
+		ViewTypeName: "nonexistent",
+		ViewName:     "default",
+	}
+	vm := restoreViewMode(state, v)
+	if vm != nil {
+		t.Error("restoreViewMode should return nil when type doesn't exist")
+	}
+}
+
+func TestRestoreViewMode_Success(t *testing.T) {
+	dir := t.TempDir()
+	v := core.NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("vault Init() error = %v", err)
+	}
+	if err := v.Open(); err != nil {
+		t.Fatalf("vault Open() error = %v", err)
+	}
+	defer v.Close()
+
+	// Create a type with objects
+	ts := &core.TypeSchema{Name: "book", Emoji: "📚"}
+	if err := v.SaveType(ts); err != nil {
+		t.Fatalf("SaveType() error = %v", err)
+	}
+	if _, err := v.NewObject("book", "test-a", ""); err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+	if _, err := v.NewObject("book", "test-b", ""); err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	state := SessionState{
+		ViewTypeName: "book",
+		ViewName:     "default",
+		ViewCursor:   1,
+	}
+	vm := restoreViewMode(state, v)
+	if vm == nil {
+		t.Fatal("restoreViewMode should return non-nil viewMode")
+	}
+	if vm.typeName != "book" {
+		t.Errorf("typeName = %q, want %q", vm.typeName, "book")
+	}
+	if vm.viewName != "default" {
+		t.Errorf("viewName = %q, want %q", vm.viewName, "default")
+	}
+	if vm.cursor != 1 {
+		t.Errorf("cursor = %d, want 1", vm.cursor)
+	}
+	if len(vm.objects) != 2 {
+		t.Errorf("objects len = %d, want 2", len(vm.objects))
+	}
+}
+
+func TestRestoreViewMode_CursorClamped(t *testing.T) {
+	dir := t.TempDir()
+	v := core.NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("vault Init() error = %v", err)
+	}
+	if err := v.Open(); err != nil {
+		t.Fatalf("vault Open() error = %v", err)
+	}
+	defer v.Close()
+
+	ts := &core.TypeSchema{Name: "book"}
+	if err := v.SaveType(ts); err != nil {
+		t.Fatalf("SaveType() error = %v", err)
+	}
+	if _, err := v.NewObject("book", "only-one", ""); err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	state := SessionState{
+		ViewTypeName: "book",
+		ViewName:     "default",
+		ViewCursor:   50, // way beyond actual items
+		ViewScroll:   50,
+	}
+	vm := restoreViewMode(state, v)
+	if vm == nil {
+		t.Fatal("restoreViewMode should return non-nil viewMode")
+	}
+	totalRows := len(vm.visibleRows())
+	if vm.cursor >= totalRows {
+		t.Errorf("cursor = %d should be clamped below %d", vm.cursor, totalRows)
+	}
+	if vm.scroll >= totalRows {
+		t.Errorf("scroll = %d should be clamped below %d", vm.scroll, totalRows)
+	}
+}
+
+func TestRestoreViewMode_StaleExpandedGroups(t *testing.T) {
+	dir := t.TempDir()
+	v := core.NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("vault Init() error = %v", err)
+	}
+	if err := v.Open(); err != nil {
+		t.Fatalf("vault Open() error = %v", err)
+	}
+	defer v.Close()
+
+	ts := &core.TypeSchema{
+		Name: "book",
+		Properties: []core.Property{
+			{Name: "genre", Type: "string"},
+		},
+	}
+	if err := v.SaveType(ts); err != nil {
+		t.Fatalf("SaveType() error = %v", err)
+	}
+	obj, err := v.NewObject("book", "a", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+	obj.Properties["genre"] = "fiction"
+	if err := v.SaveObject(obj); err != nil {
+		t.Fatalf("SaveObject() error = %v", err)
+	}
+
+	// Save a view with group_by
+	vc := &core.ViewConfig{Name: "by-genre", GroupBy: "genre"}
+	if err := v.SaveView("book", vc); err != nil {
+		t.Fatalf("SaveView() error = %v", err)
+	}
+
+	state := SessionState{
+		ViewTypeName:       "book",
+		ViewName:           "by-genre",
+		ViewExpandedGroups: []string{"fiction", "deleted-group"},
+	}
+	vm := restoreViewMode(state, v)
+	if vm == nil {
+		t.Fatal("restoreViewMode should return non-nil viewMode")
+	}
+
+	// "fiction" group should exist and be expanded
+	foundFiction := false
+	for _, g := range vm.groups {
+		if g.Label == "fiction" {
+			if !g.Expanded {
+				t.Error("fiction group should be expanded")
+			}
+			foundFiction = true
+		}
+	}
+	if !foundFiction {
+		t.Error("fiction group should exist in view groups")
+	}
+	// "deleted-group" should be silently ignored — no panic
+}
+
+func TestSaveAndLoad_ViewModeState(t *testing.T) {
+	dir := t.TempDir()
+	os.MkdirAll(filepath.Join(dir, ".typemd"), 0755)
+
+	original := SessionState{
+		SelectedObjectID:   "book/test-01abc",
+		ExpandedGroups:     []string{"book"},
+		ViewTypeName:       "book",
+		ViewName:           "by-rating",
+		ViewCursor:         3,
+		ViewScroll:         1,
+		ViewExpandedGroups: []string{"5 stars"},
+		PropsVisible:       true,
+	}
+
+	saveSessionState(dir, original)
+	loaded := loadSessionState(dir)
+
+	if loaded.ViewTypeName != "book" {
+		t.Errorf("ViewTypeName = %q, want %q", loaded.ViewTypeName, "book")
+	}
+	if loaded.ViewName != "by-rating" {
+		t.Errorf("ViewName = %q, want %q", loaded.ViewName, "by-rating")
+	}
+	if loaded.ViewCursor != 3 {
+		t.Errorf("ViewCursor = %d, want 3", loaded.ViewCursor)
+	}
+	if loaded.ViewScroll != 1 {
+		t.Errorf("ViewScroll = %d, want 1", loaded.ViewScroll)
+	}
+	if len(loaded.ViewExpandedGroups) != 1 || loaded.ViewExpandedGroups[0] != "5 stars" {
+		t.Errorf("ViewExpandedGroups = %v, want [5 stars]", loaded.ViewExpandedGroups)
+	}
+}
+
 func TestFocusPanelToString(t *testing.T) {
 	tests := []struct {
 		input focusPanel

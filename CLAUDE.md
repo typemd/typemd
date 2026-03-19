@@ -170,7 +170,7 @@ Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_ty
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
-- TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, and props visibility)
+- TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, props visibility, and optionally view mode state — `view_type_name`, `view_name`, `view_cursor`, `view_scroll`, `view_expanded_groups` — when the TUI was in view mode on exit)
 - Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`)
 - Starter type templates: `core/starters/*.yaml` (embedded in binary via `//go:embed`; offered during `tmd init` as opt-in type schemas — idea, note, book)
 - Object templates: `templates/<type>/<name>.md` (optional, Markdown files with frontmatter property overrides and body content applied during `tmd object create`; single template auto-applies, multiple templates prompt for selection or use `-t` flag)

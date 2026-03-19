@@ -202,8 +202,11 @@ TUI 在離開時會自動將會話狀態儲存到 `.typemd/tui-state.yaml`。下
 - **面板尺寸** — 左側面板和屬性面板的寬度
 - **屬性面板可見性** — 屬性面板是否顯示
 - **捲動偏移** — Object 列表的垂直捲動位置
+- **View mode** — 若離開時處於 view mode，下次啟動時會自動還原該 view，包含游標位置、捲動偏移和 view 內展開的群組
 
 若之前選取的 Object 已被刪除，TUI 會 fallback 到同 type 群組的第一個 Object，再到整體第一個 Object。焦點面板也會被還原——如果上次離開時焦點在內文或屬性面板，下次啟動時會回到同一個面板。
+
+若儲存的 view 所屬的 type 或 view 已被刪除，TUI 會 fallback 到該 type 的 default view，若無任何 view 則回到正常的 sidebar 模式。
 
 搜尋狀態不會被保留——每次啟動都從全新的畫面開始。
 
