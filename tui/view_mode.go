@@ -254,23 +254,24 @@ func truncate(s string, maxLen int) string {
 	return runewidth.Truncate(s, maxLen, "…")
 }
 
-// formatPropValue formats a property value for table display.
-func formatPropValue(obj *core.Object, propName string) string {
+// displayPropValue formats a property value for table display using the
+// unified DisplayProperty.FormatValue() pipeline.
+func (vm *viewMode) displayPropValue(obj *core.Object, propName string) string {
 	val, ok := obj.Properties[propName]
 	if !ok || val == nil {
 		return ""
 	}
-	switch v := val.(type) {
-	case string:
-		return v
-	case bool:
-		if v {
-			return "✓"
-		}
-		return ""
-	default:
-		return fmt.Sprintf("%v", v)
+	dp := core.DisplayProperty{
+		Key:   propName,
+		Value: val,
 	}
+	if vm.schema != nil {
+		if p := vm.schema.FindProperty(propName); p != nil {
+			dp.Type = p.Type
+			dp.IsRelation = p.Type == "relation"
+		}
+	}
+	return dp.FormatValue()
 }
 
 // View renders the full-width view list with property columns.
@@ -344,7 +345,7 @@ func (vm *viewMode) View() string {
 
 			line := fmt.Sprintf("  %-*s", nameW, truncate(name, nameW))
 			for _, col := range cols {
-				val := formatPropValue(row.object, col)
+				val := vm.displayPropValue(row.object, col)
 				if val == "" {
 					line += "  " + dimStyle.Render(fmt.Sprintf("%-*s", colW, "·"))
 				} else {
@@ -390,13 +391,23 @@ func (vm *viewMode) PreviewContent() string {
 	// Show key properties
 	if vm.schema != nil {
 		for _, p := range vm.schema.Properties {
-			val := formatPropValue(vm.previewObject, p.Name)
-			if val != "" {
+			val, ok := vm.previewObject.Properties[p.Name]
+			if !ok || val == nil {
+				continue
+			}
+			dp := core.DisplayProperty{
+				Key:        p.Name,
+				Value:      val,
+				Type:       p.Type,
+				IsRelation: p.Type == "relation",
+			}
+			formatted := dp.FormatValue()
+			if formatted != "" {
 				label := p.Name
 				if p.Emoji != "" {
 					label = p.Emoji + " " + label
 				}
-				b.WriteString(fmt.Sprintf(" %s: %s\n", label, val))
+				b.WriteString(fmt.Sprintf(" %s: %s\n", label, formatted))
 			}
 		}
 	}

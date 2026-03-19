@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"testing"
+	"time"
 )
 
 func TestBuildDisplayProperties(t *testing.T) {
@@ -186,6 +187,117 @@ func TestBuildDisplayPropertiesNoBacklinks(t *testing.T) {
 		if p.IsBacklink {
 			t.Error("expected no backlinks for object with no incoming wiki-links")
 		}
+	}
+}
+
+func TestFormatValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		prop     DisplayProperty
+		expected string
+	}{
+		{
+			name:     "string value",
+			prop:     DisplayProperty{Key: "title", Value: "Hello World", Type: "string"},
+			expected: "Hello World",
+		},
+		{
+			name:     "checkbox true",
+			prop:     DisplayProperty{Key: "active", Value: true, Type: "checkbox"},
+			expected: "✓",
+		},
+		{
+			name:     "checkbox false",
+			prop:     DisplayProperty{Key: "active", Value: false, Type: "checkbox"},
+			expected: "",
+		},
+		{
+			name:     "date",
+			prop:     DisplayProperty{Key: "published", Value: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC), Type: "date"},
+			expected: "2024-01-15",
+		},
+		{
+			name:     "datetime",
+			prop:     DisplayProperty{Key: "created", Value: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC), Type: "datetime"},
+			expected: "2024-01-15T10:30:00",
+		},
+		{
+			name:     "multi_select",
+			prop:     DisplayProperty{Key: "tags", Value: []any{"go", "cli"}, Type: "multi_select"},
+			expected: "[go, cli]",
+		},
+		{
+			name:     "relation",
+			prop:     DisplayProperty{Key: "author", Value: "person/robert-martin-01kk39c30y47xb1dvbs8ywqv50", IsRelation: true},
+			expected: "→ person/robert-martin",
+		},
+		{
+			name:     "backlink",
+			prop:     DisplayProperty{Key: BacklinksDisplayKey, IsBacklink: true, FromID: "note/my-note-01kk39c30y47xb1dvbs8ywqv50"},
+			expected: "⟵ note/my-note",
+		},
+		{
+			name:     "reverse relation",
+			prop:     DisplayProperty{Key: "books", IsReverse: true, FromID: "book/clean-code-01kk39c30y47xb1dvbs8ywqv50"},
+			expected: "← book/clean-code",
+		},
+		{
+			name:     "nil value",
+			prop:     DisplayProperty{Key: "empty", Value: nil},
+			expected: "",
+		},
+		{
+			name:     "integer value",
+			prop:     DisplayProperty{Key: "count", Value: 42, Type: "number"},
+			expected: "42",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.prop.FormatValue()
+			if got != tt.expected {
+				t.Errorf("FormatValue() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFormatDelegatesToFormatValue(t *testing.T) {
+	tests := []struct {
+		name     string
+		prop     DisplayProperty
+		expected string
+	}{
+		{
+			name:     "string",
+			prop:     DisplayProperty{Key: "title", Value: "Hello", Type: "string"},
+			expected: "title: Hello",
+		},
+		{
+			name:     "checkbox true",
+			prop:     DisplayProperty{Key: "active", Value: true, Type: "checkbox"},
+			expected: "active: ✓",
+		},
+		{
+			name:     "checkbox false",
+			prop:     DisplayProperty{Key: "active", Value: false, Type: "checkbox"},
+			expected: "active: ",
+		},
+		{
+			name:     "date",
+			prop:     DisplayProperty{Key: "published", Value: time.Date(2024, 1, 15, 0, 0, 0, 0, time.UTC), Type: "date"},
+			expected: "published: 2024-01-15",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.prop.Format()
+			if got != tt.expected {
+				t.Errorf("Format() = %q, want %q", got, tt.expected)
+			}
+		})
 	}
 }
 
