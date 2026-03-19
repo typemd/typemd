@@ -125,12 +125,16 @@ graph LR
 | `object_index.go` | ObjectIndex interface + ObjectResult + SortRule |
 | `object_service.go` | ObjectService (command use cases) |
 | `query_service.go` | QueryService (query use cases) |
-| `local_object_repository.go` | LocalObjectRepository (file I/O) |
+| `local_object_repository.go` | LocalObjectRepository (struct, path conventions, object CRUD, shared properties) |
+| `local_object_repository_schema.go` | Type schema CRUD and migration |
+| `local_object_repository_template.go` | Template CRUD |
 | `sqlite_object_index.go` | SQLiteObjectIndex (SQLite queries) |
 | `projector.go` | Projector (file→index sync) |
 | `domain_event.go` | Domain event types + EventDispatcher |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `type_schema.go` | TypeSchema entity + validation + YAML serialization + version handling (DefaultSchemaVersion, CompareVersions) + color validation (ValidColorPresets, validateColor) + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
+| `type_schema.go` | TypeSchema entity + helpers + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
+| `type_schema_validate.go` | Schema validation (ValidateSchema) + object validation (ValidateObject) + property type validators |
+| `type_schema_marshal.go` | YAML serialization (MarshalTypeSchema) + version handling (CompareVersions) + color validation (ValidColorPresets) |
 | `stats.go` | VaultStats/TypeSummary/TypeStats/PropertyStats structs + QueryService.VaultStats()/TypeStats() methods + TypeSummary.DisplayName() |
 | `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
 | `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
