@@ -88,6 +88,9 @@ tmd
 # 開啟 TUI（指定 vault 路徑）
 tmd --vault /path/to/vault
 
+# 以唯讀模式開啟 TUI（停用編輯功能）
+tmd --readonly
+
 # 建立新的 Object（名稱自動轉為 slug，ULID 自動附加）
 tmd object create book "Clean Code"
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
@@ -107,10 +110,6 @@ tmd object show book/clean-code
 tmd object list
 tmd object list --json
 
-# 依 Type 和屬性查詢
-tmd query "type=book status=reading"
-tmd query "type=book" --json
-
 # 全文搜尋
 tmd search "concurrency"
 
@@ -125,6 +124,9 @@ tmd --reindex
 
 # 驗證 schema、Object 和 Relation
 tmd type validate
+
+# 全面性的 vault 健康檢查（涵蓋 validate 的所有檢查項目）
+tmd doctor
 
 # Vault 統計摘要
 tmd stats                # 整體統計摘要
@@ -186,21 +188,31 @@ Body
 
 | 按鍵 | 動作 |
 |------|------|
-| `↑`/`k`、`↓`/`j` | 瀏覽 Object 列表 |
-| `Enter`/`Space` | 選取 Object / 展開收合群組 |
+| `↑`/`k`、`↓`/`j` | 瀏覽列表 / 捲動內容 |
+| `Enter` | 選取 Object / 聚焦 Type 編輯器 / 建立新 Type（在 `+ New Type` 上） |
+| `Space` | 展開 / 收合群組 |
 | `Tab` | 在面板之間循環焦點 |
+| `n` | 建立新 Object 並編輯內文（在目前 Type 群組中） |
+| `N` | 快速建立（批次模式——停留在輸入框以便連續建立） |
 | `e` | 進入編輯模式（聚焦在內文或屬性面板時） |
 | `/` | 搜尋（FTS5 全文搜尋） |
 | `Esc` | 退出編輯模式（若有變更則自動儲存）/ 清除搜尋結果 |
-| `p` | 切換屬性面板 |
+| `v` | 開啟目前 Type 的 view 模式（表格顯示，支援排序 / 篩選） |
+| `p` | 切換屬性面板 / 在 view 模式中切換預覽 |
 | `w` | 切換自動換行 |
 | `[`/`]` | 縮小/放大焦點面板 |
 | `?`/`h` | 開啟快捷鍵說明 |
 | `q`/`Ctrl+C` | 離開 |
 
-狀態列會顯示目前模式：`[VIEW]` 代表一般瀏覽，`[EDIT]` 代表編輯模式啟用中。
+將游標移至側邊欄底部的 `+ New Type` 並按 `Enter` 即可建立新 Type。標題面板會出現建立表單，包含 emoji、名稱和複數形式等欄位——按 `Tab` 在欄位之間切換。
 
-退出編輯模式時，變更會自動儲存至 `.md` 檔案並更新 SQLite 索引。若在編輯期間檔案被外部程式修改，狀態列會出現 `[CONFLICT]` 提示 — 按 `y` 強制覆寫、`n` 從磁碟重新載入，或 `Esc` 取消。
+將游標移至 Type 群組標題時，右側面板會自動顯示 **Type 編輯器**，可以編輯 Type 的中繼資料（plural、emoji、unique）、管理屬性（新增、刪除、排序、置頂）、管理範本（檢視、建立、編輯、刪除），以及刪除 Type。Type 編輯器有自己的快捷鍵，顯示在狀態列。在範本上按 Enter 會開啟 **範本編輯器**，可以檢視和編輯範本的內文和屬性。
+
+狀態列會顯示目前模式：`[VIEW]` 代表一般瀏覽、`[EDIT]` 代表編輯模式啟用中、`[TYPE]` 代表 Type 編輯器聚焦中、`[TEMPLATE]` 代表檢視或編輯範本中、`[READONLY]` 代表以 `--readonly` 啟動。按 `v` 可對 Type 群組進入 **view 模式**——全寬表格顯示物件及屬性欄位，支援排序 / 篩選，以及可選的預覽面板（`p`）。
+
+當啟用 `--readonly` 時，`e` 鍵會被停用，不會執行任何寫入操作，快捷鍵說明也會隱藏編輯相關的綁定。
+
+退出編輯模式時，變更會自動儲存至 `.md` 檔案並更新 SQLite 索引。若在編輯期間檔案被外部程式修改，狀態列會出現 `[CONFLICT]` 提示——按 `y` 強制覆寫、`n` 從磁碟重新載入，或 `Esc` 取消。
 
 TUI 會自動監控 `objects/` 目錄，當檔案被建立、修改或刪除時自動重新整理。
 

@@ -276,7 +276,7 @@ The TUI automatically saves your session state to `.typemd/tui-state.yaml` when 
 - **Scroll offset** — vertical scroll position in the object list
 - **View mode** — if you were in a view when you quit, the TUI restores that view on next launch, including cursor position, scroll offset, and expanded groups within the view
 
-If the previously selected object was deleted, the TUI falls back to the first object in the same type group, then to the first object overall. If there is a saved focus state, the TUI restores it; otherwise it defaults to the sidebar.
+If the previously selected object was deleted, the TUI falls back to the first object in the same type group, then to the first object overall. Focus always starts on the sidebar for a consistent experience, except when restoring view mode (which sets focus to the body panel).
 
 If the saved view's type or view has been deleted, the TUI falls back to the default view for that type, or to the normal sidebar mode if no views exist.
 

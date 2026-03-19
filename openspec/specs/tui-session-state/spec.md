@@ -10,7 +10,7 @@ The TUI SHALL save session state to `.typemd/tui-state.yaml` when the user quits
 - **THEN** the file SHALL be overwritten with the current session state
 
 ### Requirement: Session state includes navigation context
-The saved state SHALL include the selected object ID, expanded type groups, scroll offset, focus panel, left panel width, properties panel width, properties panel visibility, and optionally the active view type name, view name, view cursor, view scroll, and view expanded groups.
+The saved state SHALL include the selected object ID, expanded type groups, scroll offset, focus panel, left panel width, properties panel width, properties panel visibility, and optionally the active view type name, view name, view cursor, view scroll, and view expanded groups. Note: focus panel is saved for completeness but is NOT restored on startup — the TUI always starts with focus on the sidebar for consistent UX.
 
 #### Scenario: Full state persisted
 - **WHEN** the user has selected object `book/clean-code-01jqr...`, expanded groups `book` and `person`, focus on body panel, left panel width 35, properties panel width 30, properties visible, and scroll offset 5
@@ -45,9 +45,9 @@ The TUI SHALL read `.typemd/tui-state.yaml` on startup and restore the saved sta
 - **WHEN** the state file contains panel width values
 - **THEN** the TUI SHALL apply those widths, subject to terminal size constraints (existing clamp logic)
 
-#### Scenario: Restore focus panel
+#### Scenario: Focus always resets to sidebar
 - **WHEN** the state file contains `focus: "body"`
-- **THEN** the TUI SHALL start with focus on the body panel
+- **THEN** the TUI SHALL start with focus on the sidebar (focus is not restored; it always resets to the left panel for consistent UX)
 
 ### Requirement: Graceful fallback when selected object is deleted
 The TUI SHALL fall back gracefully when the previously selected object no longer exists.
