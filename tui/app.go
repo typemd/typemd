@@ -216,7 +216,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 	case schemaChangedMsg:
 		m.vault.InvalidateSchemaCache()
-		m.refreshData(nil) // full refresh after schema change
+		// Only reload display properties for the selected object — don't rebuild
+		// the entire sidebar/layout, which would reset scroll and focus state.
+		if m.selected != nil && m.vault != nil {
+			m.displayProps, _ = m.vault.BuildDisplayProperties(m.selected)
+		}
+		// Also refresh type editor if active
+		if m.typeEditor != nil && m.vault != nil {
+			if ts, err := m.vault.LoadType(m.typeEditor.typeName); err == nil {
+				m.typeEditor.schema = ts
+			}
+		}
 		return m, watchTypes(m.vault.TypesDir(), m.debounceMs())
 
 	case tea.WindowSizeMsg:

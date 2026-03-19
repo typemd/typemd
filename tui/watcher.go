@@ -3,6 +3,7 @@ package tui
 import (
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	tea "charm.land/bubbletea/v2"
@@ -90,10 +91,18 @@ func watchDir(dir string, debounceMs int, buildMsg func(paths []string) tea.Msg)
 }
 
 // watchObjects starts watching the objects directory for changes.
-// Returns a tea.Cmd that sends fileChangedMsg with changed file paths.
+// Returns a tea.Cmd that sends fileChangedMsg with changed .md file paths.
+// Non-.md paths are filtered out; if no .md paths remain, Paths will be nil
+// to signal that a full sync should be used.
 func watchObjects(objectsDir string, debounceMs int) tea.Cmd {
 	return watchDir(objectsDir, debounceMs, func(paths []string) tea.Msg {
-		return fileChangedMsg{Paths: paths}
+		var mdPaths []string
+		for _, p := range paths {
+			if strings.HasSuffix(p, ".md") {
+				mdPaths = append(mdPaths, p)
+			}
+		}
+		return fileChangedMsg{Paths: mdPaths}
 	})
 }
 
