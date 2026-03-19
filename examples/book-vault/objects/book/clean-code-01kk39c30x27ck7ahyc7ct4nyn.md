@@ -7,7 +7,7 @@ status: reading
 tags:
   - programming
   - refactoring
-title: "Clean Code: A Handbook of Agile Software Craftsmanship"
+name: "Clean Code: A Handbook of Agile Software Craftsmanship"
 ---
 
 Practical guide to writing clean, maintainable code. Covers naming, functions, comments, formatting, error handling, and more.

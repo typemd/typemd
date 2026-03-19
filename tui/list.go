@@ -141,7 +141,12 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 				line = fmt.Sprintf(" %s %s (%d)", arrow, g.Plural, len(g.Objects))
 			}
 		case rowObject:
-			line = fmt.Sprintf("   %s", row.Object.GetName())
+			name := row.Object.GetName()
+			maxNameWidth := width - 3 // 3 = leading spaces "   "
+			if maxNameWidth > 0 {
+				name = runewidth.Truncate(name, maxNameWidth, "…")
+			}
+			line = fmt.Sprintf("   %s", name)
 		case rowNewType:
 			line = " + New Type"
 		}

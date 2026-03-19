@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/mattn/go-runewidth"
+
 	"charm.land/lipgloss/v2"
 	tea "charm.land/bubbletea/v2"
 )
@@ -195,7 +197,12 @@ func (m model) View() tea.View {
 		} else {
 			var lines []string
 			for i, row := range rows {
-				line := fmt.Sprintf("   %s/%s", row.Object.Type, row.Object.GetName())
+				name := row.Object.GetName()
+				maxWidth := leftW - 3 - runewidth.StringWidth(row.Object.Type) - 1 // 3 = leading spaces, 1 = "/"
+				if maxWidth > 0 {
+					name = runewidth.Truncate(name, maxWidth, "…")
+				}
+				line := fmt.Sprintf("   %s/%s", row.Object.Type, name)
 				if i == m.cursor {
 					style := highlightStyle
 					line = style.Render(line)
