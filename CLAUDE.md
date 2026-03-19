@@ -119,31 +119,44 @@ graph LR
 
 | File | Role |
 |------|------|
-| `object.go` | Object entity (aggregate root) + Vault facade methods |
-| `object_id.go` | ObjectID value object |
-| `object_repository.go` | ObjectRepository interface |
-| `object_index.go` | ObjectIndex interface + ObjectResult + SortRule |
-| `object_service.go` | ObjectService (command use cases) |
-| `query_service.go` | QueryService (query use cases) |
+| `display.go` | DisplayProperty struct + FormatValue/Format rendering + Vault.BuildDisplayProperties facade |
+| `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
+| `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
+| `domain_event.go` | Domain event types + EventDispatcher |
+| `filter_operator.go` | Type-aware filter operator registry (validOperators) + FilterRuleToSQL translation + ValidateFilterOperator |
+| `list.go` | Vault.ListTypes() facade for listing all available type names |
 | `local_object_repository.go` | LocalObjectRepository (struct, path conventions, object CRUD, shared properties) |
 | `local_object_repository_schema.go` | Type schema CRUD and migration |
 | `local_object_repository_template.go` | Template CRUD |
-| `sqlite_object_index.go` | SQLiteObjectIndex (SQLite queries) |
+| `migrate.go` | MigrateObjects (add/remove/rename properties) + MigrateSchemas (enum→select conversion) |
+| `name_template.go` | EvaluateNameTemplate for `{{ date:FORMAT }}` placeholder expansion in name templates |
+| `object.go` | Object entity (aggregate root) + Vault facade methods |
+| `object_id.go` | ObjectID value object |
+| `object_index.go` | ObjectIndex interface + ObjectResult + SortRule |
+| `object_repository.go` | ObjectRepository interface |
+| `object_service.go` | ObjectService (command use cases) |
 | `projector.go` | Projector (file→index sync) |
-| `domain_event.go` | Domain event types + EventDispatcher |
-| `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `type_schema.go` | TypeSchema entity + helpers + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
-| `type_schema_validate.go` | Schema validation (ValidateSchema) + object validation (ValidateObject) + property type validators |
-| `type_schema_marshal.go` | YAML serialization (MarshalTypeSchema) + version handling (CompareVersions) + color validation (ValidColorPresets) |
-| `stats.go` | VaultStats/TypeSummary/TypeStats/PropertyStats structs + QueryService.VaultStats()/TypeStats() methods + TypeSummary.DisplayName() |
-| `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
-| `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
-| `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
-| `vault_config.go` | VaultConfig struct + YAML loading + WriteConfig + DefaultType() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
+| `query.go` | Vault query facades (QueryObjects/SearchObjects/VaultStats/TypeStats/RebuildIndex) + ObjectResult→Object converters |
+| `query_service.go` | QueryService (query use cases) |
+| `relation.go` | Relation struct + Vault.LinkObjects/UnlinkObjects facades + relation property helpers (append/remove) |
+| `shared_properties.go` | Vault.LoadSharedProperties + SharedPropertiesMap + ValidateSharedProperties + resolveUseEntries |
 | `slugify.go` | Slugify() function for converting natural-language names to valid slugs |
+| `sqlite_object_index.go` | SQLiteObjectIndex (SQLite queries) |
+| `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
+| `stats.go` | VaultStats/TypeSummary/TypeStats/PropertyStats structs + QueryService.VaultStats()/TypeStats() methods + TypeSummary.DisplayName() |
+| `sync.go` | SyncResult/OrphanedRelation structs + Vault.SyncIndex() facade for Projector.Sync |
+| `system_property.go` | SystemProperty registry (name/description/created_at/updated_at/tags) + IsSystemProperty/IsImmutableSystemProperty helpers |
+| `tag.go` | resolveTagReference helper for tag name-to-ID resolution during sync |
 | `template.go` | Template entity + Vault facade methods (ListTemplates/LoadTemplate/SaveTemplate/DeleteTemplate) |
+| `type_schema.go` | TypeSchema entity + helpers + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
+| `type_schema_marshal.go` | YAML serialization (MarshalTypeSchema) + version handling (CompareVersions) + color validation (ValidColorPresets) |
+| `type_schema_validate.go` | Schema validation (ValidateSchema) + object validation (ValidateObject) + property type validators |
+| `ulid.go` | GenerateULID + StripULID + ulidSuffixPattern for ULID generation and stripping |
+| `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
+| `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
+| `vault_config.go` | VaultConfig struct + YAML loading + WriteConfig + DefaultType() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
 | `view.go` | ViewConfig/FilterRule structs + ViewLayout constants + Vault view CRUD (ListViews/LoadView/SaveView/DeleteView/DefaultView) |
-| `filter_operator.go` | Type-aware filter operator registry (validOperators) + FilterRuleToSQL translation + ValidateFilterOperator |
+| `wikilink.go` | WikiLink/StoredWikiLink structs + ParseWikiLinks + RenderWikiLinks + Vault.ListWikiLinks/ListBacklinks facades |
 
 ### TUI Architecture
 

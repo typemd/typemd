@@ -7,7 +7,7 @@ sidebar:
 
 顯示 Object 的完整資訊：屬性（包含 Relation 和反向連結）和內文。
 
-支援前綴匹配 — 可以省略 ULID 後綴，只要前綴能唯一識別 Object 即可。如果有多個 Object 匹配，會顯示候選清單。
+支援前綴匹配 — 可以省略 ULID 後綴，只要前綴能唯一識別 Object 即可。如果有多個 Object 匹配，指令會回傳錯誤並列出所有匹配的 ID，方便你提供更精確的前綴。
 
 ```bash
 tmd object show book/golang-in-action

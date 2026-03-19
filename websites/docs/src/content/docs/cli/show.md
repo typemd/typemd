@@ -7,7 +7,7 @@ sidebar:
 
 Displays an object's full information: properties (including relations and backlinks) and body.
 
-Supports prefix matching — you can omit the ULID suffix if the prefix uniquely identifies an object. If multiple objects match, the command displays a disambiguation list.
+Supports prefix matching — you can omit the ULID suffix if the prefix uniquely identifies an object. If multiple objects match, the command returns an error listing the matching IDs so you can provide a more specific prefix.
 
 ```bash
 tmd object show book/golang-in-action
