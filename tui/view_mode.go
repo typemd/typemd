@@ -70,8 +70,9 @@ func (vm *viewMode) load() {
 
 	vm.schema, _ = vm.vault.LoadType(vm.typeName)
 
-	// Query objects using vault facade
-	objects, err := vm.vault.QueryObjects(core.TypeFilter(vm.typeName), vm.view.Sort...)
+	// Query objects using vault facade, combining type filter with view filter rules
+	filter := append(core.TypeFilter(vm.typeName), vm.view.Filter...)
+	objects, err := vm.vault.QueryObjects(filter, vm.view.Sort...)
 	if err != nil {
 		vm.objects = nil
 	} else {
