@@ -224,19 +224,25 @@ If unsure, default to BDD with sequential implementation.
 
 At key decision points, check with the user before proceeding.
 
+### Post-Implementation Review
+
+After all tasks are complete, run these two review steps before shipping:
+
+1. **Simplify** — invoke the `simplify` skill to review changed code for reuse, quality, and efficiency, then fix any issues found.
+
+2. **Update Documentation** — invoke the `update-doc` skill to compare implementation against all documentation and fix discrepancies.
+
 ### Phase 3: Verify and Ship
 
 Execute the following steps in order:
 
 1. **Verify** — invoke `superpowers:verification-before-completion` to confirm all tests pass, no regressions, and implementation matches the plan.
 
-2. **Update Documentation** — invoke `update-doc` skill to fix any discrepancies before committing.
+2. **Commit and Push** — invoke `git:commit-push` skill.
 
-3. **Commit and Push** — invoke `git:commit-push` skill.
+3. **Archive** — use the `openspec-archive-change` skill to archive the completed change. This syncs any delta specs to the main `openspec/specs/` directory and moves the change to `openspec/changes/archive/`.
 
-4. **Archive** — use the `openspec-archive-change` skill to archive the completed change. This syncs any delta specs to the main `openspec/specs/` directory and moves the change to `openspec/changes/archive/`.
-
-5. **Open PR** — create a pull request using the project's PR template at `.github/pull_request_template.md` as the body structure:
+4. **Open PR** — create a pull request using the project's PR template at `.github/pull_request_template.md` as the body structure:
 
 ```bash
 gh pr create --title "<title>" --body "$(cat <<'EOF'
