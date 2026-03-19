@@ -63,7 +63,29 @@ TypeMD 中知識的基本單位。你不需要用「檔案」或「筆記」來�
 
 已儲存的設定，控制某個 Type 的物件如何顯示 — 包含排序順序、篩選規則、分組和佈局。View 以 YAML 檔案儲存在 `.typemd/types/<name>/views/`。每個 Type 都有一個隱含的預設 View（list 佈局，按 name 排序）。
 
-[深入了解 →](/zh-tw/advanced/file-structure#view)
+[深入了解 →](/zh-tw/advanced/file-structure#views)
+
+## System Property（系統屬性）
+
+由 TypeMD 管理、存在於每個 Object 上的屬性：`name`、`description`、`created_at`、`updated_at` 和 `tags`。系統屬性在 frontmatter 中依固定順序排在最前面。使用者撰寫的系統屬性（`name`、`description`、`tags`）可以被 template 覆蓋；自動管理的（`created_at`、`updated_at`）不能覆蓋。
+
+[深入了解 →](/zh-tw/basics/properties#系統屬性)
+
+## Shared Property（共用屬性）
+
+定義在 `.typemd/properties.yaml` 中的可重複使用屬性定義，type schema 可透過 `use` 關鍵字引用。共用屬性確保跨 type 的定義一致。引用時可以依 type 覆寫 `pin`、`emoji` 和 `description`。
+
+[深入了解 →](/zh-tw/basics/properties#共用屬性)
+
+## Query（查詢）
+
+對索引進行的結構化篩選與排序請求。查詢使用篩選規則（屬性 + 運算子 + 值）和排序規則（屬性 + 方向）來擷取指定 Type 的符合物件。透過 CLI（`tmd query`）公開，View 也在內部使用。
+
+[深入了解 →](/zh-tw/basics/queries)
+
+## Search（搜尋）
+
+跨物件名稱、描述和內文的全文搜尋。不同於查詢（Query）是針對結構化屬性篩選，搜尋會將自由文字輸入與搜尋索引比對。透過 CLI（`tmd search`）和 TUI 搜尋列公開。
 
 ## Slug
 

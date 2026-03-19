@@ -11,10 +11,10 @@ A Type is a blueprint that defines what kind of Object you're working with and w
 
 Think of a Type as a category with structure. A `book` Type knows that books have a title, a reading status, and a rating. A `person` Type knows that people have a name and a role.
 
-Types are defined as YAML schema files in `.typemd/types/`:
+Types are defined as YAML schema files in `.typemd/types/<name>/schema.yaml`:
 
 ```yaml
-# .typemd/types/book.yaml
+# .typemd/types/book/schema.yaml
 name: book
 plural: books
 emoji: 📚
@@ -59,7 +59,13 @@ TypeMD has two built-in Types:
 | 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property; has `unique: true` to enforce name uniqueness |
 | 📄 `page` | _(none)_ | General-purpose content container for free-form writing |
 
-Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `.typemd/types/<name>.yaml` file with additional properties. All other types are user-defined via `.typemd/types/*.yaml` files. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
+Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `.typemd/types/<name>/schema.yaml` file with additional properties. All other types are user-defined via `.typemd/types/*/schema.yaml` files.
+
+:::note
+Legacy single-file format (`.typemd/types/book.yaml`) is automatically migrated to directory format (`book/schema.yaml`) on first load.
+:::
+
+TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
 
 For details on tags, see [Tags](/basics/tags).
 
@@ -80,6 +86,8 @@ Each property in a Type schema has a data type:
 | `select` | One of a fixed set of options | `"reading"` |
 | `multi_select` | Multiple values from options | `["go", "programming"]` |
 | `relation` | A link to another Object | `"person/alan-donovan"` |
+
+`select` and `multi_select` properties require an `options` array. Each option has a `value` (required) and an optional `label` for display. When `label` is omitted, it defaults to the `value`. See [Properties](/basics/properties#choice-types) for a full example.
 
 For relation properties, see the [Relations](/concepts/relations) page for details on `target`, `bidirectional`, `inverse`, and `multiple` fields.
 

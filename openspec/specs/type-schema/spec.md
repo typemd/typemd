@@ -244,7 +244,7 @@ A type schema SHALL NOT define a `name` property that has the same name as any s
 
 ### Requirement: LoadType resolves use entries
 
-`LoadType()` SHALL resolve all `use` entries in a type schema by replacing them with fully resolved Property objects. The resolved Property SHALL have all fields from the shared definition, with `pin` and `emoji` overridden if specified in the `use` entry. After resolution, the `Use` field SHALL be empty.
+`LoadType()` SHALL resolve all `use` entries in a type schema by replacing them with fully resolved Property objects. The resolved Property SHALL have all fields from the shared definition, with `pin`, `emoji`, and `description` overridden if specified in the `use` entry. After resolution, the `Use` field SHALL be empty.
 
 #### Scenario: Use entry resolved with no overrides
 

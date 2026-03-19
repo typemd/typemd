@@ -48,7 +48,7 @@ Detects broken links — `[[target]]` references in object body content where th
 
 ### Phase 5: Name Uniqueness Validation
 
-Checks all types with `unique: true` in their schema (e.g., the built-in `tag` type) to ensure no two objects of the same type share the same `name` value.
+Checks all types with `unique: true` in their schema (e.g., the built-in `tag` type) to ensure no two objects of the same type share the same `name` value. The uniqueness comparison uses exact string match — it is case-sensitive and no normalization (case folding, whitespace trimming) is applied.
 
 ## Lenient validation philosophy
 

@@ -13,7 +13,7 @@ Every Object supports five system properties managed by TypeMD. These provide th
 
 | Property | Description | Mutability | Why |
 |----------|-------------|------------|-----|
-| `name` | Display name, auto-populated from the slug on creation | User-authored | Decouples display from filename — supports spaces, casing, and renaming without moving files |
+| `name` | Display name, auto-populated from the slug on creation (or auto-generated from a [name template](/basics/templates#name-templates) when defined) | User-authored | Decouples display from filename — supports spaces, casing, and renaming without moving files |
 | `description` | Optional single-line summary for list displays and search results | User-authored | Provides a consistent summary field across all types, used in list views, search results, and API responses |
 | `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) | Auto-managed | Enables sorting by creation date and understanding the timeline of a vault |
 | `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) | Auto-managed | Enables sorting by recency and tracking the evolution of Objects |
@@ -181,7 +181,7 @@ properties:
 |---|----------------|-----------------|
 | Defined in | `.typemd/properties.yaml` | `.typemd/types/<type>.yaml` |
 | Reusable | Yes — referenced via `use` | No — scoped to one type |
-| Customizable per type | `pin` and `emoji` only | Fully customizable |
+| Customizable per type | `pin`, `emoji`, and `description` only | Fully customizable |
 | Use case | Properties shared across multiple types | Properties unique to one type |
 
 **Rule of thumb**: if a property appears in two or more types with the same definition, make it a shared property.

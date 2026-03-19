@@ -17,8 +17,10 @@ An Object is a Markdown file with two parts:
 ```markdown
 ---
 name: golang-in-action
+description:
 created_at: "2026-03-09T10:30:00+08:00"
 updated_at: "2026-03-11T18:00:00+08:00"
+tags: []
 title: Go in Action
 status: reading
 rating: 4.5

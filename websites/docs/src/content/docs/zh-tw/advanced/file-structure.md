@@ -86,6 +86,8 @@ book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 # .typemd/types/book/schema.yaml
 name: book
 plural: books
+color: blue
+description: "Books I've read or want to read"
 unique: false
 properties:
   - name: status
@@ -104,7 +106,7 @@ properties:
 
 完整的 type schema 格式請參閱 [Type](/zh-tw/concepts/types)。
 
-## View
+## Views
 
 每個 type 可以有多個已儲存的 view，定義物件的排序、篩選和顯示方式。View 以 YAML 檔案儲存在 `.typemd/types/<name>/views/`：
 
@@ -120,7 +122,8 @@ filter:
   - property: status
     operator: is
     value: reading
-group_by: genre
+group_by:
+  - property: genre
 ```
 
 有兩種佈局可用：

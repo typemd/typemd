@@ -19,7 +19,7 @@ The system SHALL support an optional `.typemd/properties.yaml` file that defines
 
 ### Requirement: Shared properties support all property fields
 
-Shared property definitions SHALL support all fields available in type schema properties: `name`, `type`, `emoji`, `pin`, `options`, `target`, `default`, `multiple`, `bidirectional`, `inverse`.
+Shared property definitions SHALL support all fields available in type schema properties: `name`, `type`, `emoji`, `description`, `pin`, `options`, `target`, `default`, `multiple`, `bidirectional`, `inverse`.
 
 #### Scenario: Shared property with options
 

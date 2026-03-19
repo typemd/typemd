@@ -65,6 +65,28 @@ A saved configuration that controls how Objects of a Type are displayed — incl
 
 [Learn more →](/advanced/file-structure#views)
 
+## System Property
+
+A property managed by TypeMD that exists on every Object: `name`, `description`, `created_at`, `updated_at`, and `tags`. System properties appear first in frontmatter in a fixed order. User-authored system properties (`name`, `description`, `tags`) can be overridden by templates; auto-managed ones (`created_at`, `updated_at`) cannot.
+
+[Learn more →](/basics/properties#system-properties)
+
+## Shared Property
+
+A reusable property definition in `.typemd/properties.yaml` that can be referenced from type schemas via the `use` keyword. Shared properties ensure consistent definitions across types. When referencing, you can override `pin`, `emoji`, and `description` per type.
+
+[Learn more →](/basics/properties#shared-properties)
+
+## Query
+
+A structured filter-and-sort request against the index. Queries use filter rules (property + operator + value) and sort rules (property + direction) to retrieve matching Objects of a given Type. Exposed via the CLI (`tmd query`) and used internally by Views.
+
+[Learn more →](/basics/queries)
+
+## Search
+
+A full-text search across Object names, descriptions, and body content. Unlike Queries which filter on structured properties, Search matches free-text input against the search index. Exposed via the CLI (`tmd search`) and the TUI search bar.
+
 ## Slug
 
 The human-readable part of an Object's filename. For example, `golang-in-action` in `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md`. Derived from the name you provide when creating an Object.

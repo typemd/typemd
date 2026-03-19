@@ -181,7 +181,7 @@ Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_ty
 - Built-in types: `tag` (🏷️, plural "tags", unique, backs `tags` system property) and `page` (📄, plural "pages", general-purpose content container). Built-in types exist without YAML files, cannot be deleted, but can be overridden by custom `.typemd/types/<name>.yaml`.
 - Shared properties: `.typemd/properties.yaml` (optional, defines reusable property definitions referenced via `use` in type schemas; `use` entries can override `pin`, `emoji`, and `description`)
 - Relations defined as properties in type schemas
-- Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
+- Wiki-links: `[[type/slug-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, props visibility, and optionally view mode state — `view_type_name`, `view_name`, `view_cursor`, `view_scroll`, `view_expanded_groups` — when the TUI was in view mode on exit)
 - Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`)

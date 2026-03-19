@@ -85,6 +85,7 @@ Type schema 中的每個屬性都有一個 `type`，決定它接受什麼值以�
 | 設定 | 型別 | 說明 |
 |------|------|------|
 | `emoji` | string | 簡潔顯示用的視覺圖示（在同一 type 內必須唯一） |
+| `description` | string | 自由文字，說明該屬性的用途 |
 | `pin` | integer | 正整數，讓屬性突出顯示在 TUI body 面板頂端。數值越小排越前面。已置頂的屬性不會出現在 Properties 面板中。 |
 | `default` | any | 建立新 object 時指定的預設值 |
 
@@ -154,12 +155,13 @@ properties:
 
 ### 覆寫欄位
 
-透過 `use` 引用共用屬性時，你可以覆寫兩個欄位：
+透過 `use` 引用共用屬性時，你可以覆寫三個欄位：
 
 | 欄位 | 說明 |
 |------|------|
 | `pin` | 覆寫此 type 中的置頂位置 |
 | `emoji` | 覆寫此 type 中的顯示 emoji |
+| `description` | 覆寫此 type 中的屬性說明 |
 
 其他所有欄位不能覆寫——它們來自共用定義。
 
@@ -179,7 +181,7 @@ properties:
 |---|---------|---------|
 | 定義位置 | `.typemd/properties.yaml` | `.typemd/types/<type>.yaml` |
 | 可重複使用 | 是——透過 `use` 引用 | 否——僅限單一 type |
-| 可依 type 自訂 | 僅限 `pin` 和 `emoji` | 完全可自訂 |
+| 可依 type 自訂 | 僅限 `pin`、`emoji` 和 `description` | 完全可自訂 |
 | 適用情境 | 多個 type 共用的屬性 | 單一 type 獨有的屬性 |
 
 **經驗法則**：如果某個屬性以相同的定義出現在兩個以上的 type 中，就把它做成共用屬性。

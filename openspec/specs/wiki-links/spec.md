@@ -96,7 +96,7 @@ The `tmd type validate` command SHALL report links whose targets do not resolve 
 #### Scenario: Broken link is reported
 
 - **WHEN** an object contains a link `[[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]]` that does not resolve
-- **THEN** validation reports `<object-id>: broken link [[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]]`
+- **THEN** validation reports `<object-id>: broken wiki-link [[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]]`
 
 #### Scenario: Valid links pass validation
 

@@ -72,6 +72,11 @@ tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 Use `--both` to remove the inverse side as well. This only takes effect when the relation property has `bidirectional: true` and an `inverse` field defined in the schema.
 
+## Behavior details
+
+- **Duplicate links are rejected** — For multiple-value relations, linking the same target object twice is rejected. Each target can appear at most once in the list.
+- **Reverse relations** — In the TUI object detail view, reverse relations (where the current object is the target of another object's relation) appear with a `←` indicator to distinguish them from forward relations.
+
 ## Relations vs. wiki-links
 
 TypeMD also supports [links](/concepts/links) (`[[type/slug]]`) for informal inline references. Relations are structured and schema-defined; links are freeform and live in the Markdown body. See the [Links](/concepts/links) page for a detailed comparison.

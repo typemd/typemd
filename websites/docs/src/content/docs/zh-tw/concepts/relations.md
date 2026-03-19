@@ -1,5 +1,5 @@
 ---
-title: Relation
+title: Relations
 description: Object 之間如何透過帶型別的連結互相連接。
 sidebar:
   order: 4
@@ -71,6 +71,11 @@ tmd relation unlink book/golang-in-action author person/alan-donovan --both
 ```
 
 使用 `--both` 來同時移除反向端。這只在 schema 中定義了 `bidirectional: true` 和 `inverse` 欄位時才有效。
+
+## 行為細節
+
+- **重複連結會被拒絕** — 對於多值 relation，連結同一個目標物件兩次會被拒絕。每個目標在清單中最多只能出現一次。
+- **反向 relation** — 在 TUI 的 object 詳細檢視中，反向 relation（目前 object 是另一個 object 的 relation 目標）會以 `←` 指示符標示，與正向 relation 區分。
 
 ## Relation vs. Wiki-link
 

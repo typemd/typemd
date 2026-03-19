@@ -120,7 +120,8 @@ filter:
   - property: status
     operator: is
     value: reading
-group_by: genre
+group_by:
+  - property: genre
 ```
 
 Two layouts are available:

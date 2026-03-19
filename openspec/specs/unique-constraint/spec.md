@@ -1,6 +1,6 @@
 ## Purpose
 
-Name uniqueness constraint on type schemas. Types with `unique: true` enforce that no two objects share the same `name` value.
+Name uniqueness constraint on type schemas. Types with `unique: true` enforce that no two objects **of the same type** share the same `name` value.
 
 ## Requirements
 
