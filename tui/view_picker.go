@@ -3,7 +3,6 @@ package tui
 import (
 	tea "charm.land/bubbletea/v2"
 	"charm.land/huh/v2"
-	"charm.land/lipgloss/v2"
 )
 
 // viewPicker wraps a huh.Form with a single Select field for choosing a view.
@@ -80,13 +79,5 @@ func (vp *viewPicker) Update(msg tea.Msg) (*viewPicker, tea.Cmd) {
 func (vp *viewPicker) View(width, height int) string {
 	content := vp.form.View()
 
-	popupStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("12")).
-		Padding(1, 2)
-
-	popup := popupStyle.Render(content)
-	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, popup,
-		lipgloss.WithWhitespaceChars(" "),
-	)
+	return renderPopup(content, width, height, 0)
 }

@@ -3,8 +3,6 @@ package tui
 import (
 	"fmt"
 	"strings"
-
-	"charm.land/lipgloss/v2"
 )
 
 const (
@@ -76,13 +74,5 @@ func renderHelp(width, height int, readOnly bool) string {
 		popupW = width - 4
 	}
 
-	popup := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(colorFocusBorder).
-		Width(popupW + 2). // +2: lipgloss v2 Width includes border
-		Padding(1, 2).
-		Render(content)
-
-	// Center the popup
-	return lipgloss.Place(width, height, lipgloss.Center, lipgloss.Center, popup)
+	return renderPopup(content, width, height, popupW+2) // +2: lipgloss v2 Width includes border
 }

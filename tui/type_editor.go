@@ -677,11 +677,10 @@ func (te *typeEditor) renderPropPopup(termW, termH int) string {
 	pd := te.propDetail
 	p := te.schema.Properties[te.propDetailIdx]
 
-
 	var b strings.Builder
 
 	if pd.editing {
-		b.WriteString(fmt.Sprintf("  Emoji: %s", pd.emojiInput.View()))
+		b.WriteString(fmt.Sprintf("Emoji: %s", pd.emojiInput.View()))
 	} else {
 		val := p.Emoji
 		if val == "" {
@@ -689,7 +688,7 @@ func (te *typeEditor) renderPropPopup(termW, termH int) string {
 		} else {
 			val = padEmoji(val)
 		}
-		line := fmt.Sprintf("  Emoji: %s", val)
+		line := fmt.Sprintf("Emoji: %s", val)
 		if pd.cursor == 0 {
 			line = highlightStyle.Render(line)
 		}
@@ -701,9 +700,9 @@ func (te *typeEditor) renderPropPopup(termW, termH int) string {
 	// future: description field here
 
 	if pd.editing {
-		b.WriteString("\n  enter: save  esc: cancel")
+		b.WriteString("\nenter: save  esc: cancel")
 	} else {
-		b.WriteString("\n  enter: edit  esc: back")
+		b.WriteString("\nenter: edit  esc: back")
 	}
 
 	popupW := 36
@@ -713,18 +712,9 @@ func (te *typeEditor) renderPropPopup(termW, termH int) string {
 
 	titleStyle := lipgloss.NewStyle().Bold(true)
 	title := titleStyle.Render(fmt.Sprintf("%s (%s)", p.Name, p.Type))
-	fullContent := fmt.Sprintf("  %s\n  ──────────────────\n%s", title, b.String())
+	fullContent := fmt.Sprintf("%s\n──────────────────\n%s", title, b.String())
 
-	popupStyle := lipgloss.NewStyle().
-		Border(lipgloss.RoundedBorder()).
-		BorderForeground(lipgloss.Color("12")).
-		Width(popupW).
-		Padding(1, 0)
-
-	popup := popupStyle.Render(fullContent)
-	return lipgloss.Place(termW, termH, lipgloss.Center, lipgloss.Center, popup,
-		lipgloss.WithWhitespaceChars(" "),
-	)
+	return renderPopup(fullContent, termW, termH, popupW)
 }
 
 // ── Add Property Wizard ─────────────────────────────────────────────────────
