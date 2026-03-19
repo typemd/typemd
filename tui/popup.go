@@ -1,6 +1,9 @@
 package tui
 
-import "charm.land/lipgloss/v2"
+import (
+	"github.com/typemd/typemd/tui/widget"
+	"charm.land/lipgloss/v2"
+)
 
 // renderPopup renders content as a centered popup overlay with a rounded border.
 // The border color uses the theme's colorFocusBorder. An optional width can be
@@ -15,8 +18,5 @@ func renderPopup(content string, termW, termH int, popupWidth int) string {
 		style = style.Width(popupWidth)
 	}
 
-	popup := style.Render(content)
-	return lipgloss.Place(termW, termH, lipgloss.Center, lipgloss.Center, popup,
-		lipgloss.WithWhitespaceChars(" "),
-	)
+	return widget.CenteredPopup(content, style, termW, termH)
 }

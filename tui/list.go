@@ -107,19 +107,6 @@ func clampCursor(cursor, totalRows int) int {
 	return cursor
 }
 
-// adjustScrollOffset returns a new offset so that cursor is visible within viewHeight.
-func adjustScrollOffset(cursor, offset, viewHeight int) int {
-	if viewHeight <= 0 {
-		return 0
-	}
-	if cursor < offset {
-		return cursor
-	}
-	if cursor >= offset+viewHeight {
-		return cursor - viewHeight + 1
-	}
-	return offset
-}
 
 // renderList renders the left panel list with scroll offset support.
 func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, width, height int) string {

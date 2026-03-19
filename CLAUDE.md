@@ -9,6 +9,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **core/** — Core library: objects, types, relations, index
 - **cmd/** — CLI commands (Cobra)
 - **tui/** — Terminal UI (Bubble Tea)
+  - **tui/widget/** — Shared UI primitives (popup, scroll) used across TUI components
 - **mcp/** — MCP server
 - **web/** — Web UI: React + shadcn/ui (future)
 - **app/** — Desktop app via Wails + shared React frontend (future)
@@ -146,7 +147,7 @@ The TUI uses a three-panel layout (sidebar, body, properties) with a **right pan
 
 - `panelEmpty` — no content selected
 - `panelObject` — object detail view (body + properties)
-- `panelTypeEditor` — type schema editor (independent sub-model `typeEditor` in `tui/type_editor.go`)
+- `panelTypeEditor` — type schema editor (independent sub-model `typeEditor` split across `tui/type_editor.go`, `type_editor_update.go`, `type_editor_render.go`, `type_editor_wizard.go`, `type_editor_prop_detail.go`)
 - `panelTemplate` — template detail view (independent sub-model `templateEditor` in `tui/template_editor.go`)
 - `panelView` — full-width view mode (independent sub-model `viewMode` in `tui/view_mode.go`)
 

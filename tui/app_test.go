@@ -110,20 +110,6 @@ func TestClampCursor(t *testing.T) {
 	}
 }
 
-func TestAdjustScrollOffset(t *testing.T) {
-	// cursor above viewport — scroll up
-	if o := adjustScrollOffset(2, 5, 10); o != 2 {
-		t.Errorf("adjustScrollOffset(2,5,10) = %d, want 2", o)
-	}
-	// cursor below viewport — scroll down
-	if o := adjustScrollOffset(15, 5, 10); o != 6 {
-		t.Errorf("adjustScrollOffset(15,5,10) = %d, want 6", o)
-	}
-	// cursor within viewport — no change
-	if o := adjustScrollOffset(7, 5, 10); o != 5 {
-		t.Errorf("adjustScrollOffset(7,5,10) = %d, want 5", o)
-	}
-}
 
 func TestScrollOffset_CursorFollows(t *testing.T) {
 	var objects []*core.Object

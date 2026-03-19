@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/typemd/typemd/core"
+	"github.com/typemd/typemd/tui/widget"
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/bubbles/v2/textarea"
 	"charm.land/bubbles/v2/viewport"
@@ -562,7 +563,7 @@ func (m *model) reloadFromDisk() {
 // adjustScroll updates scrollOffset so cursor is always visible.
 func (m *model) adjustScroll() {
 	contentH := m.height - 3
-	m.scrollOffset = adjustScrollOffset(m.cursor, m.scrollOffset, contentH)
+	m.scrollOffset = widget.AdjustScroll(m.cursor, m.scrollOffset, contentH)
 }
 
 // resizePanel adjusts the focused panel width by delta characters.

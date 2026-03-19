@@ -7,6 +7,7 @@ import (
 
 	"github.com/mattn/go-runewidth"
 	"github.com/typemd/typemd/core"
+	"github.com/typemd/typemd/tui/widget"
 	tea "charm.land/bubbletea/v2"
 	"charm.land/lipgloss/v2"
 )
@@ -301,12 +302,7 @@ func (vm *viewMode) View() string {
 	if visibleH < 1 {
 		visibleH = 1
 	}
-	if vm.cursor < vm.scroll {
-		vm.scroll = vm.cursor
-	}
-	if vm.cursor >= vm.scroll+visibleH {
-		vm.scroll = vm.cursor - visibleH + 1
-	}
+	vm.scroll = widget.AdjustScroll(vm.cursor, vm.scroll, visibleH)
 
 	highlightStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("0")).
