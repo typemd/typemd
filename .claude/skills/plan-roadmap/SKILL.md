@@ -32,11 +32,10 @@ Fetch all Release issues and their sub-issues, plus unassigned issues:
 
 ```bash
 # All Release issues (open and closed)
-# Note: GitHub GraphQL filterBy does NOT support issueType filtering.
-# Fetch all issues with issueType field, then filter by issueType.name == "Release" in the results.
+# Use filterBy.type to filter by issue type name (e.g. "Release").
 gh api graphql -f query='query {
   repository(owner:"typemd", name:"typemd") {
-    issues(first: 100, states: [OPEN, CLOSED], orderBy: {field: CREATED_AT, direction: ASC}) {
+    issues(first: 100, states: [OPEN, CLOSED], orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {type: "Release"}) {
       nodes {
         number title state
         issueType { name }
@@ -48,10 +47,10 @@ gh api graphql -f query='query {
       }
     }
   }
-}' --jq '.data.repository.issues.nodes | map(select(.issueType.name == "Release"))'
+}'
 
 # All open issues (to find unassigned ones)
-gh issue list --state open --json number,title,labels --limit 100
+gh issue list --state open --json number,title,labels --limit 200
 ```
 
 Filter out issues that are already sub-issues of a Release to identify unassigned issues.
@@ -171,7 +170,7 @@ Present final state of all affected Release issues:
 ```bash
 gh api graphql -f query='query {
   repository(owner:"typemd", name:"typemd") {
-    issues(first: 100, states: OPEN, orderBy: {field: CREATED_AT, direction: ASC}) {
+    issues(first: 100, states: OPEN, orderBy: {field: CREATED_AT, direction: ASC}, filterBy: {type: "Release"}) {
       nodes {
         number title
         issueType { name }
@@ -182,5 +181,5 @@ gh api graphql -f query='query {
       }
     }
   }
-}' --jq '.data.repository.issues.nodes | map(select(.issueType.name == "Release"))'
+}'
 ```

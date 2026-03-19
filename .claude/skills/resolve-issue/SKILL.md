@@ -3,6 +3,7 @@ name: resolve-issue
 description: |
   This skill should be used when the user asks to "resolve an issue", "work on issue #N", "fix #N", "implement #N", "close #N", "tackle #N", "pick up #N", "start working on #N", "what should I work on next", or references a specific GitHub issue number they want to work on. Can also auto-select the best issue when no number is specified.
 allowed-tools:
+  - Bash(${CLAUDE_SKILL_DIR}/scripts:*)
   - Bash(gh api graphql:*)
   - Bash(gh issue list:*)
   - Bash(gh issue view:*)
@@ -50,25 +51,35 @@ Preflight covers all lightweight preparation steps before the main phases begin.
 
 If the user does not specify an issue number, automatically select the best issue to work on.
 
-**Step 1: Find the nearest open Release issue**
+**Step 1: Find the nearest open Release issue and its open sub-issues**
 
 ```bash
-# Note: GitHub GraphQL filterBy does NOT support issueType filtering.
-# Fetch open issues and filter by title pattern to find Release issues.
-gh api graphql -f query='query {
-  repository(owner:"typemd", name:"typemd") {
-    issues(first: 50, states: OPEN, orderBy: {field: CREATED_AT, direction: ASC}) {
-      nodes { number title subIssues(first: 30) { nodes { number title state labels(first: 5) { nodes { name } } } } }
-    }
-  }
-}' --jq '.data.repository.issues.nodes | map(select(.title | test("^v[0-9]+\\.[0-9]+\\.[0-9]+ —"))) | sort_by(.number) | first'
+${CLAUDE_SKILL_DIR}/scripts/find-release-issues.sh
 ```
 
-If no open Release issue exists, fall back to all open issues.
+The script queries all open issues via GraphQL, filters for Release issues (title matching `vX.Y.Z —`), and returns a JSON object:
 
-**Step 2: List open sub-issues in that Release**
+```json
+{
+  "release": { "number": 123, "title": "v0.5.0 — ..." },
+  "issues": [
+    { "number": 74, "title": "...", "labels": ["core"] },
+    ...
+  ]
+}
+```
 
-Extract the open sub-issues from the Release issue's `subIssues` response above.
+If no Release issue exists, `release` is `null` and `issues` contains all open issues.
+
+**Step 2: Get details for candidate issues**
+
+From the issues returned in Step 1, pick the top candidates (up to 5-6) based on labels and titles, then fetch their details:
+
+```bash
+${CLAUDE_SKILL_DIR}/scripts/get-issue-details.sh <number> [number ...]
+```
+
+The script returns a JSON array with each issue's number, title, labels, and body (truncated to 300 chars).
 
 **Step 3: Rank issues by priority**
 
