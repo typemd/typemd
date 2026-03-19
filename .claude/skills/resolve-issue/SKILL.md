@@ -1,7 +1,7 @@
 ---
 name: resolve-issue
 description: |
-  This skill should be used when the user asks to "resolve an issue", "work on issue #N", "fix #N", "implement #N", "close #N", "tackle #N", "pick up #N", "start working on #N", "what should I work on next", or references a specific GitHub issue number they want to work on. Can also auto-select the best issue when no number is specified.
+  This skill should be used when the user asks to "resolve an issue", "work on issue #N", "fix #N", "implement #N", "close #N", "tackle #N", "pick up #N", "start working on #N", "what should I work on next", or references a specific GitHub issue number they want to work on. Can also accept a version number (e.g., "0.5.0") to select from that release's sub-issues, or auto-select the best issue when no argument is specified.
 ---
 
 # Resolve Issue
@@ -41,39 +41,62 @@ If no matching change exists, start from Preflight.
 
 Preflight covers all lightweight preparation steps before the main phases begin.
 
+### Argument Parsing
+
+The argument can be one of three forms:
+
+| Input | Example | Interpretation |
+|-------|---------|---------------|
+| Issue number | `42`, `#42` | Resolve that specific issue → skip to **Check Issue State** |
+| Version number | `0.5.0`, `v0.5.0` | Expand that version's sub-issues, then select one |
+| Empty | *(none)* | List all open Release issues → choose a version → select a sub-issue |
+
+**How to detect:**
+- Matches `#?\d+` (with optional `#` prefix) → issue number
+- Matches `v?\d+\.\d+\.\d+` → version number
+- Otherwise → empty / auto-select
+
 ### Issue Selection (when no issue number is specified)
 
-If the user does not specify an issue number, automatically select the best issue to work on.
+If the argument is a **version number** or **empty**, use the two-step flow below.
 
-**Step 1: Find the nearest open Release issue and its open sub-issues**
+**Step 1: Choose a Release**
+
+If no version is specified, list all open Release issues first:
 
 ```bash
 ./scripts/find-release-issues
 ```
 
-The script queries all open issues via GraphQL, filters for Release issues (title matching `vX.Y.Z —`), and returns a JSON object:
+Returns all open Release-type issues (verified via GraphQL `issueType`):
 
 ```json
 {
-  "release": { "number": 123, "title": "v0.5.0 — ..." },
-  "issues": [
-    { "number": 74, "title": "...", "labels": ["core"] },
-    ...
+  "releases": [
+    { "number": 218, "title": "v0.5.0 — Filter, Sort & View" },
+    { "number": 219, "title": "v0.6.0 — Navigate & Discover" }
   ]
 }
 ```
 
-If no Release issue exists, `release` is `null` and `issues` contains all open issues.
+Present the releases to the user via AskUserQuestion and let them pick one. If a version was already provided as an argument, skip this step.
 
-**Step 2: Get details for candidate issues**
-
-From the issues returned in Step 1, pick the top candidates (up to 5-6) based on labels and titles, then fetch their details:
+**Step 2: Expand sub-issues for the chosen release**
 
 ```bash
-./scripts/get-issue-details <number> [number ...]
+./scripts/find-release-issues <version>
 ```
 
-The script returns a JSON array with each issue's number, title, labels, and body (truncated to 300 chars).
+Returns the release's open sub-issues with body (truncated to 300 chars):
+
+```json
+{
+  "release": { "number": 218, "title": "v0.5.0 — ..." },
+  "issues": [
+    { "number": 74, "title": "...", "labels": ["core"], "body": "..." }
+  ]
+}
+```
 
 **Step 3: Rank issues by priority**
 
@@ -93,6 +116,16 @@ Ask the user via AskUserQuestion with the top 3 recommended issues:
 - **"#N: \<title\>"** — for each candidate, include a one-line reason why it's recommended (e.g., "Blocks 3 other issues", "Critical bug", "Quick win for release X")
 
 The user selects one, then proceed to **Check Issue State** with that issue number.
+
+### Standalone Issue Lookup
+
+When a specific issue number is given (not part of a release), use `get-issue-details` to fetch its details:
+
+```bash
+./scripts/get-issue-details <number> [number ...]
+```
+
+Returns a JSON array with each issue's number, title, labels, and body (truncated to 300 chars).
 
 ### Check Issue State
 

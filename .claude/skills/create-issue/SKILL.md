@@ -74,6 +74,7 @@ After setting the issue type, assign **one or more component labels**. Optionall
 
 | Label | When to use |
 |---|---|
+| `breaking-change` | Introduces breaking changes to public API or CLI |
 | `discussion` | Needs discussion before implementation |
 | `documentation` | Docs changes |
 
