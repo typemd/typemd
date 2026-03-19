@@ -339,6 +339,52 @@ properties:
 	}
 }
 
+func TestVault_MigrateSchemas_DirectoryFormat(t *testing.T) {
+	v := setupMigrateTestVault(t)
+
+	// Write enum schema in directory format (the default for new types)
+	enumSchema := []byte(`name: book
+properties:
+  - name: title
+    type: string
+  - name: status
+    type: enum
+    values:
+      - to-read
+      - reading
+      - done
+`)
+	writeTestTypeSchema(v, "book", enumSchema)
+
+	result, err := v.MigrateSchemas(false)
+	if err != nil {
+		t.Fatalf("MigrateSchemas() error = %v", err)
+	}
+
+	if len(result.Changes) != 1 {
+		t.Fatalf("len(Changes) = %d, want 1", len(result.Changes))
+	}
+	if result.Changes[0].TypeName != "book" {
+		t.Errorf("TypeName = %q, want %q", result.Changes[0].TypeName, "book")
+	}
+	if len(result.Changes[0].Properties) != 1 || result.Changes[0].Properties[0] != "status" {
+		t.Errorf("Properties = %v, want [status]", result.Changes[0].Properties)
+	}
+
+	// Verify the schema.yaml was rewritten correctly
+	schema, err := v.LoadType("book")
+	if err != nil {
+		t.Fatalf("LoadType() error = %v", err)
+	}
+	statusProp := schema.Properties[1]
+	if statusProp.Type != "select" {
+		t.Errorf("status.Type = %q, want %q", statusProp.Type, "select")
+	}
+	if len(statusProp.Options) != 3 {
+		t.Fatalf("len(status.Options) = %d, want 3", len(statusProp.Options))
+	}
+}
+
 func TestVault_MigrateSchemas_MultipleEnums(t *testing.T) {
 	v := setupMigrateTestVault(t)
 
