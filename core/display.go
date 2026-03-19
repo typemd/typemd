@@ -31,36 +31,37 @@ func displayObjectID(id string) string {
 	return StripULID(id)
 }
 
-// Format returns a human-readable string for this property.
-func (p DisplayProperty) Format() string {
+// FormatValue returns the formatted value without the key prefix.
+// Use this for contexts where the key is displayed separately (e.g. table columns).
+func (p DisplayProperty) FormatValue() string {
 	if p.IsBacklink {
-		return fmt.Sprintf("%s: ⟵ %s", p.Key, displayObjectID(p.FromID))
+		return "⟵ " + displayObjectID(p.FromID)
 	}
 	if p.IsReverse {
-		return fmt.Sprintf("%s: ← %s", p.Key, displayObjectID(p.FromID))
+		return "← " + displayObjectID(p.FromID)
 	}
 	if p.Value == nil {
-		return fmt.Sprintf("%s: (null)", p.Key)
+		return ""
 	}
 	if p.IsRelation {
-		return fmt.Sprintf("%s: → %s", p.Key, displayObjectID(fmt.Sprintf("%v", p.Value)))
+		return "→ " + displayObjectID(fmt.Sprintf("%v", p.Value))
 	}
 
 	switch p.Type {
 	case "checkbox":
 		if b, ok := p.Value.(bool); ok {
 			if b {
-				return fmt.Sprintf("%s: [x]", p.Key)
+				return "✓"
 			}
-			return fmt.Sprintf("%s: [ ]", p.Key)
+			return ""
 		}
 	case "date":
 		if t, ok := p.Value.(time.Time); ok {
-			return fmt.Sprintf("%s: %s", p.Key, t.Format("2006-01-02"))
+			return t.Format("2006-01-02")
 		}
 	case "datetime":
 		if t, ok := p.Value.(time.Time); ok {
-			return fmt.Sprintf("%s: %s", p.Key, t.Format("2006-01-02T15:04:05"))
+			return t.Format("2006-01-02T15:04:05")
 		}
 	case "multi_select":
 		if arr, ok := p.Value.([]any); ok {
@@ -68,11 +69,16 @@ func (p DisplayProperty) Format() string {
 			for i, v := range arr {
 				items[i] = fmt.Sprintf("%v", v)
 			}
-			return fmt.Sprintf("%s: [%s]", p.Key, strings.Join(items, ", "))
+			return "[" + strings.Join(items, ", ") + "]"
 		}
 	}
 
-	return fmt.Sprintf("%s: %v", p.Key, p.Value)
+	return fmt.Sprintf("%v", p.Value)
+}
+
+// Format returns a human-readable string for this property (key: value).
+func (p DisplayProperty) Format() string {
+	return p.Key + ": " + p.FormatValue()
 }
 
 // BuildDisplayProperties assembles display-ready properties. Delegates to QueryService.
