@@ -453,7 +453,7 @@ func (vm *viewMode) viewList(rows []viewRow) string {
 			}
 
 			if isCurrent {
-				b.WriteString(highlightStyle.Render(line) + "\n")
+				b.WriteString(highlightStyle.Render(padRight(line, vm.width)) + "\n")
 			} else {
 				b.WriteString(line + "\n")
 			}
@@ -552,7 +552,7 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 			}
 
 			if isCurrent {
-				b.WriteString(highlightStyle.Render(line) + "\n")
+				b.WriteString(highlightStyle.Render(padRight(line, vm.width)) + "\n")
 			} else {
 				b.WriteString(line + "\n")
 			}
