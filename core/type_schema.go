@@ -194,7 +194,7 @@ func (v *Vault) DeleteType(name string) error {
 
 // CountObjectsByType returns the number of objects of the given type.
 func (v *Vault) CountObjectsByType(typeName string) (int, error) {
-	results, err := v.index.Query("type=" + typeName)
+	results, err := v.index.Query(TypeFilter(typeName))
 	if err != nil {
 		return 0, err
 	}

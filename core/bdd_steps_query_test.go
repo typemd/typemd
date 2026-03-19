@@ -2,14 +2,38 @@ package core
 
 import (
 	"fmt"
+	"strings"
 
 	"github.com/cucumber/godog"
 )
 
+// parseTestFilter converts a BDD filter string like "type=book status=reading"
+// into []FilterRule for the structured query API.
+func parseTestFilter(filter string) []FilterRule {
+	filter = strings.TrimSpace(filter)
+	if filter == "" {
+		return nil
+	}
+	parts := strings.Fields(filter)
+	rules := make([]FilterRule, 0, len(parts))
+	for _, part := range parts {
+		idx := strings.Index(part, "=")
+		if idx < 1 {
+			continue
+		}
+		rules = append(rules, FilterRule{
+			Property: part[:idx],
+			Operator: "is",
+			Value:    part[idx+1:],
+		})
+	}
+	return rules
+}
+
 // ── Query steps ─────────────────────────────────────────────────────────────
 
 func (dc *domainContext) iQueryObjectsWithFilter(filter string) {
-	results, err := dc.vault.QueryObjects(filter)
+	results, err := dc.vault.QueryObjects(parseTestFilter(filter))
 	dc.lastErr = err
 	dc.queryResults = results
 }

@@ -383,7 +383,7 @@ func (m *model) rebuildGroups() {
 	if m.vault == nil {
 		return
 	}
-	objects, err := m.vault.QueryObjects("")
+	objects, err := m.vault.QueryObjects(nil)
 	if err != nil {
 		return
 	}
@@ -1061,7 +1061,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		}
 	}
 
-	objects, err := v.QueryObjects("")
+	objects, err := v.QueryObjects(nil)
 	if err != nil {
 		return fmt.Errorf("query objects: %w", err)
 	}

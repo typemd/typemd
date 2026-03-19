@@ -300,7 +300,10 @@ func (s *ObjectService) loadObjectAndSchema(id string) (*Object, *TypeSchema, er
 
 // checkNameUnique returns an error if an object with the given name already exists.
 func (s *ObjectService) checkNameUnique(typeName, name string) error {
-	results, err := s.index.Query(fmt.Sprintf("type=%s name=%s", typeName, name))
+	results, err := s.index.Query([]FilterRule{
+		{Property: "type", Operator: "is", Value: typeName},
+		{Property: "name", Operator: "is", Value: name},
+	})
 	if err != nil {
 		return fmt.Errorf("check name uniqueness: %w", err)
 	}

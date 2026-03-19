@@ -33,6 +33,11 @@ type FilterRule struct {
 	Value    string `yaml:"value,omitempty"`
 }
 
+// TypeFilter returns a []FilterRule that matches objects of the given type.
+func TypeFilter(typeName string) []FilterRule {
+	return []FilterRule{{Property: "type", Operator: "is", Value: typeName}}
+}
+
 // viewsDir returns the views directory path for a type.
 func (v *Vault) viewsDir(typeName string) string {
 	return filepath.Join(v.TypesDir(), typeName, "views")

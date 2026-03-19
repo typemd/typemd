@@ -222,8 +222,8 @@ tmd --reindex
 # 重建索引並啟動 MCP server
 tmd mcp --reindex
 
-# 重建索引並執行查詢
-tmd query "type=book" --reindex
+# 重建索引並列出 Object
+tmd object list --reindex
 ```
 
 ### 孤立 relation 清理

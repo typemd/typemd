@@ -30,7 +30,7 @@ type SortRule struct {
 // It also exposes write methods used by the Projector to maintain the index.
 type ObjectIndex interface {
 	// Query operations — the read side of CQRS
-	Query(filter string, sort ...SortRule) ([]*ObjectResult, error)
+	Query(filter []FilterRule, sort ...SortRule) ([]*ObjectResult, error)
 	Search(keyword string) ([]*ObjectResult, error)
 	FindRelations(objectID string) ([]Relation, error)
 	FindBacklinks(objectID string) ([]StoredWikiLink, error)

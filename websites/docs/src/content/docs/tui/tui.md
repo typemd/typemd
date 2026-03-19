@@ -294,8 +294,8 @@ tmd --reindex
 # Reindex and start MCP server
 tmd mcp --reindex
 
-# Reindex and run a query
-tmd query "type=book" --reindex
+# Reindex and list objects
+tmd object list --reindex
 ```
 
 ### Orphaned relation cleanup

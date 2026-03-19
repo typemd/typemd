@@ -5,54 +5,30 @@ sidebar:
   order: 5
 ---
 
-Queries let you filter Objects by their property values using structured conditions. Unlike [search](/basics/search), which matches free-text across all content, queries target specific properties with exact values.
+Queries let you filter Objects by their property values using structured filter rules. Unlike [search](/basics/search), which matches free-text across all content, queries target specific properties with typed operators.
 
 ## How it works
 
-Queries use `key=value` format to match Objects. When multiple conditions are provided, they are combined with AND logic — only Objects matching all conditions are returned.
+Queries use structured `FilterRule` conditions to match Objects. Each rule specifies a property, an operator, and a value. When multiple rules are provided, they are combined with AND logic — only Objects matching all conditions are returned.
 
-The `type` key is a special filter that matches the Object's type name. All other keys match against frontmatter property values.
+The `type` property is a special filter that matches the Object's type name. All other properties match against frontmatter property values.
 
-## CLI usage
+## Listing objects
+
+Use the CLI to list all objects or search:
 
 ```bash
-# Filter by type
-tmd query "type=book"
+# List all objects
+tmd object list
+tmd object list --json
 
-# Filter by type and property
-tmd query "type=book status=reading"
-
-# Output as JSON
-tmd query "type=book" --json
+# Full-text search
+tmd search "concurrency"
 ```
-
-| Option | Description |
-|--------|-------------|
-| `--json` | Output results in JSON format |
-
-## Examples
-
-| Query | Matches |
-|-------|---------|
-| `type=book` | All book Objects |
-| `type=book status=reading` | Books with status "reading" |
-| `type=person role=author` | People with role "author" |
-
-## Sorting
-
-Queries support sorting by property values. When used via the TUI [view mode](/tui/tui#view-mode--table-display), sort rules are defined in the view configuration:
-
-```yaml
-sort:
-  - property: rating
-    direction: desc
-```
-
-Sort direction is either `asc` (ascending) or `desc` (descending). Multiple sort rules are applied in order (first rule is the primary sort).
 
 ## Filter operators
 
-Views support type-aware filter operators beyond simple `key=value` equality. Each property type has a defined set of valid operators:
+Views support type-aware filter operators. Each property type has a defined set of valid operators:
 
 | Property type | Operators |
 |---------------|-----------|
@@ -77,9 +53,20 @@ filter:
 
 Multiple filters are combined with AND logic.
 
+## Sorting
+
+Queries support sorting by property values. When used via the TUI [view mode](/tui/tui#view-mode--table-display), sort rules are defined in the view configuration:
+
+```yaml
+sort:
+  - property: rating
+    direction: desc
+```
+
+Sort direction is either `asc` (ascending) or `desc` (descending). Multiple sort rules are applied in order (first rule is the primary sort).
+
 ## See also
 
 - [Search](/basics/search) — full-text search across all content
 - [Views](/advanced/file-structure#views) — view configuration format
-- [tmd query](/tui/query) — CLI reference
 - [Data Model](/developers/data-model#querying-architecture) — querying details

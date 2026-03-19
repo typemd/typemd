@@ -60,7 +60,7 @@ The system SHALL support a `--json` flag that outputs statistics as structured J
 - **THEN** the output SHALL be valid JSON containing the type name, object count, and per-property statistics with type-specific aggregation data
 
 ### Requirement: QueryService aggregation methods
-The system SHALL expose vault statistics through `QueryService` methods, making aggregation logic reusable across CLI, MCP, and Web consumers.
+The system SHALL expose vault statistics through `QueryService` methods, making aggregation logic reusable across CLI, MCP, and Web consumers. Internally, these methods SHALL use `[]FilterRule` (via `TypeFilter()`) instead of legacy filter strings when querying the index.
 
 #### Scenario: VaultStats method
 - **WHEN** a consumer calls `QueryService.VaultStats()`
@@ -69,3 +69,7 @@ The system SHALL expose vault statistics through `QueryService` methods, making 
 #### Scenario: TypeStats method
 - **WHEN** a consumer calls `QueryService.TypeStats("book")`
 - **THEN** it SHALL return a `TypeStats` struct with property-level aggregations for all aggregable properties of the `book` type
+
+#### Scenario: Internal query uses structured filter
+- **WHEN** `VaultStats()` or `TypeStats()` queries the index for objects of a specific type
+- **THEN** it SHALL pass `TypeFilter(typeName)` (i.e. `[]FilterRule{{Property: "type", Operator: "is", Value: typeName}}`) instead of a filter string

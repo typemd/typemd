@@ -58,7 +58,7 @@ func (v *Vault) MigrateObjects(typeName string, opts MigrateOptions) (*MigrateRe
 	}
 
 	// Query all objects of this type
-	objects, err := v.QueryObjects("type=" + typeName)
+	objects, err := v.QueryObjects(TypeFilter(typeName))
 	if err != nil {
 		return nil, fmt.Errorf("query objects: %w", err)
 	}

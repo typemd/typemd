@@ -266,7 +266,7 @@ func TestE2E_ReadOnly_CreationDisabled(t *testing.T) {
 func TestE2E_UniqueConstraint_InlineError(t *testing.T) {
 	m := setupCreateTestModel(t)
 	os.WriteFile(filepath.Join(m.vault.TypesDir(), "tag.yaml"), []byte("name: tag\nunique: true\nplural: tags\n"), 0644)
-	objects, _ := m.vault.QueryObjects("")
+	objects, _ := m.vault.QueryObjects(nil)
 	m.groups = buildGroups(objects, m.vault)
 	m = initSize(t, m)
 

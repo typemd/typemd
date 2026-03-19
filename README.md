@@ -117,10 +117,6 @@ tmd object show book/clean-code
 tmd object list
 tmd object list --json
 
-# Query by type and property
-tmd query "type=book status=reading"
-tmd query "type=book" --json
-
 # Full-text search
 tmd search "concurrency"
 

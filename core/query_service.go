@@ -49,8 +49,8 @@ func (s *QueryService) Resolve(prefix string) (string, error) {
 	}
 }
 
-// Query queries objects using key=value filter syntax with optional sort.
-func (s *QueryService) Query(filter string, sort ...SortRule) ([]*Object, error) {
+// Query queries objects using structured filter rules with optional sort.
+func (s *QueryService) Query(filter []FilterRule, sort ...SortRule) ([]*Object, error) {
 	results, err := s.index.Query(filter, sort...)
 	if err != nil {
 		return nil, err

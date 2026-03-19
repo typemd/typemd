@@ -23,7 +23,7 @@ func TestVault_SyncIndex_NewFile(t *testing.T) {
 	}
 
 	// Verify object is now in DB
-	objs, err := v.QueryObjects("type=book")
+	objs, err := v.QueryObjects(TypeFilter("book"))
 	if err != nil {
 		t.Fatalf("QueryObjects() error = %v", err)
 	}
@@ -51,7 +51,7 @@ func TestVault_SyncIndex_UpdatedFile(t *testing.T) {
 		t.Fatalf("SyncIndex() error = %v", err)
 	}
 
-	objs, err := v.QueryObjects("type=book")
+	objs, err := v.QueryObjects(TypeFilter("book"))
 	if err != nil {
 		t.Fatalf("QueryObjects() error = %v", err)
 	}
@@ -82,7 +82,7 @@ func TestVault_SyncIndex_DeletedFile(t *testing.T) {
 		t.Errorf("Deleted = %d, want 1", result.Deleted)
 	}
 
-	objs, err := v.QueryObjects("type=book")
+	objs, err := v.QueryObjects(TypeFilter("book"))
 	if err != nil {
 		t.Fatalf("QueryObjects() error = %v", err)
 	}

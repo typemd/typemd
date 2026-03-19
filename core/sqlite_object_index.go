@@ -122,26 +122,34 @@ func scanObjectResults(rows *sql.Rows) ([]*ObjectResult, error) {
 	return results, rows.Err()
 }
 
-// Query queries objects using key=value filter syntax with optional sort rules.
-// "type" filters on the type column; other keys filter on JSON properties.
-// An empty filter returns all objects.
-func (idx *SQLiteObjectIndex) Query(filter string, sort ...SortRule) ([]*ObjectResult, error) {
-	conditions, err := parseFilter(filter)
-	if err != nil {
-		return nil, fmt.Errorf("parse filter: %w", err)
-	}
-
+// Query queries objects using structured filter rules with optional sort rules.
+// "type" property filters on the type column; other properties filter via FilterRuleToSQL.
+// A nil or empty filter returns all objects.
+func (idx *SQLiteObjectIndex) Query(filter []FilterRule, sort ...SortRule) ([]*ObjectResult, error) {
 	query := "SELECT id, type, filename, properties, body FROM objects"
 	var whereClauses []string
 	var args []any
 
-	for _, c := range conditions {
-		if c.Key == "type" {
-			whereClauses = append(whereClauses, "type = ?")
-			args = append(args, c.Value)
+	for _, rule := range filter {
+		if rule.Property == "type" {
+			// Special case: "type" is a SQL column, not in properties JSON
+			switch rule.Operator {
+			case "is":
+				whereClauses = append(whereClauses, "type = ?")
+				args = append(args, rule.Value)
+			case "is_not":
+				whereClauses = append(whereClauses, "type != ?")
+				args = append(args, rule.Value)
+			default:
+				return nil, fmt.Errorf("filter rule %q: unsupported operator %q for type column", rule.Property, rule.Operator)
+			}
 		} else {
-			whereClauses = append(whereClauses, "json_extract(properties, ?) = ?")
-			args = append(args, "$."+c.Key, c.Value)
+			clause, ruleArgs, err := FilterRuleToSQL(rule)
+			if err != nil {
+				return nil, fmt.Errorf("filter rule %q: %w", rule.Property, err)
+			}
+			whereClauses = append(whereClauses, clause)
+			args = append(args, ruleArgs...)
 		}
 	}
 

@@ -1,8 +1,5 @@
-# tui-object-list Specification
+## MODIFIED Requirements
 
-## Purpose
-TBD - created by archiving change issue-163-tui-type-emoji-headers. Update Purpose after archive.
-## Requirements
 ### Requirement: Group header displays type emoji
 
 The TUI object list panel SHALL display the type's emoji prefix in group headers when the type schema defines an emoji field. Object list loading SHALL use `[]FilterRule` parameters when calling `Vault.QueryObjects()`.
@@ -18,12 +15,3 @@ The TUI object list panel SHALL display the type's emoji prefix in group headers
 #### Scenario: Object list loading uses structured filter
 - **WHEN** the TUI loads the object list (via `app.go` or `view_mode.go`)
 - **THEN** it SHALL call `Vault.QueryObjects([]FilterRule{...})` instead of passing a filter string
-
-### Requirement: Normal mode help bar shows both creation keybindings
-
-When the sidebar is focused in normal mode, the help bar SHALL include both `n` (new) and `N` (quick create) keybinding hints.
-
-#### Scenario: Sidebar focused help bar
-
-- **WHEN** the sidebar is focused in normal mode with a type header or object selected
-- **THEN** the help bar SHALL include hints for both `n: new` and `N: quick create`
