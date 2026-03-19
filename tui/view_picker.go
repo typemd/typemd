@@ -36,6 +36,7 @@ func newViewPicker(typeName string, viewNames []string) *viewPicker {
 				Title("Select a view").
 				Options(opts...).
 				Value(&vp.selected).
+				Filtering(true).
 				Height(min(len(opts)+2, 10)),
 		),
 	).WithWidth(40).WithShowHelp(false)
