@@ -43,8 +43,8 @@ func helpEntries(readOnly bool) []helpEntry {
 	return entries
 }
 
-// renderHelp builds the help overlay popup content.
-func renderHelp(width, height int, readOnly bool) string {
+// helpContent builds the help popup text content.
+func helpContent(width int, readOnly bool) (content string, popupW int) {
 	entries := helpEntries(readOnly)
 
 	// Find max key width for alignment
@@ -67,12 +67,18 @@ func renderHelp(width, height int, readOnly bool) string {
 	lines = append(lines, "")
 	lines = append(lines, fmt.Sprintf("Press Esc or %s to close", keys.Help.Help().Key))
 
-	content := strings.Join(lines, "\n")
-
-	popupW := contentW + helpPopupPadding
+	popupW = contentW + helpPopupPadding
 	if popupW > width-4 {
 		popupW = width - 4
 	}
+	popupW += 2 // lipgloss v2 Width includes border
 
-	return renderPopup(content, width, height, popupW+2) // +2: lipgloss v2 Width includes border
+	return strings.Join(lines, "\n"), popupW
+}
+
+// renderHelp builds the help overlay on top of a background screen
+// using lipgloss Layer/Compositor. The background remains visible outside the popup.
+func renderHelp(background string, width, height int, readOnly bool) string {
+	content, popupW := helpContent(width, readOnly)
+	return renderOverlayPopup(background, content, width, height, popupW)
 }

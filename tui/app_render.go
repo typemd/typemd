@@ -133,13 +133,6 @@ func (m model) View() tea.View {
 		return v
 	}
 
-	// Help overlay takes over the entire screen
-	if m.showHelp {
-		v := tea.NewView(renderHelp(m.width, m.height, m.readOnly))
-		v.AltScreen = true
-		return v
-	}
-
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
 	// In lipgloss v2, Width()/Height() set the TOTAL size including border.
@@ -374,6 +367,11 @@ func (m model) View() tea.View {
 	}
 
 	screen := panels + "\n" + helpBar
+
+	// Help overlay using Layer/Compositor (background remains visible)
+	if m.showHelp {
+		screen = renderHelp(screen, m.width, m.height, m.readOnly)
+	}
 
 	// Overlay popup if type editor has one active
 	if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
