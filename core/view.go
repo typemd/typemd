@@ -13,8 +13,10 @@ import (
 type ViewLayout string
 
 const (
-	// ViewLayoutList displays objects as a list.
+	// ViewLayoutList displays objects as a simple list (name + optional inline values).
 	ViewLayoutList ViewLayout = "list"
+	// ViewLayoutTable displays objects in a columnar table (NAME + property columns).
+	ViewLayoutTable ViewLayout = "table"
 )
 
 // GroupRule defines a single grouping level.
@@ -26,6 +28,7 @@ type GroupRule struct {
 type ViewConfig struct {
 	Name    string       `yaml:"name"`
 	Layout  ViewLayout   `yaml:"layout"`
+	Columns []string     `yaml:"columns,omitempty"`
 	Filter  []FilterRule `yaml:"filter,omitempty"`
 	Sort    []SortRule   `yaml:"sort,omitempty"`
 	GroupBy []GroupRule   `yaml:"group_by,omitempty"`
@@ -39,6 +42,7 @@ func (vc *ViewConfig) UnmarshalYAML(value *yaml.Node) error {
 	var raw struct {
 		Name    string       `yaml:"name"`
 		Layout  ViewLayout   `yaml:"layout"`
+		Columns []string     `yaml:"columns"`
 		Filter  []FilterRule `yaml:"filter,omitempty"`
 		Sort    []SortRule   `yaml:"sort,omitempty"`
 		GroupBy yaml.Node    `yaml:"group_by"`
@@ -49,6 +53,7 @@ func (vc *ViewConfig) UnmarshalYAML(value *yaml.Node) error {
 
 	vc.Name = raw.Name
 	vc.Layout = raw.Layout
+	vc.Columns = raw.Columns
 	vc.Filter = raw.Filter
 	vc.Sort = raw.Sort
 

@@ -97,25 +97,41 @@ The default mode. Browse objects and types in the sidebar.
 | `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
 
-### View Mode — Table Display
+### View Mode
 
-Press `v` on a type group header or object to enter **view mode**. This replaces the three-panel layout with a full-width table showing objects with property columns.
+Press `v` on a type group header or object to enter **view mode**. This replaces the three-panel layout with a full-width display of objects. View mode supports two layouts:
+
+- **List layout** — Each row shows the object's emoji and name, optionally followed by inline property values separated by " · ". This is the default layout for new views.
+- **Table layout** — A columnar display with a NAME column followed by property columns. Column headers include sort indicators (↑/↓) when active. The number of columns adjusts to the terminal width.
 
 | Key | Action |
 |-----|--------|
 | `↑`/`k`, `↓`/`j` | Navigate rows |
 | `Enter` | Open object detail (three-panel view) |
+| `e` | Open view editor (right split panel) |
 | `p` | Toggle preview panel (right side) |
 | `Esc` | Return to sidebar |
 | `q`/`Ctrl+C` | Quit |
 
-The table displays the object name followed by property columns (pinned properties first). The number of columns adjusts to the terminal width.
-
-When **preview** is active (`p`), the right side shows the selected object's properties and body content. The preview follows the cursor as you navigate.
+When **preview** is active (`p`), the right side shows the selected object's properties and body content. The preview follows the cursor as you navigate. Preview and view editor are mutually exclusive.
 
 If the type has multiple saved [views](/advanced/file-structure#views), a selection popup appears when pressing `v`. If only the default view exists, it opens directly.
 
 The type editor also shows a **Views** section where you can browse saved views and create new ones with `+ Add View`.
+
+#### View Editor
+
+Press `e` in view mode to open the **view editor** as a right split panel. The editor has five sections:
+
+| Section | Description |
+|---------|-------------|
+| **Layout** | Toggle between `list` and `table` with `Enter`. |
+| **Columns** | Add, remove, and reorder properties to display. In list layout, selected properties appear as inline values. In table layout, they become column headers. |
+| **Filter** | Add filter rules (property + operator + value) to narrow displayed objects. |
+| **Sort** | Define sort rules (property + direction) controlling row order. |
+| **Group By** | Group objects by one or more properties. |
+
+Changes are auto-saved on every edit. Press `Esc` to close the editor and return to the view list.
 
 ### `[TYPE]` — Type Editor
 

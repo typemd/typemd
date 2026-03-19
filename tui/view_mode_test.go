@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"strings"
 	"testing"
 
 	"github.com/typemd/typemd/core"
@@ -177,5 +178,216 @@ func TestVisibleRows_WithoutGroupBy(t *testing.T) {
 		if r.isHeader {
 			t.Error("should not have any header rows")
 		}
+	}
+}
+
+// --- Layout rendering tests ---
+
+func TestViewList_NameOnly(t *testing.T) {
+	vm := &viewMode{
+		view:   &core.ViewConfig{Layout: core.ViewLayoutList},
+		schema: &core.TypeSchema{Name: "book", Emoji: "📚"},
+		objects: []*core.Object{
+			{ID: "book/a", Type: "book", Properties: map[string]any{"name": "Clean Code"}},
+			{ID: "book/b", Type: "book", Properties: map[string]any{"name": "DDIA"}},
+		},
+		width:  80,
+		height: 20,
+	}
+	vm.buildGroups()
+
+	output := vm.View()
+
+	if !strings.Contains(output, "📚 Clean Code") {
+		t.Errorf("list should contain emoji + name, got:\n%s", output)
+	}
+	if !strings.Contains(output, "📚 DDIA") {
+		t.Errorf("list should contain emoji + name, got:\n%s", output)
+	}
+	if strings.Contains(output, "NAME") {
+		t.Errorf("list layout should not have column headers, got:\n%s", output)
+	}
+}
+
+func TestViewList_WithColumns(t *testing.T) {
+	vm := &viewMode{
+		view: &core.ViewConfig{
+			Layout:  core.ViewLayoutList,
+			Columns: []string{"status"},
+		},
+		schema: &core.TypeSchema{
+			Name:  "book",
+			Emoji: "📚",
+			Properties: []core.Property{
+				{Name: "status", Type: "string"},
+			},
+		},
+		objects: []*core.Object{
+			{ID: "book/a", Type: "book", Properties: map[string]any{"name": "Clean Code", "status": "reading"}},
+		},
+		width:  80,
+		height: 20,
+	}
+	vm.buildGroups()
+
+	output := vm.View()
+
+	if !strings.Contains(output, "📚 Clean Code · reading") {
+		t.Errorf("list with columns should show inline values, got:\n%s", output)
+	}
+}
+
+func TestViewList_EmptyValuesOmitted(t *testing.T) {
+	vm := &viewMode{
+		view: &core.ViewConfig{
+			Layout:  core.ViewLayoutList,
+			Columns: []string{"status", "rating"},
+		},
+		schema: &core.TypeSchema{
+			Name: "book",
+			Properties: []core.Property{
+				{Name: "status", Type: "string"},
+				{Name: "rating", Type: "number"},
+			},
+		},
+		objects: []*core.Object{
+			{ID: "book/a", Type: "book", Properties: map[string]any{"name": "Test", "status": "reading"}},
+		},
+		width:  80,
+		height: 20,
+	}
+	vm.buildGroups()
+
+	output := vm.View()
+
+	if strings.Count(output, " · ") > 1 {
+		t.Errorf("empty column values should be omitted, got:\n%s", output)
+	}
+}
+
+func TestViewTable_Dispatch(t *testing.T) {
+	vm := &viewMode{
+		view:   &core.ViewConfig{Layout: core.ViewLayoutTable},
+		schema: &core.TypeSchema{Name: "book"},
+		objects: []*core.Object{
+			{ID: "book/a", Type: "book", Properties: map[string]any{"name": "Test"}},
+		},
+		width:  80,
+		height: 20,
+	}
+	vm.buildGroups()
+
+	output := vm.View()
+
+	if !strings.Contains(output, "NAME") {
+		t.Errorf("table layout should have NAME column header, got:\n%s", output)
+	}
+}
+
+func TestViewTable_SortIndicators(t *testing.T) {
+	vm := &viewMode{
+		view: &core.ViewConfig{
+			Layout: core.ViewLayoutTable,
+			Sort:   []core.SortRule{{Property: "status", Direction: "asc"}},
+		},
+		schema: &core.TypeSchema{
+			Name:       "book",
+			Properties: []core.Property{{Name: "status", Type: "string"}},
+		},
+		objects: []*core.Object{
+			{ID: "book/a", Type: "book", Properties: map[string]any{"name": "Test", "status": "reading"}},
+		},
+		width:  80,
+		height: 20,
+	}
+	vm.buildGroups()
+
+	output := vm.View()
+	if !strings.Contains(output, "↑") {
+		t.Errorf("table should show ↑ for ascending sort, got:\n%s", output)
+	}
+}
+
+func TestViewTable_DescSortIndicator(t *testing.T) {
+	vm := &viewMode{
+		view: &core.ViewConfig{
+			Layout: core.ViewLayoutTable,
+			Sort:   []core.SortRule{{Property: "rating", Direction: "desc"}},
+		},
+		schema: &core.TypeSchema{
+			Name:       "book",
+			Properties: []core.Property{{Name: "rating", Type: "number"}},
+		},
+		objects: []*core.Object{
+			{ID: "book/a", Type: "book", Properties: map[string]any{"name": "Test", "rating": 5}},
+		},
+		width:  80,
+		height: 20,
+	}
+	vm.buildGroups()
+
+	output := vm.View()
+	if !strings.Contains(output, "↓") {
+		t.Errorf("table should show ↓ for descending sort, got:\n%s", output)
+	}
+}
+
+func TestViewColumns_ExplicitOverride(t *testing.T) {
+	vm := &viewMode{
+		view: &core.ViewConfig{
+			Layout:  core.ViewLayoutTable,
+			Columns: []string{"rating"},
+		},
+		schema: &core.TypeSchema{
+			Name: "book",
+			Properties: []core.Property{
+				{Name: "status", Type: "string"},
+				{Name: "rating", Type: "number"},
+			},
+		},
+		width: 80,
+	}
+
+	cols := vm.viewColumns()
+	if len(cols) != 1 || cols[0] != "rating" {
+		t.Errorf("viewColumns() = %v, want [rating]", cols)
+	}
+}
+
+func TestViewColumns_ListDefaultEmpty(t *testing.T) {
+	vm := &viewMode{
+		view: &core.ViewConfig{Layout: core.ViewLayoutList},
+		schema: &core.TypeSchema{
+			Name:       "book",
+			Properties: []core.Property{{Name: "status", Type: "string"}},
+		},
+		width: 80,
+	}
+
+	cols := vm.viewColumns()
+	if len(cols) != 0 {
+		t.Errorf("list layout default should return no columns, got %v", cols)
+	}
+}
+
+func TestViewColumns_TableDefaultAllProps(t *testing.T) {
+	vm := &viewMode{
+		view: &core.ViewConfig{Layout: core.ViewLayoutTable},
+		schema: &core.TypeSchema{
+			Name: "book",
+			Properties: []core.Property{
+				{Name: "status", Type: "string"},
+				{Name: "rating", Type: "number"},
+			},
+		},
+		width: 200,
+	}
+
+	cols := vm.viewColumns()
+	if len(cols) != 2 {
+		t.Fatalf("table default should return all props, got %v", cols)
+	}
+	if cols[0] != "status" || cols[1] != "rating" {
+		t.Errorf("viewColumns() = %v, want [status rating]", cols)
 	}
 }
