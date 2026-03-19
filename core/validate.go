@@ -13,7 +13,7 @@ import (
 // Returns a map of object ID to validation errors.
 func ValidateAllObjects(v *Vault) map[string][]error {
 	result := make(map[string][]error)
-	objects, err := v.QueryObjects("")
+	objects, err := v.QueryObjects(nil)
 	if err != nil {
 		return result
 	}

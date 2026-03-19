@@ -21,7 +21,7 @@ func newQuerySortContext(dc *domainContext) *querySortContext {
 // ── When steps ──────────────────────────────────────────────────────────────
 
 func (qs *querySortContext) iQueryWithFilterSortedBy(filter, property, direction string) {
-	results, err := qs.dc.vault.Queries.Query(filter, SortRule{
+	results, err := qs.dc.vault.Queries.Query(parseTestFilter(filter), SortRule{
 		Property:  property,
 		Direction: direction,
 	})
@@ -30,7 +30,7 @@ func (qs *querySortContext) iQueryWithFilterSortedBy(filter, property, direction
 }
 
 func (qs *querySortContext) iQueryWithFilterAndNoSort(filter string) {
-	results, err := qs.dc.vault.Queries.Query(filter)
+	results, err := qs.dc.vault.Queries.Query(parseTestFilter(filter))
 	qs.sortedResults = results
 	qs.dc.lastErr = err
 }

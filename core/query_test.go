@@ -4,82 +4,15 @@ import (
 	"testing"
 )
 
-// ── parseFilter tests ────────────────────────────────────────────────────────
+// ── TypeFilter tests ────────────────────────────────────────────────────────
 
-func TestParseFilter_Single(t *testing.T) {
-	got, err := parseFilter("type=book")
-	if err != nil {
-		t.Fatalf("parseFilter() error = %v", err)
-	}
+func TestTypeFilter(t *testing.T) {
+	got := TypeFilter("book")
 	if len(got) != 1 {
 		t.Fatalf("len = %d, want 1", len(got))
 	}
-	if got[0].Key != "type" || got[0].Value != "book" {
-		t.Errorf("got[0] = %+v, want {type book}", got[0])
-	}
-}
-
-func TestParseFilter_Multiple(t *testing.T) {
-	got, err := parseFilter("type=book status=reading")
-	if err != nil {
-		t.Fatalf("parseFilter() error = %v", err)
-	}
-	want := []filterCondition{
-		{Key: "type", Value: "book"},
-		{Key: "status", Value: "reading"},
-	}
-	if len(got) != len(want) {
-		t.Fatalf("len = %d, want %d", len(got), len(want))
-	}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Errorf("got[%d] = %+v, want %+v", i, got[i], want[i])
-		}
-	}
-}
-
-func TestParseFilter_Empty(t *testing.T) {
-	got, err := parseFilter("")
-	if err != nil {
-		t.Fatalf("parseFilter(\"\") error = %v", err)
-	}
-	if got != nil {
-		t.Errorf("got = %v, want nil", got)
-	}
-}
-
-func TestParseFilter_Whitespace(t *testing.T) {
-	got, err := parseFilter("   ")
-	if err != nil {
-		t.Fatalf("parseFilter(whitespace) error = %v", err)
-	}
-	if got != nil {
-		t.Errorf("got = %v, want nil", got)
-	}
-}
-
-func TestParseFilter_Invalid_NoEquals(t *testing.T) {
-	_, err := parseFilter("invalid-no-equals")
-	if err == nil {
-		t.Fatal("expected error for missing '=', got nil")
-	}
-}
-
-func TestParseFilter_Invalid_LeadingEquals(t *testing.T) {
-	_, err := parseFilter("=value")
-	if err == nil {
-		t.Fatal("expected error for leading '=', got nil")
-	}
-}
-
-func TestParseFilter_ValueWithEquals(t *testing.T) {
-	// value contains '='; only split on the first one
-	got, err := parseFilter("key=a=b")
-	if err != nil {
-		t.Fatalf("parseFilter() error = %v", err)
-	}
-	if got[0].Key != "key" || got[0].Value != "a=b" {
-		t.Errorf("got[0] = %+v, want {key a=b}", got[0])
+	if got[0].Property != "type" || got[0].Operator != "is" || got[0].Value != "book" {
+		t.Errorf("got = %+v, want {type is book}", got[0])
 	}
 }
 
@@ -92,7 +25,7 @@ func TestVault_QueryObjects_ByType(t *testing.T) {
 	v.NewObject("book", "book2", "")   //nolint:errcheck
 	v.NewObject("person", "alice", "") //nolint:errcheck
 
-	results, err := v.QueryObjects("type=book")
+	results, err := v.QueryObjects(TypeFilter("book"))
 	if err != nil {
 		t.Fatalf("QueryObjects() error = %v", err)
 	}
@@ -115,7 +48,10 @@ func TestVault_QueryObjects_ByProperty(t *testing.T) {
 	b2, _ := v.NewObject("book", "book2", "")
 	v.SetProperty(b2.ID, "status", "done") //nolint:errcheck
 
-	results, err := v.QueryObjects("type=book status=reading")
+	results, err := v.QueryObjects([]FilterRule{
+		{Property: "type", Operator: "is", Value: "book"},
+		{Property: "status", Operator: "is", Value: "reading"},
+	})
 	if err != nil {
 		t.Fatalf("QueryObjects() error = %v", err)
 	}
@@ -132,7 +68,7 @@ func TestVault_QueryObjects_NoResults(t *testing.T) {
 
 	v.NewObject("book", "book1", "") //nolint:errcheck
 
-	results, err := v.QueryObjects("type=person")
+	results, err := v.QueryObjects(TypeFilter("person"))
 	if err != nil {
 		t.Fatalf("QueryObjects() error = %v", err)
 	}
@@ -147,21 +83,12 @@ func TestVault_QueryObjects_EmptyFilter(t *testing.T) {
 	v.NewObject("book", "book1", "")   //nolint:errcheck
 	v.NewObject("person", "alice", "") //nolint:errcheck
 
-	results, err := v.QueryObjects("")
+	results, err := v.QueryObjects(nil)
 	if err != nil {
-		t.Fatalf("QueryObjects(\"\") error = %v", err)
+		t.Fatalf("QueryObjects(nil) error = %v", err)
 	}
 	if len(results) != 2 {
-		t.Errorf("QueryObjects(\"\") len = %d, want 2", len(results))
-	}
-}
-
-func TestVault_QueryObjects_InvalidFilter(t *testing.T) {
-	v := setupTestVault(t)
-
-	_, err := v.QueryObjects("invalid-filter")
-	if err == nil {
-		t.Fatal("expected error for invalid filter, got nil")
+		t.Errorf("QueryObjects(nil) len = %d, want 2", len(results))
 	}
 }
 
@@ -172,7 +99,7 @@ func TestVault_QueryObjects_DBNotOpen(t *testing.T) {
 		t.Fatalf("Init() error = %v", err)
 	}
 
-	_, err := v.QueryObjects("type=book")
+	_, err := v.QueryObjects(TypeFilter("book"))
 	if err == nil {
 		t.Fatal("expected error when DB not opened, got nil")
 	}
@@ -194,7 +121,11 @@ func TestVault_QueryObjects_MultipleConditions(t *testing.T) {
 	v.SetProperty(b3.ID, "title", "Go")    //nolint:errcheck
 
 	// type=book status=reading title=Go — should match only b1
-	results, err := v.QueryObjects("type=book status=reading title=Go")
+	results, err := v.QueryObjects([]FilterRule{
+		{Property: "type", Operator: "is", Value: "book"},
+		{Property: "status", Operator: "is", Value: "reading"},
+		{Property: "title", Operator: "is", Value: "Go"},
+	})
 	if err != nil {
 		t.Fatalf("QueryObjects() error = %v", err)
 	}

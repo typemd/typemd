@@ -19,7 +19,7 @@ Examples:
 		}
 		defer vault.Close()
 
-		results, err := vault.QueryObjects("")
+		results, err := vault.QueryObjects(nil)
 		if err != nil {
 			return err
 		}

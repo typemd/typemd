@@ -37,7 +37,7 @@ func TestSQLiteObjectIndex_UpsertAndQuery(t *testing.T) {
 		t.Fatalf("upsert: %v", err)
 	}
 
-	results, err := idx.Query("")
+	results, err := idx.Query(nil)
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}
@@ -58,7 +58,7 @@ func TestSQLiteObjectIndex_UpsertUpdatesExisting(t *testing.T) {
 	idx.Upsert("book/test-01abc", "book", "test-01abc", `{"name":"Old"}`, "")
 	idx.Upsert("book/test-01abc", "book", "test-01abc", `{"name":"New"}`, "")
 
-	results, _ := idx.Query("")
+	results, _ := idx.Query(nil)
 	if len(results) != 1 {
 		t.Fatalf("expected 1 result after upsert, got %d", len(results))
 	}
@@ -73,7 +73,7 @@ func TestSQLiteObjectIndex_QueryByType(t *testing.T) {
 	idx.Upsert("book/a-01abc", "book", "a-01abc", `{"name":"A"}`, "")
 	idx.Upsert("note/b-01abc", "note", "b-01abc", `{"name":"B"}`, "")
 
-	results, err := idx.Query("type=book")
+	results, err := idx.Query(TypeFilter("book"))
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}
@@ -91,7 +91,7 @@ func TestSQLiteObjectIndex_QueryByProperty(t *testing.T) {
 	idx.Upsert("book/a-01abc", "book", "a-01abc", `{"status":"reading"}`, "")
 	idx.Upsert("book/b-01abc", "book", "b-01abc", `{"status":"done"}`, "")
 
-	results, err := idx.Query("status=reading")
+	results, err := idx.Query([]FilterRule{{Property: "status", Operator: "is", Value: "reading"}})
 	if err != nil {
 		t.Fatalf("query: %v", err)
 	}

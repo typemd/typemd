@@ -89,7 +89,7 @@ func (s *QueryService) VaultStats() (*VaultStats, error) {
 	stats := &VaultStats{}
 
 	for _, name := range typeNames {
-		results, err := s.index.Query("type=" + name)
+		results, err := s.index.Query(TypeFilter(name))
 		if err != nil {
 			return nil, fmt.Errorf("query type %s: %w", name, err)
 		}
@@ -138,7 +138,7 @@ func (s *QueryService) TypeStats(typeName string) (*TypeStats, error) {
 		return nil, fmt.Errorf("load type %q: %w", typeName, err)
 	}
 
-	results, err := s.index.Query("type=" + typeName)
+	results, err := s.index.Query(TypeFilter(typeName))
 	if err != nil {
 		return nil, fmt.Errorf("query type %s: %w", typeName, err)
 	}

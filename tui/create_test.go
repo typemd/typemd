@@ -25,7 +25,7 @@ func setupCreateTestModel(t *testing.T) model {
 	}
 	t.Cleanup(func() { v.Close() })
 
-	objects, _ := v.QueryObjects("")
+	objects, _ := v.QueryObjects(nil)
 	groups := buildGroups(objects, v)
 	if len(groups) > 0 {
 		groups[0].Expanded = true
@@ -148,7 +148,7 @@ func TestStartCreate_NameTemplatePrefill(t *testing.T) {
 	m := setupCreateTestModel(t)
 	os.WriteFile(filepath.Join(m.vault.TypesDir(), "journal.yaml"),
 		[]byte("name: journal\nproperties:\n  - name: name\n    template: \"{{ date:YYYY-MM-DD }}\"\n"), 0644)
-	objects, _ := m.vault.QueryObjects("")
+	objects, _ := m.vault.QueryObjects(nil)
 	m.groups = buildGroups(objects, m.vault)
 
 	journalIdx := -1
@@ -324,7 +324,7 @@ func TestCreate_EmptyNameRejected(t *testing.T) {
 func TestCreate_UniqueError(t *testing.T) {
 	m := setupCreateTestModel(t)
 	os.WriteFile(filepath.Join(m.vault.TypesDir(), "tag.yaml"), []byte("name: tag\nunique: true\n"), 0644)
-	objects, _ := m.vault.QueryObjects("")
+	objects, _ := m.vault.QueryObjects(nil)
 	m.groups = buildGroups(objects, m.vault)
 
 	tagIdx := -1

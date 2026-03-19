@@ -46,15 +46,9 @@ TypeMD 提供兩種查詢路徑：
 
 ### 結構化查詢
 
-使用 `tmd query` 依屬性篩選 Object。條件使用 `key=value` 格式，以空格分隔（AND 邏輯）：
+查詢管線使用結構化 `FilterRule` 條件來篩選 Object。每條規則指定一個屬性、一個運算子和一個值。查詢針對 SQLite 索引執行以提升效能，回傳輕量的 `ObjectResult` 投影而非完整的 Object 實體。
 
-```bash
-tmd query "type=book"
-tmd query "type=book status=reading"
-tmd query "type=book" --json
-```
-
-結構化查詢針對 SQLite 索引執行以提升效能，回傳輕量的 `ObjectResult` 投影而非完整的 Object 實體。
+篩選規則透過 `Vault.QueryObjects()` 以程式化方式使用，也可在 view 設定（`.typemd/types/<name>/views/<view>.yaml`）中定義。
 
 ### 全文搜尋
 

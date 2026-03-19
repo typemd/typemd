@@ -49,11 +49,11 @@ A great book about Go...
 
 TUI 會自動偵測新檔案並顯示它。如果你 clone 了一個現有的 vault，資料庫會在首次開啟時自動建立——不需要手動執行 `tmd --reindex`。
 
-## 4. 查詢與搜尋
+## 4. 列出與搜尋
 
 ```bash
-# 依 Type 和屬性篩選
-tmd query "type=book status=reading"
+# 列出所有 Object
+tmd object list
 
 # 全文搜尋
 tmd search "concurrency"

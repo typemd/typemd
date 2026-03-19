@@ -46,15 +46,9 @@ TypeMD provides two query paths:
 
 ### Structured queries
 
-Use `tmd query` to filter Objects by properties. Conditions use `key=value` format, separated by spaces (AND logic):
+The query pipeline uses structured `FilterRule` conditions to filter Objects. Each rule specifies a property, an operator, and a value. Queries run against the SQLite index for performance, returning lightweight `ObjectResult` projections rather than full Object entities.
 
-```bash
-tmd query "type=book"
-tmd query "type=book status=reading"
-tmd query "type=book" --json
-```
-
-Structured queries run against the SQLite index for performance, returning lightweight `ObjectResult` projections rather than full Object entities.
+Filter rules are used programmatically through `Vault.QueryObjects()` and in view configurations (`.typemd/types/<name>/views/<view>.yaml`).
 
 ### Full-text search
 
