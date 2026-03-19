@@ -133,8 +133,6 @@ func (m model) View() tea.View {
 		return v
 	}
 
-	// Help overlay is rendered later using Layer/Compositor (see below)
-
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
 	// In lipgloss v2, Width()/Height() set the TOTAL size including border.
