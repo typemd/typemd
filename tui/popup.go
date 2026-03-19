@@ -5,10 +5,8 @@ import (
 	"charm.land/lipgloss/v2"
 )
 
-// renderPopup renders content as a centered popup overlay with a rounded border.
-// The border color uses the theme's colorFocusBorder. An optional width can be
-// provided to constrain the popup; pass 0 to let lipgloss auto-size from content.
-func renderPopup(content string, termW, termH int, popupWidth int) string {
+// popupStyle returns the standard popup border style.
+func popupStyle(popupWidth int) lipgloss.Style {
 	style := lipgloss.NewStyle().
 		Border(lipgloss.RoundedBorder()).
 		BorderForeground(colorFocusBorder).
@@ -18,5 +16,19 @@ func renderPopup(content string, termW, termH int, popupWidth int) string {
 		style = style.Width(popupWidth)
 	}
 
-	return widget.CenteredPopup(content, style, termW, termH)
+	return style
+}
+
+// renderPopup renders content as a centered popup overlay with a rounded border.
+// The border color uses the theme's colorFocusBorder. An optional width can be
+// provided to constrain the popup; pass 0 to let lipgloss auto-size from content.
+// The background is replaced with whitespace (legacy behavior).
+func renderPopup(content string, termW, termH int, popupWidth int) string {
+	return widget.CenteredPopup(content, popupStyle(popupWidth), termW, termH)
+}
+
+// renderOverlayPopup renders content as a centered popup on top of a background
+// using lipgloss Layer/Compositor. The background remains visible outside the popup.
+func renderOverlayPopup(background, content string, termW, termH int, popupWidth int) string {
+	return widget.OverlayPopup(background, content, popupStyle(popupWidth), termW, termH)
 }

@@ -133,12 +133,7 @@ func (m model) View() tea.View {
 		return v
 	}
 
-	// Help overlay takes over the entire screen
-	if m.showHelp {
-		v := tea.NewView(renderHelp(m.width, m.height, m.readOnly))
-		v.AltScreen = true
-		return v
-	}
+	// Help overlay is rendered later using Layer/Compositor (see below)
 
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
@@ -374,6 +369,11 @@ func (m model) View() tea.View {
 	}
 
 	screen := panels + "\n" + helpBar
+
+	// Help overlay using Layer/Compositor (background remains visible)
+	if m.showHelp {
+		screen = renderHelp(screen, m.width, m.height, m.readOnly)
+	}
 
 	// Overlay popup if type editor has one active
 	if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
