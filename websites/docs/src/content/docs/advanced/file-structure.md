@@ -112,6 +112,7 @@ Each type can have saved views that define how objects are filtered, sorted, and
 # .typemd/types/book/views/by-rating.yaml
 name: by-rating
 layout: list
+columns: [status, rating]
 sort:
   - property: rating
     direction: desc
@@ -121,6 +122,13 @@ filter:
     value: reading
 group_by: genre
 ```
+
+Two layouts are available:
+
+- **`list`** — displays object names with optional inline property values. Default columns: none (name only).
+- **`table`** — displays a columnar table with a NAME column followed by property columns with headers. Default columns: all properties.
+
+The optional `columns` field specifies which properties to display. When set, both layouts use exactly those properties.
 
 Every type has an implicit default view (list layout, sorted by name ascending). When you customize the default view, it is saved as `views/default.yaml`. If no view files exist, the type directory does not need a `views/` subdirectory.
 

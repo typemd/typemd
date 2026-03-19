@@ -112,6 +112,7 @@ properties:
 # .typemd/types/book/views/by-rating.yaml
 name: by-rating
 layout: list
+columns: [status, rating]
 sort:
   - property: rating
     direction: desc
@@ -121,6 +122,13 @@ filter:
     value: reading
 group_by: genre
 ```
+
+有兩種佈局可用：
+
+- **`list`** — 顯示 object 名稱，搭配選填的行內屬性值。預設欄位：無（僅名稱）。
+- **`table`** — 顯示欄位式表格，包含 NAME 欄位以及帶標題的屬性欄位。預設欄位：所有屬性。
+
+選填的 `columns` 欄位指定要顯示哪些屬性。設定後，兩種佈局都會顯示指定的屬性。
 
 每個 type 都有一個隱含的預設 view（list 佈局，按 name 升序排列）。自訂預設 view 後會儲存為 `views/default.yaml`。若沒有 view 檔案，type 目錄不需要 `views/` 子目錄。
 

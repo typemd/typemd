@@ -25,7 +25,9 @@ type viewEditorDeletedMsg struct {
 type veSection int
 
 const (
-	veSectionFilter veSection = iota
+	veSectionLayout  veSection = iota
+	veSectionColumns
+	veSectionFilter
 	veSectionSort
 	veSectionGroup
 	veSectionCount // must be last
@@ -160,8 +162,12 @@ func (ve *viewEditor) filterProps() {
 
 func (ve *viewEditor) sectionItemCount(s veSection) int {
 	switch s {
+	case veSectionLayout:
+		return 1 // single toggle item
+	case veSectionColumns:
+		return len(ve.view.Columns) + 1 // +1 for "+ Add Column"
 	case veSectionFilter:
-		return len(ve.view.Filter) + 1 // +1 for "+ Add Filter"
+		return len(ve.view.Filter) + 1
 	case veSectionSort:
 		return len(ve.view.Sort) + 1
 	case veSectionGroup:
@@ -172,6 +178,10 @@ func (ve *viewEditor) sectionItemCount(s veSection) int {
 
 func (ve *viewEditor) sectionRuleCount(s veSection) int {
 	switch s {
+	case veSectionLayout:
+		return 1
+	case veSectionColumns:
+		return len(ve.view.Columns)
 	case veSectionFilter:
 		return len(ve.view.Filter)
 	case veSectionSort:
@@ -221,6 +231,10 @@ func (ve *viewEditor) updateView(msg tea.KeyPressMsg) (*viewEditor, tea.Cmd) {
 			ve.cursor++
 		}
 	case "enter":
+		// Layout section: toggle between list/table
+		if ve.section == veSectionLayout {
+			return ve.toggleLayout()
+		}
 		ruleCount := ve.sectionRuleCount(ve.section)
 		if ve.cursor == ruleCount {
 			// "+ Add" row
@@ -353,6 +367,16 @@ func (ve *viewEditor) updateConfirmDel(msg tea.KeyPressMsg) (*viewEditor, tea.Cm
 
 // ── Rule operations ─────────────────────────────────────────────────────────
 
+func (ve *viewEditor) toggleLayout() (*viewEditor, tea.Cmd) {
+	if ve.view.Layout == core.ViewLayoutTable {
+		ve.view.Layout = core.ViewLayoutList
+	} else {
+		ve.view.Layout = core.ViewLayoutTable
+	}
+	ve.save()
+	return ve, tea.Sequence(func() tea.Msg { return viewEditorChangedMsg{} })
+}
+
 func (ve *viewEditor) startAdd() (*viewEditor, tea.Cmd) {
 	ve.action = veActionAdd
 	ve.propInput.SetValue("")
@@ -369,6 +393,10 @@ func (ve *viewEditor) startEdit() (*viewEditor, tea.Cmd) {
 	// Pre-populate property picker with current value
 	var currentProp string
 	switch ve.section {
+	case veSectionColumns:
+		if ve.cursor < len(ve.view.Columns) {
+			currentProp = ve.view.Columns[ve.cursor]
+		}
 	case veSectionFilter:
 		if ve.cursor < len(ve.view.Filter) {
 			currentProp = ve.view.Filter[ve.cursor].Property
@@ -400,6 +428,9 @@ func (ve *viewEditor) startEdit() (*viewEditor, tea.Cmd) {
 
 func (ve *viewEditor) afterPropPicked() (*viewEditor, tea.Cmd) {
 	switch ve.section {
+	case veSectionColumns:
+		// Column only needs property — commit immediately
+		return ve.commitColumnRule()
 	case veSectionFilter:
 		// Need operator picker
 		ve.opList = ve.operatorsForProp(ve.pendingProp)
@@ -463,6 +494,17 @@ func (ve *viewEditor) commitSortRule(direction string) (*viewEditor, tea.Cmd) {
 	return ve, tea.Sequence(func() tea.Msg { return viewEditorChangedMsg{} })
 }
 
+func (ve *viewEditor) commitColumnRule() (*viewEditor, tea.Cmd) {
+	if ve.action == veActionEdit && ve.editIdx < len(ve.view.Columns) {
+		ve.view.Columns[ve.editIdx] = ve.pendingProp
+	} else {
+		ve.view.Columns = append(ve.view.Columns, ve.pendingProp)
+	}
+	ve.mode = veModeView
+	ve.save()
+	return ve, tea.Sequence(func() tea.Msg { return viewEditorChangedMsg{} })
+}
+
 func (ve *viewEditor) commitGroupRule() (*viewEditor, tea.Cmd) {
 	rule := core.GroupRule{Property: ve.pendingProp}
 	if ve.action == veActionEdit && ve.editIdx < len(ve.view.GroupBy) {
@@ -481,6 +523,10 @@ func (ve *viewEditor) deleteRule() (*viewEditor, tea.Cmd) {
 		return ve, nil // on "+ Add" row, nothing to delete
 	}
 	switch ve.section {
+	case veSectionLayout:
+		return ve, nil // can't delete layout
+	case veSectionColumns:
+		ve.view.Columns = append(ve.view.Columns[:ve.cursor], ve.view.Columns[ve.cursor+1:]...)
 	case veSectionFilter:
 		ve.view.Filter = append(ve.view.Filter[:ve.cursor], ve.view.Filter[ve.cursor+1:]...)
 	case veSectionSort:
@@ -505,6 +551,10 @@ func (ve *viewEditor) moveRule(delta int) (*viewEditor, tea.Cmd) {
 		return ve, nil // boundary
 	}
 	switch ve.section {
+	case veSectionLayout:
+		return ve, nil // layout has no ordering
+	case veSectionColumns:
+		ve.view.Columns[ve.cursor], ve.view.Columns[newIdx] = ve.view.Columns[newIdx], ve.view.Columns[ve.cursor]
 	case veSectionFilter:
 		ve.view.Filter[ve.cursor], ve.view.Filter[newIdx] = ve.view.Filter[newIdx], ve.view.Filter[ve.cursor]
 	case veSectionSort:
@@ -567,14 +617,37 @@ func (ve *viewEditor) View() string {
 	b.WriteString(titleStyle.Render(fmt.Sprintf(" Edit: %s", ve.viewName)) + "\n")
 	b.WriteString(dimStyle.Render(" " + strings.Repeat("─", ve.width-4)) + "\n")
 
+	// Layout section (special: single toggle item)
+	{
+		isActive := ve.section == veSectionLayout
+		label := "📐 Layout"
+		if isActive {
+			label = sectionStyle.Render(label)
+		} else {
+			label = dimStyle.Render(label)
+		}
+		b.WriteString("\n " + label + "\n")
+		layoutVal := string(ve.view.Layout)
+		if layoutVal == "" {
+			layoutVal = "list"
+		}
+		text := "  " + layoutVal
+		if isActive && ve.mode == veModeView {
+			b.WriteString(" " + activeStyle.Render(text) + "\n")
+		} else {
+			b.WriteString(" " + text + "\n")
+		}
+	}
+
 	type sectionDef struct {
-		label     string
-		section   veSection
-		count     int
-		format    func(int) string
-		addLabel  string
+		label    string
+		section  veSection
+		count    int
+		format   func(int) string
+		addLabel string
 	}
 	sections := []sectionDef{
+		{"📊 Columns", veSectionColumns, len(ve.view.Columns), ve.formatColumnRule, "Add Column"},
 		{"📋 Filter", veSectionFilter, len(ve.view.Filter), ve.formatFilterRule, "Add Filter"},
 		{"📊 Sort", veSectionSort, len(ve.view.Sort), ve.formatSortRule, "Add Sort"},
 		{"📁 Group By", veSectionGroup, len(ve.view.GroupBy), ve.formatGroupRule, "Add Group"},
@@ -599,6 +672,10 @@ func (ve *viewEditor) View() string {
 	}
 
 	return b.String()
+}
+
+func (ve *viewEditor) formatColumnRule(i int) string {
+	return fmt.Sprintf("  %s", ve.view.Columns[i])
 }
 
 func (ve *viewEditor) formatFilterRule(i int) string {

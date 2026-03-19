@@ -303,9 +303,22 @@ func (vm *viewMode) updatePreview() {
 	}
 }
 
-// viewColumns returns the property names to display as columns.
-// Uses pinned properties first, then unpinned, up to a reasonable limit.
+// viewColumns returns the property names to display as columns/inline values.
+// If ViewConfig.Columns is set, uses those exactly. Otherwise:
+// - Table layout: all schema properties (pinned first, then unpinned)
+// - List layout: empty (name only)
 func (vm *viewMode) viewColumns() []string {
+	// Explicit columns take priority
+	if vm.view != nil && len(vm.view.Columns) > 0 {
+		return vm.view.Columns
+	}
+
+	// List layout defaults to no columns (name only)
+	if vm.view == nil || vm.view.Layout != core.ViewLayoutTable {
+		return nil
+	}
+
+	// Table layout defaults to all schema properties
 	if vm.schema == nil {
 		return nil
 	}
@@ -324,7 +337,6 @@ func (vm *viewMode) viewColumns() []string {
 			unpinned = append(unpinned, p.Name)
 		}
 	}
-	// Sort pinned by pin value
 	sort.Slice(pinned, func(i, j int) bool {
 		return pinned[i].pin < pinned[j].pin
 	})
@@ -334,7 +346,7 @@ func (vm *viewMode) viewColumns() []string {
 	cols = append(cols, unpinned...)
 
 	// Limit columns based on available width (rough: 15 chars per col)
-	maxCols := (vm.width - 22) / 14 // 22 for name column + padding
+	maxCols := (vm.width - 22) / 14
 	if maxCols < 1 {
 		maxCols = 1
 	}
@@ -369,23 +381,91 @@ func (vm *viewMode) displayPropValue(obj *core.Object, propName string) string {
 	return dp.FormatValue()
 }
 
-// View renders the full-width view list with property columns.
+// View renders the view mode content based on the configured layout.
 func (vm *viewMode) View() string {
 	rows := vm.visibleRows()
 	if len(rows) == 0 {
 		return "  (no objects)"
 	}
 
+	switch vm.view.Layout {
+	case core.ViewLayoutTable:
+		return vm.viewTable(rows)
+	default:
+		return vm.viewList(rows)
+	}
+}
+
+// viewList renders objects as a simple list: emoji + name + inline column values.
+func (vm *viewMode) viewList(rows []viewRow) string {
+	cols := vm.viewColumns()
+
+	// Ensure scroll keeps cursor visible
+	visibleH := vm.height - 2 // padding
+	if visibleH < 1 {
+		visibleH = 1
+	}
+	vm.scroll = widget.AdjustScroll(vm.cursor, vm.scroll, visibleH)
+
+	highlightStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("0")).
+		Background(lipgloss.Color("6"))
+	dimStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8"))
+
+	emoji := ""
+	if vm.schema != nil && vm.schema.Emoji != "" {
+		emoji = vm.schema.Emoji + " "
+	}
+
+	var b strings.Builder
+	for i := vm.scroll; i < len(rows) && i < vm.scroll+visibleH; i++ {
+		row := rows[i]
+		isCurrent := i == vm.cursor
+
+		if row.isHeader {
+			headerText := fmt.Sprintf(" ── %s ──", row.label)
+			b.WriteString(dimStyle.Render(headerText) + "\n")
+		} else if row.object != nil {
+			name := row.object.GetName()
+			if name == "" {
+				name = row.object.Filename
+			}
+
+			line := "  " + emoji + name
+
+			// Append inline column values
+			for _, col := range cols {
+				val := vm.displayPropValue(row.object, col)
+				if val != "" {
+					line += " · " + val
+				}
+			}
+
+			if isCurrent {
+				b.WriteString(highlightStyle.Render(line) + "\n")
+			} else {
+				b.WriteString(line + "\n")
+			}
+		}
+	}
+
+	return b.String()
+}
+
+// viewTable renders objects in a columnar table with headers and separators.
+func (vm *viewMode) viewTable(rows []viewRow) string {
 	cols := vm.viewColumns()
 	nameW := 20
 	colW := 12
 
-	// Adjust name width based on actual content
+	// Adjust name width based on actual display width
 	for _, row := range rows {
 		if row.object != nil {
 			name := row.object.GetName()
-			if len([]rune(name)) > nameW {
-				nameW = len([]rune(name))
+			w := runewidth.StringWidth(name)
+			if w > nameW {
+				nameW = w
 			}
 		}
 	}
@@ -409,12 +489,25 @@ func (vm *viewMode) View() string {
 		Foreground(lipgloss.Color("4")).
 		Bold(true)
 
+	// Build sort indicator map
+	sortIndicators := make(map[string]string)
+	if vm.view != nil {
+		for _, s := range vm.view.Sort {
+			if s.Direction == "desc" {
+				sortIndicators[s.Property] = " ↓"
+			} else {
+				sortIndicators[s.Property] = " ↑"
+			}
+		}
+	}
+
 	var b strings.Builder
 
 	// Column header
 	header := fmt.Sprintf("  %-*s", nameW, "NAME")
 	for _, col := range cols {
-		header += fmt.Sprintf("  %-*s", colW, strings.ToUpper(truncate(col, colW)))
+		label := strings.ToUpper(col) + sortIndicators[col]
+		header += fmt.Sprintf("  %-*s", colW, truncate(label, colW))
 	}
 	b.WriteString(headerStyle.Render(header) + "\n")
 	// Separator
@@ -486,17 +579,7 @@ func (vm *viewMode) PreviewContent() string {
 	// Show key properties
 	if vm.schema != nil {
 		for _, p := range vm.schema.Properties {
-			val, ok := vm.previewObject.Properties[p.Name]
-			if !ok || val == nil {
-				continue
-			}
-			dp := core.DisplayProperty{
-				Key:        p.Name,
-				Value:      val,
-				Type:       p.Type,
-				IsRelation: p.Type == "relation",
-			}
-			formatted := dp.FormatValue()
+			formatted := vm.displayPropValue(vm.previewObject, p.Name)
 			if formatted != "" {
 				label := p.Name
 				if p.Emoji != "" {
