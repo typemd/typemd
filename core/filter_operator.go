@@ -48,6 +48,32 @@ var validOperators = map[string]map[string]bool{
 	},
 }
 
+// OperatorsForType returns the ordered list of valid filter operators for a property type.
+// Returns nil if the property type is unknown.
+func OperatorsForType(propertyType string) []string {
+	ops, ok := validOperators[propertyType]
+	if !ok {
+		return nil
+	}
+	// Return operators in a stable, logical order.
+	var ordered []string
+	// Define the canonical order across all types.
+	allOps := []string{
+		"is", "is_not",
+		"contains", "does_not_contain",
+		"starts_with", "ends_with",
+		"eq", "neq", "gt", "gte", "lt", "lte",
+		"before", "after", "on_or_before", "on_or_after",
+		"is_empty", "is_not_empty",
+	}
+	for _, op := range allOps {
+		if ops[op] {
+			ordered = append(ordered, op)
+		}
+	}
+	return ordered
+}
+
 // ValidateFilterOperator checks that an operator is valid for a given property type.
 func ValidateFilterOperator(propertyType, operator string) error {
 	ops, ok := validOperators[propertyType]

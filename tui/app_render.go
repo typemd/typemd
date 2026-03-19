@@ -85,7 +85,32 @@ func (m model) View() tea.View {
 		bodyH := contentH - titlePanelHeight
 
 		var bodyContent string
-		if vm.HasPreview() {
+		if vm.HasEditor() {
+			// Split: table on left, editor on right
+			editorW := m.width * 2 / 5 // 40% for editor
+			tableW := m.width - editorW - bdr - 2
+
+			vm.SetSize(tableW-bdr, bodyH-bdr)
+			vm.SetEditorSize(editorW, bodyH-bdr)
+
+			tableStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				Width(tableW).
+				Height(bodyH).
+				MaxHeight(bodyH)
+
+			editorStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				BorderForeground(colorFocusBorder).
+				Width(editorW).
+				Height(bodyH).
+				MaxHeight(bodyH)
+
+			bodyContent = lipgloss.JoinHorizontal(lipgloss.Top,
+				tableStyle.Render(vm.View()),
+				editorStyle.Render(vm.EditorView()),
+			)
+		} else if vm.HasPreview() {
 			// Split: table on left, preview on right
 			previewW := m.width * 2 / 5 // 40% for preview
 			tableW := m.width - previewW - bdr - 2 // -2 for gap between panels

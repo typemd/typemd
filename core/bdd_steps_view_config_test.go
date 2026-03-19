@@ -46,8 +46,8 @@ func (vc *viewConfigContext) theViewHasSortPropertyDirection(property, direction
 	})
 }
 
-func (vc *viewConfigContext) theViewHasGroupBy(groupBy string) {
-	vc.view.GroupBy = groupBy
+func (vc *viewConfigContext) theViewHasGroupByProperty(property string) {
+	vc.view.GroupBy = append(vc.view.GroupBy, GroupRule{Property: property})
 }
 
 func (vc *viewConfigContext) viewYAMLContent(content *godog.DocString) {
@@ -101,9 +101,20 @@ func (vc *viewConfigContext) theViewShouldHaveNSortRules(n int) error {
 	return nil
 }
 
-func (vc *viewConfigContext) theViewGroupByShouldBe(expected string) error {
-	if vc.view.GroupBy != expected {
-		return fmt.Errorf("expected group_by %q, got %q", expected, vc.view.GroupBy)
+func (vc *viewConfigContext) theViewShouldHaveNGroupRules(n int) error {
+	if len(vc.view.GroupBy) != n {
+		return fmt.Errorf("expected %d group rules, got %d", n, len(vc.view.GroupBy))
+	}
+	return nil
+}
+
+func (vc *viewConfigContext) theViewGroupByPropertyNShouldBe(index int, expected string) error {
+	idx := index - 1 // 1-based to 0-based
+	if idx < 0 || idx >= len(vc.view.GroupBy) {
+		return fmt.Errorf("group rule index %d out of range (have %d rules)", index, len(vc.view.GroupBy))
+	}
+	if vc.view.GroupBy[idx].Property != expected {
+		return fmt.Errorf("expected group rule %d property %q, got %q", index, expected, vc.view.GroupBy[idx].Property)
 	}
 	return nil
 }
@@ -143,9 +154,20 @@ func (vc *viewConfigContext) theDeserializedViewShouldHaveNSortRules(n int) erro
 	return nil
 }
 
-func (vc *viewConfigContext) theDeserializedViewGroupByShouldBe(expected string) error {
-	if vc.deserializedVC.GroupBy != expected {
-		return fmt.Errorf("expected group_by %q, got %q", expected, vc.deserializedVC.GroupBy)
+func (vc *viewConfigContext) theDeserializedViewShouldHaveNGroupRules(n int) error {
+	if len(vc.deserializedVC.GroupBy) != n {
+		return fmt.Errorf("expected %d group rules, got %d", n, len(vc.deserializedVC.GroupBy))
+	}
+	return nil
+}
+
+func (vc *viewConfigContext) theDeserializedViewGroupByPropertyNShouldBe(index int, expected string) error {
+	idx := index - 1
+	if idx < 0 || idx >= len(vc.deserializedVC.GroupBy) {
+		return fmt.Errorf("deserialized group rule index %d out of range (have %d rules)", index, len(vc.deserializedVC.GroupBy))
+	}
+	if vc.deserializedVC.GroupBy[idx].Property != expected {
+		return fmt.Errorf("expected deserialized group rule %d property %q, got %q", index, expected, vc.deserializedVC.GroupBy[idx].Property)
 	}
 	return nil
 }
@@ -159,7 +181,7 @@ func initViewConfigSteps(ctx *godog.ScenarioContext, dc *domainContext) *viewCon
 	ctx.Step(`^a view config "([^"]*)" with layout "([^"]*)"$`, vc.aViewConfigWithLayout)
 	ctx.Step(`^the view has filter property "([^"]*)" operator "([^"]*)" value "([^"]*)"$`, vc.theViewHasFilterPropertyOperatorValue)
 	ctx.Step(`^the view has sort property "([^"]*)" direction "([^"]*)"$`, vc.theViewHasSortPropertyDirection)
-	ctx.Step(`^the view has group_by "([^"]*)"$`, vc.theViewHasGroupBy)
+	ctx.Step(`^the view has group_by property "([^"]*)"$`, vc.theViewHasGroupByProperty)
 	ctx.Step(`^view YAML content:$`, vc.viewYAMLContent)
 
 	// When
@@ -171,13 +193,15 @@ func initViewConfigSteps(ctx *godog.ScenarioContext, dc *domainContext) *viewCon
 	ctx.Step(`^the view layout should be "([^"]*)"$`, vc.theViewLayoutShouldBe)
 	ctx.Step(`^the view should have (\d+) filter rules?$`, vc.theViewShouldHaveNFilterRules)
 	ctx.Step(`^the view should have (\d+) sort rules?$`, vc.theViewShouldHaveNSortRules)
-	ctx.Step(`^the view group_by should be "([^"]*)"$`, vc.theViewGroupByShouldBe)
+	ctx.Step(`^the view should have (\d+) group rules?$`, vc.theViewShouldHaveNGroupRules)
+	ctx.Step(`^the view group_by property (\d+) should be "([^"]*)"$`, vc.theViewGroupByPropertyNShouldBe)
 	ctx.Step(`^the view YAML should contain "([^"]*)"$`, vc.theViewYAMLShouldContain)
 	ctx.Step(`^the view YAML should not contain "([^"]*)"$`, vc.theViewYAMLShouldNotContain)
 	ctx.Step(`^the deserialized view name should be "([^"]*)"$`, vc.theDeserializedViewNameShouldBe)
 	ctx.Step(`^the deserialized view should have (\d+) filter rules?$`, vc.theDeserializedViewShouldHaveNFilterRules)
 	ctx.Step(`^the deserialized view should have (\d+) sort rules?$`, vc.theDeserializedViewShouldHaveNSortRules)
-	ctx.Step(`^the deserialized view group_by should be "([^"]*)"$`, vc.theDeserializedViewGroupByShouldBe)
+	ctx.Step(`^the deserialized view should have (\d+) group rules?$`, vc.theDeserializedViewShouldHaveNGroupRules)
+	ctx.Step(`^the deserialized view group_by property (\d+) should be "([^"]*)"$`, vc.theDeserializedViewGroupByPropertyNShouldBe)
 
 	return vc
 }
