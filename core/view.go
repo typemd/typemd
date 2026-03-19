@@ -17,13 +17,61 @@ const (
 	ViewLayoutList ViewLayout = "list"
 )
 
+// GroupRule defines a single grouping level.
+type GroupRule struct {
+	Property string `yaml:"property"`
+}
+
 // ViewConfig defines a saved view configuration for a type.
 type ViewConfig struct {
 	Name    string       `yaml:"name"`
 	Layout  ViewLayout   `yaml:"layout"`
 	Filter  []FilterRule `yaml:"filter,omitempty"`
 	Sort    []SortRule   `yaml:"sort,omitempty"`
-	GroupBy string       `yaml:"group_by,omitempty"`
+	GroupBy []GroupRule   `yaml:"group_by,omitempty"`
+}
+
+// UnmarshalYAML implements custom YAML unmarshaling for ViewConfig to support
+// both legacy string format (group_by: "genre") and new array format
+// (group_by: [{property: genre}]).
+func (vc *ViewConfig) UnmarshalYAML(value *yaml.Node) error {
+	// Use a raw struct to avoid recursion.
+	var raw struct {
+		Name    string       `yaml:"name"`
+		Layout  ViewLayout   `yaml:"layout"`
+		Filter  []FilterRule `yaml:"filter,omitempty"`
+		Sort    []SortRule   `yaml:"sort,omitempty"`
+		GroupBy yaml.Node    `yaml:"group_by"`
+	}
+	if err := value.Decode(&raw); err != nil {
+		return err
+	}
+
+	vc.Name = raw.Name
+	vc.Layout = raw.Layout
+	vc.Filter = raw.Filter
+	vc.Sort = raw.Sort
+
+	// Parse group_by based on YAML node kind.
+	switch raw.GroupBy.Kind {
+	case yaml.ScalarNode:
+		// Legacy string format: group_by: "genre"
+		s := raw.GroupBy.Value
+		if s != "" {
+			vc.GroupBy = []GroupRule{{Property: s}}
+		}
+	case yaml.SequenceNode:
+		// New array format: group_by: [{property: genre}]
+		var rules []GroupRule
+		if err := raw.GroupBy.Decode(&rules); err != nil {
+			return fmt.Errorf("decode group_by array: %w", err)
+		}
+		vc.GroupBy = rules
+	case 0:
+		// Not present in YAML — leave nil.
+	}
+
+	return nil
 }
 
 // FilterRule defines a single filter condition.
