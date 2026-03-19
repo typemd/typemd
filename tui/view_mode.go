@@ -361,6 +361,16 @@ func truncate(s string, maxLen int) string {
 	return runewidth.Truncate(s, maxLen, "…")
 }
 
+// padRight pads a string with spaces to fill exactly width display cells.
+// Unlike fmt.Sprintf("%-*s"), this correctly handles CJK/emoji wide characters.
+func padRight(s string, width int) string {
+	sw := runewidth.StringWidth(s)
+	if sw >= width {
+		return s
+	}
+	return s + strings.Repeat(" ", width-sw)
+}
+
 // displayPropValue formats a property value for table display using the
 // unified DisplayProperty.FormatValue() pipeline.
 func (vm *viewMode) displayPropValue(obj *core.Object, propName string) string {
@@ -504,10 +514,10 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 	var b strings.Builder
 
 	// Column header
-	header := fmt.Sprintf("  %-*s", nameW, "NAME")
+	header := "  " + padRight("NAME", nameW)
 	for _, col := range cols {
 		label := strings.ToUpper(col) + sortIndicators[col]
-		header += fmt.Sprintf("  %-*s", colW, truncate(label, colW))
+		header += "  " + padRight(truncate(label, colW), colW)
 	}
 	b.WriteString(headerStyle.Render(header) + "\n")
 	// Separator
@@ -531,13 +541,13 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 				name = row.object.Filename
 			}
 
-			line := fmt.Sprintf("  %-*s", nameW, truncate(name, nameW))
+			line := "  " + padRight(truncate(name, nameW), nameW)
 			for _, col := range cols {
 				val := vm.displayPropValue(row.object, col)
 				if val == "" {
-					line += "  " + dimStyle.Render(fmt.Sprintf("%-*s", colW, "·"))
+					line += "  " + dimStyle.Render(padRight("·", colW))
 				} else {
-					line += fmt.Sprintf("  %-*s", colW, truncate(val, colW))
+					line += "  " + padRight(truncate(val, colW), colW)
 				}
 			}
 
