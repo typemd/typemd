@@ -40,8 +40,9 @@ type viewMode struct {
 	// View editor: shown as right split panel (mutually exclusive with preview)
 	editor *viewEditor
 
-	width  int
-	height int
+	width        int
+	height       int
+	previewWidth int // content width of preview panel (0 = not in split mode)
 }
 
 // viewGroup represents a group of objects in the view list.
@@ -361,6 +362,12 @@ func truncate(s string, maxLen int) string {
 	return runewidth.Truncate(s, maxLen, "…")
 }
 
+// padRight pads a string with spaces to fill exactly width display cells.
+// Delegates to runewidth.FillRight for CJK/emoji-aware padding.
+func padRight(s string, width int) string {
+	return runewidth.FillRight(s, width)
+}
+
 // displayPropValue formats a property value for table display using the
 // unified DisplayProperty.FormatValue() pipeline.
 func (vm *viewMode) displayPropValue(obj *core.Object, propName string) string {
@@ -443,7 +450,7 @@ func (vm *viewMode) viewList(rows []viewRow) string {
 			}
 
 			if isCurrent {
-				b.WriteString(highlightStyle.Render(line) + "\n")
+				b.WriteString(highlightStyle.Render(padRight(line, vm.width)) + "\n")
 			} else {
 				b.WriteString(line + "\n")
 			}
@@ -471,6 +478,16 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 	}
 	if nameW > 30 {
 		nameW = 30
+	}
+
+	// Trim columns to fit within available width
+	// Each row: 2 (indent) + nameW + len(cols) * (2 + colW)
+	maxCols := (vm.width - 2 - nameW) / (2 + colW)
+	if maxCols < 0 {
+		maxCols = 0
+	}
+	if len(cols) > maxCols {
+		cols = cols[:maxCols]
 	}
 
 	// Ensure scroll keeps cursor visible
@@ -504,10 +521,10 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 	var b strings.Builder
 
 	// Column header
-	header := fmt.Sprintf("  %-*s", nameW, "NAME")
+	header := "  " + padRight("NAME", nameW)
 	for _, col := range cols {
 		label := strings.ToUpper(col) + sortIndicators[col]
-		header += fmt.Sprintf("  %-*s", colW, truncate(label, colW))
+		header += "  " + padRight(truncate(label, colW), colW)
 	}
 	b.WriteString(headerStyle.Render(header) + "\n")
 	// Separator
@@ -531,18 +548,21 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 				name = row.object.Filename
 			}
 
-			line := fmt.Sprintf("  %-*s", nameW, truncate(name, nameW))
+			line := "  " + padRight(truncate(name, nameW), nameW)
 			for _, col := range cols {
 				val := vm.displayPropValue(row.object, col)
 				if val == "" {
-					line += "  " + dimStyle.Render(fmt.Sprintf("%-*s", colW, "·"))
+					cell := padRight("·", colW)
+					if !isCurrent {
+						cell = dimStyle.Render(cell)
+					}
+					line += "  " + cell
 				} else {
-					line += fmt.Sprintf("  %-*s", colW, truncate(val, colW))
+					line += "  " + padRight(truncate(val, colW), colW)
 				}
 			}
-
 			if isCurrent {
-				b.WriteString(highlightStyle.Render(line) + "\n")
+				b.WriteString(highlightStyle.Render(padRight(line, vm.width)) + "\n")
 			} else {
 				b.WriteString(line + "\n")
 			}
@@ -572,9 +592,19 @@ func (vm *viewMode) PreviewContent() string {
 		name = vm.previewObject.Filename
 	}
 
+	// Let lipgloss handle name wrapping; only constrain separator width
+	maxW := vm.previewWidth
+	if maxW < 10 {
+		maxW = 40
+	}
+
 	var b strings.Builder
 	b.WriteString(" " + name + "\n")
-	b.WriteString(" " + strings.Repeat("─", len([]rune(name))+2) + "\n")
+	sepW := maxW - 2 // fill most of panel width
+	if sepW < 4 {
+		sepW = 4
+	}
+	b.WriteString(" " + strings.Repeat("─", sepW) + "\n")
 
 	// Show key properties
 	if vm.schema != nil {

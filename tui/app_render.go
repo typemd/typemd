@@ -81,17 +81,38 @@ func (m model) View() tea.View {
 			Width(m.width - bdr).
 			Height(titlePanelHeight)
 		titleText := vm.titleContent()
+		if vm.detailObject != nil && m.selected != nil {
+			if vm.schema != nil && vm.schema.Emoji != "" {
+				titleText = fmt.Sprintf(" %s %s · %s", padEmoji(vm.schema.Emoji), m.selected.Type, m.selected.GetName())
+			} else {
+				titleText = fmt.Sprintf(" %s · %s", m.selected.Type, m.selected.GetName())
+			}
+		}
 
 		bodyH := contentH - titlePanelHeight
 
 		var bodyContent string
-		if vm.HasEditor() {
+		if vm.detailObject != nil {
+			// Object detail within view mode — full-width body only
+			m.bodyViewport.SetWidth(m.width - bdr - 2)
+			m.bodyViewport.SetHeight(bodyH - bdr)
+			m.bodyViewport.SetContent(renderBody(m.selected, m.width-bdr-2, m.displayProps))
+
+			bodyStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				Width(m.width - bdr).
+				Height(bodyH).
+				MaxHeight(bodyH)
+
+			bodyContent = bodyStyle.Render(m.bodyViewport.View())
+		} else if vm.HasEditor() {
 			// Split: table on left, editor on right
-			editorW := m.width * 2 / 5 // 40% for editor
-			tableW := m.width - editorW - bdr - 2
+			totalContent := m.width - bdr
+			editorW := totalContent * 2 / 5
+			tableW := totalContent - editorW
 
 			vm.SetSize(tableW-bdr, bodyH-bdr)
-			vm.SetEditorSize(editorW, bodyH-bdr)
+			vm.SetEditorSize(editorW-bdr, bodyH-bdr)
 
 			tableStyle := lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
@@ -112,10 +133,13 @@ func (m model) View() tea.View {
 			)
 		} else if vm.HasPreview() {
 			// Split: table on left, preview on right
-			previewW := m.width * 2 / 5 // 40% for preview
-			tableW := m.width - previewW - bdr - 2 // -2 for gap between panels
+			// Match title: Width(m.width-bdr) fills screen, so total content = m.width-bdr
+			totalContent := m.width - bdr
+			previewW := totalContent / 2
+			tableW := totalContent - previewW
 
 			vm.SetSize(tableW-bdr, bodyH-bdr)
+			vm.previewWidth = previewW - bdr
 
 			tableStyle := lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).

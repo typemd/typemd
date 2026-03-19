@@ -297,12 +297,12 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			vm, cmd := m.viewMode.Update(msg)
 			m.viewMode = vm
-			// If an object was selected, load it into the normal detail view
+			// If an object was selected, show it within view mode (keep panelView)
 			if vm != nil && vm.detailObject != nil && m.selected != vm.detailObject {
 				obj, err := m.vault.GetObject(vm.detailObject.ID)
 				if err == nil {
 					m.applyLoadedObject(obj)
-					m.rightPanel = panelObject
+					// Stay in panelView — detailObject signals the render to show object detail
 				}
 			}
 			return m, cmd
@@ -540,6 +540,9 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 			return fmt.Errorf("get working directory: %w", err)
 		}
 	}
+
+	closeLog := initLog(vaultPath)
+	defer closeLog()
 
 	v := core.NewVault(vaultPath)
 	loadTheme(vaultPath)
