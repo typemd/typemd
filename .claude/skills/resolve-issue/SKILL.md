@@ -2,12 +2,6 @@
 name: resolve-issue
 description: |
   This skill should be used when the user asks to "resolve an issue", "work on issue #N", "fix #N", "implement #N", "close #N", "tackle #N", "pick up #N", "start working on #N", "what should I work on next", or references a specific GitHub issue number they want to work on. Can also auto-select the best issue when no number is specified.
-allowed-tools:
-  - Bash(${CLAUDE_SKILL_DIR}/scripts:*)
-  - Bash(gh api graphql:*)
-  - Bash(gh issue list:*)
-  - Bash(gh issue view:*)
-  - Bash(openspec:*)
 ---
 
 # Resolve Issue
@@ -54,7 +48,7 @@ If the user does not specify an issue number, automatically select the best issu
 **Step 1: Find the nearest open Release issue and its open sub-issues**
 
 ```bash
-${CLAUDE_SKILL_DIR}/scripts/find-release-issues.sh
+./scripts/find-release-issues
 ```
 
 The script queries all open issues via GraphQL, filters for Release issues (title matching `vX.Y.Z —`), and returns a JSON object:
@@ -76,7 +70,7 @@ If no Release issue exists, `release` is `null` and `issues` contains all open i
 From the issues returned in Step 1, pick the top candidates (up to 5-6) based on labels and titles, then fetch their details:
 
 ```bash
-${CLAUDE_SKILL_DIR}/scripts/get-issue-details.sh <number> [number ...]
+./scripts/get-issue-details <number> [number ...]
 ```
 
 The script returns a JSON array with each issue's number, title, labels, and body (truncated to 300 chars).

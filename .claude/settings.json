@@ -1,21 +1,26 @@
 {
   "permissions": {
     "allow": [
+      "Bash(./scripts/find-release-issues)",
+      "Bash(./scripts/get-issue-details *)",
       "Bash(gh api repos/typemd/typemd/milestones:*)",
-      "Bash(gh issue list:*)",
-      "Bash(gh issue view:*)",
-      "Bash(gh label list:*)",
-      "Bash(gh project field-list:*)",
-      "Bash(gh project item-list:*)",
-      "Bash(gh project list:*)",
-      "Bash(gh run view:*)",
+      "Bash(gh api graphql *)",
+      "Bash(gh issue list *)",
+      "Bash(gh issue view *)",
+      "Bash(gh label list *)",
+      "Bash(gh project field-list *)",
+      "Bash(gh project item-list *)",
+      "Bash(gh project list *)",
+      "Bash(gh run list *)",
+      "Bash(gh run view *)",
       "Bash(git check-ignore:*)",
-      "Bash(go build:*)",
-      "Bash(go fmt:*)",
-      "Bash(go run:*)",
-      "Bash(go test:*)",
-      "Bash(go vet:*)",
+      "Bash(go build *)",
+      "Bash(go fmt *)",
+      "Bash(go run *)",
+      "Bash(go test *)",
+      "Bash(go vet *)",
       "Bash(grep:*)",
+      "Bash(make test)",
       "Bash(openspec instructions:*)",
       "Bash(openspec list:*)",
       "Bash(openspec new:*)",
@@ -26,6 +31,9 @@
       "Skill(resolve-issue)",
       "Skill(update-doc)",
       "WebFetch(domain:goreleaser.com)"
+    ],
+    "deny": [
+      "Bash(bash *)"
     ]
   }
 }
