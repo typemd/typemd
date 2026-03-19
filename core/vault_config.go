@@ -5,6 +5,7 @@ import (
 	"os"
 	"path/filepath"
 	"sort"
+	"strconv"
 	"strings"
 
 	"gopkg.in/yaml.v3"
@@ -15,11 +16,17 @@ const configFileName = "config.yaml"
 // VaultConfig holds vault-level configuration loaded from .typemd/config.yaml.
 type VaultConfig struct {
 	CLI CLIConfig `yaml:"cli"`
+	TUI TUIConfig `yaml:"tui,omitempty"`
 }
 
 // CLIConfig holds CLI-specific configuration.
 type CLIConfig struct {
 	DefaultType string `yaml:"default_type"`
+}
+
+// TUIConfig holds TUI-specific configuration.
+type TUIConfig struct {
+	DebounceMs int `yaml:"debounce_ms,omitempty"`
 }
 
 // configKeyEntry maps a dot-notation key to getter/setter on VaultConfig.
@@ -34,6 +41,23 @@ var configKeyRegistry = map[string]configKeyEntry{
 		Get: func(cfg *VaultConfig) string { return cfg.CLI.DefaultType },
 		Set: func(cfg *VaultConfig, value string) { cfg.CLI.DefaultType = value },
 	},
+	"tui.debounce_ms": {
+		Get: func(cfg *VaultConfig) string {
+			if cfg.TUI.DebounceMs == 0 {
+				return ""
+			}
+			return strconv.Itoa(cfg.TUI.DebounceMs)
+		},
+		Set: func(cfg *VaultConfig, value string) {
+			n, _ := strconv.Atoi(value)
+			cfg.TUI.DebounceMs = n
+		},
+	},
+}
+
+// Config returns the current in-memory VaultConfig.
+func (v *Vault) Config() *VaultConfig {
+	return v.config
 }
 
 // loadVaultConfig reads and parses the vault config file.

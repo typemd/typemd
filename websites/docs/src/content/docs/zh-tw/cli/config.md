@@ -42,12 +42,15 @@ tmd config list
 | Key | 說明 |
 |-----|------|
 | `cli.default_type` | `tmd object create` 未指定 type 時的預設 type |
+| `tui.debounce_ms` | 檔案監聽的 debounce 間隔（毫秒，預設：200） |
 
 Keys 使用 dot-notation，對應到 YAML 巢狀結構。例如 `cli.default_type` 對應：
 
 ```yaml
 cli:
   default_type: idea
+tui:
+  debounce_ms: 200
 ```
 
 ## 錯誤處理

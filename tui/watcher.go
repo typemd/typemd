@@ -9,21 +9,45 @@ import (
 	"github.com/fsnotify/fsnotify"
 )
 
-// fileChangedMsg is sent when a file change is detected in the objects directory.
-type fileChangedMsg struct{}
+const defaultDebounceMs = 200
 
-// watchObjects starts watching the objects directory for changes.
-// Returns a tea.Cmd that sends fileChangedMsg when changes are detected.
-// Uses debouncing to batch rapid changes (e.g. editor save).
-func watchObjects(objectsDir string) tea.Cmd {
+// fileChangedMsg is sent when file changes are detected in the objects directory.
+// Paths contains the deduplicated list of changed file paths.
+type fileChangedMsg struct {
+	Paths []string
+}
+
+// schemaChangedMsg is sent when file changes are detected in the types directory.
+type schemaChangedMsg struct{}
+
+// deduplicatePaths returns a deduplicated copy of the input paths.
+func deduplicatePaths(paths []string) []string {
+	seen := make(map[string]bool, len(paths))
+	result := make([]string, 0, len(paths))
+	for _, p := range paths {
+		if !seen[p] {
+			seen[p] = true
+			result = append(result, p)
+		}
+	}
+	return result
+}
+
+// watchDir creates a watcher on a directory and calls buildMsg when changes are detected.
+// It debounces rapid changes and collects changed file paths during the window.
+func watchDir(dir string, debounceMs int, buildMsg func(paths []string) tea.Msg) tea.Cmd {
+	if debounceMs <= 0 {
+		debounceMs = defaultDebounceMs
+	}
 	return func() tea.Msg {
 		watcher, err := fsnotify.NewWatcher()
 		if err != nil {
 			return nil
 		}
+		defer watcher.Close()
 
-		// Watch objects dir and all subdirectories
-		filepath.Walk(objectsDir, func(path string, info os.FileInfo, err error) error {
+		// Watch dir and all subdirectories
+		filepath.Walk(dir, func(path string, info os.FileInfo, err error) error {
 			if err != nil {
 				return nil
 			}
@@ -33,7 +57,6 @@ func watchObjects(objectsDir string) tea.Cmd {
 			return nil
 		})
 
-		// Wait for first change, then debounce
 		for {
 			select {
 			case event, ok := <-watcher.Events:
@@ -41,20 +64,21 @@ func watchObjects(objectsDir string) tea.Cmd {
 					return nil
 				}
 				if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
-					// Debounce: wait a bit for more changes
-					time.Sleep(200 * time.Millisecond)
-					// Drain any queued events
+					// Collect this event's path
+					paths := []string{event.Name}
+
+					// Debounce: wait for more changes
+					time.Sleep(time.Duration(debounceMs) * time.Millisecond)
+
+					// Drain queued events, collecting their paths
 					for len(watcher.Events) > 0 {
-						<-watcher.Events
-					}
-					// Re-add new subdirectories (for Create events)
-					filepath.Walk(objectsDir, func(path string, info os.FileInfo, err error) error {
-						if err == nil && info.IsDir() {
-							watcher.Add(path)
+						e := <-watcher.Events
+						if e.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
+							paths = append(paths, e.Name)
 						}
-						return nil
-					})
-					return fileChangedMsg{}
+					}
+
+					return buildMsg(deduplicatePaths(paths))
 				}
 			case _, ok := <-watcher.Errors:
 				if !ok {
@@ -63,4 +87,20 @@ func watchObjects(objectsDir string) tea.Cmd {
 			}
 		}
 	}
+}
+
+// watchObjects starts watching the objects directory for changes.
+// Returns a tea.Cmd that sends fileChangedMsg with changed file paths.
+func watchObjects(objectsDir string, debounceMs int) tea.Cmd {
+	return watchDir(objectsDir, debounceMs, func(paths []string) tea.Msg {
+		return fileChangedMsg{Paths: paths}
+	})
+}
+
+// watchTypes starts watching the types directory for schema changes.
+// Returns a tea.Cmd that sends schemaChangedMsg when changes are detected.
+func watchTypes(typesDir string, debounceMs int) tea.Cmd {
+	return watchDir(typesDir, debounceMs, func(_ []string) tea.Msg {
+		return schemaChangedMsg{}
+	})
 }

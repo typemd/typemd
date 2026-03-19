@@ -24,6 +24,7 @@ type Vault struct {
 	Queries           *QueryService
 	Events            *EventDispatcher
 	config            *VaultConfig
+	schemaCache       map[string]*TypeSchema
 	sharedProperties  []Property
 	sharedPropsMap    map[string]Property
 	sharedPropsLoaded bool
@@ -164,6 +165,7 @@ func (v *Vault) closeInternal() {
 	v.Queries = nil
 	v.Events = nil
 	v.config = nil
+	v.schemaCache = nil
 }
 
 // Close closes the SQLite database connection.
@@ -180,6 +182,7 @@ func (v *Vault) Close() error {
 	v.Queries = nil
 	v.Events = nil
 	v.config = nil
+	v.schemaCache = nil
 	return err
 }
 

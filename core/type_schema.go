@@ -190,9 +190,22 @@ var validPropertyTypes = map[string]bool{
 	"relation":     true,
 }
 
-// LoadType loads a type schema by name.
+// LoadType loads a type schema by name, using the in-memory cache when available.
 func (v *Vault) LoadType(name string) (*TypeSchema, error) {
-	return v.repo.GetSchema(name)
+	if v.schemaCache != nil {
+		if cached, ok := v.schemaCache[name]; ok {
+			return cached, nil
+		}
+	}
+	schema, err := v.repo.GetSchema(name)
+	if err != nil {
+		return nil, err
+	}
+	if v.schemaCache == nil {
+		v.schemaCache = make(map[string]*TypeSchema)
+	}
+	v.schemaCache[name] = schema
+	return schema, nil
 }
 
 // SaveType validates and persists a TypeSchema to .typemd/types/<name>.yaml.
@@ -204,7 +217,11 @@ func (v *Vault) SaveType(schema *TypeSchema) error {
 	if err != nil {
 		return fmt.Errorf("marshal type schema: %w", err)
 	}
-	return v.repo.WriteSchema(schema.Name, data)
+	if err := v.repo.WriteSchema(schema.Name, data); err != nil {
+		return err
+	}
+	delete(v.schemaCache, schema.Name)
+	return nil
 }
 
 // DeleteType removes a user-defined type schema. Built-in types cannot be deleted.
@@ -212,7 +229,17 @@ func (v *Vault) DeleteType(name string) error {
 	if _, ok := defaultTypes[name]; ok {
 		return fmt.Errorf("cannot delete built-in type %q", name)
 	}
-	return v.repo.DeleteSchema(name)
+	if err := v.repo.DeleteSchema(name); err != nil {
+		return err
+	}
+	delete(v.schemaCache, name)
+	return nil
+}
+
+// InvalidateSchemaCache clears the entire schema cache,
+// forcing subsequent LoadType calls to reload from disk.
+func (v *Vault) InvalidateSchemaCache() {
+	v.schemaCache = nil
 }
 
 // CountObjectsByType returns the number of objects of the given type.

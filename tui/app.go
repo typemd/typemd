@@ -100,9 +100,24 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	if m.vault != nil {
-		return watchObjects(m.vault.ObjectsDir())
+		debounce := m.debounceMs()
+		return tea.Batch(
+			watchObjects(m.vault.ObjectsDir(), debounce),
+			watchTypes(m.vault.TypesDir(), debounce),
+		)
 	}
 	return nil
+}
+
+// debounceMs returns the configured debounce interval, defaulting to 200ms.
+func (m model) debounceMs() int {
+	if m.vault == nil || m.vault.Config() == nil {
+		return defaultDebounceMs
+	}
+	if ms := m.vault.Config().TUI.DebounceMs; ms > 0 {
+		return ms
+	}
+	return defaultDebounceMs
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -122,7 +137,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.typeEditor = nil
 		m.rightPanel = panelEmpty
 		m.focus = focusLeft
-		m.refreshData()
+		m.refreshData(nil)
 		return m, nil
 
 	case openTemplateMsg:
@@ -191,12 +206,18 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case fileChangedMsg:
+		debounce := m.debounceMs()
 		if m.skipNextReload {
 			m.skipNextReload = false
-			return m, watchObjects(m.vault.ObjectsDir())
+			return m, watchObjects(m.vault.ObjectsDir(), debounce)
 		}
-		m.refreshData()
-		return m, watchObjects(m.vault.ObjectsDir())
+		m.refreshData(msg.Paths)
+		return m, watchObjects(m.vault.ObjectsDir(), debounce)
+
+	case schemaChangedMsg:
+		m.vault.InvalidateSchemaCache()
+		m.refreshData(nil) // full refresh after schema change
+		return m, watchTypes(m.vault.TypesDir(), m.debounceMs())
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -365,13 +386,22 @@ func (m *model) rebuildGroups() {
 }
 
 // refreshData syncs the index from disk and reloads all objects, preserving cursor position when possible.
-func (m *model) refreshData() {
+// When paths is non-empty, uses incremental sync for the specified files.
+// When paths is nil or empty, falls back to full sync.
+func (m *model) refreshData(paths []string) {
 	if m.vault == nil {
 		return
 	}
 
-	// Sync filesystem to DB first
-	m.vault.SyncIndex()
+	// Sync filesystem to DB — incremental when paths available, full otherwise
+	if len(paths) > 0 {
+		if _, err := m.vault.SyncFiles(paths); err != nil {
+			// Fallback to full sync on error
+			m.vault.SyncIndex()
+		}
+	} else {
+		m.vault.SyncIndex()
+	}
 
 	m.rebuildGroups()
 

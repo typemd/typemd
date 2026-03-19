@@ -124,6 +124,55 @@ func TestSQLiteObjectIndex_Search(t *testing.T) {
 	}
 }
 
+func TestSQLiteObjectIndex_SearchWithoutRebuild(t *testing.T) {
+	idx := setupTestIndex(t)
+
+	// Upsert should make content searchable via FTS triggers (no Rebuild needed)
+	idx.Upsert("book/golang-01abc", "book", "golang-01abc", `{"name":"Go Programming"}`, "Learn golang basics")
+
+	results, err := idx.Search("golang")
+	if err != nil {
+		t.Fatalf("search: %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result without Rebuild, got %d", len(results))
+	}
+	if results[0].ID != "book/golang-01abc" {
+		t.Errorf("ID = %q, want %q", results[0].ID, "book/golang-01abc")
+	}
+}
+
+func TestSQLiteObjectIndex_FTSUpdatedOnUpsert(t *testing.T) {
+	idx := setupTestIndex(t)
+
+	// Insert initial content
+	idx.Upsert("book/test-01abc", "book", "test-01abc", `{"name":"Old Title"}`, "old content here")
+
+	// Verify initial content is searchable
+	results, _ := idx.Search("old")
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result for 'old', got %d", len(results))
+	}
+
+	// Update content via upsert
+	idx.Upsert("book/test-01abc", "book", "test-01abc", `{"name":"New Title"}`, "new content here")
+
+	// New content should be searchable
+	results, err := idx.Search("new")
+	if err != nil {
+		t.Fatalf("search 'new': %v", err)
+	}
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result for 'new' after upsert, got %d", len(results))
+	}
+
+	// Old content should no longer be searchable
+	results, _ = idx.Search("old")
+	if len(results) != 0 {
+		t.Errorf("expected 0 results for 'old' after upsert, got %d", len(results))
+	}
+}
+
 func TestSQLiteObjectIndex_SearchEmpty(t *testing.T) {
 	idx := setupTestIndex(t)
 
@@ -157,6 +206,32 @@ func TestSQLiteObjectIndex_RemoveAndListIDs(t *testing.T) {
 	}
 	if ids[0] != "book/b-01abc" {
 		t.Errorf("remaining ID = %q, want %q", ids[0], "book/b-01abc")
+	}
+}
+
+func TestSQLiteObjectIndex_FTSCleanedOnRemove(t *testing.T) {
+	idx := setupTestIndex(t)
+
+	idx.Upsert("book/unique-01abc", "book", "unique-01abc", `{"name":"Unique Book"}`, "very unique content xyz123")
+
+	// Verify searchable
+	results, _ := idx.Search("xyz123")
+	if len(results) != 1 {
+		t.Fatalf("expected 1 result before remove, got %d", len(results))
+	}
+
+	// Remove the object
+	if err := idx.Remove("book/unique-01abc"); err != nil {
+		t.Fatalf("remove: %v", err)
+	}
+
+	// Should no longer be searchable
+	results, err := idx.Search("xyz123")
+	if err != nil {
+		t.Fatalf("search after remove: %v", err)
+	}
+	if len(results) != 0 {
+		t.Errorf("expected 0 results after remove, got %d", len(results))
 	}
 }
 
