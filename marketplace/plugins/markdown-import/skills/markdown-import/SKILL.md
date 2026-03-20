@@ -9,7 +9,7 @@ Help the user convert existing markdown files into typemd objects.
 
 ## Before You Start
 
-1. **Read the vault's type schemas** from `.typemd/types/*.yaml` to understand available types and their properties
+1. **Read the vault's type schemas** from `.typemd/types/*/schema.yaml` (or legacy `.typemd/types/*.yaml`) to understand available types and their properties
 2. **Check `.typemd/properties.yaml`** for shared property definitions (referenced via `use:` in type schemas)
 3. **List existing objects** with `tmd object list` to understand what's already in the vault (for relation discovery)
 
@@ -22,7 +22,7 @@ For each markdown file the user wants to import:
 ### 1. Analyze the Content
 
 Read the file and determine:
-- What **type** best fits this content (e.g., book, person, idea, note)
+- What **type** best fits this content (e.g., book, person, idea, note, page). Note: `tag` (🏷️, unique) and `page` (📄, general-purpose) are built-in types that always exist
 - What **properties** can be extracted from the content
 - What **relations** might exist to other objects in the vault
 
@@ -30,7 +30,7 @@ If the content doesn't clearly map to an existing type, ask the user which type 
 
 ### 2. Generate the typemd Object
 
-Use `tmd object create <type> <name>` to create the object file. This generates the proper ULID filename at `objects/<type>/<slug>-<ulid>.md`. If the type has object templates, use `-t <template>` to select one.
+Use `tmd object create <type> <name>` to create the object file. This generates the proper ULID filename at `objects/<type>/<slug>-<ulid>.md` (ULID: 26-character Crockford Base32, lowercase). If the type has object templates, use `-t <template>` to select one.
 
 Then edit the created file to populate:
 
@@ -41,7 +41,7 @@ Then edit the created file to populate:
   - `created_at`: ISO 8601 timestamp (use the original file's date if available, otherwise current time)
   - `updated_at`: current ISO 8601 timestamp
   - `tags`: array of tag object IDs (e.g., `tag/programming-01kk...`)
-- Type-specific properties after system properties, matching the type schema's property definitions and order
+- Type-specific properties after system properties, matching the type schema's property definitions and order. Available property types: `string`, `number`, `date`, `datetime`, `url`, `checkbox`, `select`, `multi_select`, `relation`
 
 **Body**: the markdown content, cleaned up and adapted. Preserve the substance of the original content.
 
