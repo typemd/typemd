@@ -165,6 +165,8 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initQuerySortSteps(ctx, dc)
 	initFilterOperatorSteps(ctx, dc)
 	initStatsSteps(ctx, dc)
+	initSchemaCacheSteps(ctx, dc)
+	initIncrementalSyncSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

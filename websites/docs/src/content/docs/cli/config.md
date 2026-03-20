@@ -42,12 +42,15 @@ tmd config list
 | Key | Description |
 |-----|-------------|
 | `cli.default_type` | Default type for `tmd object create` when no type argument is given |
+| `tui.debounce_ms` | File watcher debounce interval in milliseconds (default: 200) |
 
 Keys use dot-notation that maps to YAML nesting. For example, `cli.default_type` corresponds to:
 
 ```yaml
 cli:
   default_type: idea
+tui:
+  debounce_ms: 200
 ```
 
 ## Error Handling

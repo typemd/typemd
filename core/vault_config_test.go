@@ -159,6 +159,75 @@ func TestGetConfigValue_UnsetKnownKey(t *testing.T) {
 	}
 }
 
+func TestLoadVaultConfig_TUIDebounceMs(t *testing.T) {
+	dir := t.TempDir()
+	content := "tui:\n  debounce_ms: 500\n"
+	os.WriteFile(filepath.Join(dir, configFileName), []byte(content), 0644)
+
+	cfg, err := loadVaultConfig(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.TUI.DebounceMs != 500 {
+		t.Errorf("expected debounce_ms=500, got %d", cfg.TUI.DebounceMs)
+	}
+}
+
+func TestLoadVaultConfig_TUIDebounceMs_NotSet(t *testing.T) {
+	dir := t.TempDir()
+	content := "cli:\n  default_type: page\n"
+	os.WriteFile(filepath.Join(dir, configFileName), []byte(content), 0644)
+
+	cfg, err := loadVaultConfig(dir)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if cfg.TUI.DebounceMs != 0 {
+		t.Errorf("expected debounce_ms=0, got %d", cfg.TUI.DebounceMs)
+	}
+}
+
+func TestGetSetConfigValue_TUIDebounceMs(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+	v.Open()
+	defer v.Close()
+
+	// Set debounce_ms
+	if err := v.SetConfigValue("tui.debounce_ms", "300"); err != nil {
+		t.Fatalf("SetConfigValue error: %v", err)
+	}
+	val, err := v.GetConfigValue("tui.debounce_ms")
+	if err != nil {
+		t.Fatalf("GetConfigValue error: %v", err)
+	}
+	if val != "300" {
+		t.Errorf("expected '300', got %q", val)
+	}
+
+	// Verify struct field
+	if v.config.TUI.DebounceMs != 300 {
+		t.Errorf("expected DebounceMs=300, got %d", v.config.TUI.DebounceMs)
+	}
+}
+
+func TestGetConfigValue_TUIDebounceMs_Unset(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+	v.Open()
+	defer v.Close()
+
+	val, err := v.GetConfigValue("tui.debounce_ms")
+	if err != nil {
+		t.Fatalf("GetConfigValue error: %v", err)
+	}
+	if val != "" {
+		t.Errorf("expected empty value for unset debounce_ms, got %q", val)
+	}
+}
+
 func TestConfigKeys_Sorted(t *testing.T) {
 	keys := ConfigKeys()
 	if len(keys) == 0 {

@@ -332,4 +332,6 @@ Orphaned relations have been removed from the index.
 
 ## Auto-refresh
 
-The TUI watches the `objects/` directory via fsnotify. When files are created, modified, or deleted, it automatically syncs the database and refreshes the view (200ms debounce), preserving the current selection when possible.
+The TUI watches the `objects/` directory via fsnotify. When files are created, modified, or deleted, it performs an incremental index sync for the changed files and refreshes the view (200ms debounce), preserving the current selection when possible. The debounce interval can be customized via `tui.debounce_ms` in `.typemd/config.yaml`.
+
+The TUI also watches the `.typemd/types/` directory for schema changes. When type schemas are modified externally, the schema cache is invalidated and a full refresh is triggered.

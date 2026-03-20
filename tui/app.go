@@ -100,9 +100,24 @@ type model struct {
 
 func (m model) Init() tea.Cmd {
 	if m.vault != nil {
-		return watchObjects(m.vault.ObjectsDir())
+		debounce := m.debounceMs()
+		return tea.Batch(
+			watchObjects(m.vault.ObjectsDir(), debounce),
+			watchTypes(m.vault.TypesDir(), debounce),
+		)
 	}
 	return nil
+}
+
+// debounceMs returns the configured debounce interval, defaulting to 200ms.
+func (m model) debounceMs() int {
+	if m.vault == nil || m.vault.Config() == nil {
+		return defaultDebounceMs
+	}
+	if ms := m.vault.Config().TUI.DebounceMs; ms > 0 {
+		return ms
+	}
+	return defaultDebounceMs
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
@@ -122,7 +137,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.typeEditor = nil
 		m.rightPanel = panelEmpty
 		m.focus = focusLeft
-		m.refreshData()
+		m.refreshData(nil)
 		return m, nil
 
 	case openTemplateMsg:
@@ -191,12 +206,34 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, nil
 
 	case fileChangedMsg:
+		debounce := m.debounceMs()
 		if m.skipNextReload {
 			m.skipNextReload = false
-			return m, watchObjects(m.vault.ObjectsDir())
+			return m, watchObjects(m.vault.ObjectsDir(), debounce)
 		}
-		m.refreshData()
-		return m, watchObjects(m.vault.ObjectsDir())
+		// Only refresh if there are actual .md paths; non-.md events
+		// (editor temp files, .DS_Store) are filtered by the watcher
+		// and result in nil Paths — just restart the watcher.
+		if len(msg.Paths) > 0 {
+			m.refreshData(msg.Paths)
+		}
+		return m, watchObjects(m.vault.ObjectsDir(), debounce)
+
+	case schemaChangedMsg:
+		m.vault.InvalidateSchemaCache()
+		// Rebuild groups to pick up new/deleted types (expanded state is preserved)
+		m.rebuildGroups()
+		// Reload display properties for the selected object
+		if m.selected != nil && m.vault != nil {
+			m.displayProps, _ = m.vault.BuildDisplayProperties(m.selected)
+		}
+		// Refresh type editor if active
+		if m.typeEditor != nil && m.vault != nil {
+			if ts, err := m.vault.LoadType(m.typeEditor.typeName); err == nil {
+				m.typeEditor.schema = ts
+			}
+		}
+		return m, watchTypes(m.vault.TypesDir(), m.debounceMs())
 
 	case tea.WindowSizeMsg:
 		m.width = msg.Width
@@ -351,27 +388,52 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// rebuildGroups reloads objects and rebuilds type groups from the vault.
+// rebuildGroups reloads objects and rebuilds type groups from the vault,
+// preserving the expanded state of each group.
 func (m *model) rebuildGroups() {
 	if m.vault == nil {
 		return
 	}
+	// Snapshot expanded state before rebuild
+	expandedSet := make(map[string]bool, len(m.groups))
+	for _, g := range m.groups {
+		if g.Expanded {
+			expandedSet[g.Name] = true
+		}
+	}
+
 	objects, err := m.vault.QueryObjects(nil)
 	if err != nil {
 		return
 	}
 	m.groups = buildGroups(objects, m.vault)
+
+	// Restore expanded state
+	for i := range m.groups {
+		if expandedSet[m.groups[i].Name] {
+			m.groups[i].Expanded = true
+		}
+	}
 	m.searchResults = nil
 }
 
 // refreshData syncs the index from disk and reloads all objects, preserving cursor position when possible.
-func (m *model) refreshData() {
+// When paths is non-empty, uses incremental sync for the specified files.
+// When paths is nil or empty, falls back to full sync.
+func (m *model) refreshData(paths []string) {
 	if m.vault == nil {
 		return
 	}
 
-	// Sync filesystem to DB first
-	m.vault.SyncIndex()
+	// Sync filesystem to DB — incremental when paths available, full otherwise
+	if len(paths) > 0 {
+		if _, err := m.vault.SyncFiles(paths); err != nil {
+			// Fallback to full sync on error
+			m.vault.SyncIndex()
+		}
+	} else {
+		m.vault.SyncIndex()
+	}
 
 	m.rebuildGroups()
 

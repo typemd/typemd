@@ -3,6 +3,8 @@ package core
 import (
 	"encoding/json"
 	"fmt"
+	"os"
+	"path/filepath"
 	"strings"
 )
 
@@ -22,6 +24,113 @@ type Projector struct {
 // createTag is called when a tag reference needs auto-creation.
 func NewProjector(repo ObjectRepository, index ObjectIndex, createTag func(slug string) (*Object, error)) *Projector {
 	return &Projector{repo: repo, index: index, createTag: createTag}
+}
+
+// objectSyncer holds per-sync caches for processing objects.
+type objectSyncer struct {
+	repo              ObjectRepository
+	schemaCache       map[string]*TypeSchema
+	propertyNameCache map[string]map[string]bool
+	sysNames          []string
+}
+
+func newObjectSyncer(repo ObjectRepository) *objectSyncer {
+	return &objectSyncer{
+		repo:              repo,
+		schemaCache:       make(map[string]*TypeSchema),
+		propertyNameCache: make(map[string]map[string]bool),
+		sysNames:          SystemPropertyNames(),
+	}
+}
+
+// upsertObject processes a single object: migrates name if needed, filters properties,
+// and upserts into the index. Returns the filtered properties JSON and any error.
+func (s *objectSyncer) upsertObject(obj *Object, index ObjectIndex) error {
+	// Populate schema cache
+	if _, cached := s.schemaCache[obj.Type]; !cached {
+		schema, err := s.repo.GetSchema(obj.Type)
+		if err != nil {
+			s.schemaCache[obj.Type] = nil
+		} else {
+			s.schemaCache[obj.Type] = schema
+			s.propertyNameCache[obj.Type] = schema.PropertyNames()
+		}
+	}
+
+	// Migrate: add NameProperty if missing
+	nameVal, hasName := obj.Properties[NameProperty]
+	if !hasName || nameVal == nil || nameVal == "" {
+		obj.Properties[NameProperty] = StripULID(obj.Filename)
+		keyOrder := OrderedPropKeys(obj.Properties, s.schemaCache[obj.Type])
+		if err := s.repo.Save(obj, keyOrder); err != nil {
+			return fmt.Errorf("write name migration for %s: %w", obj.ID, err)
+		}
+	}
+
+	// Filter properties by type schema (only index schema-defined keys + system properties)
+	props := obj.Properties
+	if allowed := s.propertyNameCache[obj.Type]; allowed != nil {
+		filtered := make(map[string]any, len(allowed)+len(s.sysNames))
+		for _, name := range s.sysNames {
+			if val, ok := props[name]; ok {
+				filtered[name] = val
+			}
+		}
+		for k, val := range props {
+			if allowed[k] {
+				filtered[k] = val
+			}
+		}
+		props = filtered
+	}
+
+	propsJSON, err := json.Marshal(props)
+	if err != nil {
+		return nil // skip unserializable
+	}
+
+	return index.Upsert(obj.ID, obj.Type, obj.Filename, string(propsJSON), obj.Body)
+}
+
+// buildSyncContext builds a syncContext from a list of objects for wikilink/tag sync.
+func buildSyncContext(objects []*Object) *syncContext {
+	ctx := &syncContext{
+		diskIDs:     make(map[string]bool),
+		diskBodies:  make(map[string]string),
+		diskTags:    make(map[string]*Object),
+		diskTagRefs: make(map[string][]string),
+	}
+	for _, obj := range objects {
+		ctx.diskIDs[obj.ID] = true
+		ctx.diskBodies[obj.ID] = obj.Body
+		if obj.Type == TagTypeName {
+			ctx.diskTags[obj.ID] = obj
+		}
+		if tagsVal, ok := obj.Properties[TagsProperty]; ok {
+			if tagsArr, ok := tagsVal.([]any); ok {
+				var refs []string
+				for _, item := range tagsArr {
+					if ref, ok := item.(string); ok {
+						refs = append(refs, ref)
+					}
+				}
+				if len(refs) > 0 {
+					ctx.diskTagRefs[obj.ID] = refs
+				}
+			}
+		}
+	}
+	return ctx
+}
+
+// syncWikiLinksAndTags syncs wikilinks and tag relations from a syncContext.
+func (p *Projector) syncWikiLinksAndTags(ctx *syncContext) error {
+	for id, body := range ctx.diskBodies {
+		if err := p.syncWikiLinks(id, body, ctx.diskIDs); err != nil {
+			return fmt.Errorf("sync wikilinks for %s: %w", id, err)
+		}
+	}
+	return p.syncTagRelations(ctx)
 }
 
 // Sync scans the repository, upserts all objects into the index,
@@ -50,87 +159,15 @@ func (p *Projector) Sync() (*SyncResult, error) {
 		return result, p.index.Rebuild()
 	}
 
-	// Build context from walked objects
-	ctx := &syncContext{
-		diskIDs:     make(map[string]bool),
-		diskBodies:  make(map[string]string),
-		diskTags:    make(map[string]*Object),
-		diskTagRefs: make(map[string][]string),
-	}
-
-	schemaCache := make(map[string]*TypeSchema)
-	propertyNameCache := make(map[string]map[string]bool)
-	sysNames := SystemPropertyNames()
+	syncer := newObjectSyncer(p.repo)
 
 	for _, obj := range objects {
-		// Populate schema cache
-		if _, cached := schemaCache[obj.Type]; !cached {
-			schema, err := p.repo.GetSchema(obj.Type)
-			if err != nil {
-				schemaCache[obj.Type] = nil
-			} else {
-				schemaCache[obj.Type] = schema
-				propertyNameCache[obj.Type] = schema.PropertyNames()
-			}
-		}
-
-		// Migrate: add NameProperty if missing
-		nameVal, hasName := obj.Properties[NameProperty]
-		if !hasName || nameVal == nil || nameVal == "" {
-			obj.Properties[NameProperty] = StripULID(obj.Filename)
-			keyOrder := OrderedPropKeys(obj.Properties, schemaCache[obj.Type])
-			if err := p.repo.Save(obj, keyOrder); err != nil {
-				return nil, fmt.Errorf("write name migration for %s: %w", obj.ID, err)
-			}
-		}
-
-		// Filter properties by type schema (only index schema-defined keys + system properties)
-		props := obj.Properties
-		if allowed := propertyNameCache[obj.Type]; allowed != nil {
-			filtered := make(map[string]any, len(allowed)+len(sysNames))
-			for _, name := range sysNames {
-				if val, ok := props[name]; ok {
-					filtered[name] = val
-				}
-			}
-			for k, val := range props {
-				if allowed[k] {
-					filtered[k] = val
-				}
-			}
-			props = filtered
-		}
-
-		propsJSON, err := json.Marshal(props)
-		if err != nil {
-			continue // skip unserializable
-		}
-
-		if err := p.index.Upsert(obj.ID, obj.Type, obj.Filename, string(propsJSON), obj.Body); err != nil {
-			return nil, fmt.Errorf("upsert object %s: %w", obj.ID, err)
-		}
-
-		ctx.diskIDs[obj.ID] = true
-		ctx.diskBodies[obj.ID] = obj.Body
-
-		if obj.Type == TagTypeName {
-			ctx.diskTags[obj.ID] = obj
-		}
-
-		if tagsVal, ok := props[TagsProperty]; ok {
-			if tagsArr, ok := tagsVal.([]any); ok {
-				var refs []string
-				for _, item := range tagsArr {
-					if ref, ok := item.(string); ok {
-						refs = append(refs, ref)
-					}
-				}
-				if len(refs) > 0 {
-					ctx.diskTagRefs[obj.ID] = refs
-				}
-			}
+		if err := syncer.upsertObject(obj, p.index); err != nil {
+			return nil, err
 		}
 	}
+
+	ctx := buildSyncContext(objects)
 
 	// Delete stale objects from index
 	deleted, err := p.deleteStaleObjects(ctx.diskIDs)
@@ -153,19 +190,85 @@ func (p *Projector) Sync() (*SyncResult, error) {
 		}
 	}
 
-	// Sync wikilinks for all objects
-	for id, body := range ctx.diskBodies {
-		if err := p.syncWikiLinks(id, body, ctx.diskIDs); err != nil {
-			return nil, fmt.Errorf("sync wikilinks for %s: %w", id, err)
-		}
-	}
-
-	// Sync tag relations
-	if err := p.syncTagRelations(ctx); err != nil {
+	// Sync wikilinks and tag relations
+	if err := p.syncWikiLinksAndTags(ctx); err != nil {
 		return nil, err
 	}
 
 	return result, p.index.Rebuild()
+}
+
+// objectPathToID converts a filesystem path under the objects directory to an object ID.
+// Path format: .../objects/<type>/<filename>.md → ID: <type>/<filename>
+// Returns the ID and true if valid, or empty string and false otherwise.
+func objectPathToID(path, objectsDir string) (string, bool) {
+	rel, err := filepath.Rel(objectsDir, path)
+	if err != nil {
+		return "", false
+	}
+	// Must be exactly <type>/<filename>.md (two path components)
+	rel = filepath.ToSlash(rel)
+	if !strings.HasSuffix(rel, ".md") {
+		return "", false
+	}
+	parts := strings.SplitN(rel, "/", 3)
+	if len(parts) != 2 {
+		return "", false
+	}
+	id := parts[0] + "/" + strings.TrimSuffix(parts[1], ".md")
+	return id, true
+}
+
+// SyncFiles incrementally synchronizes specific files to the index.
+// For existing files, it reads and upserts them. For deleted files, it removes them.
+// After incremental object sync, it performs a full wikilink and tag sync
+// using data already in the index (no filesystem walk).
+func (p *Projector) SyncFiles(paths []string, objectsDir string) (*SyncResult, error) {
+	result := &SyncResult{}
+	syncer := newObjectSyncer(p.repo)
+
+	for _, path := range paths {
+		id, ok := objectPathToID(path, objectsDir)
+		if !ok {
+			continue // skip non-object files
+		}
+
+		// Try to read the object — if it doesn't exist, it was deleted
+		obj, err := p.repo.Get(id)
+		if err != nil {
+			if os.IsNotExist(err) || strings.Contains(err.Error(), "read object") {
+				// File deleted — remove from index
+				if removeErr := p.index.Remove(id); removeErr != nil {
+					return nil, fmt.Errorf("remove deleted object %s: %w", id, removeErr)
+				}
+				if err := p.index.DeleteWikiLinks(id); err != nil {
+					return nil, fmt.Errorf("delete wikilinks for %s: %w", id, err)
+				}
+				result.Deleted++
+				continue
+			}
+			return nil, fmt.Errorf("read object %s: %w", id, err)
+		}
+
+		if err := syncer.upsertObject(obj, p.index); err != nil {
+			return nil, err
+		}
+	}
+
+	// Full wikilink and tag sync using all objects from disk
+	objects, err := p.repo.Walk()
+	if err != nil {
+		return nil, fmt.Errorf("walk objects for wikilink/tag sync: %w", err)
+	}
+
+	if objects != nil {
+		ctx := buildSyncContext(objects)
+		if err := p.syncWikiLinksAndTags(ctx); err != nil {
+			return nil, err
+		}
+	}
+
+	return result, nil
 }
 
 // deleteStaleObjects removes index entries for objects not found on disk.

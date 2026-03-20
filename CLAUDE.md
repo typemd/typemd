@@ -135,7 +135,7 @@ graph LR
 | `object_index.go` | ObjectIndex interface + ObjectResult + SortRule |
 | `object_repository.go` | ObjectRepository interface |
 | `object_service.go` | ObjectService (command use cases) |
-| `projector.go` | Projector (file→index sync) |
+| `projector.go` | Projector (file→index sync): full Sync + incremental SyncFiles (path-based) + objectPathToID helper |
 | `query.go` | Vault query facades (QueryObjects/SearchObjects/VaultStats/TypeStats/RebuildIndex) + ObjectResult→Object converters |
 | `query_service.go` | QueryService (query use cases) |
 | `relation.go` | Relation struct + Vault.LinkObjects/UnlinkObjects facades + relation property helpers (append/remove) |
@@ -144,17 +144,17 @@ graph LR
 | `sqlite_object_index.go` | SQLiteObjectIndex (SQLite queries) |
 | `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
 | `stats.go` | VaultStats/TypeSummary/TypeStats/PropertyStats structs + QueryService.VaultStats()/TypeStats() methods + TypeSummary.DisplayName() |
-| `sync.go` | SyncResult/OrphanedRelation structs + Vault.SyncIndex() facade for Projector.Sync |
+| `sync.go` | SyncResult/OrphanedRelation structs + Vault.SyncIndex() facade for Projector.Sync + Vault.SyncFiles() for incremental sync |
 | `system_property.go` | SystemProperty registry (name/description/created_at/updated_at/tags) + IsSystemProperty/IsImmutableSystemProperty helpers |
 | `tag.go` | resolveTagReference helper for tag name-to-ID resolution during sync |
 | `template.go` | Template entity + Vault facade methods (ListTemplates/LoadTemplate/SaveTemplate/DeleteTemplate) |
-| `type_schema.go` | TypeSchema entity + helpers + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) |
+| `type_schema.go` | TypeSchema entity + helpers + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) + LoadType with schema cache + InvalidateSchemaCache |
 | `type_schema_marshal.go` | YAML serialization (MarshalTypeSchema) + version handling (CompareVersions) + color validation (ValidColorPresets) |
 | `type_schema_validate.go` | Schema validation (ValidateSchema) + object validation (ValidateObject) + property type validators |
 | `ulid.go` | GenerateULID + StripULID + ulidSuffixPattern for ULID generation and stripping |
 | `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `vault_config.go` | VaultConfig struct + YAML loading + WriteConfig + DefaultType() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
+| `vault_config.go` | VaultConfig struct (CLIConfig + TUIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
 | `view.go` | ViewConfig/FilterRule/GroupRule structs + ViewLayout constants + custom UnmarshalYAML (legacy string→[]GroupRule migration) + Vault view CRUD (ListViews/LoadView/SaveView/DeleteView/DefaultView) |
 | `wikilink.go` | WikiLink/StoredWikiLink structs + ParseWikiLinks + RenderWikiLinks + Vault.ListWikiLinks/ListBacklinks facades |
 
@@ -169,6 +169,8 @@ The TUI uses a three-panel layout (sidebar, body, properties) with a **right pan
 - `panelView` — full-width view mode (independent sub-model `viewMode` in `tui/view_mode.go`) with optional `viewEditor` sub-model (`tui/view_editor.go`) shown as a right split panel
 
 The right panel automatically follows the sidebar cursor: moving to an object shows its detail, moving to a type header shows the type editor. The `typeEditor` sub-model has its own `Update()`/`View()` methods and internal mode state (view, edit, move, add wizard, delete confirmation, property detail popup). The type editor includes a Templates section listing available templates; pressing Enter on a template transitions to `panelTemplate` mode. The `templateEditor` sub-model supports viewing, inline editing (body + properties), creating, and deleting templates. The type editor also includes a Views section listing saved views; pressing Enter on a view or pressing `v` from the sidebar transitions to `panelView` mode — a full-width list that replaces the three-panel layout. Navigation stack: sidebar → view list (Enter opens object) → object detail (Esc returns to view list) → Esc exits view mode. Pressing `e` in view mode opens the `viewEditor` as a right split panel (60/40 split, mutually exclusive with preview). The view editor supports inline editing of filter rules, sort rules, and group rules with property picker (text + list), operator picker (scrollable list), and auto-save on every change.
+
+The TUI file watcher monitors both `objects/` (for object changes) and `.typemd/types/` (for schema changes). Object file changes trigger incremental index sync via `Projector.SyncFiles()`. Schema file changes trigger `InvalidateSchemaCache()` followed by a full refresh. The watcher debounce interval defaults to 200ms and is configurable via `tui.debounce_ms` in `.typemd/config.yaml`.
 
 Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_type.go`): triggered via `+ New Type`, it transforms the title panel into a multi-field form (emoji, name, plural) with Tab cycling and a live type schema preview in the right panel. After creation, the type editor opens automatically.
 

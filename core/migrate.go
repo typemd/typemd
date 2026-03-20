@@ -173,6 +173,9 @@ func (v *Vault) MigrateSchemas(dryRun bool) (*SchemaMigrateResult, error) {
 		}
 	}
 
+	// Invalidate schema cache since schemas may have changed
+	v.schemaCache = nil
+
 	return result, nil
 }
 

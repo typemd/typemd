@@ -332,4 +332,6 @@ Orphaned relations have been removed from the index.
 
 ## 自動重新整理
 
-TUI 透過 fsnotify 監控 `objects/` 目錄。當檔案被建立、修改或刪除時，會自動同步資料庫並重新整理畫面（200ms 防抖），並盡可能保持目前的選取狀態。
+TUI 透過 fsnotify 監控 `objects/` 目錄。當檔案被建立、修改或刪除時，會對變更的檔案進行增量索引同步並重新整理畫面（200ms 防抖），並盡可能保持目前的選取狀態。防抖間隔可透過 `.typemd/config.yaml` 中的 `tui.debounce_ms` 自訂。
+
+TUI 也會監控 `.typemd/types/` 目錄的 schema 變更。當 type schema 被外部修改時，schema cache 會被清除並觸發完整重新整理。

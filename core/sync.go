@@ -31,3 +31,15 @@ func (v *Vault) SyncIndex() (*SyncResult, error) {
 	}
 	return v.projector.Sync()
 }
+
+// SyncFiles incrementally synchronizes specific files to the index.
+// Falls back to full SyncIndex if paths is empty.
+func (v *Vault) SyncFiles(paths []string) (*SyncResult, error) {
+	if v.projector == nil {
+		return nil, fmt.Errorf("vault not opened")
+	}
+	if len(paths) == 0 {
+		return v.projector.Sync()
+	}
+	return v.projector.SyncFiles(paths, v.ObjectsDir())
+}

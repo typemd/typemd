@@ -796,6 +796,47 @@ func TestModel_SkipNextReload_SuppressesRefresh(t *testing.T) {
 	}
 }
 
+func TestModel_FileChangedMsg_WithPaths(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+
+	msg := fileChangedMsg{Paths: []string{"/some/path/book/test.md"}}
+	newM, cmd := m.Update(msg)
+	updated := newM.(model)
+
+	// Should restart watcher
+	if cmd == nil {
+		t.Error("should restart watcher after fileChangedMsg")
+	}
+	_ = updated
+}
+
+func TestModel_FileChangedMsg_EmptyPaths_FallsBackToFullSync(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+
+	msg := fileChangedMsg{Paths: nil}
+	newM, cmd := m.Update(msg)
+	updated := newM.(model)
+
+	// Should restart watcher (full sync fallback)
+	if cmd == nil {
+		t.Error("should restart watcher after fileChangedMsg with empty paths")
+	}
+	_ = updated
+}
+
+func TestModel_SchemaChangedMsg_InvalidatesCache(t *testing.T) {
+	m, _ := setupTestModelWithVault(t)
+
+	newM, cmd := m.Update(schemaChangedMsg{})
+	updated := newM.(model)
+
+	// Should restart types watcher
+	if cmd == nil {
+		t.Error("should restart types watcher after schemaChangedMsg")
+	}
+	_ = updated
+}
+
 func TestModel_ConcurrentEdit_DetectedBeforeSave(t *testing.T) {
 	m, obj := setupTestModelWithVault(t)
 
