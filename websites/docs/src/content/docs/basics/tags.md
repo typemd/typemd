@@ -26,7 +26,7 @@ Any user-defined type can also enable name uniqueness by adding `unique: true` t
 
 ## Using tags
 
-Every Object has a `tags` [system property](/basics/properties#system-properties) that holds references to tag Objects. In frontmatter, tag references can use either the full Object ID or the tag name:
+Every Object supports a `tags` [system property](/basics/properties#system-properties) that holds references to tag Objects. The `tags` property only appears in frontmatter when explicitly set. In frontmatter, tag references can use either the full Object ID or the tag name:
 
 ```yaml
 tags:

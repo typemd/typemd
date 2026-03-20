@@ -139,7 +139,7 @@ The file is optional. If `.typemd/properties.yaml` does not exist or contains no
 Use the `use` keyword to reference a shared property by name:
 
 ```yaml
-# .typemd/types/project.yaml
+# .typemd/types/project/schema.yaml
 name: project
 emoji: "\U0001F4CB"
 properties:
@@ -155,7 +155,7 @@ When the type is loaded, each `use` entry is resolved to the full property defin
 
 ### Overriding fields
 
-When referencing a shared property via `use`, you can override three fields:
+When referencing a shared property via `use`, you can override these fields:
 
 | Field | Description |
 |-------|-------------|
@@ -166,7 +166,7 @@ When referencing a shared property via `use`, you can override three fields:
 All other fields cannot be overridden — they come from the shared definition.
 
 ```yaml
-# .typemd/types/task.yaml
+# .typemd/types/task/schema.yaml
 name: task
 properties:
   - use: due_date
@@ -179,9 +179,9 @@ properties:
 
 | | Shared Property | Inline Property |
 |---|----------------|-----------------|
-| Defined in | `.typemd/properties.yaml` | `.typemd/types/<type>.yaml` |
+| Defined in | `.typemd/properties.yaml` | `.typemd/types/<type>/schema.yaml` |
 | Reusable | Yes — referenced via `use` | No — scoped to one type |
-| Customizable per type | `pin` and `emoji` only | Fully customizable |
+| Customizable per type | `pin`, `emoji`, and `description` | Fully customizable |
 | Use case | Properties shared across multiple types | Properties unique to one type |
 
 **Rule of thumb**: if a property appears in two or more types with the same definition, make it a shared property.

@@ -26,7 +26,7 @@ sidebar:
 
 ## 使用標籤
 
-每個 Object 都有一個 `tags` [系統屬性](/zh-tw/basics/properties#系統屬性)，存放對 tag Object 的參照。在 frontmatter 中，標籤參照可以使用完整的 Object ID 或標籤名稱：
+每個 Object 都支援 `tags` [系統屬性](/zh-tw/basics/properties#系統屬性)，存放對 tag Object 的參照。`tags` 屬性只在使用者明確設定後才會出現在 frontmatter 中。在 frontmatter 中，標籤參照可以使用完整的 Object ID 或標籤名稱：
 
 ```yaml
 tags:

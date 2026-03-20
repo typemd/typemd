@@ -92,7 +92,10 @@ unique: false
 properties:
   - name: status
     type: select
-    options: [reading, completed, want-to-read]
+    options:
+      - value: reading
+      - value: completed
+      - value: want-to-read
   - name: author
     type: relation
     target: person
@@ -120,7 +123,8 @@ filter:
   - property: status
     operator: is
     value: reading
-group_by: genre
+group_by:
+  - property: genre
 ```
 
 Two layouts are available:
@@ -140,12 +144,15 @@ The optional file `.typemd/properties.yaml` defines reusable property definition
 
 ```yaml
 # .typemd/properties.yaml
-- name: status
-  type: select
-  options: [active, archived]
+properties:
+  - name: status
+    type: select
+    options:
+      - value: active
+      - value: archived
 ```
 
-For details on shared properties, see [Shared Properties](/concepts/shared-properties).
+For details on shared properties, see [Shared Properties](/basics/properties#shared-properties).
 
 ## Object templates
 

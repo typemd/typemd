@@ -14,7 +14,7 @@ Think of a Type as a category with structure. A `book` Type knows that books hav
 Types are defined as YAML schema files in `.typemd/types/`:
 
 ```yaml
-# .typemd/types/book.yaml
+# .typemd/types/book/schema.yaml
 name: book
 plural: books
 emoji: 📚
@@ -59,7 +59,7 @@ TypeMD has two built-in Types:
 | 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property; has `unique: true` to enforce name uniqueness |
 | 📄 `page` | _(none)_ | General-purpose content container for free-form writing |
 
-Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `.typemd/types/<name>.yaml` file with additional properties. All other types are user-defined via `.typemd/types/*.yaml` files. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
+Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `.typemd/types/<name>/schema.yaml` file with additional properties. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
 
 For details on tags, see [Tags](/basics/tags).
 

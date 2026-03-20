@@ -13,7 +13,7 @@ When you mention another Object in your notes, you can wrap its ID in double bra
 
 ```markdown
 ---
-title: Go in Action
+name: Go in Action
 ---
 
 # Notes

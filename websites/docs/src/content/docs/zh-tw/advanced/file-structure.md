@@ -90,7 +90,10 @@ unique: false
 properties:
   - name: status
     type: select
-    options: [reading, completed, want-to-read]
+    options:
+      - value: reading
+      - value: completed
+      - value: want-to-read
   - name: author
     type: relation
     target: person
@@ -104,7 +107,7 @@ properties:
 
 完整的 type schema 格式請參閱 [Type](/zh-tw/concepts/types)。
 
-## View
+## Views
 
 每個 type 可以有多個已儲存的 view，定義物件的排序、篩選和顯示方式。View 以 YAML 檔案儲存在 `.typemd/types/<name>/views/`：
 
@@ -120,7 +123,8 @@ filter:
   - property: status
     operator: is
     value: reading
-group_by: genre
+group_by:
+  - property: genre
 ```
 
 有兩種佈局可用：
@@ -138,12 +142,15 @@ group_by: genre
 
 ```yaml
 # .typemd/properties.yaml
-- name: status
-  type: select
-  options: [active, archived]
+properties:
+  - name: status
+    type: select
+    options:
+      - value: active
+      - value: archived
 ```
 
-關於共用屬性的詳細說明，請參閱[共用屬性](/zh-tw/concepts/shared-properties)。
+關於共用屬性的詳細說明，請參閱[共用屬性](/zh-tw/basics/properties#共用屬性)。
 
 ## Object Template
 

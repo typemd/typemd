@@ -13,7 +13,7 @@ sidebar:
 
 ```markdown
 ---
-title: Go in Action
+name: Go in Action
 ---
 
 # Notes

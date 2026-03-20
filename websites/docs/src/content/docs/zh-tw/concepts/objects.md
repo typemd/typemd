@@ -16,10 +16,9 @@ Object 是一個 Markdown 檔案，由兩個部分組成：
 
 ```markdown
 ---
-name: golang-in-action
+name: Go in Action
 created_at: "2026-03-09T10:30:00+08:00"
 updated_at: "2026-03-11T18:00:00+08:00"
-title: Go in Action
 status: reading
 rating: 4.5
 author: person/alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz

@@ -72,6 +72,6 @@ tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 使用 `--both` 來同時移除反向端。這只在 schema 中定義了 `bidirectional: true` 和 `inverse` 欄位時才有效。
 
-## Relation vs. Wiki-link
+## Relation vs. 連結
 
 TypeMD 也支援[連結](/zh-tw/concepts/links)（`[[type/slug]]`）來做非正式的行內引用。Relation 是結構化、由 schema 定義的；連結是自由格式、寫在 Markdown 內文中的。詳細比較請見[連結](/zh-tw/concepts/links)頁面。

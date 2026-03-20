@@ -72,6 +72,6 @@ tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 Use `--both` to remove the inverse side as well. This only takes effect when the relation property has `bidirectional: true` and an `inverse` field defined in the schema.
 
-## Relations vs. wiki-links
+## Relations vs. Links
 
-TypeMD also supports [links](/concepts/links) (`[[type/slug]]`) for informal inline references. Relations are structured and schema-defined; links are freeform and live in the Markdown body. See the [Links](/concepts/links) page for a detailed comparison.
+TypeMD also supports [Links](/concepts/links) (`[[type/slug]]`) for informal inline references. Relations are structured and schema-defined; Links are freeform and live in the Markdown body. See the [Links](/concepts/links) page for a detailed comparison.
