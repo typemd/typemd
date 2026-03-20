@@ -92,8 +92,8 @@ func watchDir(dir string, debounceMs int, buildMsg func(paths []string) tea.Msg)
 
 // watchObjects starts watching the objects directory for changes.
 // Returns a tea.Cmd that sends fileChangedMsg with changed .md file paths.
-// Non-.md paths are filtered out; if no .md paths remain, Paths will be nil
-// to signal that a full sync should be used.
+// Non-.md paths (editor temp files, directories) are filtered out.
+// If no .md paths remain, Paths will be nil — the caller should skip refresh.
 func watchObjects(objectsDir string, debounceMs int) tea.Cmd {
 	return watchDir(objectsDir, debounceMs, func(paths []string) tea.Msg {
 		var mdPaths []string

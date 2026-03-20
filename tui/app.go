@@ -211,17 +211,23 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.skipNextReload = false
 			return m, watchObjects(m.vault.ObjectsDir(), debounce)
 		}
-		m.refreshData(msg.Paths)
+		// Only refresh if there are actual .md paths; non-.md events
+		// (editor temp files, .DS_Store) are filtered by the watcher
+		// and result in nil Paths — just restart the watcher.
+		if len(msg.Paths) > 0 {
+			m.refreshData(msg.Paths)
+		}
 		return m, watchObjects(m.vault.ObjectsDir(), debounce)
 
 	case schemaChangedMsg:
 		m.vault.InvalidateSchemaCache()
-		// Only reload display properties for the selected object — don't rebuild
-		// the entire sidebar/layout, which would reset scroll and focus state.
+		// Rebuild groups to pick up new/deleted types (expanded state is preserved)
+		m.rebuildGroups()
+		// Reload display properties for the selected object
 		if m.selected != nil && m.vault != nil {
 			m.displayProps, _ = m.vault.BuildDisplayProperties(m.selected)
 		}
-		// Also refresh type editor if active
+		// Refresh type editor if active
 		if m.typeEditor != nil && m.vault != nil {
 			if ts, err := m.vault.LoadType(m.typeEditor.typeName); err == nil {
 				m.typeEditor.schema = ts
