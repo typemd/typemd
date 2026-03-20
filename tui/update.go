@@ -94,6 +94,15 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		}
 		return m, nil
 
+	case "r":
+		if m.readOnly {
+			return m, nil
+		}
+		if m.selected != nil && m.rightPanel == panelObject {
+			return m, m.startRename()
+		}
+		return m, nil
+
 	case "tab":
 		switch m.focus {
 		case focusLeft:

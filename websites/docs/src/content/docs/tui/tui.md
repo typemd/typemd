@@ -90,6 +90,7 @@ The default mode. Browse objects and types in the sidebar.
 | `n` | Create new object & edit body (in current type group) |
 | `N` | Quick create — batch mode (in current type group) |
 | `e` | Enter edit mode (when body panel focused) |
+| `r` | Rename object (inline in title panel) |
 | `/` | Enter search mode |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |

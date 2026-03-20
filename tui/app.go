@@ -52,6 +52,7 @@ type model struct {
 	viewPicker  *viewPicker          // non-nil when view selection popup is active
 	createType   *createTypeState    // non-nil when type creation flow is active
 	create       *createState        // non-nil when object creation flow is active
+	rename       *renameState        // non-nil when rename flow is active
 
 	// Left panel
 	groups       []typeGroup
@@ -408,13 +409,20 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			m.typeEditor = te
 			m.syncTypeGroupMeta(te.typeName, te.schema)
 			return m, cmd
+		case m.rename != nil:
+			return updateRename(m, msg)
 		case m.editMode:
 			return updateEdit(m, msg)
 		default:
 			return updateNormal(m, msg)
 		}
 	}
-	// Route remaining messages (e.g. cursor blink) to textarea when in body edit mode
+	// Route remaining messages (e.g. cursor blink) to active input components
+	if m.rename != nil {
+		var cmd tea.Cmd
+		m.rename.nameInput, cmd = m.rename.nameInput.Update(msg)
+		return m, cmd
+	}
 	if m.editMode && m.focus == focusBody {
 		var cmd tea.Cmd
 		m.bodyTextarea, cmd = m.bodyTextarea.Update(msg)

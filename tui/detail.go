@@ -13,21 +13,23 @@ func wikiLinkStyle(s string) string {
 	return wikiLinkStyleBase.Render(s)
 }
 
+// titlePrefix returns the " emoji type" or " type" prefix used in title panels.
+func titlePrefix(emoji, typeName string) string {
+	if emoji != "" {
+		return fmt.Sprintf(" %s %s", padEmoji(emoji), typeName)
+	}
+	return fmt.Sprintf(" %s", typeName)
+}
+
 // renderTitleContent builds the title string for the title panel.
 // Format: "emoji type · name" or "type · name" when no emoji.
 func renderTitleContent(obj *core.Object, typeName, emoji string, width int) string {
 	if obj == nil {
 		return ""
 	}
-	var title string
-	if emoji != "" {
-		title = fmt.Sprintf(" %s %s · %s", padEmoji(emoji), typeName, obj.GetName())
-	} else {
-		title = fmt.Sprintf(" %s · %s", typeName, obj.GetName())
-	}
-	maxWidth := width
-	if maxWidth > 0 {
-		title = runewidth.Truncate(title, maxWidth, "…")
+	title := titlePrefix(emoji, typeName) + " · " + obj.GetName()
+	if width > 0 {
+		title = runewidth.Truncate(title, width, "…")
 	}
 	return title
 }
@@ -97,10 +99,10 @@ func renderProperties(obj *core.Object, displayProps []core.DisplayProperty) str
 	b.WriteString(" Properties\n")
 	b.WriteString(" ──────────\n")
 
-	// Filter out pinned properties
+	// Filter out pinned properties and name (shown in title panel)
 	var unpinned []core.DisplayProperty
 	for _, p := range displayProps {
-		if p.Pin == 0 {
+		if p.Pin == 0 && p.Key != core.NameProperty {
 			unpinned = append(unpinned, p)
 		}
 	}

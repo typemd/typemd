@@ -1,0 +1,7 @@
+name: default
+layout: table
+columns:
+    - published
+sort:
+    - property: name
+      direction: desc

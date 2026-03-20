@@ -202,6 +202,7 @@ The properties panel is hidden by default and can be toggled with `p`. On narrow
 | `n` | Create new object & edit body (in current type group) |
 | `N` | Quick create (batch mode — stay in input for rapid entry) |
 | `e` | Enter edit mode (body or properties panel) |
+| `r` | Rename object (inline in title panel) |
 | `/` | Search (FTS5 full-text search) |
 | `Esc` | Exit edit mode (auto-saves if changed) / Clear search results |
 | `v` | Open view mode for current type (table display with sort/filter) |

@@ -18,6 +18,7 @@ type keyMap struct {
 	ExitEdit    key.Binding
 	NewObject   key.Binding
 	QuickCreate key.Binding
+	Rename      key.Binding
 	Stats       key.Binding
 }
 
@@ -37,5 +38,6 @@ var keys = keyMap{
 	ExitEdit:    key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "exit edit")),
 	NewObject:   key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new object")),
 	QuickCreate: key.NewBinding(key.WithKeys("N"), key.WithHelp("N", "quick create (batch)")),
+	Rename:      key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
 	Stats:       key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "stats")),
 }
