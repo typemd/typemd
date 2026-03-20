@@ -38,9 +38,11 @@ TypeMD 讓你用 **Object** 來思考——書籍、人物、想法、會議—�
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # 使用者自訂 Type schema（YAML）
-│   │   ├── book.yaml       # 自行建立
-│   │   └── person.yaml
+│   ├── types/              # 使用者自訂 Type schema（目錄格式）
+│   │   ├── book/
+│   │   │   └── schema.yaml # 自行建立
+│   │   └── person/
+│   │       └── schema.yaml
 │   ├── properties.yaml     # 共用屬性定義（選用）
 │   ├── index.db            # SQLite 索引（自動更新）
 │   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
@@ -221,7 +223,7 @@ TUI 會自動監控 `objects/` 目錄，當檔案被建立、修改或刪除時�
 在 `.typemd/types/` 定義你的 Type（`tag` 和 `page` 是內建型別，其他皆由使用者自訂）：
 
 ```yaml
-# .typemd/types/book.yaml
+# .typemd/types/book/schema.yaml
 name: book
 plural: books
 emoji: 📚
@@ -246,6 +248,8 @@ properties:
 
 可選的 `plural` 欄位用於指定在 TUI 群組標題和 CLI 輸出中顯示的正確複數形式。若未設定，則使用 type 名稱作為預設值。
 
+可選的 `unique` 欄位（布林值，預設為 `false`）確保同 type 的 object 不會共用相同的 `name` 值。設為 `true` 時，建立重複名稱的 object 會失敗。內建的 `tag` type 預設啟用 `unique: true`，並包含兩個預設屬性：`color`（string, 🎨）和 `icon`（string, ✨）。
+
 Type 和屬性都支援可選的 `emoji` 欄位，用於在 CLI 和 TUI 輸出中視覺辨識。屬性還支援可選的 `default` 欄位來指定預設值。
 
 可選的 `version` 欄位（semver 風格的 `"major.minor"` 字串，預設為 `"0.0"`）用於追蹤 schema 演進。Major 代表破壞性變更，minor 代表向下相容的變更，為未來的遷移工具奠定基礎。
@@ -255,7 +259,7 @@ Type 和屬性都支援可選的 `emoji` 欄位，用於在 CLI 和 TUI 輸出�
 Relation 在 Type schema 中定義為 `type: relation` 屬性。使用 `bidirectional` 和 `inverse` 來自動同步兩端：
 
 ```yaml
-# .typemd/types/person.yaml
+# .typemd/types/person/schema.yaml
 name: person
 properties:
   - name: role

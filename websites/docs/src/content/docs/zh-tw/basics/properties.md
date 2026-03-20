@@ -130,7 +130,7 @@ properties:
       - value: low
 ```
 
-每個項目支援與 type schema 屬性相同的所有欄位：`name`、`type`、`emoji`、`pin`、`options`、`target`、`default`、`multiple`、`bidirectional` 和 `inverse`。
+每個項目支援與 type schema 屬性相同的所有欄位：`name`、`type`、`emoji`、`pin`、`options`、`target`、`default`、`multiple`、`bidirectional` 和 `inverse`。在 type schema 中透過 `use:` 引用時，只有 `pin`、`emoji` 和 `description` 可以被覆寫——其他欄位皆繼承自共用屬性定義。
 
 此檔案為選填。如果 `.typemd/properties.yaml` 不存在或沒有 `properties` 陣列，TypeMD 會將其視為空的共用屬性集合。
 

@@ -86,7 +86,7 @@ The config file is loaded during vault open. If the file is missing or empty, al
 Type schemas can opt into name uniqueness by setting `unique: true`. When enabled, TypeMD prevents creating multiple Objects of the same type with identical `name` values.
 
 ```yaml
-# .typemd/types/person.yaml
+# .typemd/types/person/schema.yaml
 name: person
 unique: true  # only one person per name
 properties:

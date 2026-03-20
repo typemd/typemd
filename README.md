@@ -38,9 +38,11 @@ TypeMD lets you think in **Objects** — books, people, ideas, meetings — conn
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # user-defined type schemas (YAML)
-│   │   ├── book.yaml       # you create these
-│   │   └── person.yaml
+│   ├── types/              # user-defined type schemas (directory format)
+│   │   ├── book/
+│   │   │   └── schema.yaml # you create these
+│   │   └── person/
+│   │       └── schema.yaml
 │   ├── properties.yaml     # shared property definitions (optional)
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
@@ -107,8 +109,8 @@ tmd object create book "Clean Code" -t review
 # → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz (with review template)
 
 # Create with name template (name auto-generated if type defines a template)
-tmd object create journal
-# → Created journal/日記-2026-03-14-01jqr3k5mpbvn8e0f2g7h9txyz
+tmd object create note
+# → Created note/2026-03-14-01jqr3k5mpbvn8e0f2g7h9txyz
 
 # Show object detail (prefix matching — no need to type the full ULID)
 tmd object show book/clean-code
@@ -228,7 +230,7 @@ The TUI automatically watches the `objects/` directory and refreshes when files 
 Define your types in `.typemd/types/` (`tag` and `page` are built-in — all others are user-defined):
 
 ```yaml
-# .typemd/types/book.yaml
+# .typemd/types/book/schema.yaml
 name: book
 plural: books
 emoji: 📚
@@ -253,7 +255,7 @@ properties:
 
 The optional `plural` field specifies the grammatically correct plural form for display in TUI group headers and CLI output. When omitted, falls back to the type name.
 
-The optional `unique` field (boolean, defaults to `false`) enforces that no two objects of the same type can share the same `name` value. When set to `true`, attempting to create an object with a duplicate name will fail. The built-in `tag` type has `unique: true` enabled by default.
+The optional `unique` field (boolean, defaults to `false`) enforces that no two objects of the same type can share the same `name` value. When set to `true`, attempting to create an object with a duplicate name will fail. The built-in `tag` type has `unique: true` enabled by default and includes two default properties: `color` (string, 🎨) and `icon` (string, ✨).
 
 Types and properties both support an optional `emoji` field for visual identification in CLI and TUI output. Properties also support an optional `default` field to specify a default value.
 
@@ -264,7 +266,7 @@ The optional `version` field (semver-style `"major.minor"` string, defaults to `
 Relations are defined as `type: relation` properties within type schemas. Use `bidirectional` and `inverse` to auto-sync both sides:
 
 ```yaml
-# .typemd/types/person.yaml
+# .typemd/types/person/schema.yaml
 name: person
 properties:
   - name: role
