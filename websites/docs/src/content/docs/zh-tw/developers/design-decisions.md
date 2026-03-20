@@ -129,7 +129,7 @@ properties:
     type: date
     emoji: 📅
 
-# .typemd/types/task.yaml
+# .typemd/types/task/schema.yaml
 properties:
   - use: due_date
     pin: 1

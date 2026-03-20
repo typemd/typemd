@@ -58,7 +58,7 @@ Type schemas can mark properties with a `pin` value (positive integer) to highli
 Pinned properties are **excluded** from the Properties panel to avoid duplication.
 
 ```yaml
-# .typemd/types/book.yaml
+# .typemd/types/book/schema.yaml
 properties:
   - name: status
     type: select
@@ -108,7 +108,7 @@ Press `v` on a type group header or object to enter **view mode**. This replaces
 | Key | Action |
 |-----|--------|
 | `↑`/`k`, `↓`/`j` | Navigate rows |
-| `Enter` | Open object detail (three-panel view) |
+| `Enter`/`Space` | Open object detail / Toggle group expand/collapse |
 | `e` | Open view editor (right split panel) |
 | `p` | Toggle preview panel (right side) |
 | `Esc` | Return to sidebar |
@@ -132,7 +132,18 @@ Press `e` in view mode to open the **view editor** as a right split panel. The e
 | **Sort** | Define sort rules (property + direction) controlling row order. |
 | **Group By** | Group objects by one or more properties. |
 
-Changes are auto-saved on every edit. Press `Esc` to close the editor and return to the view list.
+| Key | Action |
+|-----|--------|
+| `Tab` | Next section |
+| `Shift+Tab` | Previous section |
+| `Enter` | Edit field / Toggle layout / Add rule |
+| `x`/`d` | Delete selected rule |
+| `K` | Move selected rule up |
+| `J` | Move selected rule down |
+| `D` | Delete entire view (with confirmation) |
+| `Esc` | Close editor and return to view list |
+
+Changes are auto-saved on every edit.
 
 ### `[TYPE]` — Type Editor
 

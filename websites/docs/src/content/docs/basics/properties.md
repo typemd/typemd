@@ -130,7 +130,7 @@ properties:
       - value: low
 ```
 
-Each entry supports all the same fields as a regular type schema property: `name`, `type`, `emoji`, `pin`, `options`, `target`, `default`, `multiple`, `bidirectional`, and `inverse`.
+Each entry supports all the same fields as a regular type schema property: `name`, `type`, `emoji`, `pin`, `options`, `target`, `default`, `multiple`, `bidirectional`, and `inverse`. When referenced via `use:` in a type schema, only `pin`, `emoji`, and `description` can be overridden — all other fields are inherited from the shared definition.
 
 The file is optional. If `.typemd/properties.yaml` does not exist or contains no `properties` array, TypeMD treats it as an empty set of shared properties.
 

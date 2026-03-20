@@ -12,12 +12,17 @@ You are working in a **typemd vault** — a local-first knowledge management sys
 ```
 project-root/
 ├── .typemd/
+│   ├── config.yaml          # Vault config (cli.default_type, tui.debounce_ms)
 │   ├── index.db             # SQLite index (auto-managed, gitignored)
 │   ├── tui-state.yaml       # TUI session state (persisted on quit)
-│   ├── types/               # Type schema definitions
-│   │   ├── book.yaml
-│   │   └── person.yaml
-│   └── properties.yaml      # Shared property definitions (optional)
+│   ├── properties.yaml      # Shared property definitions (optional)
+│   └── types/               # Type schema definitions (directory format)
+│       ├── book/
+│       │   ├── schema.yaml
+│       │   └── views/       # View definitions (optional)
+│       │       └── default.yaml
+│       └── person/
+│           └── schema.yaml
 ├── templates/               # Object templates (optional)
 │   └── book/
 │       └── review.md        # Template with frontmatter overrides + body
@@ -73,18 +78,15 @@ Object IDs support **prefix matching** — `tmd object show book/clean` works if
 | `tmd relation link <from> <relation> <to>` | Create a relation between objects |
 | `tmd relation unlink <from> <relation> <to> [--both]` | Remove a relation (`--both` removes inverse too) |
 
-### Search & Query
+### Search
 
 | Command | Description |
 |---------|-------------|
 | `tmd search <keyword> [--json]` | Full-text search across filename, properties, and body |
-| `tmd query "<key=value> ..." [--json]` | Filter objects by property values (AND logic) |
 
 Examples:
 ```bash
 tmd search "concurrency"
-tmd query "type=book status=reading"
-tmd query "type=book" --json
 ```
 
 ### Migration
@@ -144,11 +146,11 @@ These are **reserved** — type schemas cannot define properties named `name`, `
 
 - **Full ID**: `book/clean-code-01kk39c30x27ck7ahyc7ct4nyn` (with ULID)
 - **Display ID**: `book/clean-code` (ULID stripped)
-- **ULID**: 26-character lowercase alphanumeric, sortable by timestamp
+- **ULID**: 26-character Crockford Base32 (lowercase `[0-9a-hjkmnp-tv-z]`), sortable by timestamp
 
 ## Type Schema Format
 
-Type schemas live in `.typemd/types/<type>.yaml`:
+Type schemas live in `.typemd/types/<type>/schema.yaml` (directory format) or `.typemd/types/<type>.yaml` (legacy single-file, auto-migrated to directory on load):
 
 ```yaml
 name: book
@@ -205,6 +207,9 @@ properties:
 |--------|-------------|
 | `plural` | Plural display name for collection contexts (e.g., `books`) |
 | `unique` | When `true`, enforces name uniqueness across objects of this type |
+| `version` | Semver-style `"major.minor"` string for schema migration tracking (default `"0.0"`) |
+| `color` | Visual theming — preset name or `#RGB`/`#RRGGBB` hex |
+| `description` | Free-text type documentation |
 
 ### Property Options
 
@@ -213,8 +218,9 @@ properties:
 | `emoji` | Icon displayed in TUI and CLI |
 | `pin: <int>` | Display order in TUI body panel (1 = top) |
 | `default` | Default value for new objects |
+| `description` | Free-text property documentation |
 | `use: <name>` | Reference a shared property from `properties.yaml` |
-| `template` | Only valid on the `name` property — Go template for auto-generated names (e.g., `"{{.title}} by {{.author}}"`) |
+| `template` | Only valid on the `name` property — Go template for auto-generated names (e.g., `"{{.title}} by {{.author}}"`, also supports `{{ date:FORMAT }}` placeholders) |
 
 ### Relation Options
 
@@ -239,7 +245,7 @@ properties:
     emoji: ❤️
 ```
 
-Reference in type schemas with `use:`. Only `pin` and `emoji` can be overridden:
+Reference in type schemas with `use:`. Only `pin`, `emoji`, and `description` can be overridden:
 
 ```yaml
 properties:
@@ -247,6 +253,37 @@ properties:
   - use: favorite
     pin: 1
 ```
+
+## Views
+
+Views define how objects of a type are presented. They live at `.typemd/types/<type>/views/<view>.yaml`.
+
+```yaml
+layout: table          # "list" or "table"
+columns:               # which properties to display (optional)
+  - status
+  - rating
+  - author
+sort:
+  - property: name
+    order: asc
+filter:
+  - property: status
+    operator: "="
+    value: reading
+group_by:
+  - property: genre   # supports multi-level grouping
+```
+
+| Option | Description |
+|--------|-------------|
+| `layout` | `list` (name + optional inline values) or `table` (columnar with headers) |
+| `columns` | `[]string` — which properties to display; defaults: list = none, table = all |
+| `sort` | `[]SortRule` — `{property, order}` for ordering |
+| `filter` | `[]FilterRule` — `{property, operator, value}` for filtering |
+| `group_by` | `[]GroupRule` — `{property}` for multi-level grouping |
+
+Each type has an implicit default view (list layout, sort by name asc) that materializes as `views/default.yaml` when customized. In the TUI, press `v` on a type to enter view mode, and `e` to open the view editor.
 
 ## Object Templates
 
@@ -256,9 +293,13 @@ Object templates live at `templates/<type>/<name>.md`. They are Markdown files w
 - **Multiple templates** → user is prompted to select, or use `-t <name>` flag
 - Templates can set default property values and provide starter body content
 
-## Built-in Tag Type
+## Built-in Types
 
-Tags are managed as objects of the built-in `tag` type (`unique: true`, `plural: "tags"`, emoji: 🏷️). When you reference a tag in an object's `tags` property, typemd automatically creates the tag object if it doesn't already exist. Tag objects live at `objects/tag/<name>-<ulid>.md` like any other object.
+typemd has two built-in types that exist without YAML files, cannot be deleted, but can be overridden by custom `.typemd/types/<name>/schema.yaml`:
+
+### Tag (🏷️)
+
+Tags are managed as objects of the built-in `tag` type (`unique: true`, `plural: "tags"`). When you reference a tag in an object's `tags` property, typemd automatically creates the tag object if it doesn't already exist. Tag objects live at `objects/tag/<name>-<ulid>.md` like any other object.
 
 The default tag schema has two properties:
 
@@ -267,7 +308,9 @@ The default tag schema has two properties:
 | `color` | `string` | 🎨 | Tag color |
 | `icon` | `string` | ✨ | Tag icon |
 
-You can override the built-in tag schema by creating `.typemd/types/tag.yaml`.
+### Page (📄)
+
+A general-purpose content container (`plural: "pages"`). Useful for freeform notes or content that doesn't fit a specific type.
 
 ## Wiki-Links
 
@@ -303,7 +346,9 @@ The right panel follows the sidebar cursor:
 | `e` | Enter edit mode |
 | `esc` | Exit edit mode (saves) |
 | `n` | Create new object (on type header or object) |
+| `N` | Quick create (batch mode) |
 | `/` | Search |
+| `v` | Enter view mode (on type header) |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft-wrap |
 | `[`/`]` | Resize panel |
@@ -312,7 +357,7 @@ The right panel follows the sidebar cursor:
 
 ## Tips for Working with typemd
 
-- **Always read type schemas first** before creating or modifying objects — check `.typemd/types/*.yaml`
+- **Always read type schemas first** before creating or modifying objects — check `.typemd/types/*/schema.yaml`
 - **Use `tmd doctor`** for a comprehensive health check, or `tmd type validate` for quick schema validation
 - **Object IDs include ULIDs** — don't guess them, use `tmd object list` to find exact IDs
 - **Relations are properties** — set them in frontmatter, not as wiki-links (wiki-links are for body text references)

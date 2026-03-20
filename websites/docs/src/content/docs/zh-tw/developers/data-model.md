@@ -68,7 +68,7 @@ tmd search "golang" --json
 Type schema 可透過設定 `unique: true` 來啟用 name 唯一性檢查。啟用後，TypeMD 會阻止建立同一 type 下擁有相同 `name` 值的多個 Object。
 
 ```yaml
-# .typemd/types/person.yaml
+# .typemd/types/person/schema.yaml
 name: person
 unique: true  # 同一個人名稱只能有一個
 properties:
