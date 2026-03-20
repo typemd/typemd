@@ -382,16 +382,32 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	return m, nil
 }
 
-// rebuildGroups reloads objects and rebuilds type groups from the vault.
+// rebuildGroups reloads objects and rebuilds type groups from the vault,
+// preserving the expanded state of each group.
 func (m *model) rebuildGroups() {
 	if m.vault == nil {
 		return
 	}
+	// Snapshot expanded state before rebuild
+	expandedSet := make(map[string]bool, len(m.groups))
+	for _, g := range m.groups {
+		if g.Expanded {
+			expandedSet[g.Name] = true
+		}
+	}
+
 	objects, err := m.vault.QueryObjects(nil)
 	if err != nil {
 		return
 	}
 	m.groups = buildGroups(objects, m.vault)
+
+	// Restore expanded state
+	for i := range m.groups {
+		if expandedSet[m.groups[i].Name] {
+			m.groups[i].Expanded = true
+		}
+	}
 	m.searchResults = nil
 }
 
