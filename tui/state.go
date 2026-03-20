@@ -26,6 +26,11 @@ type SessionState struct {
 	ViewCursor        int      `yaml:"view_cursor,omitempty"`
 	ViewScroll        int      `yaml:"view_scroll,omitempty"`
 	ViewExpandedGroups []string `yaml:"view_expanded_groups,omitempty"`
+
+	// Stats mode state (present only when TUI was in stats mode on exit)
+	StatsCursor   int    `yaml:"stats_cursor,omitempty"`
+	StatsScroll   int    `yaml:"stats_scroll,omitempty"`
+	StatsTypeName string `yaml:"stats_type_name,omitempty"`
 }
 
 const stateFileName = "tui-state.yaml"
@@ -88,6 +93,15 @@ func (m model) captureState() SessionState {
 		state.ViewCursor = m.viewMode.cursor
 		state.ViewScroll = m.viewMode.scroll
 		state.ViewExpandedGroups = m.viewMode.expandedGroupLabels()
+	}
+
+	// Capture stats mode state when active
+	if m.rightPanel == panelStats && m.statsMode != nil {
+		state.StatsCursor = m.statsMode.cursor
+		state.StatsScroll = m.statsMode.scroll
+		if m.statsMode.screen == statsDetail {
+			state.StatsTypeName = m.statsMode.detailType
+		}
 	}
 
 	return state
@@ -200,6 +214,42 @@ func restoreViewMode(state SessionState, v *core.Vault) *viewMode {
 	}
 
 	return vm
+}
+
+// restoreStatsMode attempts to restore stats mode from saved session state.
+// Returns a non-nil *statsMode if restoration succeeds, nil otherwise.
+// Stats state takes precedence over view state when both are present.
+func restoreStatsMode(state SessionState, v *core.Vault) *statsMode {
+	hasStatsState := state.StatsTypeName != "" || state.StatsCursor > 0 || state.StatsScroll > 0
+
+	if !hasStatsState {
+		return nil
+	}
+
+	layout := ""
+	if cfg := v.Config(); cfg != nil {
+		layout = cfg.TUI.StatsTypeLayout
+	}
+
+	sm := newStatsMode(v, layout)
+
+	// Clamp cursor to valid range
+	if sm.typeCount() > 0 {
+		sm.cursor = min(state.StatsCursor, sm.typeCount()-1)
+		sm.scroll = min(state.StatsScroll, sm.typeCount()-1)
+	}
+
+	// Restore type detail if saved
+	if state.StatsTypeName != "" {
+		// Verify the type still exists
+		if _, err := v.LoadType(state.StatsTypeName); err == nil {
+			sm.loadTypeStats(state.StatsTypeName)
+			sm.screen = statsDetail
+		}
+		// If type no longer exists, stay on vault overview (fallback)
+	}
+
+	return sm
 }
 
 // focusPanelToString converts a focusPanel value to its string representation.

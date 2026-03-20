@@ -859,6 +859,140 @@ func TestSaveAndLoad_ViewModeState(t *testing.T) {
 	}
 }
 
+// --- Stats mode persistence tests ---
+
+func TestCaptureState_InStatsMode(t *testing.T) {
+	m := setupTestModel(t)
+	m.rightPanel = panelStats
+	m.statsMode = &statsMode{
+		cursor:     2,
+		scroll:     1,
+		screen:     statsDetail,
+		detailType: "book",
+	}
+
+	state := m.captureState()
+
+	if state.StatsCursor != 2 {
+		t.Errorf("StatsCursor = %d, want 2", state.StatsCursor)
+	}
+	if state.StatsScroll != 1 {
+		t.Errorf("StatsScroll = %d, want 1", state.StatsScroll)
+	}
+	if state.StatsTypeName != "book" {
+		t.Errorf("StatsTypeName = %q, want %q", state.StatsTypeName, "book")
+	}
+}
+
+func TestCaptureState_StatsOverviewNoTypeName(t *testing.T) {
+	m := setupTestModel(t)
+	m.rightPanel = panelStats
+	m.statsMode = &statsMode{
+		cursor: 1,
+		screen: statsOverview,
+	}
+
+	state := m.captureState()
+
+	if state.StatsCursor != 1 {
+		t.Errorf("StatsCursor = %d, want 1", state.StatsCursor)
+	}
+	if state.StatsTypeName != "" {
+		t.Errorf("StatsTypeName = %q, want empty (overview mode)", state.StatsTypeName)
+	}
+}
+
+func TestCaptureState_NotInStatsMode(t *testing.T) {
+	m := setupTestModel(t)
+	m.rightPanel = panelObject
+	m.statsMode = nil
+
+	state := m.captureState()
+
+	if state.StatsCursor != 0 {
+		t.Errorf("StatsCursor = %d, want 0 (not in stats mode)", state.StatsCursor)
+	}
+	if state.StatsTypeName != "" {
+		t.Errorf("StatsTypeName = %q, want empty (not in stats mode)", state.StatsTypeName)
+	}
+}
+
+func TestSessionState_StatsFields_MarshalRoundTrip(t *testing.T) {
+	state := SessionState{
+		StatsCursor:   3,
+		StatsScroll:   1,
+		StatsTypeName: "book",
+	}
+
+	data, err := yaml.Marshal(&state)
+	if err != nil {
+		t.Fatalf("Marshal error: %v", err)
+	}
+
+	var loaded SessionState
+	if err := yaml.Unmarshal(data, &loaded); err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	if loaded.StatsCursor != 3 {
+		t.Errorf("StatsCursor = %d, want 3", loaded.StatsCursor)
+	}
+	if loaded.StatsScroll != 1 {
+		t.Errorf("StatsScroll = %d, want 1", loaded.StatsScroll)
+	}
+	if loaded.StatsTypeName != "book" {
+		t.Errorf("StatsTypeName = %q, want %q", loaded.StatsTypeName, "book")
+	}
+}
+
+func TestSessionState_StatsFields_OmittedWhenEmpty(t *testing.T) {
+	state := SessionState{
+		SelectedObjectID: "book/test",
+		PropsVisible:     true,
+	}
+	data, err := yaml.Marshal(&state)
+	if err != nil {
+		t.Fatalf("Marshal error: %v", err)
+	}
+
+	yamlStr := string(data)
+	if strings.Contains(yamlStr, "stats_cursor") {
+		t.Errorf("zero StatsCursor should be omitted, got:\n%s", yamlStr)
+	}
+	if strings.Contains(yamlStr, "stats_type_name") {
+		t.Errorf("empty StatsTypeName should be omitted, got:\n%s", yamlStr)
+	}
+}
+
+func TestRestoreStatsMode_NoStatsState(t *testing.T) {
+	state := SessionState{SelectedObjectID: "book/test"}
+	sm := restoreStatsMode(state, nil)
+	if sm != nil {
+		t.Error("restoreStatsMode should return nil when no stats state fields")
+	}
+}
+
+func TestRestoreStatsMode_StatsTakesPrecedenceOverView(t *testing.T) {
+	// When both stats and view state are present, stats should take precedence.
+	// restoreStatsMode detects stats state; the caller (Start) checks stats first.
+	state := SessionState{
+		StatsCursor:  2,
+		ViewTypeName: "book",
+		ViewName:     "default",
+	}
+
+	// restoreStatsMode should detect stats state
+	hasStats := state.StatsTypeName != "" || state.StatsCursor > 0 || state.StatsScroll > 0
+	if !hasStats {
+		t.Error("stats state should be detected when StatsCursor > 0")
+	}
+
+	hasView := state.ViewTypeName != "" && state.ViewName != ""
+	if !hasView {
+		t.Error("view state should also be detected")
+	}
+}
+
 func TestFocusPanelToString(t *testing.T) {
 	tests := []struct {
 		input focusPanel

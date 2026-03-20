@@ -182,6 +182,87 @@ func (m model) View() tea.View {
 		return v
 	}
 
+	// Full-width stats mode takes over the entire screen
+	if m.rightPanel == panelStats && m.statsMode != nil {
+		contentH := m.height - 3
+		if contentH < 0 {
+			contentH = 0
+		}
+		bdr := 2
+		stm := m.statsMode
+
+		titleStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(m.width - bdr).
+			Height(titlePanelHeight)
+		titleText := stm.titleContent()
+
+		bodyH := contentH - titlePanelHeight
+
+		var bodyContent string
+		if stm.screen == statsDetail && stm.typeLayout == "popup" {
+			// Popup layout: overview behind, detail as popup overlay
+			stm.SetSize(m.width-bdr-2, bodyH-bdr)
+			overviewContent := stm.viewOverview()
+
+			bodyStyle := lipgloss.NewStyle().
+				Border(lipgloss.RoundedBorder()).
+				Width(m.width - bdr).
+				Height(bodyH).
+				MaxHeight(bodyH)
+
+			background := lipgloss.JoinVertical(lipgloss.Left,
+				titleStyle.Render(" Vault Statistics"),
+				bodyStyle.Render(overviewContent),
+			)
+			background += "\n  " + stm.HelpBar()
+
+			// Render popup overlay
+			popupW := m.width * 2 / 3
+			if popupW < 40 {
+				popupW = min(40, m.width-4)
+			}
+			// Set width to popup inner width so bar charts scale correctly
+			stm.SetSize(popupW-bdr-2, bodyH-bdr)
+			popupContent := stm.viewDetail()
+			screen := renderOverlayPopup(background, popupContent, m.width, m.height, popupW)
+
+			if m.showHelp {
+				screen = renderStatsHelp(screen, m.width, m.height, stm.screen)
+			}
+
+			v := tea.NewView(screen)
+			v.AltScreen = true
+			return v
+		}
+
+		// Fullscreen layout
+		bodyStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(m.width - bdr).
+			Height(bodyH).
+			MaxHeight(bodyH)
+
+		stm.SetSize(m.width-bdr-2, bodyH-bdr)
+		bodyContent = bodyStyle.Render(stm.View())
+
+		panels := lipgloss.JoinVertical(lipgloss.Left,
+			titleStyle.Render(titleText),
+			bodyContent,
+		)
+
+		helpBar := "  " + stm.HelpBar()
+		screen := panels + "\n" + helpBar
+
+		if m.showHelp {
+			screen = renderStatsHelp(screen, m.width, m.height, stm.screen)
+		}
+
+		v := tea.NewView(screen)
+		v.AltScreen = true
+		return v
+	}
+
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
 	// In lipgloss v2, Width()/Height() set the TOTAL size including border.

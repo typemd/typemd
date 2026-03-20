@@ -68,6 +68,20 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		m.searchInput.Focus()
 		return m, textinput.Blink
 
+	case "ctrl+s":
+		if m.vault != nil {
+			layout := ""
+			if cfg := m.vault.Config(); cfg != nil {
+				layout = cfg.TUI.StatsTypeLayout
+			}
+			sm := newStatsMode(m.vault, layout)
+			sm.SetSize(m.width-2, m.height-3)
+			m.statsMode = sm
+			m.rightPanel = panelStats
+			m.focus = focusBody
+		}
+		return m, nil
+
 	case "e":
 		if m.readOnly {
 			return m, nil

@@ -26,7 +26,8 @@ type CLIConfig struct {
 
 // TUIConfig holds TUI-specific configuration.
 type TUIConfig struct {
-	DebounceMs int `yaml:"debounce_ms,omitempty"`
+	DebounceMs      int    `yaml:"debounce_ms,omitempty"`
+	StatsTypeLayout string `yaml:"stats_type_layout,omitempty"`
 }
 
 // configKeyEntry maps a dot-notation key to getter/setter on VaultConfig.
@@ -52,6 +53,10 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.TUI.DebounceMs = n
 		},
+	},
+	"tui.stats_type_layout": {
+		Get: func(cfg *VaultConfig) string { return cfg.TUI.StatsTypeLayout },
+		Set: func(cfg *VaultConfig, value string) { cfg.TUI.StatsTypeLayout = value },
 	},
 }
 

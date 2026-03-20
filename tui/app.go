@@ -28,6 +28,7 @@ const (
 	panelTypeEditor                       // type editor view
 	panelTemplate                         // template detail view
 	panelView                             // full-width view mode
+	panelStats                            // stats dashboard mode
 )
 
 type typeGroup struct {
@@ -47,6 +48,7 @@ type model struct {
 	typeEditor  *typeEditor          // non-nil when rightPanel == panelTypeEditor
 	tmplEditor  *templateEditor      // non-nil when rightPanel == panelTemplate
 	viewMode    *viewMode            // non-nil when rightPanel == panelView
+	statsMode   *statsMode           // non-nil when rightPanel == panelStats
 	viewPicker  *viewPicker          // non-nil when view selection popup is active
 	createType   *createTypeState    // non-nil when type creation flow is active
 	create       *createState        // non-nil when object creation flow is active
@@ -312,6 +314,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return updateCreate(m, msg)
 		case m.createType != nil:
 			return updateCreateType(m, msg)
+		case m.rightPanel == panelStats && m.statsMode != nil:
+			// q/ctrl+c quits globally
+			if msg.String() == "q" || msg.String() == "ctrl+c" {
+				if m.vault != nil {
+					saveSessionState(m.vault.Root, m.captureState())
+				}
+				return m, tea.Quit
+			}
+			// Help toggle
+			if msg.String() == "?" || msg.String() == "h" {
+				m.showHelp = true
+				return m, nil
+			}
+			// Esc at overview level exits stats mode
+			if msg.String() == "esc" && m.statsMode.screen == statsOverview {
+				m.statsMode = nil
+				m.rightPanel = panelEmpty
+				m.focus = focusLeft
+				m.selectCurrentRow()
+				return m, nil
+			}
+			stm, cmd := m.statsMode.Update(msg)
+			m.statsMode = stm
+			return m, cmd
 		case m.rightPanel == panelView && m.viewMode != nil:
 			// q/ctrl+c quits globally
 			if (msg.String() == "q" || msg.String() == "ctrl+c") && m.viewMode.CanQuit() {
@@ -675,9 +701,14 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 	var initialRightPanel rightPanelMode
 	var initialTypeEditor *typeEditor
 	var initialViewMode *viewMode
+	var initialStatsMode *statsMode
 
-	// Try to restore view mode first (takes precedence over sidebar selection)
-	if vm := restoreViewMode(savedState, v); vm != nil {
+	// Try to restore stats mode first (takes precedence over view mode)
+	if sm := restoreStatsMode(savedState, v); sm != nil {
+		initialRightPanel = panelStats
+		initialStatsMode = sm
+	} else if vm := restoreViewMode(savedState, v); vm != nil {
+		// Try to restore view mode (takes precedence over sidebar selection)
 		initialRightPanel = panelView
 		initialViewMode = vm
 	} else if selected != nil {
@@ -691,7 +722,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 	}
 
 	initialFocus := focusLeft
-	if initialViewMode != nil {
+	if initialViewMode != nil || initialStatsMode != nil {
 		initialFocus = focusBody
 	}
 
@@ -701,6 +732,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		rightPanel:    initialRightPanel,
 		typeEditor:    initialTypeEditor,
 		viewMode:      initialViewMode,
+		statsMode:     initialStatsMode,
 		groups:        groups,
 		cursor:        initialCursor,
 		scrollOffset:  savedState.ScrollOffset,
