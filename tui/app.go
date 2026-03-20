@@ -199,6 +199,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case viewEditorChangedMsg:
+		// Forward to view mode for re-query
+		if m.viewMode != nil {
+			vm, cmd := m.viewMode.Update(msg)
+			m.viewMode = vm
+			return m, cmd
+		}
+		return m, nil
+
 	case flashDismissMsg:
 		if m.create != nil && msg.seq == m.create.flashSeq {
 			m.create.flash = ""

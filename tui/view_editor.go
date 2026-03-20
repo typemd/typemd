@@ -222,6 +222,9 @@ func (ve *viewEditor) updateView(msg tea.KeyPressMsg) (*viewEditor, tea.Cmd) {
 	case "tab":
 		ve.section = (ve.section + 1) % veSectionCount
 		ve.cursor = 0
+	case "shift+tab":
+		ve.section = (ve.section - 1 + veSectionCount) % veSectionCount
+		ve.cursor = 0
 	case "up", "k":
 		if ve.cursor > 0 {
 			ve.cursor--
@@ -776,7 +779,7 @@ func (ve *viewEditor) renderSubMode(b *strings.Builder, activeStyle lipgloss.Sty
 func (ve *viewEditor) HelpBar() string {
 	switch ve.mode {
 	case veModeView:
-		return "  [VIEW EDITOR]  ↑↓: navigate  J/K: move  tab: section  enter: edit  x: delete  D: delete view  esc: close"
+		return "  [VIEW EDITOR]  ↑↓: navigate  J/K: move  tab/⇧tab: section  enter: edit  x: delete  D: delete view  esc: close"
 	case veModePickProp:
 		return "  [SELECT PROPERTY]  type to filter  ↑↓: navigate  enter: select  esc: cancel"
 	case veModePickOp:
