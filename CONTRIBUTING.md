@@ -69,7 +69,7 @@ When deciding where a test belongs: if it defines a behavior or names a concept,
 | `core/` | BDD (`core/features/`) + unit tests |
 | `tui/`  | BDD (`tui/features/`, planned) + unit tests |
 | `web/`  | BDD (`web/features/`, future) |
-| `cmd/`  | Minimal — CLI commands delegate to `core/`, covered by core BDD scenarios |
+| `cmd/`  | BDD (`cmd/features/`) + unit tests |
 | `mcp/`  | Unit tests — BDD TBD |
 
 ### Run all tests

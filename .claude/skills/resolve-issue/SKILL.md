@@ -246,7 +246,7 @@ Example of **incorrect** ordering (implementation before tests):
 - [ ] 1.2 Write BDD scenarios for GetName   ← tests after implementation
 ```
 
-For `cmd/` changes, BDD tests are usually unnecessary (CLI delegates to `core/`). For `mcp/`, use unit tests. See CLAUDE.md "Testing" section for full guidance.
+For `cmd/` changes, BDD tests cover CLI-layer behavior (argument parsing, output format, error messages) in `cmd/features/`. For `mcp/`, use unit tests. See CLAUDE.md "Testing" section for full guidance.
 
 Present the generated artifacts to the user for review before proceeding.
 
@@ -256,7 +256,7 @@ Use the `openspec-apply-change` skill to execute the tasks from the OpenSpec cha
 
 Choose the appropriate implementation approach:
 
-- **BDD** — the default for `core/` and `tui/` changes. BDD scenarios define behaviors and shared vocabulary (what a feature does), not implementation details. Write Gherkin `.feature` files first (in `<package>/features/`), then implement step definitions and production code. Use unit tests for precise validation (edge cases, output formats, exact values). For `cmd/` changes, BDD tests are usually unnecessary since CLI commands delegate to `core/`. For `mcp/`, use unit tests until BDD scope is decided.
+- **BDD** — the default for `core/`, `cmd/`, and `tui/` changes. BDD scenarios define behaviors and shared vocabulary (what a feature does), not implementation details. Write Gherkin `.feature` files first (in `<package>/features/`), then implement step definitions and production code. Use unit tests for precise validation (edge cases, output formats, exact values). For `mcp/`, use unit tests until BDD scope is decided.
 - **Subagent-driven** (`superpowers:subagent-driven-development`) — when the plan has 3+ sequential steps that each produce testable output
 - **Parallel agents** (`superpowers:dispatching-parallel-agents`) — when the plan has 2+ independent tasks with no shared state (e.g., separate packages, separate files)
 
