@@ -498,6 +498,13 @@ func (ve *viewEditor) commitColumnRule() (*viewEditor, tea.Cmd) {
 	if ve.action == veActionEdit && ve.editIdx < len(ve.view.Columns) {
 		ve.view.Columns[ve.editIdx] = ve.pendingProp
 	} else {
+		// Skip if already in columns list
+		for _, c := range ve.view.Columns {
+			if c == ve.pendingProp {
+				ve.mode = veModeView
+				return ve, nil
+			}
+		}
 		ve.view.Columns = append(ve.view.Columns, ve.pendingProp)
 	}
 	ve.mode = veModeView
