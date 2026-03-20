@@ -95,7 +95,7 @@ View 系統打好了底，接下來我們會往更進階的方向走——更多
 升級方式：
 
 ```bash
-brew upgrade typemd/tap/tmd
+brew upgrade typemd/tap/typemd-cli
 ```
 
 或從 [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.5.0) 下載預編譯的執行檔。

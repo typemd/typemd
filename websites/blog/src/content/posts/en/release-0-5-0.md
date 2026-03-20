@@ -95,7 +95,7 @@ With the View system in place, we'll be heading toward more advanced territory â
 To upgrade:
 
 ```bash
-brew upgrade typemd/tap/tmd
+brew upgrade typemd/tap/typemd-cli
 ```
 
 Or download pre-built binaries from [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.5.0).
