@@ -27,3 +27,6 @@ Feature: Object creation
     When I run object create "book" "My Book" with template "review"
     Then the command should succeed
     And the output should contain "Created book/"
+    When I run object show for the created book
+    Then the output should contain "Template Author"
+    And the output should contain "review template body"
