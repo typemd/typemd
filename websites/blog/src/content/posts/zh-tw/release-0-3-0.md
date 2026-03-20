@@ -114,7 +114,7 @@ plural: books
 ## 升級方式
 
 ```bash
-brew upgrade typemd/tap/tmd
+brew upgrade typemd/tap/typemd-cli
 ```
 
 或從 [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.3.0) 下載預編譯的執行檔。

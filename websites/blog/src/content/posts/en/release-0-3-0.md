@@ -114,7 +114,7 @@ No leaving the TUI. No remembering YAML syntax.
 ## Upgrade
 
 ```bash
-brew upgrade typemd/tap/tmd
+brew upgrade typemd/tap/typemd-cli
 ```
 
 Or grab a pre-built binary from [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.3.0).

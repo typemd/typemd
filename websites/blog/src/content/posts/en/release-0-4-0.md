@@ -102,7 +102,7 @@ The flows for creating objects and types have been completely rethought.
 ## Upgrade
 
 ```bash
-brew upgrade typemd/tap/tmd
+brew upgrade typemd/tap/typemd-cli
 ```
 
 Or grab a pre-built binary from [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.4.0).

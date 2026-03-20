@@ -125,12 +125,12 @@ properties:
 - **`--readonly` 旗標** — 以唯讀模式啟動 TUI，在不想誤觸編輯的情境下很好用。
 - **`--reindex` 旗標** — 取代原本的 `tmd reindex` 子指令，在啟動時傳入即可強制重建索引。
 - **前綴比對** — 輸入物件 ID 時，不需要完整的 ULID，短前綴就夠了。
-- **Homebrew** — `brew install typemd/tap/tmd`，macOS 使用者現在有最簡單的安裝方式。
+- **Homebrew** — `brew install typemd/tap/typemd-cli`，macOS 使用者現在有最簡單的安裝方式。
 
 ## 升級方式
 
 ```bash
-brew upgrade typemd/tap/tmd
+brew upgrade typemd/tap/typemd-cli
 ```
 
 或從 [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.2.0) 下載預編譯的執行檔。

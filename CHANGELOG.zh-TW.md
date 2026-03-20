@@ -102,7 +102,7 @@
 - `--readonly` 旗標 — 以唯讀模式啟動 TUI，停用所有編輯功能 (#107)
 - `--reindex` 旗標 — 全域旗標，啟動時強制重建 SQLite 索引，取代原本的 `tmd reindex` 子指令 (#159)
 - 前綴比對 — 可用 ULID 後綴的短前綴解析物件，不需輸入完整 ID (#72)
-- Homebrew 安裝 — 透過 `brew install typemd/tap/tmd` 安裝 (#140)
+- Homebrew 安裝 — 透過 `brew install typemd/tap/typemd-cli` 安裝 (#140)
 
 ### 變更
 

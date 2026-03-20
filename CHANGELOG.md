@@ -102,7 +102,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/).
 - `--readonly` flag — launch the TUI in read-only mode to disable all editing (#107)
 - `--reindex` flag — global flag to force rebuild the SQLite index on startup, replacing the `tmd reindex` subcommand (#159)
 - Prefix Matching — resolve objects by a short prefix of their ULID suffix instead of the full ID (#72)
-- Homebrew Installation — install via `brew install typemd/tap/tmd` (#140)
+- Homebrew Installation — install via `brew install typemd/tap/typemd-cli` (#140)
 
 ### Changed
 

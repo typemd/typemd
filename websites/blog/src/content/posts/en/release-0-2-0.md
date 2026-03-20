@@ -125,12 +125,12 @@ Close the TUI and reopen it — cursor position, selected object, and panel stat
 - **`--readonly` flag** — launch the TUI without editing enabled. Handy when you just want to browse without accidentally changing things.
 - **`--reindex` flag** — replaces the old `tmd reindex` subcommand. Pass it at startup to force a full index rebuild.
 - **Prefix matching** — when referencing objects by ID, a short prefix of the ULID is enough. No need for the full ID.
-- **Homebrew** — `brew install typemd/tap/tmd`. The easiest way to install on macOS.
+- **Homebrew** — `brew install typemd/tap/typemd-cli`. The easiest way to install on macOS.
 
 ## Upgrade
 
 ```bash
-brew upgrade typemd/tap/tmd
+brew upgrade typemd/tap/typemd-cli
 ```
 
 Or grab a pre-built binary from [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.2.0).
