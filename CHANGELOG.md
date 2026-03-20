@@ -4,6 +4,41 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v0.5.0] - 2026-03-20
+
+### Breaking Changes
+
+- Remove `tmd query` — replaced by view filters (structured `FilterRule` objects) and `tmd search`; migrate scripts that use `tmd query` accordingly (#267)
+
+### Added
+
+- View System — define saved views per type in `.typemd/types/<name>/views/<view>.yaml` with layout, filter, sort, group_by, and columns configuration (#95, #256)
+- List View Layout — `layout: list` displays objects as a name list with optional inline values; the default view for every type (#256)
+- Table View Layout — `layout: table` displays objects in a columnar table with configurable `columns` for property selection (#97, #282)
+- View Editor — press `e` in view mode to open a side-panel editor for filter rules, sort rules, and group_by with property/operator pickers and auto-save (#258, #279)
+- View Filters — type-aware filter operators (`is`, `contains`, `before`, `gt`, etc.) applied at the query pipeline level; each property type has its own valid operator set (#263, #264)
+- Multi-level Group By — `group_by` supports an array of `{property: string}` rules for nested grouping; legacy single-string format auto-migrates (#279)
+- View Mode Session Persistence — TUI remembers which view was open (type, view name, cursor, scroll, expanded groups) across restarts (#265)
+- View Selection Filtering — popup for selecting views supports text filtering (#259)
+- `tmd stats` Command — aggregate statistics for total objects, objects per type, and property usage (#30)
+- Incremental Index Sync — TUI uses `Projector.SyncFiles()` for path-based incremental sync instead of full reindex (#231)
+
+### Changed
+
+- Type Schema Directory Format — `MigrateSchemas` now handles directory-format type schemas alongside legacy single-file format (#260)
+- Unified Property Formatting — `FormatValue` provides consistent property value rendering across view mode table and object detail (#262)
+- Structured Filter Model — legacy filter strings replaced with typed `FilterRule` objects supporting type-aware operator validation (#267)
+- TUI Overlay System — help overlay and popups use lipgloss `Layer`/`Compositor` for correct layering (#261, #276)
+
+### Fixed
+
+- View editor forwards changes to view mode and supports Shift+Tab navigation
+- View editor no longer shows duplicate columns
+- View mode layout, CJK text alignment, and object detail navigation corrected
+- Sidebar displays object name instead of slug
+
+[v0.5.0]: https://github.com/typemd/typemd/releases/tag/v0.5.0
+
 ## [v0.4.0] - 2026-03-18
 
 ### Added

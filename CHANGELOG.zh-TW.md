@@ -4,6 +4,41 @@
 
 格式依循 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [v0.5.0] - 2026-03-20
+
+### 破壞性變更
+
+- 移除 `tmd query` — 篩選功能改由 view filter（結構化 `FilterRule` 物件）與 `tmd search` 取代；使用 `tmd query` 的腳本需遷移 (#267)
+
+### 新增
+
+- View 系統 — 在 `.typemd/types/<name>/views/<view>.yaml` 定義型別的儲存視圖，含佈局、篩選、排序、分組與欄位設定 (#95, #256)
+- 列表視圖佈局 — `layout: list` 以名稱列表呈現物件，可附帶行內值；為每個型別的預設視圖 (#256)
+- 表格視圖佈局 — `layout: table` 以欄位表格呈現物件，可透過 `columns` 設定顯示欄位 (#97, #282)
+- View 編輯器 — 在視圖模式按 `e` 開啟側邊面板編輯器，支援篩選規則、排序規則、分組規則的屬性／運算子選取器與自動儲存 (#258, #279)
+- View 篩選 — 型別感知的篩選運算子（`is`、`contains`、`before`、`gt` 等）在查詢管線層級套用；每種屬性型別有各自的有效運算子集 (#263, #264)
+- 多層分組 — `group_by` 支援 `{property: string}` 規則陣列，可進行巢狀分組；舊版單一字串格式自動遷移 (#279)
+- View 模式 Session 持久化 — TUI 記住開啟中的視圖（型別、視圖名稱、游標、捲動、展開分組）跨重啟還原 (#265)
+- View 選取篩選 — 選取視圖的彈出視窗支援文字篩選 (#259)
+- `tmd stats` 指令 — 彙總統計：總物件數、各型別物件數、屬性使用率 (#30)
+- 增量索引同步 — TUI 使用 `Projector.SyncFiles()` 進行基於路徑的增量同步，取代完整重建索引 (#231)
+
+### 變更
+
+- 型別 Schema 目錄格式 — `MigrateSchemas` 現在同時處理目錄格式與舊版單檔格式的型別 schema (#260)
+- 統一屬性格式化 — `FormatValue` 在視圖模式表格與物件詳細頁提供一致的屬性值呈現 (#262)
+- 結構化篩選模型 — 舊版篩選字串改為型別化的 `FilterRule` 物件，支援型別感知的運算子驗證 (#267)
+- TUI Overlay 系統 — 說明覆蓋層與彈出視窗使用 lipgloss `Layer`/`Compositor` 正確分層 (#261, #276)
+
+### 修正
+
+- View 編輯器正確將變更轉發至視圖模式，並支援 Shift+Tab 導航
+- View 編輯器不再顯示重複欄位
+- 視圖模式佈局、CJK 文字對齊與物件詳細頁導航修正
+- 側邊欄顯示物件名稱而非 slug
+
+[v0.5.0]: https://github.com/typemd/typemd/releases/tag/v0.5.0
+
 ## [v0.4.0] - 2026-03-18
 
 ### 新增
