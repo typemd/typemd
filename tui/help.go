@@ -34,6 +34,7 @@ func helpEntries(readOnly bool) []helpEntry {
 	}
 	entries = append(entries,
 		helpEntry{keys.Search.Help().Key, keys.Search.Help().Desc},
+		helpEntry{keys.Stats.Help().Key, keys.Stats.Help().Desc},
 		helpEntry{keys.GrowPanel.Help().Key, keys.GrowPanel.Help().Desc},
 		helpEntry{keys.ShrinkPanel.Help().Key, keys.ShrinkPanel.Help().Desc},
 		helpEntry{keys.ToggleProps.Help().Key, keys.ToggleProps.Help().Desc},
@@ -44,11 +45,35 @@ func helpEntries(readOnly bool) []helpEntry {
 	return entries
 }
 
-// helpContent builds the help popup text content.
-func helpContent(width int, readOnly bool) (content string, popupW int) {
-	entries := helpEntries(readOnly)
+// statsHelpEntries returns keybindings specific to stats mode.
+func statsHelpEntries(screen statsScreen) []helpEntry {
+	entries := []helpEntry{
+		{keys.Up.Help().Key, "up"},
+		{keys.Down.Help().Key, "down"},
+	}
+	switch screen {
+	case statsOverview:
+		entries = append(entries,
+			helpEntry{"enter", "type detail"},
+			helpEntry{"r", "refresh"},
+			helpEntry{"esc", "exit stats"},
+		)
+	case statsDetail:
+		entries = append(entries,
+			helpEntry{"t", "toggle layout"},
+			helpEntry{"r", "refresh"},
+			helpEntry{"esc", "back to overview"},
+		)
+	}
+	entries = append(entries,
+		helpEntry{keys.Help.Help().Key, keys.Help.Help().Desc},
+		helpEntry{keys.Quit.Help().Key, keys.Quit.Help().Desc},
+	)
+	return entries
+}
 
-	// Find max key width for alignment
+// buildHelpPopup formats help entries into a popup content string and width.
+func buildHelpPopup(title string, entries []helpEntry, width int) (content string, popupW int) {
 	maxKeyW := 0
 	for _, e := range entries {
 		if len(e.Key) > maxKeyW {
@@ -58,9 +83,8 @@ func helpContent(width int, readOnly bool) (content string, popupW int) {
 
 	contentW := maxKeyW + helpKeyPadding + helpDescWidth
 
-	// Build lines
 	var lines []string
-	lines = append(lines, "Keybindings")
+	lines = append(lines, title)
 	lines = append(lines, strings.Repeat("─", contentW))
 	for _, e := range entries {
 		lines = append(lines, fmt.Sprintf("  %-*s   %s", maxKeyW, e.Key, e.Desc))
@@ -80,6 +104,12 @@ func helpContent(width int, readOnly bool) (content string, popupW int) {
 // renderHelp builds the help overlay on top of a background screen
 // using lipgloss Layer/Compositor. The background remains visible outside the popup.
 func renderHelp(background string, width, height int, readOnly bool) string {
-	content, popupW := helpContent(width, readOnly)
+	content, popupW := buildHelpPopup("Keybindings", helpEntries(readOnly), width)
+	return renderOverlayPopup(background, content, width, height, popupW)
+}
+
+// renderStatsHelp builds the help overlay for stats mode.
+func renderStatsHelp(background string, width, height int, screen statsScreen) string {
+	content, popupW := buildHelpPopup("Stats Keybindings", statsHelpEntries(screen), width)
 	return renderOverlayPopup(background, content, width, height, popupW)
 }

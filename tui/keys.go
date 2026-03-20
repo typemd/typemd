@@ -19,6 +19,7 @@ type keyMap struct {
 	NewObject   key.Binding
 	QuickCreate key.Binding
 	Rename      key.Binding
+	Stats       key.Binding
 }
 
 var keys = keyMap{
@@ -38,4 +39,5 @@ var keys = keyMap{
 	NewObject:   key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new object")),
 	QuickCreate: key.NewBinding(key.WithKeys("N"), key.WithHelp("N", "quick create (batch)")),
 	Rename:      key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
+	Stats:       key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "stats")),
 }

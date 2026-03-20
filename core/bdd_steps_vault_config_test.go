@@ -21,7 +21,20 @@ func (dc *domainContext) theDefaultTypeShouldBe(expected string) error {
 	return nil
 }
 
+func (dc *domainContext) theStatsTypeLayoutShouldBe(expected string) error {
+	cfg := dc.vault.Config()
+	got := cfg.TUI.StatsTypeLayout
+	if got == "" {
+		got = "fullscreen"
+	}
+	if got != expected {
+		return fmt.Errorf("expected stats_type_layout %q, got %q", expected, got)
+	}
+	return nil
+}
+
 func initVaultConfigSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a config file with content:$`, dc.aConfigFileWithContent)
 	ctx.Step(`^the default type should be "([^"]*)"$`, dc.theDefaultTypeShouldBe)
+	ctx.Step(`^the stats type layout should be "([^"]*)"$`, dc.theStatsTypeLayoutShouldBe)
 }

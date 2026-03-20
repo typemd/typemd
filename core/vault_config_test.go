@@ -241,6 +241,33 @@ func TestConfigKeys_Sorted(t *testing.T) {
 	}
 }
 
+func TestStatsTypeLayoutDefault(t *testing.T) {
+	cfg := &VaultConfig{}
+	if cfg.TUI.StatsTypeLayout != "" {
+		t.Errorf("expected empty default, got %q", cfg.TUI.StatsTypeLayout)
+	}
+}
+
+func TestStatsTypeLayoutConfigKey(t *testing.T) {
+	entry, ok := configKeyRegistry["tui.stats_type_layout"]
+	if !ok {
+		t.Fatal("tui.stats_type_layout not in config registry")
+	}
+	cfg := &VaultConfig{}
+	// Default should return empty (consumer applies "fullscreen" default)
+	if got := entry.Get(cfg); got != "" {
+		t.Errorf("expected empty default, got %q", got)
+	}
+	// Set popup
+	entry.Set(cfg, "popup")
+	if cfg.TUI.StatsTypeLayout != "popup" {
+		t.Errorf("expected 'popup', got %q", cfg.TUI.StatsTypeLayout)
+	}
+	if got := entry.Get(cfg); got != "popup" {
+		t.Errorf("expected 'popup' from getter, got %q", got)
+	}
+}
+
 func TestSetConfigValue_CreatesConfigFile(t *testing.T) {
 	dir := t.TempDir()
 	v := NewVault(dir)

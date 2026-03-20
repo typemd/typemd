@@ -49,3 +49,20 @@ Feature: Vault configuration
     When I open the vault
     Then no error should occur
     And the default type should be "note"
+
+  Scenario: TUI stats_type_layout config
+    Given a vault is initialized
+    And a config file with content:
+      """
+      tui:
+        stats_type_layout: popup
+      """
+    When I open the vault
+    Then no error should occur
+    And the stats type layout should be "popup"
+
+  Scenario: TUI stats_type_layout defaults to fullscreen
+    Given a vault is initialized
+    When I open the vault
+    Then no error should occur
+    And the stats type layout should be "fullscreen"
