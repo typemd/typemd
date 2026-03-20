@@ -87,10 +87,16 @@ func (cs *createState) selectedTemplateName() string {
 }
 
 // initNameInput creates and configures the text input for name entry.
-func initNameInput() textinput.Model {
+// If initialValue is provided, it pre-fills the input and moves cursor to end.
+func initNameInput(initialValue ...string) textinput.Model {
 	ti := textinput.New()
+	ti.Prompt = ""
 	ti.Placeholder = "object name"
 	ti.CharLimit = 100
+	if len(initialValue) > 0 && initialValue[0] != "" {
+		ti.SetValue(initialValue[0])
+		ti.CursorEnd()
+	}
 	ti.Focus()
 	return ti
 }
@@ -254,21 +260,11 @@ func renderCreateTitleContent(cs *createState, width int) string {
 
 	// Flash takes priority in batch mode
 	if cs.flash != "" {
-		prefix := ""
-		if cs.emoji != "" {
-			prefix = padEmoji(cs.emoji) + " "
-		}
-		return fmt.Sprintf(" %s%s · %s", prefix, cs.typeName, cs.flash)
+		return titlePrefix(cs.emoji, cs.typeName) + " · " + cs.flash
 	}
 
 	var b strings.Builder
-
-	// Type prefix: "📚 book · "
-	if cs.emoji != "" {
-		b.WriteString(fmt.Sprintf(" %s %s · ", padEmoji(cs.emoji), cs.typeName))
-	} else {
-		b.WriteString(fmt.Sprintf(" %s · ", cs.typeName))
-	}
+	b.WriteString(titlePrefix(cs.emoji, cs.typeName) + " · ")
 
 	// Name input
 	b.WriteString(cs.nameInput.View())

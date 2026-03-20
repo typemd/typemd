@@ -82,11 +82,11 @@ func (m model) View() tea.View {
 			Height(titlePanelHeight)
 		titleText := vm.titleContent()
 		if vm.detailObject != nil && m.selected != nil {
-			if vm.schema != nil && vm.schema.Emoji != "" {
-				titleText = fmt.Sprintf(" %s %s · %s", padEmoji(vm.schema.Emoji), m.selected.Type, m.selected.GetName())
-			} else {
-				titleText = fmt.Sprintf(" %s · %s", m.selected.Type, m.selected.GetName())
+			emoji := ""
+			if vm.schema != nil {
+				emoji = vm.schema.Emoji
 			}
+			titleText = titlePrefix(emoji, m.selected.Type) + " · " + m.selected.GetName()
 		}
 
 		bodyH := contentH - titlePanelHeight
@@ -311,11 +311,7 @@ func (m model) View() tea.View {
 			Width(titleW).
 			Height(titlePanelHeight)
 		te := m.typeEditor
-		emojiPrefix := ""
-		if te.schema.Emoji != "" {
-			emojiPrefix = padEmoji(te.schema.Emoji) + " "
-		}
-		titleText := fmt.Sprintf(" %s%s", emojiPrefix, te.typeName)
+		titleText := titlePrefix(te.schema.Emoji, te.typeName)
 		titleContent := titleStyle.Render(titleText)
 
 		// Adjust editor panel height for title
@@ -369,6 +365,9 @@ func (m model) View() tea.View {
 			} else if m.createType != nil {
 				titleContent = renderCreateTypeTitleContent(m.createType)
 				titleStyle = titleStyle.BorderForeground(colorFocusBorder)
+			} else if m.rename != nil {
+				titleContent = renderRenameTitleContent(m.rename)
+				titleStyle = titleStyle.BorderForeground(colorEditBorder)
 			} else if m.selected != nil {
 				titleContent = renderTitleContent(m.selected, m.selected.Type, m.selectedTypeEmoji(), titleW-bdr)
 			}
@@ -391,6 +390,8 @@ func (m model) View() tea.View {
 		helpBar = renderCreateHelpBar(m.create)
 	} else if m.createType != nil {
 		helpBar = renderCreateTypeHelpBar()
+	} else if m.rename != nil {
+		helpBar = "  [RENAME]  enter: save  esc: cancel"
 	} else if m.searchMode {
 		helpBar = "  / " + m.searchInput.View()
 	} else if m.rightPanel == panelTemplate && m.tmplEditor != nil && m.focus != focusLeft {
