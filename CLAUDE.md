@@ -7,6 +7,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 ## Architecture
 
 - **core/** — Core library: objects, types, relations, index
+  - **core/ai/** — AI provider abstraction and service layer (Claude CLI integration)
 - **cmd/** — CLI commands (Cobra)
 - **tui/** — Terminal UI (Bubble Tea)
   - **tui/widget/** — Shared UI primitives (CenteredPopup, OverlayPopup via Layer/Compositor, scroll) used across TUI components
@@ -132,10 +133,11 @@ graph LR
 | `name_template.go` | EvaluateNameTemplate for `{{ date:FORMAT }}` placeholder expansion in name templates |
 | `object.go` | Object entity (aggregate root) + Vault facade methods |
 | `object_id.go` | ObjectID value object |
-| `object_index.go` | ObjectIndex interface + ObjectResult + SortRule |
+| `name_resolve.go` | buildNameIndex + resolveByName + resolveRelationValue + isFullObjectID for name-to-ID resolution during sync |
+| `object_index.go` | ObjectIndex interface + ObjectResult + SortRule + DeleteNonTagRelations + DeleteRelationsByObject |
 | `object_repository.go` | ObjectRepository interface |
 | `object_service.go` | ObjectService (command use cases) |
-| `projector.go` | Projector (file→index sync): full Sync + incremental SyncFiles (path-based) + objectPathToID helper |
+| `projector.go` | Projector (file→index sync): full Sync + incremental SyncFiles (path-based) + objectPathToID helper + relation sync (all schema-defined relations) + name reference auto-expand write-back |
 | `query.go` | Vault query facades (QueryObjects/SearchObjects/VaultStats/TypeStats/RebuildIndex) + ObjectResult→Object converters |
 | `query_service.go` | QueryService (query use cases) |
 | `relation.go` | Relation struct + Vault.LinkObjects/UnlinkObjects facades + relation property helpers (append/remove) |
@@ -144,7 +146,7 @@ graph LR
 | `sqlite_object_index.go` | SQLiteObjectIndex (SQLite queries) |
 | `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
 | `stats.go` | VaultStats/TypeSummary/TypeStats/PropertyStats structs + QueryService.VaultStats()/TypeStats() methods + TypeSummary.DisplayName() |
-| `sync.go` | SyncResult/OrphanedRelation structs + Vault.SyncIndex() facade for Projector.Sync + Vault.SyncFiles() for incremental sync |
+| `sync.go` | SyncResult (Expanded/Unresolved fields for name resolution reporting) + OrphanedRelation/UnresolvedRelation structs + Vault.SyncIndex() facade for Projector.Sync + Vault.SyncFiles() for incremental sync |
 | `system_property.go` | SystemProperty registry (name/description/created_at/updated_at/tags) + IsSystemProperty/IsImmutableSystemProperty helpers |
 | `tag.go` | resolveTagReference helper for tag name-to-ID resolution during sync |
 | `template.go` | Template entity + Vault facade methods (ListTemplates/LoadTemplate/SaveTemplate/DeleteTemplate) |
@@ -152,9 +154,13 @@ graph LR
 | `type_schema_marshal.go` | YAML serialization (MarshalTypeSchema) + version handling (CompareVersions) + color validation (ValidColorPresets) |
 | `type_schema_validate.go` | Schema validation (ValidateSchema) + object validation (ValidateObject) + property type validators |
 | `ulid.go` | GenerateULID + StripULID + ulidSuffixPattern for ULID generation and stripping |
-| `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
+| `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateRelationReferences, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `vault_config.go` | VaultConfig struct (CLIConfig + TUIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
+| `vault_config.go` | VaultConfig struct (CLIConfig + TUIConfig + AIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
+| `ai/provider.go` | Provider interface + CompletionRequest/CompletionResponse types |
+| `ai/claude_cli.go` | ClaudeCLI provider implementation (subprocess invocation via `claude -p`) + LookupBinary |
+| `ai/service.go` | AIService (Describe, SuggestTags, ExploreSchema) + prompt builders + response types (TagSuggestion, SchemaExploration) |
+| `ai/prompts.go` | Default system prompts for describe, tag, and explore operations |
 | `view.go` | ViewConfig/FilterRule/GroupRule structs + ViewLayout constants + custom UnmarshalYAML (legacy string→[]GroupRule migration) + Vault view CRUD (ListViews/LoadView/SaveView/DeleteView/DefaultView) |
 | `wikilink.go` | WikiLink/StoredWikiLink structs + ParseWikiLinks + RenderWikiLinks + Vault.ListWikiLinks/ListBacklinks facades |
 
@@ -174,6 +180,8 @@ The TUI file watcher monitors both `objects/` (for object changes) and `.typemd/
 
 Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_type.go`): triggered via `+ New Type`, it transforms the title panel into a multi-field form (emoji, name, plural) with Tab cycling and a live type schema preview in the right panel. After creation, the type editor opens automatically.
 
+The TUI supports **AI-powered assistance** when `ai.enabled: true` in config and `claude` CLI is installed. Pressing `g` in object detail view opens an AI action picker popup (Generate description / Suggest tags). Pressing `ctrl+e` from the sidebar enters schema explore mode. AI operations use the `claude` CLI as a subprocess (`claude -p --output-format json --json-schema ...`). AI state is tracked via `aiState` (idle, action picker, loading, preview, showing tags, error) with corresponding help bar messages and property panel overlays (`tui/ai.go`, `tui/ai_update.go`, `tui/ai_render.go`).
+
 ## Data Model
 
 - Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
@@ -186,7 +194,7 @@ Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_ty
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, props visibility, and optionally view mode state — `view_type_name`, `view_name`, `view_cursor`, `view_scroll`, `view_expanded_groups` — when the TUI was in view mode on exit)
-- Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`)
+- Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`; `ai.enabled` enables AI features, `ai.model` overrides model, `ai.prompts.*` customizes system prompts, `ai.explore.sample_count`/`ai.explore.body_truncate` configures schema explore sampling)
 - Starter type templates: `core/starters/*.yaml` (embedded in binary via `//go:embed`; offered during `tmd init` as opt-in type schemas — idea, note, book)
 - Object templates: `templates/<type>/<name>.md` (optional, Markdown files with frontmatter property overrides and body content applied during `tmd object create`; single template auto-applies, multiple templates prompt for selection or use `-t` flag)
 - Object files: `objects/<type>/<name>.md`
@@ -215,9 +223,7 @@ Blog posts are the exception: written in Traditional Chinese (zh-tw) first, then
 ## Build & Test
 
 ```bash
-go build ./...
-go test ./...
-go run ./cmd/tmd [command]
+make test
 ```
 
 ## Testing

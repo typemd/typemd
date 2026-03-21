@@ -23,12 +23,13 @@ const (
 type rightPanelMode int
 
 const (
-	panelEmpty      rightPanelMode = iota // no content selected
-	panelObject                           // object detail view (existing behavior)
-	panelTypeEditor                       // type editor view
-	panelTemplate                         // template detail view
-	panelView                             // full-width view mode
-	panelStats                            // stats dashboard mode
+	panelEmpty         rightPanelMode = iota // no content selected
+	panelObject                             // object detail view (existing behavior)
+	panelTypeEditor                         // type editor view
+	panelTemplate                           // template detail view
+	panelView                               // full-width view mode
+	panelStats                              // stats dashboard mode
+	panelSchemaExplore                      // AI schema explore mode
 )
 
 type typeGroup struct {
@@ -48,7 +49,8 @@ type model struct {
 	typeEditor  *typeEditor          // non-nil when rightPanel == panelTypeEditor
 	tmplEditor  *templateEditor      // non-nil when rightPanel == panelTemplate
 	viewMode    *viewMode            // non-nil when rightPanel == panelView
-	statsMode   *statsMode           // non-nil when rightPanel == panelStats
+	statsMode       *statsMode       // non-nil when rightPanel == panelStats
+	schemaExplorer  *schemaExplorer  // non-nil when rightPanel == panelSchemaExplore
 	viewPicker  *viewPicker          // non-nil when view selection popup is active
 	createType   *createTypeState    // non-nil when type creation flow is active
 	create       *createState        // non-nil when object creation flow is active
@@ -72,6 +74,14 @@ type model struct {
 
 	// Shared detail state
 	displayProps []core.DisplayProperty
+
+	// AI state
+	aiState        aiState
+	aiActionCursor int            // cursor in action picker popup
+	aiPreviewDesc  string         // AI-generated description preview
+	aiTagItems     []tagPopupItem // AI-suggested tags for popup
+	aiTagCursor    int            // cursor in tag popup
+	aiError        string         // AI error message
 
 	// Edit mode
 	editMode      bool
@@ -141,6 +151,25 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.rightPanel = panelEmpty
 		m.focus = focusLeft
 		m.refreshData(nil)
+		return m, nil
+
+	case aiDescribeResultMsg:
+		return updateAIDescribeResult(m, msg)
+
+	case aiTagResultMsg:
+		return updateAITagResult(m, msg)
+
+	case aiExploreResultMsg:
+		if m.schemaExplorer != nil {
+			if msg.Err != nil {
+				m.schemaExplorer.err = msg.Err
+				m.schemaExplorer.screen = seSummary
+			} else if msg.Exploration != nil {
+				m.schemaExplorer.suggestions = msg.Exploration.Suggestions
+				m.schemaExplorer.statuses = make([]suggestionStatus, len(msg.Exploration.Suggestions))
+				m.schemaExplorer.screen = seSuggestions
+			}
+		}
 		return m, nil
 
 	case openTemplateMsg:
@@ -339,6 +368,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			stm, cmd := m.statsMode.Update(msg)
 			m.statsMode = stm
 			return m, cmd
+		case m.rightPanel == panelSchemaExplore && m.schemaExplorer != nil:
+			if msg.String() == "q" || msg.String() == "ctrl+c" {
+				if m.vault != nil {
+					saveSessionState(m.vault.Root, m.captureState())
+				}
+				return m, tea.Quit
+			}
+			se, cmd := m.schemaExplorer.Update(msg)
+			if se == nil {
+				// Explorer returned nil — exit schema explore mode
+				m.schemaExplorer = nil
+				m.rightPanel = panelEmpty
+				m.focus = focusLeft
+				m.selectCurrentRow()
+				return m, nil
+			}
+			m.schemaExplorer = se
+			return m, cmd
 		case m.rightPanel == panelView && m.viewMode != nil:
 			// q/ctrl+c quits globally
 			if (msg.String() == "q" || msg.String() == "ctrl+c") && m.viewMode.CanQuit() {
@@ -411,6 +458,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return m, cmd
 		case m.rename != nil:
 			return updateRename(m, msg)
+		case m.aiState == aiActionPicker:
+			return updateAIActionPicker(m, msg)
+		case m.aiState == aiPreviewDescribe:
+			return updateAIPreview(m, msg)
+		case m.aiState == aiShowingTags:
+			return updateAITagPopup(m, msg)
+		case m.aiState == aiError:
+			return updateAIError(m, msg)
 		case m.editMode:
 			return updateEdit(m, msg)
 		default:

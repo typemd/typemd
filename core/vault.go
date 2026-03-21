@@ -7,6 +7,7 @@ import (
 	"os"
 	"path/filepath"
 
+	"github.com/typemd/typemd/core/ai"
 	_ "modernc.org/sqlite"
 )
 
@@ -24,6 +25,7 @@ type Vault struct {
 	Queries           *QueryService
 	Events            *EventDispatcher
 	config            *VaultConfig
+	aiService         *ai.AIService
 	schemaCache       map[string]*TypeSchema
 	sharedProperties  []Property
 	sharedPropsMap    map[string]Property
@@ -127,6 +129,7 @@ func (v *Vault) Open() error {
 		return fmt.Errorf("load config: %w", err)
 	}
 	v.config = cfg
+	v.initAI(cfg)
 
 	v.projector = NewProjector(v.repo, v.index, func(slug string) (*Object, error) {
 		return v.Objects.Create(TagTypeName, slug, "")
@@ -152,6 +155,33 @@ func (v *Vault) Open() error {
 	return nil
 }
 
+// initAI initializes the AI service if enabled and claude binary is available.
+func (v *Vault) initAI(cfg *VaultConfig) {
+	v.aiService = nil
+	if !cfg.AI.Enabled {
+		return
+	}
+	binaryPath, err := ai.LookupBinary()
+	if err != nil {
+		return
+	}
+	provider := &ai.ClaudeCLI{
+		Binary: binaryPath,
+		Model:  cfg.AI.Model,
+	}
+	v.aiService = ai.NewAIService(provider, ai.ServiceConfig{
+		Model:          cfg.AI.Model,
+		DescribePrompt: cfg.AI.Prompts.Describe,
+		TagPrompt:      cfg.AI.Prompts.Tag,
+		ExplorePrompt:  cfg.AI.Prompts.Explore,
+	})
+}
+
+// AIService returns the AI service, or nil if AI is not available.
+func (v *Vault) AIService() *ai.AIService {
+	return v.aiService
+}
+
 // closeInternal releases all resources without checking state.
 func (v *Vault) closeInternal() {
 	if v.db != nil {
@@ -165,6 +195,7 @@ func (v *Vault) closeInternal() {
 	v.Queries = nil
 	v.Events = nil
 	v.config = nil
+	v.aiService = nil
 	v.schemaCache = nil
 }
 
@@ -182,6 +213,7 @@ func (v *Vault) Close() error {
 	v.Queries = nil
 	v.Events = nil
 	v.config = nil
+	v.aiService = nil
 	v.schemaCache = nil
 	return err
 }

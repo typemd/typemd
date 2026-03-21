@@ -55,7 +55,12 @@ func (m *model) updateDetail() {
 	}
 	m.bodyViewport.SetContent(bodyContent)
 
-	propsContent := renderProperties(m.selected, m.displayProps)
+	var propsContent string
+	if m.aiState != aiIdle {
+		propsContent = renderPropertiesWithAI(m.selected, m.displayProps, *m)
+	} else {
+		propsContent = renderProperties(m.selected, m.displayProps)
+	}
 	if m.softWrap && m.propsViewport.Width() > 0 {
 		propsContent = softWrapLines(propsContent, m.propsViewport.Width())
 	}
@@ -256,6 +261,34 @@ func (m model) View() tea.View {
 
 		if m.showHelp {
 			screen = renderStatsHelp(screen, m.width, m.height, stm.screen)
+		}
+
+		v := tea.NewView(screen)
+		v.AltScreen = true
+		return v
+	}
+
+	// Schema explore — full-width panel
+	if m.rightPanel == panelSchemaExplore && m.schemaExplorer != nil {
+		contentH := m.height - 3
+		if contentH < 0 {
+			contentH = 0
+		}
+		bdr := 2
+		bodyStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(m.width - bdr).
+			Height(contentH).
+			MaxHeight(contentH)
+
+		m.schemaExplorer.SetSize(m.width-bdr-2, contentH-bdr)
+		content := bodyStyle.Render(m.schemaExplorer.View())
+
+		helpBar := "  [AI EXPLORE]  ↑↓: navigate  |  enter: accept  |  s: skip  |  esc: exit"
+		screen := content + "\n" + helpBar
+
+		if m.showHelp {
+			screen = renderHelp(screen, m.width, m.height, m.readOnly)
 		}
 
 		v := tea.NewView(screen)
@@ -483,6 +516,16 @@ func (m model) View() tea.View {
 		helpBar = "  [CONFLICT]  " + m.saveErr
 	} else if m.saveErr != "" {
 		helpBar = "  [ERROR]  " + m.saveErr
+	} else if m.aiState == aiActionPicker {
+		helpBar = "  [AI]  ↑↓: navigate  |  enter: select  |  esc: cancel"
+	} else if m.aiState == aiLoadingDescribe || m.aiState == aiLoadingTags {
+		helpBar = "  [AI]  Generating..."
+	} else if m.aiState == aiPreviewDescribe {
+		helpBar = "  [AI]  tab: accept  |  esc: reject"
+	} else if m.aiState == aiShowingTags {
+		helpBar = "  [AI TAGS]  ↑↓: navigate  |  space: toggle  |  enter: apply  |  esc: cancel"
+	} else if m.aiState == aiError {
+		helpBar = "  [AI ERROR]  " + m.aiError + "  |  press any key to dismiss"
 	} else if m.editMode {
 		helpBar = "  [EDIT]  esc: exit edit mode"
 	} else {
@@ -509,6 +552,11 @@ func (m model) View() tea.View {
 		if overlay := m.typeEditor.Overlay(m.width, m.height); overlay != "" {
 			screen = overlay
 		}
+	}
+
+	// AI action picker overlay
+	if m.aiState == aiActionPicker {
+		screen = renderAIActionPicker(screen, m.width, m.height, m.aiActionCursor)
 	}
 
 	// View picker overlay

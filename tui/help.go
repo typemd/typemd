@@ -31,6 +31,8 @@ func helpEntries(readOnly bool) []helpEntry {
 		entries = append(entries, helpEntry{keys.Rename.Help().Key, keys.Rename.Help().Desc})
 		entries = append(entries, helpEntry{keys.NewObject.Help().Key, keys.NewObject.Help().Desc})
 		entries = append(entries, helpEntry{keys.QuickCreate.Help().Key, keys.QuickCreate.Help().Desc})
+		entries = append(entries, helpEntry{keys.AIGenerate.Help().Key, keys.AIGenerate.Help().Desc})
+		entries = append(entries, helpEntry{keys.SchemaExplore.Help().Key, keys.SchemaExplore.Help().Desc})
 	}
 	entries = append(entries,
 		helpEntry{keys.Search.Help().Key, keys.Search.Help().Desc},

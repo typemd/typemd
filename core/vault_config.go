@@ -17,6 +17,28 @@ const configFileName = "config.yaml"
 type VaultConfig struct {
 	CLI CLIConfig `yaml:"cli"`
 	TUI TUIConfig `yaml:"tui,omitempty"`
+	AI  AIConfig  `yaml:"ai,omitempty"`
+}
+
+// AIConfig holds AI-specific configuration.
+type AIConfig struct {
+	Enabled bool          `yaml:"enabled,omitempty"`
+	Model   string        `yaml:"model,omitempty"`
+	Prompts PromptsConfig `yaml:"prompts,omitempty"`
+	Explore ExploreConfig `yaml:"explore,omitempty"`
+}
+
+// PromptsConfig holds customizable system prompts for AI operations.
+type PromptsConfig struct {
+	Describe string `yaml:"describe,omitempty"`
+	Tag      string `yaml:"tag,omitempty"`
+	Explore  string `yaml:"explore,omitempty"`
+}
+
+// ExploreConfig holds schema explore parameters.
+type ExploreConfig struct {
+	SampleCount  int `yaml:"sample_count,omitempty"`
+	BodyTruncate int `yaml:"body_truncate,omitempty"`
 }
 
 // CLIConfig holds CLI-specific configuration.
@@ -57,6 +79,57 @@ var configKeyRegistry = map[string]configKeyEntry{
 	"tui.stats_type_layout": {
 		Get: func(cfg *VaultConfig) string { return cfg.TUI.StatsTypeLayout },
 		Set: func(cfg *VaultConfig, value string) { cfg.TUI.StatsTypeLayout = value },
+	},
+	"ai.enabled": {
+		Get: func(cfg *VaultConfig) string {
+			if cfg.AI.Enabled {
+				return "true"
+			}
+			return ""
+		},
+		Set: func(cfg *VaultConfig, value string) {
+			cfg.AI.Enabled = value == "true"
+		},
+	},
+	"ai.model": {
+		Get: func(cfg *VaultConfig) string { return cfg.AI.Model },
+		Set: func(cfg *VaultConfig, value string) { cfg.AI.Model = value },
+	},
+	"ai.prompts.describe": {
+		Get: func(cfg *VaultConfig) string { return cfg.AI.Prompts.Describe },
+		Set: func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Describe = value },
+	},
+	"ai.prompts.tag": {
+		Get: func(cfg *VaultConfig) string { return cfg.AI.Prompts.Tag },
+		Set: func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Tag = value },
+	},
+	"ai.prompts.explore": {
+		Get: func(cfg *VaultConfig) string { return cfg.AI.Prompts.Explore },
+		Set: func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Explore = value },
+	},
+	"ai.explore.sample_count": {
+		Get: func(cfg *VaultConfig) string {
+			if cfg.AI.Explore.SampleCount == 0 {
+				return ""
+			}
+			return strconv.Itoa(cfg.AI.Explore.SampleCount)
+		},
+		Set: func(cfg *VaultConfig, value string) {
+			n, _ := strconv.Atoi(value)
+			cfg.AI.Explore.SampleCount = n
+		},
+	},
+	"ai.explore.body_truncate": {
+		Get: func(cfg *VaultConfig) string {
+			if cfg.AI.Explore.BodyTruncate == 0 {
+				return ""
+			}
+			return strconv.Itoa(cfg.AI.Explore.BodyTruncate)
+		},
+		Set: func(cfg *VaultConfig, value string) {
+			n, _ := strconv.Atoi(value)
+			cfg.AI.Explore.BodyTruncate = n
+		},
 	},
 }
 

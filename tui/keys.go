@@ -3,23 +3,25 @@ package tui
 import "charm.land/bubbles/v2/key"
 
 type keyMap struct {
-	Up          key.Binding
-	Down        key.Binding
-	Enter       key.Binding
-	Tab         key.Binding
-	Search      key.Binding
-	Quit        key.Binding
-	GrowPanel   key.Binding
-	ShrinkPanel key.Binding
-	ToggleProps key.Binding
-	ToggleWrap  key.Binding
-	Help        key.Binding
-	EnterEdit   key.Binding
-	ExitEdit    key.Binding
-	NewObject   key.Binding
-	QuickCreate key.Binding
-	Rename      key.Binding
-	Stats       key.Binding
+	Up            key.Binding
+	Down          key.Binding
+	Enter         key.Binding
+	Tab           key.Binding
+	Search        key.Binding
+	Quit          key.Binding
+	GrowPanel     key.Binding
+	ShrinkPanel   key.Binding
+	ToggleProps   key.Binding
+	ToggleWrap    key.Binding
+	Help          key.Binding
+	EnterEdit     key.Binding
+	ExitEdit      key.Binding
+	NewObject     key.Binding
+	QuickCreate   key.Binding
+	Rename        key.Binding
+	Stats         key.Binding
+	AIGenerate    key.Binding
+	SchemaExplore key.Binding
 }
 
 var keys = keyMap{
@@ -39,5 +41,7 @@ var keys = keyMap{
 	NewObject:   key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new object")),
 	QuickCreate: key.NewBinding(key.WithKeys("N"), key.WithHelp("N", "quick create (batch)")),
 	Rename:      key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
-	Stats:       key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "stats")),
+	Stats:         key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "stats")),
+	AIGenerate:    key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "AI generate")),
+	SchemaExplore: key.NewBinding(key.WithKeys("ctrl+e"), key.WithHelp("ctrl+e", "AI schema explore")),
 }
