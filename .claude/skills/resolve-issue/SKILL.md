@@ -203,7 +203,15 @@ The goal of this phase is to:
 
 The explore session should be grounded in the issue context gathered during Preflight. Pass the issue summary, key requirements, and any additional user context into the explore session.
 
-This phase is interactive — continue the exploration dialogue until the user is satisfied that the problem is well-understood. The user may end the exploration explicitly (e.g., "looks good", "let's proceed") or the explore skill may naturally conclude.
+This phase is interactive — continue the exploration dialogue until the problem is well-understood.
+
+**Gate check before proceeding:** Since Phase 1 (Design) flows directly into Phase 2 (Implement) without a separate review pause, the explore phase must reach sufficient depth. Before leaving this phase, confirm with the user via AskUserQuestion:
+
+- **Scope** — what's in and what's out
+- **Approach** — the high-level technical direction (which packages, what patterns)
+- **Edge cases** — any tricky scenarios surfaced during exploration
+
+The user may end the exploration explicitly (e.g., "looks good", "let's proceed") or the explore skill may naturally conclude. Either way, ensure the three points above have been addressed.
 
 Once exploration is complete, proceed to Phase 1.
 
@@ -248,7 +256,7 @@ Example of **incorrect** ordering (implementation before tests):
 
 For `cmd/` changes, BDD tests cover CLI-layer behavior (argument parsing, output format, error messages) in `cmd/features/`. For `mcp/`, use unit tests. See CLAUDE.md "Testing" section for full guidance.
 
-Present the generated artifacts to the user for review before proceeding.
+Once all artifacts are generated, proceed directly to Phase 2.
 
 ### Phase 2: Implement
 
