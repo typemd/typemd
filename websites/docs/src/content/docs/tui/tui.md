@@ -95,8 +95,19 @@ The default mode. Browse objects and types in the sidebar.
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |
 | `[`/`]` | Shrink/grow focused panel |
+| `g` | AI generate (describe / tag suggestions) |
+| `Ctrl+E` | AI schema explore |
 | `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
+
+### AI Assist
+
+Requires `ai.enabled: true` in `.typemd/config.yaml` and the `claude` CLI installed and authenticated.
+
+- **`g`** — Opens an AI action picker popup with two options:
+  - **Generate description** — AI analyzes the object's name, properties, and body to generate a description. Shown as ghost text preview; press `Tab` to accept or `Esc` to reject.
+  - **Suggest tags** — AI suggests relevant tags based on object content and existing tags. Shows a selectable popup with checkboxes; `Space` to toggle, `Enter` to apply, `Esc` to cancel. Tags are classified as existing or new (★).
+- **`Ctrl+E`** — Enters schema explore mode (from sidebar). Select a type, and AI analyzes its objects to suggest schema improvements (add/modify/remove properties). Press `Enter` to accept or `s` to skip each suggestion.
 
 ### View Mode
 

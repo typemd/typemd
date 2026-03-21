@@ -1,0 +1,4 @@
+cli:
+  default_type: book
+ai:
+  enabled: true

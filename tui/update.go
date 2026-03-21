@@ -68,6 +68,12 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		m.searchInput.Focus()
 		return m, textinput.Blink
 
+	case "g":
+		return handleAIGenerate(m)
+
+	case "ctrl+e":
+		return handleSchemaExplore(m)
+
 	case "ctrl+s":
 		if m.vault != nil {
 			layout := ""

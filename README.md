@@ -30,6 +30,7 @@ TypeMD lets you think in **Objects** — books, people, ideas, meetings — conn
 - **Full-text search** — find anything across your vault
 - **Structured queries** — filter objects by type, property, or relation
 - **TUI** — Three-panel interface powered by [Bubble Tea](https://github.com/charmbracelet/bubbletea), with auto-refresh on file changes
+- **AI Assist** — generate descriptions, suggest tags, and explore schemas with Claude AI in the TUI
 - **MCP Server** — integrate with AI assistants via Model Context Protocol
 - **Local-first** — everything lives on your machine as plain Markdown files
 
@@ -96,7 +97,7 @@ tmd search "concurrency"
 tmd object show book/clean-code           # prefix matching, no full ULID needed
 tmd object list
 
-# Connect objects
+# Connect objects (name references in frontmatter auto-expand on sync)
 tmd relation link book/golang-in-action author person/alan-donovan
 
 # Maintenance
