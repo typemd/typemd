@@ -12,7 +12,8 @@ var linkCmd = &cobra.Command{
 	Long: `Create a relation between two objects.
 
 Supports prefix matching — you can omit the ULID suffix if the prefix
-uniquely identifies an object.
+uniquely identifies an object. If a prefix matches multiple objects,
+an interactive picker is shown to select the intended one.
 
 Examples:
   tmd relation link book/clean-code author person/robert-martin
@@ -26,11 +27,11 @@ Examples:
 		defer vault.Close()
 
 		relName := args[1]
-		fromID, err := vault.ResolveID(args[0])
+		fromID, err := resolveIDInteractive(vault, args[0])
 		if err != nil {
 			return err
 		}
-		toID, err := vault.ResolveID(args[2])
+		toID, err := resolveIDInteractive(vault, args[2])
 		if err != nil {
 			return err
 		}
