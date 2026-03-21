@@ -122,6 +122,8 @@ func resetAllFlags() {
 	typeFlag = ""
 	noStarters = false
 	searchJSON = false
+	formatDryRun = false
+	formatType = ""
 
 	// Reset Cobra local flags that use cmd.Flags().GetBool() instead of
 	// package-level vars. Without this, flags set in one scenario leak
@@ -146,6 +148,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initInitSteps(sc, cc)
 	initObjectSteps(sc, cc)
 	initSearchSteps(sc, cc)
+	initFormatSteps(sc, cc)
 }
 
 func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {

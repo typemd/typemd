@@ -100,6 +100,7 @@ tmd object list
 tmd relation link book/golang-in-action author person/alan-donovan
 
 # Maintenance
+tmd format                                # normalize frontmatter & schema formatting
 tmd doctor                                # vault health check
 tmd stats                                 # vault-wide statistics
 tmd --reindex                             # rebuild index after manual edits

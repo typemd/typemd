@@ -124,6 +124,7 @@ graph LR
 | `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
 | `domain_event.go` | Domain event types + EventDispatcher |
 | `filter_operator.go` | Type-aware filter operator registry (validOperators) + FilterRuleToSQL translation + ValidateFilterOperator + OperatorsForType |
+| `format.go` | FormatResult struct + Vault.FormatAll/FormatObjects/FormatSchemas for batch frontmatter normalization |
 | `list.go` | Vault.ListTypes() facade for listing all available type names |
 | `local_object_repository.go` | LocalObjectRepository (struct, path conventions, object CRUD, shared properties) |
 | `local_object_repository_schema.go` | Type schema CRUD and migration |
