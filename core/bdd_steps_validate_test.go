@@ -73,6 +73,14 @@ func (dc *domainContext) twoLinkedNotesExist() {
 }
 
 func (dc *domainContext) aNoteWithABrokenWikiLinkExists() {
+	dc.createNoteWithBrokenWikiLink(true)
+}
+
+func (dc *domainContext) aNoteWithABrokenWikiLinkExistsOnAFreshVault() {
+	dc.createNoteWithBrokenWikiLink(false)
+}
+
+func (dc *domainContext) createNoteWithBrokenWikiLink(sync bool) {
 	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "note.yaml"),
 		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
 
@@ -81,7 +89,9 @@ func (dc *domainContext) aNoteWithABrokenWikiLinkExists() {
 
 	body := "---\ntitle: Alpha\n---\n\nSee [[note/nonexistent-01jjjjjjjjjjjjjjjjjjjjjjjj]].\n"
 	os.WriteFile(dc.vault.ObjectPath(note.Type, note.Filename), []byte(body), 0644)
-	dc.vault.SyncIndex()
+	if sync {
+		dc.vault.SyncIndex()
+	}
 }
 
 func (dc *domainContext) iValidateWikiLinks() {
@@ -140,6 +150,7 @@ func initValidateSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^there should be (\d+) relation errors?$`, dc.thereShouldBeNRelationErrors)
 	ctx.Step(`^two linked notes exist$`, dc.twoLinkedNotesExist)
 	ctx.Step(`^a note with a broken wiki-link exists$`, dc.aNoteWithABrokenWikiLinkExists)
+	ctx.Step(`^a note with a broken wiki-link exists on a fresh vault$`, dc.aNoteWithABrokenWikiLinkExistsOnAFreshVault)
 	ctx.Step(`^I validate wiki-links$`, dc.iValidateWikiLinks)
 	ctx.Step(`^there should be no wiki-link errors$`, dc.thereShouldBeNoWikiLinkErrors)
 	ctx.Step(`^there should be (\d+) wiki-link errors?$`, dc.thereShouldBeNWikiLinkErrors)

@@ -31,13 +31,33 @@ body:
       required: true
 
   - type: textarea
-    id: open-questions
+    id: scope
     attributes:
-      label: Open Questions
-      description: Any design decisions, trade-offs, or unknowns that need discussion.
+      label: Scope
+      description: What's in and what's out of this issue.
       placeholder: |
-        - Question 1?
-        - Question 2?
+        - **In**: ...
+        - **Out**: ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: approach
+    attributes:
+      label: Approach
+      description: High-level technical direction — which packages, what patterns, key design decisions.
+      placeholder: Describe the implementation approach.
+    validations:
+      required: false
+
+  - type: textarea
+    id: edge-cases
+    attributes:
+      label: Edge Cases
+      description: Tricky scenarios, conflicts with existing behavior, or open questions.
+      placeholder: |
+        - Edge case 1
+        - Edge case 2
     validations:
       required: false
 

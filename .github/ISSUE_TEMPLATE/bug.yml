@@ -43,6 +43,17 @@ body:
       required: false
 
   - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: Which packages/files are affected, and initial root cause hypothesis if available.
+      placeholder: |
+        - **Affected area**: core/object.go, tui/sidebar.go
+        - **Root cause hypothesis**: ...
+    validations:
+      required: false
+
+  - type: textarea
     id: references
     attributes:
       label: References

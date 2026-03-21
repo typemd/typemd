@@ -31,6 +31,26 @@ body:
       required: true
 
   - type: textarea
+    id: scope
+    attributes:
+      label: Scope
+      description: What's in and what's out of this task.
+      placeholder: |
+        - **In**: ...
+        - **Out**: ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: approach
+    attributes:
+      label: Approach
+      description: Technical direction — what to change and where.
+      placeholder: Describe the implementation approach.
+    validations:
+      required: true
+
+  - type: textarea
     id: references
     attributes:
       label: References

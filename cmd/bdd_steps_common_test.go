@@ -150,6 +150,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initSearchSteps(sc, cc)
 	initFormatSteps(sc, cc)
 	initCompletionSteps(sc, cc)
+	initDisambiguateSteps(sc, cc)
 }
 
 func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {

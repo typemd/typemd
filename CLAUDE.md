@@ -147,7 +147,7 @@ graph LR
 | `sqlite_object_index.go` | SQLiteObjectIndex (SQLite queries) |
 | `starters.go` | Embedded starter type templates (idea/note/book) + StarterTypes() + Vault.WriteStarterTypes() |
 | `stats.go` | VaultStats/TypeSummary/TypeStats/PropertyStats structs + QueryService.VaultStats()/TypeStats() methods + TypeSummary.DisplayName() |
-| `sync.go` | SyncResult (Expanded/Unresolved fields for name resolution reporting) + OrphanedRelation/UnresolvedRelation structs + Vault.SyncIndex() facade for Projector.Sync + Vault.SyncFiles() for incremental sync |
+| `sync.go` | SyncResult (Expanded/Unresolved fields for name resolution reporting) + OrphanedRelation/UnresolvedRelation structs + ReasonNotFound/ReasonAmbiguous constants + Vault.SyncIndex() facade for Projector.Sync + Vault.SyncFiles() for incremental sync |
 | `system_property.go` | SystemProperty registry (name/description/created_at/updated_at/tags) + IsSystemProperty/IsImmutableSystemProperty helpers |
 | `tag.go` | resolveTagReference helper for tag name-to-ID resolution during sync |
 | `template.go` | Template entity + Vault facade methods (ListTemplates/LoadTemplate/SaveTemplate/DeleteTemplate) |
@@ -184,7 +184,7 @@ Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_ty
 
 The TUI supports **AI-powered assistance** when `ai.enabled: true` in config and `claude` CLI is installed. Pressing `g` in object detail view opens an AI action picker popup (Generate description / Suggest tags). Pressing `ctrl+e` from the sidebar enters schema explore mode. AI operations use the `claude` CLI as a subprocess (`claude -p --output-format json --json-schema ...`). AI state is tracked via `aiState` (idle, action picker, loading, preview, showing tags) with corresponding help bar messages and property panel overlays (`tui/ai.go`, `tui/ai_update.go`, `tui/ai_render.go`). AI errors are surfaced as toast notifications.
 
-The TUI uses a **toast notification system** (`widget.ToastModel` in `tui/widget/toast.go`) for transient messages. Toasts appear as a floating overlay in the bottom-right corner via lipgloss Layer/Compositor. Three severity levels: Info, Warning, Error. Toasts auto-dismiss after a configurable duration (default 3s) and can be manually dismissed via a configurable key (default Esc, which is consumed by the toast). Multiple messages from a single event are aggregated via group keys (e.g., `⚠ 3 unresolved refs`). Toast is initialized from `tui.toast.*` config via `newToastFromConfig()`. Current use cases: sync unresolved reference warnings and AI operation errors.
+The TUI uses a **toast notification system** (`widget.ToastModel` in `tui/widget/toast.go`) for transient messages. Toasts appear as a floating overlay in the bottom-right corner via lipgloss Layer/Compositor. Three severity levels: Info, Warning, Error. Toasts auto-dismiss after a configurable duration (default 3s) and can be manually dismissed via a configurable key (default Esc, which is consumed by the toast). Multiple messages from a single event are aggregated via group keys (e.g., `⚠ 2 not found`, `⚠ 1 ambiguous`). Toast is initialized from `tui.toast.*` config via `newToastFromConfig()`. Current use cases: sync unresolved reference warnings and AI operation errors.
 
 ## Data Model
 

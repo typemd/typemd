@@ -24,6 +24,14 @@ Use the `superpowers:brainstorming` skill to explore the user's idea. The brains
 - Surfacing constraints, related issues, and technical considerations
 - Narrowing scope if the idea is too broad
 
+**Technical exploration:** During brainstorming, also investigate the codebase to ground the discussion:
+
+- Identify which packages and files are affected (`core/`, `cmd/`, `tui/`, etc.)
+- Check existing patterns — how similar features are already implemented
+- Surface potential edge cases or conflicts with existing behavior
+
+This technical context feeds directly into the issue body (see Scope and Approach sections in body templates) and reduces rework during `resolve-issue` Phase 0 (Explore).
+
 Once brainstorming concludes with a clear direction, proceed to the next step.
 
 ### Step 2: Check for duplicates
@@ -203,96 +211,9 @@ gh api graphql -f query="mutation { removeBlockedBy(input: { issueId: \"$ISSUE_I
 
 ### Body Templates
 
-Use the template matching the issue type. Omit optional sections if the user didn't provide relevant content.
+Read the matching template from `.github/ISSUE_TEMPLATE/<type>.yml` to determine the body structure. Each template defines sections with labels, descriptions, and required/optional validations — use those as-is to compose the issue body.
 
-**Feature** (`feature.yml`):
-
-```markdown
-## Summary
-
-<feature description and why it's needed>
-
-## Current Behavior
-
-<how things work today, optional>
-
-## Expected Behavior
-
-<how things should work after implementation>
-
-## Open Questions
-
-<design decisions or trade-offs to discuss, optional>
-
-## References
-
-<related issues or links, optional>
-```
-
-**Bug** (`bug.yml`):
-
-```markdown
-## Problem
-
-<what the bug is and its impact>
-
-## Current Behavior
-
-<what actually happens, including errors>
-
-## Expected Behavior
-
-<what should happen instead>
-
-## Steps to Reproduce
-
-<steps to trigger the bug, optional>
-
-## References
-
-<related issues, logs, or screenshots, optional>
-```
-
-**Task** (`task.yml`):
-
-```markdown
-## Summary
-
-<task description and why it needs to be done>
-
-## Current Behavior
-
-<current state that needs to change, optional>
-
-## Expected Behavior
-
-<desired outcome after task is completed>
-
-## References
-
-<related issues or links, optional>
-```
-
-**Epic** (`epic.yml`):
-
-```markdown
-## Summary
-
-<high-level goal of this epic>
-
-## Planned Features
-
-- **Feature A** — Description
-- **Feature B** — Description
-
-## Design Considerations
-
-<architectural decisions or constraints, optional>
-
-## References
-
-<related issues or links, optional>
-```
+Omit optional sections if the user didn't provide relevant content during brainstorming.
 
 ### Step 9: Confirm
 

@@ -14,7 +14,8 @@ var showCmd = &cobra.Command{
 	Long: `Display an object's properties, relations, and body content.
 
 Supports prefix matching — you can omit the ULID suffix if the prefix
-uniquely identifies an object.
+uniquely identifies an object. If a prefix matches multiple objects,
+an interactive picker is shown to select the intended one.
 
 Examples:
   tmd object show book/clean-code
@@ -34,7 +35,7 @@ Examples:
 		}
 		defer vault.Close()
 
-		obj, err := vault.ResolveObject(args[0])
+		obj, err := resolveObjectInteractive(vault, args[0])
 		if err != nil {
 			return err
 		}
