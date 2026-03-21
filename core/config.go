@@ -55,15 +55,17 @@ type TUIConfig struct {
 
 // configKeyEntry maps a dot-notation key to getter/setter on VaultConfig.
 type configKeyEntry struct {
-	Get func(cfg *VaultConfig) string
-	Set func(cfg *VaultConfig, value string)
+	Get     func(cfg *VaultConfig) string
+	Set     func(cfg *VaultConfig, value string)
+	Default string // human-readable default value for display
 }
 
 // configKeyRegistry maps dot-notation config keys to VaultConfig struct fields.
 var configKeyRegistry = map[string]configKeyEntry{
 	"cli.default_type": {
-		Get: func(cfg *VaultConfig) string { return cfg.CLI.DefaultType },
-		Set: func(cfg *VaultConfig, value string) { cfg.CLI.DefaultType = value },
+		Get:     func(cfg *VaultConfig) string { return cfg.CLI.DefaultType },
+		Set:     func(cfg *VaultConfig, value string) { cfg.CLI.DefaultType = value },
+		Default: "",
 	},
 	"tui.debounce_ms": {
 		Get: func(cfg *VaultConfig) string {
@@ -76,10 +78,12 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.TUI.DebounceMs = n
 		},
+		Default: "200",
 	},
 	"tui.stats_type_layout": {
-		Get: func(cfg *VaultConfig) string { return cfg.TUI.StatsTypeLayout },
-		Set: func(cfg *VaultConfig, value string) { cfg.TUI.StatsTypeLayout = value },
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.StatsTypeLayout },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.StatsTypeLayout = value },
+		Default: "fullscreen",
 	},
 	"ai.enabled": {
 		Get: func(cfg *VaultConfig) string {
@@ -91,22 +95,27 @@ var configKeyRegistry = map[string]configKeyEntry{
 		Set: func(cfg *VaultConfig, value string) {
 			cfg.AI.Enabled = value == "true"
 		},
+		Default: "false",
 	},
 	"ai.model": {
-		Get: func(cfg *VaultConfig) string { return cfg.AI.Model },
-		Set: func(cfg *VaultConfig, value string) { cfg.AI.Model = value },
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Model },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Model = value },
+		Default: "",
 	},
 	"ai.prompts.describe": {
-		Get: func(cfg *VaultConfig) string { return cfg.AI.Prompts.Describe },
-		Set: func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Describe = value },
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Prompts.Describe },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Describe = value },
+		Default: "(built-in)",
 	},
 	"ai.prompts.tag": {
-		Get: func(cfg *VaultConfig) string { return cfg.AI.Prompts.Tag },
-		Set: func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Tag = value },
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Prompts.Tag },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Tag = value },
+		Default: "(built-in)",
 	},
 	"ai.prompts.explore": {
-		Get: func(cfg *VaultConfig) string { return cfg.AI.Prompts.Explore },
-		Set: func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Explore = value },
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Prompts.Explore },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Explore = value },
+		Default: "(built-in)",
 	},
 	"ai.explore.sample_count": {
 		Get: func(cfg *VaultConfig) string {
@@ -119,6 +128,7 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.AI.Explore.SampleCount = n
 		},
+		Default: "10",
 	},
 	"ai.explore.body_truncate": {
 		Get: func(cfg *VaultConfig) string {
@@ -131,6 +141,7 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.AI.Explore.BodyTruncate = n
 		},
+		Default: "500",
 	},
 }
 
@@ -209,4 +220,14 @@ func ConfigKeys() []string {
 	}
 	sort.Strings(keys)
 	return keys
+}
+
+// ConfigKeyDefault returns the human-readable default value for a config key.
+// Returns an empty string if the key is unknown or has no default.
+func ConfigKeyDefault(key string) string {
+	entry, ok := configKeyRegistry[key]
+	if !ok {
+		return ""
+	}
+	return entry.Default
 }

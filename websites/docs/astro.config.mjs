@@ -69,6 +69,7 @@ export default defineConfig({
 						{ label: 'Search', slug: 'basics/search' },
 						{ label: 'Queries', slug: 'basics/queries' },
 						{ label: 'Validation', slug: 'basics/validation' },
+						{ label: 'Configuration', slug: 'basics/configuration' },
 					],
 				},
 				{

@@ -49,6 +49,8 @@ var configGetCmd = &cobra.Command{
 	},
 }
 
+var configListAll bool
+
 var configListCmd = &cobra.Command{
 	Use:   "list",
 	Short: "List all config values",
@@ -64,6 +66,13 @@ var configListCmd = &cobra.Command{
 			val, _ := vault.GetConfigValue(key)
 			if val != "" {
 				fmt.Printf("%s: %s\n", key, val)
+			} else if configListAll {
+				def := core.ConfigKeyDefault(key)
+				if def != "" {
+					fmt.Printf("%s: (default: %s)\n", key, def)
+				} else {
+					fmt.Printf("%s:\n", key)
+				}
 			}
 		}
 		return nil
@@ -74,5 +83,6 @@ func init() {
 	configCmd.AddCommand(configSetCmd)
 	configCmd.AddCommand(configGetCmd)
 	configCmd.AddCommand(configListCmd)
+	configListCmd.Flags().BoolVar(&configListAll, "all", false, "show all known keys with defaults")
 	rootCmd.AddCommand(configCmd)
 }

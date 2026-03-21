@@ -39,6 +39,8 @@ tmd config list
 # ai.enabled: true
 ```
 
+Use `--all` to show all known keys, including unset keys with their defaults.
+
 ## Known Keys
 
 ### CLI
@@ -96,6 +98,7 @@ ai:
 
 ## See Also
 
+- [Configuration](/basics/configuration/) — configuration overview and reference
 - [File structure](/advanced/file-structure/) — where `.typemd/config.yaml` lives
 - [tmd init](/cli/init/) — creates initial config with `default_type: page`
 - [TUI AI Assist](/tui/tui/#ai-assist) — AI features enabled by `ai.enabled`

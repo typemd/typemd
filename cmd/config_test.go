@@ -155,9 +155,49 @@ func TestConfigListCmd_WithValues(t *testing.T) {
 	}
 }
 
+func TestConfigListCmd_All(t *testing.T) {
+	dir := setupConfigVault(t)
+	vaultPath = dir
+
+	configContent := "cli:\n  default_type: idea\n"
+	os.WriteFile(filepath.Join(dir, ".typemd", "config.yaml"), []byte(configContent), 0644)
+
+	old := os.Stdout
+	r, w, _ := os.Pipe()
+	os.Stdout = w
+
+	rootCmd.SetArgs([]string{"config", "list", "--all"})
+	err := rootCmd.Execute()
+
+	w.Close()
+	os.Stdout = old
+
+	if err != nil {
+		t.Fatalf("expected no error, got %v", err)
+	}
+
+	var buf bytes.Buffer
+	buf.ReadFrom(r)
+	output := buf.String()
+
+	// Set value should show actual value
+	if !strings.Contains(output, "cli.default_type: idea") {
+		t.Errorf("expected 'cli.default_type: idea', got %q", output)
+	}
+	// Unset key with default should show default
+	if !strings.Contains(output, "tui.debounce_ms: (default: 200)") {
+		t.Errorf("expected 'tui.debounce_ms: (default: 200)', got %q", output)
+	}
+	// Unset key with no default should show key only
+	if !strings.Contains(output, "ai.model:\n") {
+		t.Errorf("expected 'ai.model:' with no value, got %q", output)
+	}
+}
+
 func TestConfigListCmd_Empty(t *testing.T) {
 	dir := setupConfigVault(t)
 	vaultPath = dir
+	configListAll = false
 
 	old := os.Stdout
 	r, w, _ := os.Pipe()
