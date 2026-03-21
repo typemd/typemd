@@ -9,10 +9,21 @@ type OrphanedRelation struct {
 	ToID   string
 }
 
+// UnresolvedRelation represents a relation reference that could not be resolved during sync.
+type UnresolvedRelation struct {
+	ObjectID string // the object containing the reference
+	Property string // the relation property name
+	Value    string // the unresolved value
+	Reason   string // "not_found" or "ambiguous"
+	Matches  []string // candidate IDs for ambiguous matches
+}
+
 // SyncResult holds statistics from a SyncIndex operation.
 type SyncResult struct {
-	Deleted  int
-	Orphaned []OrphanedRelation
+	Deleted    int
+	Orphaned   []OrphanedRelation
+	Expanded   int                  // number of relation prefixes auto-expanded to full IDs
+	Unresolved []UnresolvedRelation // relation references that could not be resolved
 }
 
 // syncContext holds intermediate state collected during sync.
@@ -21,6 +32,9 @@ type syncContext struct {
 	diskBodies  map[string]string
 	diskTags    map[string]*Object
 	diskTagRefs map[string][]string
+	diskObjects map[string]*Object           // all objects by ID
+	schemas     map[string]*TypeSchema        // cached type schemas
+	nameIndex   map[string]map[string][]string // nameIndex[type][name] = []objectID
 }
 
 // SyncIndex scans the objects directory, upserts all found objects into the index,

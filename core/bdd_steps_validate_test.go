@@ -111,6 +111,24 @@ func (dc *domainContext) theErrorShouldMention(substr string) error {
 	return fmt.Errorf("no error mentions %q", substr)
 }
 
+func (dc *domainContext) iValidateRelationReferences() {
+	dc.relationRefErrors = ValidateRelationReferences(dc.vault)
+}
+
+func (dc *domainContext) thereShouldBeNRelationReferenceErrors(expected int) error {
+	if len(dc.relationRefErrors) != expected {
+		return fmt.Errorf("relation ref errors = %d, want %d: %v", len(dc.relationRefErrors), expected, dc.relationRefErrors)
+	}
+	return nil
+}
+
+func (dc *domainContext) thereShouldBeNoRelationReferenceErrors() error {
+	if len(dc.relationRefErrors) != 0 {
+		return fmt.Errorf("expected no relation ref errors, got %v", dc.relationRefErrors)
+	}
+	return nil
+}
+
 func initValidateSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a type schema "([^"]*)" with a "([^"]*)" string property$`, dc.aTypeSchemaWithAStringProperty)
 	ctx.Step(`^a type schema "([^"]*)" with a select property missing options$`, dc.aTypeSchemaWithASelectPropertyMissingOptions)
@@ -126,4 +144,7 @@ func initValidateSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^there should be no wiki-link errors$`, dc.thereShouldBeNoWikiLinkErrors)
 	ctx.Step(`^there should be (\d+) wiki-link errors?$`, dc.thereShouldBeNWikiLinkErrors)
 	ctx.Step(`^the error should mention "([^"]*)"$`, dc.theErrorShouldMention)
+	ctx.Step(`^I validate relation references$`, dc.iValidateRelationReferences)
+	ctx.Step(`^there should be (\d+) relation reference errors?$`, dc.thereShouldBeNRelationReferenceErrors)
+	ctx.Step(`^there should be no relation reference errors$`, dc.thereShouldBeNoRelationReferenceErrors)
 }

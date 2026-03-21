@@ -167,6 +167,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initStatsSteps(ctx, dc)
 	initSchemaCacheSteps(ctx, dc)
 	initIncrementalSyncSteps(ctx, dc)
+	initRelationSyncSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

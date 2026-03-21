@@ -19,6 +19,19 @@ Feature: Validation
     When I validate relations
     Then there should be 1 relation error
 
+  Scenario: Unresolved relation reference is detected
+    Given a vault is ready with relation sync schemas
+    And a "book" object named "clean-code" exists with author name reference "person/nobody"
+    When I validate relation references
+    Then there should be 1 relation reference error
+
+  Scenario: Resolved relation reference passes validation
+    Given a vault is ready with relation sync schemas
+    And a "person" object named "john-doe" exists
+    And a "book" object named "clean-code" exists linked to the person via "author"
+    When I validate relation references
+    Then there should be no relation reference errors
+
   Scenario: Valid wiki-links pass validation
     Given a vault is ready
     And two linked notes exist

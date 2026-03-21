@@ -46,6 +46,8 @@ type ObjectIndex interface {
 	InsertRelation(name, fromID, toID string) error
 	DeleteRelation(name, fromID, toID string) error
 	DeleteRelationsByName(name string) error
+	DeleteNonTagRelations() error
+	DeleteRelationsByObject(objectID string) error
 	CleanOrphanedRelations() ([]OrphanedRelation, error)
 
 	// WikiLink index maintenance
