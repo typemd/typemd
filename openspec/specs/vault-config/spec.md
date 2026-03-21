@@ -26,7 +26,17 @@ The Vault SHALL load configuration from `.typemd/config.yaml` during `Open()`. T
 
 ### Requirement: Config struct uses interface-layer namespacing
 
-The `VaultConfig` struct SHALL organize settings under interface-layer keys: `cli`, `tui`, `ai`. Each layer SHALL have its own sub-struct. The `AIConfig` sub-struct SHALL include:
+The `VaultConfig` struct SHALL organize settings under interface-layer keys: `cli`, `tui`, `ai`. Each layer SHALL have its own sub-struct. The `TUIConfig` sub-struct SHALL include:
+- `debounce_ms` (int) — file watcher debounce interval
+- `stats_type_layout` (string) — stats detail layout mode
+- `toast` (ToastConfig) — toast notification settings with sub-keys:
+  - `position` (string, default `"bottom-right"`) — toast display position (`"bottom-right"` or `"help-bar"`)
+  - `duration_ms` (int, default `3000`) — auto-dismiss duration in milliseconds
+  - `dismiss_key` (string, default `"esc"`) — key to manually dismiss toast
+  - `show_warnings` (*bool, default `true`) — whether to show warning-level toasts
+  - `show_success` (*bool, default `false`) — whether to show info/success-level toasts
+
+The `AIConfig` sub-struct SHALL include:
 - `enabled` (bool, default `false`) — opt-in toggle for AI features
 - `model` (string, default `"claude-sonnet-4-6-20250627"`) — Claude model to use
 - `prompts` (PromptsConfig) — customizable system prompts with sub-keys `describe`, `tag`, `explore`
@@ -51,6 +61,40 @@ The `VaultConfig` struct SHALL organize settings under interface-layer keys: `cl
 
 - **WHEN** config does not contain `tui.stats_type_layout`
 - **THEN** the stats type detail layout SHALL default to `"fullscreen"`
+
+#### Scenario: TUI toast config with custom duration
+
+- **WHEN** config contains `tui:\n  toast:\n    duration_ms: 5000`
+- **THEN** `config.TUI.Toast.DurationMs` SHALL be `5000`
+
+#### Scenario: TUI toast config with position
+
+- **WHEN** config contains `tui:\n  toast:\n    position: help-bar`
+- **THEN** `config.TUI.Toast.Position` SHALL be `"help-bar"`
+
+#### Scenario: TUI toast config with dismiss_key
+
+- **WHEN** config contains `tui:\n  toast:\n    dismiss_key: q`
+- **THEN** `config.TUI.Toast.DismissKey` SHALL be `"q"`
+
+#### Scenario: TUI toast config with show_warnings disabled
+
+- **WHEN** config contains `tui:\n  toast:\n    show_warnings: false`
+- **THEN** `config.TUI.Toast.ShowWarnings` SHALL point to `false`
+
+#### Scenario: TUI toast config with show_success enabled
+
+- **WHEN** config contains `tui:\n  toast:\n    show_success: true`
+- **THEN** `config.TUI.Toast.ShowSuccess` SHALL point to `true`
+
+#### Scenario: TUI toast config defaults when absent
+
+- **WHEN** config does not contain a `tui.toast` section
+- **THEN** `config.TUI.Toast.Position` SHALL be `""` (empty; runtime default is `"bottom-right"`)
+- **AND** `config.TUI.Toast.DurationMs` SHALL be `0` (runtime default is `3000`)
+- **AND** `config.TUI.Toast.DismissKey` SHALL be `""` (runtime default is `"esc"`)
+- **AND** `config.TUI.Toast.ShowWarnings` SHALL be `nil` (runtime default is `true`)
+- **AND** `config.TUI.Toast.ShowSuccess` SHALL be `nil` (runtime default is `false`)
 
 #### Scenario: AI config with enabled flag
 
