@@ -122,24 +122,27 @@ func checkRelationRef(ref, objectID, propName string, errs *[]error) {
 }
 
 // ValidateWikiLinks checks for broken wiki-links (targets that don't resolve to existing objects).
+// It walks object files directly rather than relying on the SQLite index,
+// so validation works correctly even without a prior sync.
 func ValidateWikiLinks(v *Vault) []error {
 	var errs []error
-	rows, err := v.db.Query("SELECT from_id, target FROM wikilinks WHERE to_id = ''")
+	objects, err := v.repo.Walk()
 	if err != nil {
-		return []error{fmt.Errorf("query broken wikilinks: %w", err)}
+		return []error{fmt.Errorf("walk objects: %w", err)}
 	}
-	defer rows.Close()
 
-	for rows.Next() {
-		var fromID, target string
-		if err := rows.Scan(&fromID, &target); err != nil {
-			errs = append(errs, fmt.Errorf("scan wikilink: %w", err))
-			continue
-		}
-		errs = append(errs, fmt.Errorf("%s: broken wiki-link [[%s]]", fromID, target))
+	knownIDs := make(map[string]bool, len(objects))
+	for _, obj := range objects {
+		knownIDs[obj.ID] = true
 	}
-	if err := rows.Err(); err != nil {
-		errs = append(errs, fmt.Errorf("iterate wikilinks: %w", err))
+
+	for _, obj := range objects {
+		links := ParseWikiLinks(obj.Body)
+		for _, link := range links {
+			if !knownIDs[link.Target] {
+				errs = append(errs, fmt.Errorf("%s: broken wiki-link [[%s]]", obj.ID, link.Target))
+			}
+		}
 	}
 	return errs
 }

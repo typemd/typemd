@@ -44,3 +44,10 @@ Feature: Validation
     When I validate wiki-links
     Then there should be 1 wiki-link error
     And the error should mention "broken wiki-link"
+
+  Scenario: Broken wiki-link is detected on a fresh vault
+    Given a vault is ready
+    And a note with a broken wiki-link exists on a fresh vault
+    When I validate wiki-links
+    Then there should be 1 wiki-link error
+    And the error should mention "broken wiki-link"
