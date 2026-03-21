@@ -25,6 +25,9 @@ cli:
 tui:
   debounce_ms: 200
   stats_type_layout: fullscreen
+  toast:
+    duration_ms: 3000
+    dismiss_key: esc
 ai:
   enabled: true
   model: claude-sonnet-4-6-20250627
@@ -57,8 +60,15 @@ tmd object create "My Idea"
 |-----|------|---------|-------------|
 | `tui.debounce_ms` | int | `200` | File watcher debounce interval in milliseconds |
 | `tui.stats_type_layout` | string | `fullscreen` | Stats type detail layout: `fullscreen` or `popup` |
+| `tui.toast.position` | string | `bottom-right` | Toast display position: `bottom-right` or `help-bar` |
+| `tui.toast.duration_ms` | int | `3000` | Auto-dismiss duration in milliseconds |
+| `tui.toast.dismiss_key` | string | `esc` | Key to manually dismiss a toast notification |
+| `tui.toast.show_warnings` | bool | `true` | Show warning-level toast notifications |
+| `tui.toast.show_success` | bool | `false` | Show info/success-level toast notifications |
 
 The file watcher monitors `objects/` and `.typemd/types/` for changes. The debounce interval controls how quickly the TUI reacts to file modifications — lower values make updates feel more instant, higher values reduce redundant refreshes.
+
+Toast notifications appear in the bottom-right corner of the TUI for transient messages such as sync warnings (unresolved references) and AI operation errors. They auto-dismiss after `duration_ms` and can be manually dismissed by pressing the `dismiss_key`. Error-level toasts always show regardless of configuration.
 
 ## AI settings
 
@@ -106,6 +116,7 @@ If `.typemd/config.yaml` does not exist or a key is not set, TypeMD uses sensibl
 - No default type — `tmd object create` requires a type argument
 - File watcher debounce at 200ms
 - Stats layout in fullscreen mode
+- Toast notifications: bottom-right, 3s auto-dismiss, Esc to dismiss, warnings shown, success hidden
 - AI features disabled
 - Built-in prompts for all AI operations
 - 10 sample objects and 500 character body limit for schema exploration

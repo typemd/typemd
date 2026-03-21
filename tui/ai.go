@@ -19,7 +19,6 @@ const (
 	aiPreviewDescribe          // showing inline description preview
 	aiLoadingTags              // waiting for AI tag suggestions
 	aiShowingTags              // showing tag suggestion popup
-	aiError                    // showing error message
 )
 
 // aiAction represents a selectable AI action.

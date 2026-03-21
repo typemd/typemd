@@ -10,7 +10,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
   - **core/ai/** — AI provider abstraction and service layer (Claude CLI integration)
 - **cmd/** — CLI commands (Cobra)
 - **tui/** — Terminal UI (Bubble Tea)
-  - **tui/widget/** — Shared UI primitives (CenteredPopup, OverlayPopup via Layer/Compositor, scroll) used across TUI components
+  - **tui/widget/** — Shared UI primitives (CenteredPopup, OverlayPopup, ToastModel via Layer/Compositor, scroll) used across TUI components
 - **mcp/** — MCP server
 - **web/** — Web UI: React + shadcn/ui (future)
 - **app/** — Desktop app via Wails + shared React frontend (future)
@@ -164,6 +164,7 @@ graph LR
 | `ai/prompts.go` | Default system prompts for describe, tag, and explore operations |
 | `view.go` | ViewConfig/FilterRule/GroupRule structs + ViewLayout constants + custom UnmarshalYAML (legacy string→[]GroupRule migration) + Vault view CRUD (ListViews/LoadView/SaveView/DeleteView/DefaultView) |
 | `wikilink.go` | WikiLink/StoredWikiLink structs + ParseWikiLinks + RenderWikiLinks + Vault.ListWikiLinks/ListBacklinks facades |
+| `widget/toast.go` | ToastModel (transient notifications): Show/Update/View/Overlay, auto-dismiss via tea.Tick + seq, group aggregation, level filtering (Info/Warning/Error), configurable via ToastConfig |
 
 ### TUI Architecture
 
@@ -181,7 +182,9 @@ The TUI file watcher monitors both `objects/` (for object changes) and `.typemd/
 
 Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_type.go`): triggered via `+ New Type`, it transforms the title panel into a multi-field form (emoji, name, plural) with Tab cycling and a live type schema preview in the right panel. After creation, the type editor opens automatically.
 
-The TUI supports **AI-powered assistance** when `ai.enabled: true` in config and `claude` CLI is installed. Pressing `g` in object detail view opens an AI action picker popup (Generate description / Suggest tags). Pressing `ctrl+e` from the sidebar enters schema explore mode. AI operations use the `claude` CLI as a subprocess (`claude -p --output-format json --json-schema ...`). AI state is tracked via `aiState` (idle, action picker, loading, preview, showing tags, error) with corresponding help bar messages and property panel overlays (`tui/ai.go`, `tui/ai_update.go`, `tui/ai_render.go`).
+The TUI supports **AI-powered assistance** when `ai.enabled: true` in config and `claude` CLI is installed. Pressing `g` in object detail view opens an AI action picker popup (Generate description / Suggest tags). Pressing `ctrl+e` from the sidebar enters schema explore mode. AI operations use the `claude` CLI as a subprocess (`claude -p --output-format json --json-schema ...`). AI state is tracked via `aiState` (idle, action picker, loading, preview, showing tags) with corresponding help bar messages and property panel overlays (`tui/ai.go`, `tui/ai_update.go`, `tui/ai_render.go`). AI errors are surfaced as toast notifications.
+
+The TUI uses a **toast notification system** (`widget.ToastModel` in `tui/widget/toast.go`) for transient messages. Toasts appear as a floating overlay in the bottom-right corner via lipgloss Layer/Compositor. Three severity levels: Info, Warning, Error. Toasts auto-dismiss after a configurable duration (default 3s) and can be manually dismissed via a configurable key (default Esc, which is consumed by the toast). Multiple messages from a single event are aggregated via group keys (e.g., `⚠ 3 unresolved refs`). Toast is initialized from `tui.toast.*` config via `newToastFromConfig()`. Current use cases: sync unresolved reference warnings and AI operation errors.
 
 ## Data Model
 
@@ -195,7 +198,7 @@ The TUI supports **AI-powered assistance** when `ai.enabled: true` in config and
 - Wiki-links: `[[type/name-ulid]]` syntax in markdown body, with backlink tracking
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, props visibility, and optionally view mode state — `view_type_name`, `view_name`, `view_cursor`, `view_scroll`, `view_expanded_groups` — when the TUI was in view mode on exit)
-- Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`; `ai.enabled` enables AI features, `ai.model` overrides model, `ai.prompts.*` customizes system prompts, `ai.explore.sample_count`/`ai.explore.body_truncate` configures schema explore sampling)
+- Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`; `tui.toast.*` configures toast notifications — `position`, `duration_ms`, `dismiss_key`, `show_warnings`, `show_success`; `ai.enabled` enables AI features, `ai.model` overrides model, `ai.prompts.*` customizes system prompts, `ai.explore.sample_count`/`ai.explore.body_truncate` configures schema explore sampling)
 - Starter type templates: `core/starters/*.yaml` (embedded in binary via `//go:embed`; offered during `tmd init` as opt-in type schemas — idea, note, book)
 - Object templates: `templates/<type>/<name>.md` (optional, Markdown files with frontmatter property overrides and body content applied during `tmd object create`; single template auto-applies, multiple templates prompt for selection or use `-t` flag)
 - Object files: `objects/<type>/<name>.md`

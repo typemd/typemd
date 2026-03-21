@@ -2,6 +2,7 @@ package tui
 
 import (
 	"github.com/typemd/typemd/core"
+	"github.com/typemd/typemd/tui/widget"
 	tea "charm.land/bubbletea/v2"
 )
 
@@ -68,9 +69,9 @@ func handleSchemaExplore(m model) (model, tea.Cmd) {
 // updateAIDescribeResult handles the AI describe response.
 func updateAIDescribeResult(m model, msg aiDescribeResultMsg) (model, tea.Cmd) {
 	if msg.Err != nil {
-		m.aiState = aiError
-		m.aiError = msg.Err.Error()
-		return m, nil
+		cmd := m.toast.Show(widget.ToastError, []widget.ToastItem{{Message: msg.Err.Error()}})
+		m.aiState = aiIdle
+		return m, cmd
 	}
 	m.aiState = aiPreviewDescribe
 	m.aiPreviewDesc = msg.Description
@@ -81,9 +82,9 @@ func updateAIDescribeResult(m model, msg aiDescribeResultMsg) (model, tea.Cmd) {
 // updateAITagResult handles the AI tag suggestion response.
 func updateAITagResult(m model, msg aiTagResultMsg) (model, tea.Cmd) {
 	if msg.Err != nil {
-		m.aiState = aiError
-		m.aiError = msg.Err.Error()
-		return m, nil
+		cmd := m.toast.Show(widget.ToastError, []widget.ToastItem{{Message: msg.Err.Error()}})
+		m.aiState = aiIdle
+		return m, cmd
 	}
 	if msg.Suggestion == nil || len(msg.Suggestion.Tags) == 0 {
 		m.aiState = aiIdle
@@ -191,6 +192,14 @@ func updateAITagPopup(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 	return m, nil
 }
 
+// aiTagError resets AI state and shows an error toast. Used by applySelectedTags error paths.
+func aiTagError(m model, err error) (model, tea.Cmd) {
+	cmd := m.toast.Show(widget.ToastError, []widget.ToastItem{{Message: err.Error()}})
+	m.aiState = aiIdle
+	m.aiTagItems = nil
+	return m, cmd
+}
+
 // applySelectedTags applies the selected tags from the popup to the object.
 func applySelectedTags(m model) (model, tea.Cmd) {
 	if m.selected == nil || m.vault == nil {
@@ -205,29 +214,20 @@ func applySelectedTags(m model) (model, tea.Cmd) {
 		}
 		var tagID string
 		if item.IsNew {
-			// Create the new tag object
 			tagObj, err := m.vault.Objects.Create("tag", item.Name, "")
 			if err != nil {
-				m.aiState = aiError
-				m.aiError = err.Error()
-				return m, nil
+				return aiTagError(m, err)
 			}
 			tagID = tagObj.ID
 		} else {
-			// Resolve existing tag to full ID
 			resolved, err := m.vault.ResolveID("tag/" + item.Name)
 			if err != nil {
-				m.aiState = aiError
-				m.aiError = err.Error()
-				return m, nil
+				return aiTagError(m, err)
 			}
 			tagID = resolved
 		}
-		// Link: fromID, relationName, toID
 		if err := m.vault.LinkObjects(m.selected.ID, "tags", tagID); err != nil {
-			m.aiState = aiError
-			m.aiError = err.Error()
-			return m, nil
+			return aiTagError(m, err)
 		}
 		m.dirty = true
 	}
@@ -243,13 +243,5 @@ func applySelectedTags(m model) (model, tea.Cmd) {
 
 	m.aiState = aiIdle
 	m.aiTagItems = nil
-	return m, nil
-}
-
-// updateAIError handles key events during AI error display.
-func updateAIError(m model, _ tea.KeyPressMsg) (model, tea.Cmd) {
-	// Any key dismisses the error
-	m.aiState = aiIdle
-	m.aiError = ""
 	return m, nil
 }

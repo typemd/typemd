@@ -49,8 +49,18 @@ type CLIConfig struct {
 
 // TUIConfig holds TUI-specific configuration.
 type TUIConfig struct {
-	DebounceMs      int    `yaml:"debounce_ms,omitempty"`
-	StatsTypeLayout string `yaml:"stats_type_layout,omitempty"`
+	DebounceMs      int         `yaml:"debounce_ms,omitempty"`
+	StatsTypeLayout string      `yaml:"stats_type_layout,omitempty"`
+	Toast           ToastConfig `yaml:"toast,omitempty"`
+}
+
+// ToastConfig holds toast notification configuration.
+type ToastConfig struct {
+	Position     string `yaml:"position,omitempty"`       // "bottom-right" (default) or "help-bar"
+	DurationMs   int    `yaml:"duration_ms,omitempty"`    // default 3000
+	DismissKey   string `yaml:"dismiss_key,omitempty"`    // default "esc"
+	ShowWarnings *bool  `yaml:"show_warnings,omitempty"`  // default true (pointer for zero-value detection)
+	ShowSuccess  *bool  `yaml:"show_success,omitempty"`   // default false
 }
 
 // configKeyEntry maps a dot-notation key to getter/setter on VaultConfig.
@@ -84,6 +94,61 @@ var configKeyRegistry = map[string]configKeyEntry{
 		Get:     func(cfg *VaultConfig) string { return cfg.TUI.StatsTypeLayout },
 		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.StatsTypeLayout = value },
 		Default: "fullscreen",
+	},
+	"tui.toast.position": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Toast.Position },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Toast.Position = value },
+		Default: "bottom-right",
+	},
+	"tui.toast.duration_ms": {
+		Get: func(cfg *VaultConfig) string {
+			if cfg.TUI.Toast.DurationMs == 0 {
+				return ""
+			}
+			return strconv.Itoa(cfg.TUI.Toast.DurationMs)
+		},
+		Set: func(cfg *VaultConfig, value string) {
+			n, _ := strconv.Atoi(value)
+			cfg.TUI.Toast.DurationMs = n
+		},
+		Default: "3000",
+	},
+	"tui.toast.dismiss_key": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Toast.DismissKey },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Toast.DismissKey = value },
+		Default: "esc",
+	},
+	"tui.toast.show_warnings": {
+		Get: func(cfg *VaultConfig) string {
+			if cfg.TUI.Toast.ShowWarnings == nil {
+				return ""
+			}
+			if *cfg.TUI.Toast.ShowWarnings {
+				return "true"
+			}
+			return "false"
+		},
+		Set: func(cfg *VaultConfig, value string) {
+			b := value == "true"
+			cfg.TUI.Toast.ShowWarnings = &b
+		},
+		Default: "true",
+	},
+	"tui.toast.show_success": {
+		Get: func(cfg *VaultConfig) string {
+			if cfg.TUI.Toast.ShowSuccess == nil {
+				return ""
+			}
+			if *cfg.TUI.Toast.ShowSuccess {
+				return "true"
+			}
+			return "false"
+		},
+		Set: func(cfg *VaultConfig, value string) {
+			b := value == "true"
+			cfg.TUI.Toast.ShowSuccess = &b
+		},
+		Default: "false",
 	},
 	"ai.enabled": {
 		Get: func(cfg *VaultConfig) string {

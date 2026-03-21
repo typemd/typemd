@@ -17,13 +17,17 @@ func CenteredPopup(content string, style lipgloss.Style, termW, termH int) strin
 func OverlayPopup(background, content string, style lipgloss.Style, termW, termH int) string {
 	popup := style.Render(content)
 
-	bgLayer := lipgloss.NewLayer(background).ID("bg").Z(0)
-
-	// Center the popup by computing x/y offsets
 	popupW := lipgloss.Width(popup)
 	popupH := lipgloss.Height(popup)
 	x := (termW - popupW) / 2
 	y := (termH - popupH) / 2
+
+	return OverlayAt(background, popup, x, y, termW, termH)
+}
+
+// OverlayAt composites a rendered popup on top of a background at the given x/y position
+// using lipgloss Layer/Compositor.
+func OverlayAt(background, popup string, x, y, termW, termH int) string {
 	if x < 0 {
 		x = 0
 	}
@@ -31,6 +35,7 @@ func OverlayPopup(background, content string, style lipgloss.Style, termW, termH
 		y = 0
 	}
 
+	bgLayer := lipgloss.NewLayer(background).ID("bg").Z(0)
 	popupLayer := lipgloss.NewLayer(popup).ID("popup").Z(10).X(x).Y(y)
 
 	comp := lipgloss.NewCompositor(bgLayer, popupLayer)

@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/typemd/typemd/core"
+	"github.com/typemd/typemd/tui/widget"
 	"charm.land/bubbles/v2/textinput"
 	"charm.land/bubbles/v2/textarea"
 	"charm.land/bubbles/v2/viewport"
@@ -81,7 +82,6 @@ type model struct {
 	aiPreviewDesc  string         // AI-generated description preview
 	aiTagItems     []tagPopupItem // AI-suggested tags for popup
 	aiTagCursor    int            // cursor in tag popup
-	aiError        string         // AI error message
 
 	// Edit mode
 	editMode      bool
@@ -98,6 +98,9 @@ type model struct {
 	searchMode    bool
 	searchInput   textinput.Model
 	searchResults []*core.Object
+
+	// Toast notifications
+	toast widget.ToastModel
 
 	// Help
 	showHelp bool
@@ -141,6 +144,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		return m, cmd
 	}
 
+	// Route toast messages (dismiss tick)
+	{
+		var toastCmd tea.Cmd
+		var consumed bool
+		m.toast, toastCmd, consumed = m.toast.Update(msg)
+		if toastCmd != nil {
+			return m, toastCmd
+		}
+		if consumed {
+			return m, nil
+		}
+	}
+
 	switch msg := msg.(type) {
 	case focusLeftMsg:
 		m.focus = focusLeft
@@ -150,8 +166,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		m.typeEditor = nil
 		m.rightPanel = panelEmpty
 		m.focus = focusLeft
-		m.refreshData(nil)
-		return m, nil
+		toastCmd := m.refreshData(nil)
+		return m, toastCmd
 
 	case aiDescribeResultMsg:
 		return updateAIDescribeResult(m, msg)
@@ -255,10 +271,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		// Only refresh if there are actual .md paths; non-.md events
 		// (editor temp files, .DS_Store) are filtered by the watcher
 		// and result in nil Paths — just restart the watcher.
+		var toastCmd tea.Cmd
 		if len(msg.Paths) > 0 {
-			m.refreshData(msg.Paths)
+			toastCmd = m.refreshData(msg.Paths)
 		}
-		return m, watchObjects(m.vault.ObjectsDir(), debounce)
+		watchCmd := watchObjects(m.vault.ObjectsDir(), debounce)
+		if toastCmd != nil {
+			return m, tea.Batch(toastCmd, watchCmd)
+		}
+		return m, watchCmd
 
 	case schemaChangedMsg:
 		m.vault.InvalidateSchemaCache()
@@ -464,8 +485,6 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			return updateAIPreview(m, msg)
 		case m.aiState == aiShowingTags:
 			return updateAITagPopup(m, msg)
-		case m.aiState == aiError:
-			return updateAIError(m, msg)
 		case m.editMode:
 			return updateEdit(m, msg)
 		default:
@@ -518,19 +537,23 @@ func (m *model) rebuildGroups() {
 // refreshData syncs the index from disk and reloads all objects, preserving cursor position when possible.
 // When paths is non-empty, uses incremental sync for the specified files.
 // When paths is nil or empty, falls back to full sync.
-func (m *model) refreshData(paths []string) {
+// Returns a tea.Cmd (toast notification) if sync produces unresolved references.
+func (m *model) refreshData(paths []string) tea.Cmd {
 	if m.vault == nil {
-		return
+		return nil
 	}
 
 	// Sync filesystem to DB — incremental when paths available, full otherwise
+	var result *core.SyncResult
 	if len(paths) > 0 {
-		if _, err := m.vault.SyncFiles(paths); err != nil {
+		var err error
+		result, err = m.vault.SyncFiles(paths)
+		if err != nil {
 			// Fallback to full sync on error
-			m.vault.SyncIndex()
+			result, _ = m.vault.SyncIndex()
 		}
 	} else {
-		m.vault.SyncIndex()
+		result, _ = m.vault.SyncIndex()
 	}
 
 	m.rebuildGroups()
@@ -552,6 +575,19 @@ func (m *model) refreshData(paths []string) {
 	}
 
 	m.selectCurrentRow()
+
+	// Show toast for unresolved references
+	if result != nil && len(result.Unresolved) > 0 {
+		items := make([]widget.ToastItem, len(result.Unresolved))
+		for i, u := range result.Unresolved {
+			items[i] = widget.ToastItem{
+				Message: fmt.Sprintf("%s.%s: %s", u.ObjectID, u.Property, u.Value),
+				Group:   "unresolved refs",
+			}
+		}
+		return m.toast.Show(widget.ToastWarning, items)
+	}
+	return nil
 }
 
 // currentRows returns the appropriate rows based on whether search results are active.
@@ -692,6 +728,27 @@ func (m *model) reloadFromDisk() {
 	m.saveConflict = false
 }
 
+// newToastFromConfig creates a ToastModel with overrides from vault config.
+func newToastFromConfig(v *core.Vault) widget.ToastModel {
+	t := widget.NewToastModel()
+	if cfg := v.Config(); cfg != nil {
+		tc := cfg.TUI.Toast
+		if tc.DurationMs > 0 {
+			t.DurationMs = tc.DurationMs
+		}
+		if tc.DismissKey != "" {
+			t.DismissKey = tc.DismissKey
+		}
+		if tc.ShowWarnings != nil {
+			t.ShowWarnings = *tc.ShowWarnings
+		}
+		if tc.ShowSuccess != nil {
+			t.ShowSuccess = *tc.ShowSuccess
+		}
+	}
+	return t
+}
+
 func Start(vaultPath string, readOnly bool, reindex bool) error {
 	if vaultPath == "" {
 		var err error
@@ -789,6 +846,8 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		initialFocus = focusBody
 	}
 
+	toast := newToastFromConfig(v)
+
 	m := model{
 		vault:         v,
 		focus:         initialFocus,
@@ -811,6 +870,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		displayProps:  displayProps,
 		loadedModTime: initialModTime,
 		searchInput:   initSearchInput(),
+		toast:         toast,
 	}
 
 	p := tea.NewProgram(m)
