@@ -157,7 +157,7 @@ graph LR
 | `ulid.go` | GenerateULID + StripULID + ulidSuffixPattern for ULID generation and stripping |
 | `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateRelationReferences, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `vault_config.go` | VaultConfig struct (CLIConfig + TUIConfig + AIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
+| `config.go` | VaultConfig struct (CLIConfig + TUIConfig + AIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
 | `ai/provider.go` | Provider interface + CompletionRequest/CompletionResponse types |
 | `ai/claude_cli.go` | ClaudeCLI provider implementation (subprocess invocation via `claude -p`) + LookupBinary |
 | `ai/service.go` | AIService (Describe, SuggestTags, ExploreSchema) + prompt builders + response types (TagSuggestion, SchemaExploration) |
