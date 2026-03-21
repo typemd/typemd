@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -144,7 +145,7 @@ func loadVaultConfig(metaDir string) (*VaultConfig, error) {
 	path := filepath.Join(metaDir, configFileName)
 	data, err := os.ReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return &VaultConfig{}, nil
 		}
 		return nil, fmt.Errorf("read config: %w", err)

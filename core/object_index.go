@@ -48,6 +48,7 @@ type ObjectIndex interface {
 	DeleteRelationsByName(name string) error
 	DeleteNonTagRelations() error
 	DeleteRelationsByObject(objectID string) error
+	FindOrphanedRelations() ([]OrphanedRelation, error)
 	CleanOrphanedRelations() ([]OrphanedRelation, error)
 
 	// WikiLink index maintenance

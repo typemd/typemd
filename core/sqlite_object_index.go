@@ -295,11 +295,10 @@ func (idx *SQLiteObjectIndex) DeleteRelationsByObject(objectID string) error {
 	return nil
 }
 
-// CleanOrphanedRelations detects and removes relation records that reference
-// non-existent objects. Returns the list of orphaned relations found.
-func (idx *SQLiteObjectIndex) CleanOrphanedRelations() ([]OrphanedRelation, error) {
+// FindOrphanedRelations detects relation records that reference non-existent objects.
+func (idx *SQLiteObjectIndex) FindOrphanedRelations() ([]OrphanedRelation, error) {
 	rows, err := idx.db.Query(`
-		SELECT r.id, r.name, r.from_id, r.to_id FROM relations r
+		SELECT r.name, r.from_id, r.to_id FROM relations r
 		LEFT JOIN objects o1 ON r.from_id = o1.id
 		LEFT JOIN objects o2 ON r.to_id = o2.id
 		WHERE o1.id IS NULL OR o2.id IS NULL
@@ -310,31 +309,39 @@ func (idx *SQLiteObjectIndex) CleanOrphanedRelations() ([]OrphanedRelation, erro
 	defer rows.Close()
 
 	var orphaned []OrphanedRelation
-	var orphanIDs []any
 	for rows.Next() {
-		var rowID int
 		var o OrphanedRelation
-		if err := rows.Scan(&rowID, &o.Name, &o.FromID, &o.ToID); err != nil {
+		if err := rows.Scan(&o.Name, &o.FromID, &o.ToID); err != nil {
 			return nil, fmt.Errorf("scan orphaned relation: %w", err)
 		}
 		orphaned = append(orphaned, o)
-		orphanIDs = append(orphanIDs, rowID)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, fmt.Errorf("iterate orphaned relations: %w", err)
 	}
+	return orphaned, nil
+}
 
-	if len(orphanIDs) > 0 {
-		placeholders := strings.Repeat("?,", len(orphanIDs))
-		_, err := idx.db.Exec(
-			"DELETE FROM relations WHERE id IN ("+placeholders[:len(placeholders)-1]+")",
-			orphanIDs...,
-		)
+// CleanOrphanedRelations detects and removes relation records that reference
+// non-existent objects. Returns the list of orphaned relations found.
+func (idx *SQLiteObjectIndex) CleanOrphanedRelations() ([]OrphanedRelation, error) {
+	orphaned, err := idx.FindOrphanedRelations()
+	if err != nil {
+		return nil, err
+	}
+	if len(orphaned) > 0 {
+		_, err := idx.db.Exec(`
+			DELETE FROM relations WHERE id IN (
+				SELECT r.id FROM relations r
+				LEFT JOIN objects o1 ON r.from_id = o1.id
+				LEFT JOIN objects o2 ON r.to_id = o2.id
+				WHERE o1.id IS NULL OR o2.id IS NULL
+			)
+		`)
 		if err != nil {
 			return nil, fmt.Errorf("delete orphaned relations: %w", err)
 		}
 	}
-
 	return orphaned, nil
 }
 
@@ -349,7 +356,11 @@ func (idx *SQLiteObjectIndex) FindBacklinks(objectID string) ([]StoredWikiLink, 
 }
 
 // queryWikiLinks is a shared helper for querying wikilinks by a specific column.
+// column must be "from_id" or "to_id".
 func (idx *SQLiteObjectIndex) queryWikiLinks(column, objectID string) ([]StoredWikiLink, error) {
+	if column != "from_id" && column != "to_id" {
+		return nil, fmt.Errorf("invalid wikilink query column: %s", column)
+	}
 	query := fmt.Sprintf("SELECT from_id, to_id, target, display_text FROM wikilinks WHERE %s = ?", column)
 	rows, err := idx.db.Query(query, objectID)
 	if err != nil {

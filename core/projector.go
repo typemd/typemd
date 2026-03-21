@@ -2,6 +2,7 @@ package core
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -170,6 +171,7 @@ func (p *Projector) Sync() (*SyncResult, error) {
 		if err := syncer.upsertObject(obj, p.index); err != nil {
 			return nil, err
 		}
+		result.Synced++
 	}
 
 	ctx := buildSyncContext(objects)
@@ -248,7 +250,7 @@ func (p *Projector) SyncFiles(paths []string, objectsDir string) (*SyncResult, e
 		// Try to read the object — if it doesn't exist, it was deleted
 		obj, err := p.repo.Get(id)
 		if err != nil {
-			if os.IsNotExist(err) || strings.Contains(err.Error(), "read object") {
+			if errors.Is(err, os.ErrNotExist) || strings.Contains(err.Error(), "read object") {
 				// File deleted — remove from index
 				if removeErr := p.index.Remove(id); removeErr != nil {
 					return nil, fmt.Errorf("remove deleted object %s: %w", id, removeErr)
@@ -265,6 +267,7 @@ func (p *Projector) SyncFiles(paths []string, objectsDir string) (*SyncResult, e
 		if err := syncer.upsertObject(obj, p.index); err != nil {
 			return nil, err
 		}
+		result.Synced++
 	}
 
 	// Full wikilink, tag, and relation sync using all objects from disk

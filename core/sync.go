@@ -20,6 +20,7 @@ type UnresolvedRelation struct {
 
 // SyncResult holds statistics from a SyncIndex operation.
 type SyncResult struct {
+	Synced     int                  // number of objects upserted into the index
 	Deleted    int
 	Orphaned   []OrphanedRelation
 	Expanded   int                  // number of relation prefixes auto-expanded to full IDs

@@ -14,7 +14,7 @@ func (r *LocalObjectRepository) GetTemplate(typeName, name string) (*Template, e
 	path := r.templatePath(typeName, name)
 	data, err := os.ReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("template %q not found for type %q", name, typeName)
 		}
 		return nil, fmt.Errorf("read template: %w", err)
@@ -50,7 +50,7 @@ func (r *LocalObjectRepository) ListTemplates(typeName string) ([]string, error)
 	dir := r.typeTemplatesDir(typeName)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("read templates directory: %w", err)

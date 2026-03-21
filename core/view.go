@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -101,7 +102,7 @@ func (v *Vault) ListViews(typeName string) ([]ViewConfig, error) {
 	dir := v.viewsDir(typeName)
 	entries, err := os.ReadDir(dir)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil, nil
 		}
 		return nil, fmt.Errorf("read views directory: %w", err)
@@ -130,7 +131,7 @@ func (v *Vault) LoadView(typeName, viewName string) (*ViewConfig, error) {
 	path := filepath.Join(v.viewsDir(typeName), viewName+".yaml")
 	data, err := os.ReadFile(path)
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return nil, fmt.Errorf("view %q not found for type %q", viewName, typeName)
 		}
 		return nil, fmt.Errorf("read view: %w", err)
@@ -171,7 +172,7 @@ func (v *Vault) DeleteView(typeName, viewName string) error {
 	dir := v.viewsDir(typeName)
 	path := filepath.Join(dir, viewName+".yaml")
 	if err := os.Remove(path); err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return fmt.Errorf("view %q not found for type %q", viewName, typeName)
 		}
 		return fmt.Errorf("delete view: %w", err)

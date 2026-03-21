@@ -117,7 +117,7 @@ func (r *LocalObjectRepository) Create(obj *Object, keyOrder []string) error {
 	objPath := r.objectPath(obj.Type, obj.Filename)
 	f, err := os.OpenFile(objPath, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0644)
 	if err != nil {
-		if os.IsExist(err) {
+		if errors.Is(err, os.ErrExist) {
 			return fmt.Errorf("object already exists: %s", obj.ID)
 		}
 		return fmt.Errorf("create file: %w", err)
@@ -139,7 +139,7 @@ type CorruptedFile struct {
 // When reportCorrupted is true, unparseable files are collected; otherwise they are skipped.
 func (r *LocalObjectRepository) walkObjects(reportCorrupted bool) ([]*Object, []CorruptedFile, error) {
 	objsDir := r.objectsDir()
-	if _, err := os.Stat(objsDir); os.IsNotExist(err) {
+	if _, err := os.Stat(objsDir); errors.Is(err, os.ErrNotExist) {
 		return nil, nil, nil
 	}
 
