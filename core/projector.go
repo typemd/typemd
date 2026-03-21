@@ -466,9 +466,9 @@ func (p *Projector) writeBackModified(modified map[string]bool, ctx *syncContext
 // resolveErrorReason extracts the reason from a resolve error.
 func resolveErrorReason(err error) string {
 	if _, ok := err.(*AmbiguousMatchError); ok {
-		return "ambiguous"
+		return ReasonAmbiguous
 	}
-	return "not_found"
+	return ReasonNotFound
 }
 
 // resolveErrorMatches extracts match candidates from an AmbiguousMatchError.
