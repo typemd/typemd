@@ -81,100 +81,34 @@ Download from [GitHub Releases](https://github.com/typemd/typemd/releases).
 ## Usage
 
 ```bash
-# Initialize a new vault (interactive starter type selection)
+# Initialize a new vault
 tmd init
 
-# Initialize without starter types
-tmd init --no-starters
-
-# Open TUI (current directory)
+# Open TUI
 tmd
 
-# Open TUI with specific vault path
-tmd --vault /path/to/vault
-
-# Open TUI in read-only mode (editing disabled)
-tmd --readonly
-
-# Create a new object (names are auto-slugified, ULID appended)
+# Create objects (names are auto-slugified, ULID appended)
 tmd object create book "Clean Code"
-# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+tmd object create "Some Thought"          # uses default type from config
 
-# Use default type from config (omit type argument)
-tmd object create "Some Thought"
-# → Created idea/some-thought-01jqr3k5mpbvn8e0f2g7h9txyz
-
-# Create with object template
-tmd object create book "Clean Code" -t review
-# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz (with review template)
-
-# Create with name template (name auto-generated if type defines a template)
-tmd object create note
-# → Created note/2026-03-14-01jqr3k5mpbvn8e0f2g7h9txyz
-
-# Show object detail (prefix matching — no need to type the full ULID)
-tmd object show book/clean-code
-
-# List all objects
-tmd object list
-tmd object list --json
-
-# Full-text search
+# Search and explore
 tmd search "concurrency"
+tmd object show book/clean-code           # prefix matching, no full ULID needed
+tmd object list
 
-# Link two objects (prefix matching supported)
+# Connect objects
 tmd relation link book/golang-in-action author person/alan-donovan
 
-# Unlink (with --both to remove inverse side too)
-tmd relation unlink book/golang-in-action author person/alan-donovan --both
+# Maintenance
+tmd doctor                                # vault health check
+tmd stats                                 # vault-wide statistics
+tmd --reindex                             # rebuild index after manual edits
 
-# Sync files to DB and rebuild search index (only needed after manual edits)
-tmd --reindex
-
-# Validate schemas, objects, and relations
-tmd type validate
-
-# Comprehensive vault health check (superset of validate)
-tmd doctor
-
-# Vault-wide statistics summary
-tmd stats                # vault-wide summary
-tmd stats --type book    # per-type property stats
-tmd stats --json         # JSON output
-
-# Manage vault configuration
-tmd config set cli.default_type idea
-tmd config get cli.default_type
-tmd config list
-
-# Show type schema details
-tmd type show book
-
-# List all available types
-tmd type list
-
-# Start MCP server for AI integration
+# MCP server for AI integration
 tmd mcp
-tmd mcp --vault /path/to/vault
 ```
 
-### `tmd object show` Output
-
-```
-book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
-
-Properties
-──────────
-  title: Go in Action
-  status: reading
-  rating: 4.5
-  author: → person/alan-donovan-01jqr3k8yznw2a4dbx6t7c9fpq
-
-Body
-────
-  # Notes
-  A great book about Go...
-```
+See `tmd --help` and [docs](https://docs.typemd.io) for the full command reference.
 
 ### TUI
 
@@ -191,40 +125,7 @@ Body
 └───────────────────┘  └────────────────────┘  └───────────────────┘
 ```
 
-The properties panel is hidden by default and can be toggled with `p`. On narrow terminals (< 56 columns), it auto-hides.
-
-### TUI Controls
-
-| Key | Action |
-|-----|--------|
-| `↑`/`k`, `↓`/`j` | Navigate list / scroll content |
-| `Enter` | Select object / Focus type editor / New type (on `+ New Type`) |
-| `Space` | Toggle group expand/collapse |
-| `Tab` | Cycle focus between panels |
-| `n` | Create new object & edit body (in current type group) |
-| `N` | Quick create (batch mode — stay in input for rapid entry) |
-| `e` | Enter edit mode (body or properties panel) |
-| `r` | Rename object (inline in title panel) |
-| `/` | Search (FTS5 full-text search) |
-| `Esc` | Exit edit mode (auto-saves if changed) / Clear search results |
-| `v` | Open view mode for current type (table display with sort/filter) |
-| `p` | Toggle properties panel / Toggle preview in view mode |
-| `w` | Toggle soft wrap |
-| `[`/`]` | Shrink/grow focused panel |
-| `?`/`h` | Open help popup |
-| `q`/`Ctrl+C` | Quit |
-
-Navigate to `+ New Type` at the bottom of the sidebar and press `Enter` to create a new type. A creation form appears in the title panel with fields for emoji, name, and plural — press `Tab` to cycle between fields.
-
-Moving the cursor to a type group header automatically shows the **type editor** in the right panel, where you can edit type metadata (plural, emoji, unique), manage properties (add, delete, reorder, pin), manage templates (view, create, edit, delete), and delete the type. The type editor has its own keybindings shown in the status bar. Pressing Enter on a template opens the **template editor**, where you can view and edit the template body and properties inline.
-
-The status bar shows the current mode: `[VIEW]` for normal navigation, `[EDIT]` when editing is active, `[TYPE]` when the type editor is focused, `[TEMPLATE]` when viewing/editing a template, and `[READONLY]` when launched with `--readonly`. Press `v` on a type group to enter **view mode** — a full-width table showing objects with property columns, sort/filter support, and an optional preview panel (`p`). Press `e` in view mode to open the **view editor** as a right split panel, where you can add/edit/delete filter rules, sort rules, and group rules inline with auto-save.
-
-When `--readonly` is active, the `e` key is disabled, no write operations are performed, and the help popup hides edit-related keybindings.
-
-When exiting edit mode, changes are automatically saved to the `.md` file and the SQLite index is updated. If the file was modified externally while editing, a `[CONFLICT]` prompt appears — press `y` to overwrite, `n` to reload from disk, or `Esc` to cancel.
-
-The TUI automatically watches the `objects/` directory and refreshes when files are created, modified, or deleted.
+Press `?` in the TUI for the full keybinding reference.
 
 ## Type Schema
 
@@ -254,33 +155,7 @@ properties:
     type: number
 ```
 
-The optional `plural` field specifies the grammatically correct plural form for display in TUI group headers and CLI output. When omitted, falls back to the type name.
-
-The optional `unique` field (boolean, defaults to `false`) enforces that no two objects of the same type can share the same `name` value. When set to `true`, attempting to create an object with a duplicate name will fail. The built-in `tag` type has `unique: true` enabled by default and includes two default properties: `color` (string, 🎨) and `icon` (string, ✨).
-
-Types and properties both support an optional `emoji` field for visual identification in CLI and TUI output. Properties also support an optional `default` field to specify a default value.
-
-The optional `version` field (semver-style `"major.minor"` string, defaults to `"0.0"`) tracks schema evolution. Increment the major number for breaking changes, and the minor number for backward-compatible changes, providing a foundation for future migration tooling.
-
-## Relations
-
-Relations are defined as `type: relation` properties within type schemas. Use `bidirectional` and `inverse` to auto-sync both sides:
-
-```yaml
-# .typemd/types/person/schema.yaml
-name: person
-properties:
-  - name: role
-    type: string
-  - name: books
-    type: relation
-    target: book
-    multiple: true
-    bidirectional: true
-    inverse: author
-```
-
-When `bidirectional: true`, linking a book to a person via `author` automatically updates both the book's `author` and the person's `books` property.
+Relations are defined as `type: relation` properties. Use `bidirectional` and `inverse` to auto-sync both sides. See [docs](https://docs.typemd.io) for full schema reference.
 
 ## MCP Server
 

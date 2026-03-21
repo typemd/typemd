@@ -84,90 +84,31 @@ go install github.com/typemd/typemd/cmd/tmd@latest
 # 初始化新的 vault
 tmd init
 
-# 開啟 TUI（目前目錄）
+# 開啟 TUI
 tmd
 
-# 開啟 TUI（指定 vault 路徑）
-tmd --vault /path/to/vault
-
-# 以唯讀模式開啟 TUI（停用編輯功能）
-tmd --readonly
-
-# 建立新的 Object（名稱自動轉為 slug，ULID 自動附加）
+# 建立 Object（名稱自動轉為 slug，ULID 自動附加）
 tmd object create book "Clean Code"
-# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz
+tmd object create "Some Thought"          # 使用 config 中的預設 type
 
-# 使用 config 中的預設 type（省略 type 參數）
-tmd object create "Some Thought"
-# → Created idea/some-thought-01jqr3k5mpbvn8e0f2g7h9txyz
-
-# 建立 Object 時套用範本
-tmd object create book "Clean Code" -t review
-# → Created book/clean-code-01jqr3k5mpbvn8e0f2g7h9txyz（套用 review 範本）
-
-# 顯示 Object 詳情（支援前綴匹配，不需要輸入完整 ULID）
-tmd object show book/clean-code
-
-# 列出所有 Object
-tmd object list
-tmd object list --json
-
-# 全文搜尋
+# 搜尋與探索
 tmd search "concurrency"
+tmd object show book/clean-code           # 支援前綴匹配，不需要完整 ULID
+tmd object list
 
-# 連結兩個 Object（支援前綴匹配）
+# 連結 Object
 tmd relation link book/golang-in-action author person/alan-donovan
 
-# 取消連結（使用 --both 同時移除反向端）
-tmd relation unlink book/golang-in-action author person/alan-donovan --both
-
-# 同步檔案到資料庫並重建搜尋索引（只在手動編輯後需要）
-tmd --reindex
-
-# 驗證 schema、Object 和 Relation
-tmd type validate
-
-# 全面性的 vault 健康檢查（涵蓋 validate 的所有檢查項目）
-tmd doctor
-
-# Vault 統計摘要
-tmd stats                # 整體統計摘要
-tmd stats --type book    # 指定 Type 的屬性統計
-tmd stats --json         # JSON 輸出
-
-# 管理 vault 設定
-tmd config set cli.default_type idea
-tmd config get cli.default_type
-tmd config list
-
-# 顯示 Type schema 詳情
-tmd type show book
-
-# 列出所有可用的 Type
-tmd type list
+# 維護
+tmd doctor                                # vault 健康檢查
+tmd stats                                 # 統計摘要
+tmd --reindex                             # 手動編輯後重建索引
 
 # 啟動 MCP server 以整合 AI
 tmd mcp
-tmd mcp --vault /path/to/vault
 ```
 
-### `tmd object show` 輸出
-
-```
-book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
-
-Properties
-──────────
-  title: Go in Action
-  status: reading
-  rating: 4.5
-  author: → person/alan-donovan-01jqr3k8yznw2a4dbx6t7c9fpq
-
-Body
-────
-  # Notes
-  A great book about Go...
-```
+完整指令參考請見 `tmd --help` 及[文件](https://docs.typemd.io)。
 
 ### TUI
 
@@ -184,40 +125,7 @@ Body
 └───────────────────┘  └────────────────────┘  └───────────────────┘
 ```
 
-屬性面板預設為隱藏，可用 `p` 切換。在窄終端（< 56 欄）上會自動隱藏。
-
-### TUI 操作
-
-| 按鍵 | 動作 |
-|------|------|
-| `↑`/`k`、`↓`/`j` | 瀏覽列表 / 捲動內容 |
-| `Enter` | 選取 Object / 聚焦 Type 編輯器 / 建立新 Type（在 `+ New Type` 上） |
-| `Space` | 展開 / 收合群組 |
-| `Tab` | 在面板之間循環焦點 |
-| `n` | 建立新 Object 並編輯內文（在目前 Type 群組中） |
-| `N` | 快速建立（批次模式——停留在輸入框以便連續建立） |
-| `e` | 進入編輯模式（聚焦在內文或屬性面板時） |
-| `r` | 重新命名 Object（在標題面板中直接編輯） |
-| `/` | 搜尋（FTS5 全文搜尋） |
-| `Esc` | 退出編輯模式（若有變更則自動儲存）/ 清除搜尋結果 |
-| `v` | 開啟目前 Type 的 view 模式（表格顯示，支援排序 / 篩選） |
-| `p` | 切換屬性面板 / 在 view 模式中切換預覽 |
-| `w` | 切換自動換行 |
-| `[`/`]` | 縮小/放大焦點面板 |
-| `?`/`h` | 開啟快捷鍵說明 |
-| `q`/`Ctrl+C` | 離開 |
-
-將游標移至側邊欄底部的 `+ New Type` 並按 `Enter` 即可建立新 Type。標題面板會出現建立表單，包含 emoji、名稱和複數形式等欄位——按 `Tab` 在欄位之間切換。
-
-將游標移至 Type 群組標題時，右側面板會自動顯示 **Type 編輯器**，可以編輯 Type 的中繼資料（plural、emoji、unique）、管理屬性（新增、刪除、排序、置頂）、管理範本（檢視、建立、編輯、刪除），以及刪除 Type。Type 編輯器有自己的快捷鍵，顯示在狀態列。在範本上按 Enter 會開啟 **範本編輯器**，可以檢視和編輯範本的內文和屬性。
-
-狀態列會顯示目前模式：`[VIEW]` 代表一般瀏覽、`[EDIT]` 代表編輯模式啟用中、`[TYPE]` 代表 Type 編輯器聚焦中、`[TEMPLATE]` 代表檢視或編輯範本中、`[READONLY]` 代表以 `--readonly` 啟動。按 `v` 可對 Type 群組進入 **view 模式**——全寬表格顯示物件及屬性欄位，支援排序 / 篩選，以及可選的預覽面板（`p`）。
-
-當啟用 `--readonly` 時，`e` 鍵會被停用，不會執行任何寫入操作，快捷鍵說明也會隱藏編輯相關的綁定。
-
-退出編輯模式時，變更會自動儲存至 `.md` 檔案並更新 SQLite 索引。若在編輯期間檔案被外部程式修改，狀態列會出現 `[CONFLICT]` 提示——按 `y` 強制覆寫、`n` 從磁碟重新載入，或 `Esc` 取消。
-
-TUI 會自動監控 `objects/` 目錄，當檔案被建立、修改或刪除時自動重新整理。
+在 TUI 中按 `?` 可查看完整快捷鍵說明。
 
 ## Type Schema
 
@@ -247,33 +155,7 @@ properties:
     type: number
 ```
 
-可選的 `plural` 欄位用於指定在 TUI 群組標題和 CLI 輸出中顯示的正確複數形式。若未設定，則使用 type 名稱作為預設值。
-
-可選的 `unique` 欄位（布林值，預設為 `false`）確保同 type 的 object 不會共用相同的 `name` 值。設為 `true` 時，建立重複名稱的 object 會失敗。內建的 `tag` type 預設啟用 `unique: true`，並包含兩個預設屬性：`color`（string, 🎨）和 `icon`（string, ✨）。
-
-Type 和屬性都支援可選的 `emoji` 欄位，用於在 CLI 和 TUI 輸出中視覺辨識。屬性還支援可選的 `default` 欄位來指定預設值。
-
-可選的 `version` 欄位（semver 風格的 `"major.minor"` 字串，預設為 `"0.0"`）用於追蹤 schema 演進。Major 代表破壞性變更，minor 代表向下相容的變更，為未來的遷移工具奠定基礎。
-
-## Relation
-
-Relation 在 Type schema 中定義為 `type: relation` 屬性。使用 `bidirectional` 和 `inverse` 來自動同步兩端：
-
-```yaml
-# .typemd/types/person/schema.yaml
-name: person
-properties:
-  - name: role
-    type: string
-  - name: books
-    type: relation
-    target: book
-    multiple: true
-    bidirectional: true
-    inverse: author
-```
-
-當 `bidirectional: true` 時，透過 `author` 連結書籍和人物會自動更新書的 `author` 和人物的 `books` 屬性。
+Relation 定義為 `type: relation` 屬性，使用 `bidirectional` 和 `inverse` 自動同步兩端。完整 schema 參考請見[文件](https://docs.typemd.io)。
 
 ## MCP Server
 
