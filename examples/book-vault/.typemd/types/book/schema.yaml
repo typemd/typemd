@@ -1,12 +1,12 @@
 name: book
-emoji: "\U0001F4DA"
+emoji: "📚"
 properties:
     - name: title
       type: string
-      emoji: "\U0001F4D6"
+      emoji: "📖"
     - name: status
       type: select
-      emoji: "\U0001F4CB"
+      emoji: "📋"
       pin: 1
       options:
         - value: to-read
@@ -18,7 +18,7 @@ properties:
       pin: 2
     - name: published
       type: date
-      emoji: "\U0001F4C5"
+      emoji: "📅"
     - name: favorite
       type: checkbox
       emoji: ❤️

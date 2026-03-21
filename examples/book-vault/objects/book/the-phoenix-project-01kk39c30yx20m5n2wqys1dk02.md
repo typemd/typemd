@@ -1,13 +1,13 @@
 ---
-author: person/gene-kim-01kk39c30y4001qp772vqzspjm
-favorite: false
-published: 2013-01-10
-rating: 4
-status: reading
-tags:
-  - devops
-  - management
 name: 鳳凰專案：看 IT 部門如何讓公司從谷底翻身
+tags:
+    - devops
+    - management
+status: reading
+rating: 4
+published: "2013-01-10"
+favorite: false
+author: person/gene-kim-01kk39c30y4001qp772vqzspjm
 ---
 
 以小說形式呈現 IT 管理與 DevOps 理念，描述一位 IT 經理如何在混亂中導入精實原則，拯救瀕臨失敗的專案。
