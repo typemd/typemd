@@ -9,6 +9,12 @@ type OrphanedRelation struct {
 	ToID   string
 }
 
+// Reason constants for UnresolvedRelation.
+const (
+	ReasonNotFound  = "not_found"
+	ReasonAmbiguous = "ambiguous"
+)
+
 // UnresolvedRelation represents a relation reference that could not be resolved during sync.
 type UnresolvedRelation struct {
 	ObjectID string // the object containing the reference

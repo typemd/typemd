@@ -1,7 +1,6 @@
 package tui
 
 import (
-	"fmt"
 	"strings"
 	"testing"
 
@@ -9,21 +8,14 @@ import (
 	"github.com/typemd/typemd/tui/widget"
 )
 
-func TestSyncUnresolvedToToast(t *testing.T) {
-	// Simulate the conversion logic from refreshData:
-	// given a SyncResult with Unresolved items, build ToastItems and call Show.
+func TestSyncUnresolvedToToast_MixedReasons(t *testing.T) {
+	// Two different reasons should produce two separate group lines.
 	unresolved := []core.UnresolvedRelation{
 		{ObjectID: "book/foo-01abc", Property: "author", Value: "John", Reason: "not_found"},
 		{ObjectID: "note/bar-02def", Property: "related", Value: "Baz", Reason: "ambiguous"},
 	}
 
-	items := make([]widget.ToastItem, len(unresolved))
-	for i, u := range unresolved {
-		items[i] = widget.ToastItem{
-			Message: fmt.Sprintf("%s.%s: %s", u.ObjectID, u.Property, u.Value),
-			Group:   "unresolved refs",
-		}
-	}
+	items := unresolvedToToastItems(unresolved)
 
 	toast := widget.NewToastModel()
 	cmd := toast.Show(widget.ToastWarning, items)
@@ -37,19 +29,52 @@ func TestSyncUnresolvedToToast(t *testing.T) {
 
 	view := toast.View()
 
-	// Should show warning prefix
 	if !strings.Contains(view, "⚠") {
 		t.Errorf("expected warning prefix ⚠ in view, got: %s", view)
 	}
+	if !strings.Contains(view, "1 not found") {
+		t.Errorf("expected '1 not found' in view, got: %s", view)
+	}
+	if !strings.Contains(view, "1 ambiguous") {
+		t.Errorf("expected '1 ambiguous' in view, got: %s", view)
+	}
+}
 
-	// Should show aggregated count (2 items with same group key)
-	if !strings.Contains(view, "2") {
-		t.Errorf("expected count '2' in view, got: %s", view)
+func TestSyncUnresolvedToToast_OnlyNotFound(t *testing.T) {
+	unresolved := []core.UnresolvedRelation{
+		{ObjectID: "book/foo-01abc", Property: "author", Value: "John", Reason: "not_found"},
+		{ObjectID: "book/bar-02def", Property: "author", Value: "Jane", Reason: "not_found"},
 	}
 
-	// Should show group name
-	if !strings.Contains(view, "unresolved refs") {
-		t.Errorf("expected group name 'unresolved refs' in view, got: %s", view)
+	items := unresolvedToToastItems(unresolved)
+
+	toast := widget.NewToastModel()
+	toast.Show(widget.ToastWarning, items)
+
+	view := toast.View()
+	if !strings.Contains(view, "2 not found") {
+		t.Errorf("expected '2 not found' in view, got: %s", view)
+	}
+	if strings.Contains(view, "ambiguous") {
+		t.Errorf("should not contain 'ambiguous' when all reasons are not_found, got: %s", view)
+	}
+}
+
+func TestSyncUnresolvedToToast_OnlyAmbiguous(t *testing.T) {
+	unresolved := []core.UnresolvedRelation{
+		{ObjectID: "book/foo-01abc", Property: "author", Value: "John", Reason: "ambiguous"},
+		{ObjectID: "note/bar-02def", Property: "related", Value: "Baz", Reason: "ambiguous"},
+		{ObjectID: "idea/qux-03ghi", Property: "source", Value: "Quux", Reason: "ambiguous"},
+	}
+
+	items := unresolvedToToastItems(unresolved)
+
+	toast := widget.NewToastModel()
+	toast.Show(widget.ToastWarning, items)
+
+	view := toast.View()
+	if !strings.Contains(view, "3 ambiguous") {
+		t.Errorf("expected '3 ambiguous' in view, got: %s", view)
 	}
 }
 
@@ -78,13 +103,7 @@ func TestSyncSingleUnresolved(t *testing.T) {
 		{ObjectID: "book/test-01abc", Property: "genre", Value: "sci-fi", Reason: "not_found"},
 	}
 
-	items := make([]widget.ToastItem, len(unresolved))
-	for i, u := range unresolved {
-		items[i] = widget.ToastItem{
-			Message: fmt.Sprintf("%s.%s: %s", u.ObjectID, u.Property, u.Value),
-			Group:   "unresolved refs",
-		}
-	}
+	items := unresolvedToToastItems(unresolved)
 
 	toast := widget.NewToastModel()
 	cmd := toast.Show(widget.ToastWarning, items)
@@ -97,10 +116,42 @@ func TestSyncSingleUnresolved(t *testing.T) {
 	}
 
 	view := toast.View()
-	if !strings.Contains(view, "1") {
-		t.Errorf("expected count '1' in view, got: %s", view)
+	if !strings.Contains(view, "1 not found") {
+		t.Errorf("expected '1 not found' in view, got: %s", view)
 	}
-	if !strings.Contains(view, "unresolved refs") {
-		t.Errorf("expected group name in view, got: %s", view)
+}
+
+func TestSyncUnresolvedToToast_UnknownReasonFallback(t *testing.T) {
+	// Unknown reason should fall back to "unresolved" group.
+	unresolved := []core.UnresolvedRelation{
+		{ObjectID: "book/foo-01abc", Property: "author", Value: "John", Reason: "something_else"},
+	}
+
+	items := unresolvedToToastItems(unresolved)
+
+	toast := widget.NewToastModel()
+	toast.Show(widget.ToastWarning, items)
+
+	view := toast.View()
+	if !strings.Contains(view, "1 unresolved") {
+		t.Errorf("expected '1 unresolved' in view for unknown reason, got: %s", view)
+	}
+}
+
+func TestReasonToGroup(t *testing.T) {
+	tests := []struct {
+		reason string
+		want   string
+	}{
+		{"not_found", "not found"},
+		{"ambiguous", "ambiguous"},
+		{"", "unresolved"},
+		{"unknown", "unresolved"},
+	}
+	for _, tt := range tests {
+		got := reasonToGroup(tt.reason)
+		if got != tt.want {
+			t.Errorf("reasonToGroup(%q) = %q, want %q", tt.reason, got, tt.want)
+		}
 	}
 }

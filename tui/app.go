@@ -578,16 +578,31 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 
 	// Show toast for unresolved references
 	if result != nil && len(result.Unresolved) > 0 {
-		items := make([]widget.ToastItem, len(result.Unresolved))
-		for i, u := range result.Unresolved {
-			items[i] = widget.ToastItem{
-				Message: fmt.Sprintf("%s.%s: %s", u.ObjectID, u.Property, u.Value),
-				Group:   "unresolved refs",
-			}
-		}
-		return m.toast.Show(widget.ToastWarning, items)
+		return m.toast.Show(widget.ToastWarning, unresolvedToToastItems(result.Unresolved))
 	}
 	return nil
+}
+
+func reasonToGroup(reason string) string {
+	switch reason {
+	case core.ReasonNotFound:
+		return "not found"
+	case core.ReasonAmbiguous:
+		return "ambiguous"
+	default:
+		return "unresolved"
+	}
+}
+
+func unresolvedToToastItems(unresolved []core.UnresolvedRelation) []widget.ToastItem {
+	items := make([]widget.ToastItem, len(unresolved))
+	for i, u := range unresolved {
+		items[i] = widget.ToastItem{
+			Message: fmt.Sprintf("%s.%s: %s", u.ObjectID, u.Property, u.Value),
+			Group:   reasonToGroup(u.Reason),
+		}
+	}
+	return items
 }
 
 // currentRows returns the appropriate rows based on whether search results are active.
