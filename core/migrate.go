@@ -1,6 +1,7 @@
 package core
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -140,7 +141,7 @@ func (v *Vault) MigrateSchemas(dryRun bool) (*SchemaMigrateResult, error) {
 
 	entries, err := os.ReadDir(v.TypesDir())
 	if err != nil {
-		if os.IsNotExist(err) {
+		if errors.Is(err, os.ErrNotExist) {
 			return result, nil
 		}
 		return nil, fmt.Errorf("read types dir: %w", err)
