@@ -60,5 +60,8 @@ Body content is preserved unchanged. The updated_at timestamp is not modified.`,
 func init() {
 	formatCmd.Flags().BoolVar(&formatDryRun, "dry-run", false, "List files that need formatting without modifying them (exit code 1 if any)")
 	formatCmd.Flags().StringVar(&formatType, "type", "", "Format only objects and schemas of a specific type")
+	formatCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return completeTypeName(toComplete)
+	})
 	rootCmd.AddCommand(formatCmd)
 }

@@ -132,7 +132,7 @@ graph LR
 | `local_object_repository_template.go` | Template CRUD |
 | `migrate.go` | MigrateObjects (add/remove/rename properties) + MigrateSchemas (enum→select conversion) |
 | `name_template.go` | EvaluateNameTemplate for `{{ date:FORMAT }}` placeholder expansion in name templates |
-| `object.go` | Object entity (aggregate root) + Vault facade methods |
+| `object.go` | Object entity (aggregate root) + Vault facade methods + GlobObjectIDs (filesystem-only prefix search) |
 | `object_id.go` | ObjectID value object |
 | `name_resolve.go` | buildNameIndex + resolveByName + resolveRelationValue + isFullObjectID for name-to-ID resolution during sync |
 | `object_index.go` | ObjectIndex interface + ObjectResult + SortRule + DeleteNonTagRelations + DeleteRelationsByObject |

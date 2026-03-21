@@ -19,6 +19,7 @@ Examples:
   tmd relation unlink book/clean-code author person/robert-martin
   tmd relation unlink book/clean-code author person/robert-martin --both`,
 	Args: cobra.ExactArgs(3),
+	ValidArgsFunction: completeLinkArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		both, _ := cmd.Flags().GetBool("both")
 

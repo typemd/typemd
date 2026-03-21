@@ -16,6 +16,12 @@ Examples:
   tmd type show book
   tmd type show person`,
 	Args: cobra.ExactArgs(1),
+	ValidArgsFunction: func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return completeTypeName(toComplete)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vault := resolveVault(vaultPath)
 

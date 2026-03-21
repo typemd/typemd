@@ -26,6 +26,12 @@ Examples:
   tmd migrate book --dry-run
   tmd migrate book --rename old_field:new_field`,
 	Args: cobra.MaximumNArgs(1),
+	ValidArgsFunction: func(_ *cobra.Command, args []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		if len(args) != 0 {
+			return nil, cobra.ShellCompDirectiveNoFileComp
+		}
+		return completeTypeName(toComplete)
+	},
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vault, err := openVault(vaultPath, reindex)
 		if err != nil {

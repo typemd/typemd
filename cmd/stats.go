@@ -136,5 +136,8 @@ func runTypeStats(vault *core.Vault, typeName string, asJSON bool) error {
 func init() {
 	statsCmd.Flags().StringVar(&statsTypeName, "type", "", "Show stats for a specific type")
 	statsCmd.Flags().BoolVar(&statsJSON, "json", false, "Output as JSON")
+	statsCmd.RegisterFlagCompletionFunc("type", func(_ *cobra.Command, _ []string, toComplete string) ([]string, cobra.ShellCompDirective) {
+		return completeTypeName(toComplete)
+	})
 	rootCmd.AddCommand(statsCmd)
 }
