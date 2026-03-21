@@ -190,6 +190,12 @@ func (v *Vault) GetObject(id string) (*Object, error) {
 	return v.Queries.Get(id)
 }
 
+// GlobObjectIDs finds object IDs matching a prefix within a type directory.
+// Unlike ResolveID, this works without Open() since it uses the repository directly.
+func (v *Vault) GlobObjectIDs(typeName, prefix string) ([]string, error) {
+	return v.repo.GlobIDs(typeName, prefix)
+}
+
 // ResolveID resolves an abbreviated object ID. Delegates to QueryService.
 func (v *Vault) ResolveID(prefix string) (string, error) {
 	return v.Queries.Resolve(prefix)

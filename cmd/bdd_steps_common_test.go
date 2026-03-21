@@ -149,6 +149,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initObjectSteps(sc, cc)
 	initSearchSteps(sc, cc)
 	initFormatSteps(sc, cc)
+	initCompletionSteps(sc, cc)
 }
 
 func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
