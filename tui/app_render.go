@@ -182,7 +182,8 @@ func (m model) View() tea.View {
 		)
 
 		helpBar := "  " + vm.HelpBar()
-		v := tea.NewView(panels + "\n" + helpBar)
+		screen := m.toast.Overlay(panels+"\n"+helpBar, m.width, m.height)
+		v := tea.NewView(screen)
 		v.AltScreen = true
 		return v
 	}
@@ -236,6 +237,7 @@ func (m model) View() tea.View {
 				screen = renderStatsHelp(screen, m.width, m.height, stm.screen)
 			}
 
+			screen = m.toast.Overlay(screen, m.width, m.height)
 			v := tea.NewView(screen)
 			v.AltScreen = true
 			return v
@@ -263,6 +265,7 @@ func (m model) View() tea.View {
 			screen = renderStatsHelp(screen, m.width, m.height, stm.screen)
 		}
 
+		screen = m.toast.Overlay(screen, m.width, m.height)
 		v := tea.NewView(screen)
 		v.AltScreen = true
 		return v
@@ -291,6 +294,7 @@ func (m model) View() tea.View {
 			screen = renderHelp(screen, m.width, m.height, m.readOnly)
 		}
 
+		screen = m.toast.Overlay(screen, m.width, m.height)
 		v := tea.NewView(screen)
 		v.AltScreen = true
 		return v
@@ -524,8 +528,6 @@ func (m model) View() tea.View {
 		helpBar = "  [AI]  tab: accept  |  esc: reject"
 	} else if m.aiState == aiShowingTags {
 		helpBar = "  [AI TAGS]  ↑↓: navigate  |  space: toggle  |  enter: apply  |  esc: cancel"
-	} else if m.aiState == aiError {
-		helpBar = "  [AI ERROR]  " + m.aiError + "  |  press any key to dismiss"
 	} else if m.editMode {
 		helpBar = "  [EDIT]  esc: exit edit mode"
 	} else {
@@ -563,6 +565,9 @@ func (m model) View() tea.View {
 	if m.viewPicker != nil {
 		screen = m.viewPicker.View(m.width, m.height)
 	}
+
+	// Toast overlay (bottom-right)
+	screen = m.toast.Overlay(screen, m.width, m.height)
 
 	v := tea.NewView(screen)
 	v.AltScreen = true

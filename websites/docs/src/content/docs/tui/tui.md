@@ -109,6 +109,10 @@ Requires `ai.enabled: true` in `.typemd/config.yaml` and the `claude` CLI instal
   - **Suggest tags** — AI suggests relevant tags based on object content and existing tags. Shows a selectable popup with checkboxes; `Space` to toggle, `Enter` to apply, `Esc` to cancel. Tags are classified as existing or new (★).
 - **`Ctrl+E`** — Enters schema explore mode (from sidebar). Select a type, and AI analyzes its objects to suggest schema improvements (add/modify/remove properties). Press `Enter` to accept or `s` to skip each suggestion.
 
+### Toast Notifications
+
+The TUI shows transient toast notifications in the bottom-right corner for events like sync warnings (unresolved references) and AI errors. Toasts auto-dismiss after 3 seconds (configurable via `tui.toast.duration_ms`). Press `Esc` to dismiss manually — while a toast is visible, `Esc` is consumed by the toast and does not propagate to other panels. See [Configuration](/basics/configuration/) for all toast settings.
+
 ### View Mode
 
 Press `v` on a type group header or object to enter **view mode**. This replaces the three-panel layout with a full-width display of objects. View mode supports two layouts:
