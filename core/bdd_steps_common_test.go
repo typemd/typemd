@@ -67,6 +67,9 @@ type domainContext struct {
 	// display properties results
 	displayProps []DisplayProperty
 
+	// relation reference validation results
+	relationRefErrors []error
+
 	// starter types results
 	starterTypes []StarterType
 }

@@ -63,6 +63,64 @@ func ValidateRelations(v *Vault) []error {
 	return errs
 }
 
+// ValidateRelationReferences checks for relation values that are unresolved name references
+// (i.e., they don't have a ULID suffix). These should have been expanded during sync.
+func ValidateRelationReferences(v *Vault) []error {
+	var errs []error
+	objects, err := v.repo.Walk()
+	if err != nil {
+		return []error{fmt.Errorf("walk objects: %w", err)}
+	}
+
+	schemaCache := make(map[string]*TypeSchema)
+	for _, obj := range objects {
+		schema, ok := schemaCache[obj.Type]
+		if !ok {
+			s, err := v.repo.GetSchema(obj.Type)
+			if err != nil {
+				schemaCache[obj.Type] = nil
+				continue
+			}
+			schema = s
+			schemaCache[obj.Type] = schema
+		}
+		if schema == nil {
+			continue
+		}
+		for _, prop := range schema.Properties {
+			if prop.Type != "relation" {
+				continue
+			}
+			val, ok := obj.Properties[prop.Name]
+			if !ok || val == nil {
+				continue
+			}
+			if prop.Multiple {
+				items, ok := val.([]any)
+				if !ok {
+					continue
+				}
+				for _, item := range items {
+					if ref, ok := item.(string); ok {
+						checkRelationRef(ref, obj.ID, prop.Name, &errs)
+					}
+				}
+			} else {
+				if ref, ok := val.(string); ok {
+					checkRelationRef(ref, obj.ID, prop.Name, &errs)
+				}
+			}
+		}
+	}
+	return errs
+}
+
+func checkRelationRef(ref, objectID, propName string, errs *[]error) {
+	if !isFullObjectID(ref) {
+		*errs = append(*errs, fmt.Errorf("%s: property %q has unresolved reference %q", objectID, propName, ref))
+	}
+}
+
 // ValidateWikiLinks checks for broken wiki-links (targets that don't resolve to existing objects).
 func ValidateWikiLinks(v *Vault) []error {
 	var errs []error

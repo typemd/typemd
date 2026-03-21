@@ -92,17 +92,21 @@ func (s *objectSyncer) upsertObject(obj *Object, index ObjectIndex) error {
 	return index.Upsert(obj.ID, obj.Type, obj.Filename, string(propsJSON), obj.Body)
 }
 
-// buildSyncContext builds a syncContext from a list of objects for wikilink/tag sync.
+// buildSyncContext builds a syncContext from a list of objects for wikilink/tag/relation sync.
 func buildSyncContext(objects []*Object) *syncContext {
 	ctx := &syncContext{
 		diskIDs:     make(map[string]bool),
 		diskBodies:  make(map[string]string),
 		diskTags:    make(map[string]*Object),
 		diskTagRefs: make(map[string][]string),
+		diskObjects: make(map[string]*Object),
+		schemas:     make(map[string]*TypeSchema),
+		nameIndex:   make(map[string]map[string][]string),
 	}
 	for _, obj := range objects {
 		ctx.diskIDs[obj.ID] = true
 		ctx.diskBodies[obj.ID] = obj.Body
+		ctx.diskObjects[obj.ID] = obj
 		if obj.Type == TagTypeName {
 			ctx.diskTags[obj.ID] = obj
 		}
@@ -120,6 +124,7 @@ func buildSyncContext(objects []*Object) *syncContext {
 			}
 		}
 	}
+	buildNameIndex(ctx)
 	return ctx
 }
 
@@ -168,6 +173,8 @@ func (p *Projector) Sync() (*SyncResult, error) {
 	}
 
 	ctx := buildSyncContext(objects)
+	// Populate schema cache from syncer (already loaded during upsert)
+	ctx.schemas = syncer.schemaCache
 
 	// Delete stale objects from index
 	deleted, err := p.deleteStaleObjects(ctx.diskIDs)
@@ -188,6 +195,11 @@ func (p *Projector) Sync() (*SyncResult, error) {
 		if err := p.index.DeleteWikiLinks(id); err != nil {
 			return nil, fmt.Errorf("delete wikilinks for %s: %w", id, err)
 		}
+	}
+
+	// Sync relations: resolve prefixes, write-back, index
+	if err := p.syncRelations(ctx, result); err != nil {
+		return nil, err
 	}
 
 	// Sync wikilinks and tag relations
@@ -255,7 +267,7 @@ func (p *Projector) SyncFiles(paths []string, objectsDir string) (*SyncResult, e
 		}
 	}
 
-	// Full wikilink and tag sync using all objects from disk
+	// Full wikilink, tag, and relation sync using all objects from disk
 	objects, err := p.repo.Walk()
 	if err != nil {
 		return nil, fmt.Errorf("walk objects for wikilink/tag sync: %w", err)
@@ -263,6 +275,24 @@ func (p *Projector) SyncFiles(paths []string, objectsDir string) (*SyncResult, e
 
 	if objects != nil {
 		ctx := buildSyncContext(objects)
+		ctx.schemas = syncer.schemaCache
+
+		// Incremental relation sync: delete and rebuild only for changed objects
+		var changedIDs []string
+		for _, path := range paths {
+			id, ok := objectPathToID(path, objectsDir)
+			if !ok {
+				continue
+			}
+			changedIDs = append(changedIDs, id)
+			if err := p.index.DeleteRelationsByObject(id); err != nil {
+				return nil, fmt.Errorf("delete relations for %s: %w", id, err)
+			}
+		}
+		if err := p.syncRelationsForObjects(ctx, result, changedIDs); err != nil {
+			return nil, err
+		}
+
 		if err := p.syncWikiLinksAndTags(ctx); err != nil {
 			return nil, err
 		}
@@ -292,6 +322,158 @@ func (p *Projector) deleteStaleObjects(diskIDs map[string]bool) ([]string, error
 	}
 
 	return toDelete, nil
+}
+
+// syncRelations resolves name references, writes back expanded IDs, and indexes
+// schema-defined relation properties (excluding tags) from frontmatter.
+func (p *Projector) syncRelations(ctx *syncContext, result *SyncResult) error {
+	// Clear all non-tag relations and rebuild from frontmatter
+	if err := p.index.DeleteNonTagRelations(); err != nil {
+		return fmt.Errorf("clear non-tag relations: %w", err)
+	}
+
+	modified := make(map[string]bool)
+	for _, obj := range ctx.diskObjects {
+		if err := p.processObjectRelations(obj, ctx, result, modified); err != nil {
+			return err
+		}
+	}
+	return p.writeBackModified(modified, ctx)
+}
+
+// syncRelationsForObjects resolves and indexes relations for specific changed objects only.
+// Used by incremental sync (SyncFiles) to avoid rebuilding all relations.
+func (p *Projector) syncRelationsForObjects(ctx *syncContext, result *SyncResult, objectIDs []string) error {
+	modified := make(map[string]bool)
+	for _, id := range objectIDs {
+		obj := ctx.diskObjects[id]
+		if obj == nil {
+			continue // deleted object
+		}
+		if err := p.processObjectRelations(obj, ctx, result, modified); err != nil {
+			return err
+		}
+	}
+	return p.writeBackModified(modified, ctx)
+}
+
+// processObjectRelations resolves and indexes relation properties for a single object.
+func (p *Projector) processObjectRelations(obj *Object, ctx *syncContext, result *SyncResult, modified map[string]bool) error {
+	schema := ctx.schemas[obj.Type]
+	if schema == nil {
+		s, err := p.repo.GetSchema(obj.Type)
+		if err != nil {
+			return nil // skip objects with unknown type
+		}
+		schema = s
+		ctx.schemas[obj.Type] = schema
+	}
+
+	for _, prop := range schema.Properties {
+		if prop.Type != "relation" {
+			continue
+		}
+
+		val, ok := obj.Properties[prop.Name]
+		if !ok || val == nil {
+			continue
+		}
+
+		if prop.Multiple {
+			items, ok := val.([]any)
+			if !ok {
+				continue
+			}
+			anyChanged := false
+			newItems := make([]any, len(items))
+			for i, item := range items {
+				ref, ok := item.(string)
+				if !ok {
+					newItems[i] = item
+					continue
+				}
+				resolved, changed, err := resolveRelationValue(ref, ctx.nameIndex)
+				if err != nil {
+					result.Unresolved = append(result.Unresolved, UnresolvedRelation{
+						ObjectID: obj.ID, Property: prop.Name, Value: ref,
+						Reason: resolveErrorReason(err), Matches: resolveErrorMatches(err),
+					})
+					newItems[i] = ref
+					continue
+				}
+				if changed {
+					result.Expanded++
+					anyChanged = true
+				}
+				newItems[i] = resolved
+			}
+			if anyChanged {
+				obj.Properties[prop.Name] = newItems
+				modified[obj.ID] = true
+			}
+			// Index all resolved relation values
+			for _, item := range newItems {
+				if ref, ok := item.(string); ok && ctx.diskIDs[ref] {
+					if err := p.index.InsertRelation(prop.Name, obj.ID, ref); err != nil {
+						return fmt.Errorf("insert relation: %w", err)
+					}
+				}
+			}
+		} else {
+			ref, ok := val.(string)
+			if !ok {
+				continue
+			}
+			resolved, changed, err := resolveRelationValue(ref, ctx.nameIndex)
+			if err != nil {
+				result.Unresolved = append(result.Unresolved, UnresolvedRelation{
+					ObjectID: obj.ID, Property: prop.Name, Value: ref,
+					Reason: resolveErrorReason(err), Matches: resolveErrorMatches(err),
+				})
+				continue
+			}
+			if changed {
+				obj.Properties[prop.Name] = resolved
+				modified[obj.ID] = true
+				result.Expanded++
+			}
+			if ctx.diskIDs[resolved] {
+				if err := p.index.InsertRelation(prop.Name, obj.ID, resolved); err != nil {
+					return fmt.Errorf("insert relation: %w", err)
+				}
+			}
+		}
+	}
+	return nil
+}
+
+// writeBackModified saves objects whose relation properties were expanded during sync.
+func (p *Projector) writeBackModified(modified map[string]bool, ctx *syncContext) error {
+	for id := range modified {
+		obj := ctx.diskObjects[id]
+		schema := ctx.schemas[obj.Type]
+		keyOrder := OrderedPropKeys(obj.Properties, schema)
+		if err := p.repo.Save(obj, keyOrder); err != nil {
+			return fmt.Errorf("write-back expanded relations for %s: %w", id, err)
+		}
+	}
+	return nil
+}
+
+// resolveErrorReason extracts the reason from a resolve error.
+func resolveErrorReason(err error) string {
+	if _, ok := err.(*AmbiguousMatchError); ok {
+		return "ambiguous"
+	}
+	return "not_found"
+}
+
+// resolveErrorMatches extracts match candidates from an AmbiguousMatchError.
+func resolveErrorMatches(err error) []string {
+	if ame, ok := err.(*AmbiguousMatchError); ok {
+		return ame.Matches
+	}
+	return nil
 }
 
 // syncWikiLinks extracts wiki-links from body and stores them in the index.

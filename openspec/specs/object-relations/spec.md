@@ -16,7 +16,7 @@ A type schema SHALL support properties with `type: relation`. A relation propert
 
 ### Requirement: Objects can be linked via relation properties
 
-The system SHALL allow linking two objects through a named relation property using `LinkObjects`. The relation SHALL be persisted in both the source object's frontmatter and the `relations` database table.
+The system SHALL allow linking two objects through a named relation property using `LinkObjects`. The relation SHALL be persisted in both the source object's frontmatter and the `relations` database table. Additionally, relation values in frontmatter MAY use prefix form (without ULID suffix), which SHALL be resolved and expanded during Projector sync.
 
 #### Scenario: Link two objects
 
@@ -33,6 +33,13 @@ The system SHALL allow linking two objects through a named relation property usi
 
 - **WHEN** a link is attempted using a relation name not defined in the source type schema
 - **THEN** an error is returned
+
+#### Scenario: Hand-edited relation with prefix is resolved during sync
+
+- **WHEN** a user manually writes `author: person/john-doe` in a book's frontmatter
+- **AND** Projector sync runs
+- **THEN** the prefix SHALL be resolved to the full ID and written back to the file
+- **AND** a relation record SHALL be inserted into the `relations` table
 
 ### Requirement: Target type is validated at link time
 

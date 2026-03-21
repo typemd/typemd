@@ -274,6 +274,27 @@ func (idx *SQLiteObjectIndex) DeleteRelationsByName(name string) error {
 	return nil
 }
 
+// DeleteNonTagRelations removes all relation records except those with name "tags".
+func (idx *SQLiteObjectIndex) DeleteNonTagRelations() error {
+	_, err := idx.db.Exec("DELETE FROM relations WHERE name != ?", TagsProperty)
+	if err != nil {
+		return fmt.Errorf("delete non-tag relations: %w", err)
+	}
+	return nil
+}
+
+// DeleteRelationsByObject removes all non-tag relation records where the object
+// is the source (from_id). Only forward relations are deleted because the rebuild
+// only re-creates forward relations from the object's own frontmatter.
+func (idx *SQLiteObjectIndex) DeleteRelationsByObject(objectID string) error {
+	_, err := idx.db.Exec("DELETE FROM relations WHERE name != ? AND from_id = ?",
+		TagsProperty, objectID)
+	if err != nil {
+		return fmt.Errorf("delete relations by object: %w", err)
+	}
+	return nil
+}
+
 // CleanOrphanedRelations detects and removes relation records that reference
 // non-existent objects. Returns the list of orphaned relations found.
 func (idx *SQLiteObjectIndex) CleanOrphanedRelations() ([]OrphanedRelation, error) {

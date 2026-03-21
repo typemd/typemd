@@ -67,6 +67,17 @@ var validateCmd = &cobra.Command{
 			fmt.Println()
 		}
 
+		// Phase 3b: Unresolved relation references
+		refErrs := core.ValidateRelationReferences(vault)
+		if len(refErrs) > 0 {
+			fmt.Println("Unresolved relation references:")
+			for _, e := range refErrs {
+				fmt.Printf("  %s\n", e)
+				totalErrors++
+			}
+			fmt.Println()
+		}
+
 		// Phase 4: Wiki-link validation
 		wikiLinkErrs := core.ValidateWikiLinks(vault)
 		if len(wikiLinkErrs) > 0 {

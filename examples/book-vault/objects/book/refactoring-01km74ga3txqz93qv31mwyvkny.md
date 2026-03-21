@@ -7,7 +7,7 @@ status: done
 rating: 5
 published: "2018-11-20"
 favorite: true
-author: person/martin-fowler
+author: person/martin-fowler-01km74ga3tddfgrapc4d4f593s
 ---
 
 軟體開發經典之作。書中介紹了一系列重構手法，幫助開發者在不改變外部行為的前提下，改善程式碼的內部結構。
