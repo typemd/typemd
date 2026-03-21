@@ -1,13 +1,13 @@
 name: person
-emoji: 👤
+emoji: "👤"
 properties:
-  - name: website
-    type: url
-    emoji: 🌐
-  - name: books
-    type: relation
-    emoji: 📚
-    target: book
-    multiple: true
-    bidirectional: true
-    inverse: author
+    - name: website
+      type: url
+      emoji: "🌐"
+    - name: books
+      type: relation
+      emoji: "📚"
+      target: book
+      multiple: true
+      bidirectional: true
+      inverse: author

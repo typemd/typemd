@@ -51,7 +51,32 @@ func MarshalTypeSchema(schema *TypeSchema) ([]byte, error) {
 
 	ms.Properties = append(ms.Properties, schema.Properties...)
 
-	return yaml.Marshal(&ms)
+	data, err := yaml.Marshal(&ms)
+	if err != nil {
+		return nil, err
+	}
+	// yaml.v3 escapes non-ASCII characters (e.g. emoji 👤 → "\U0001F464").
+	// Restore UTF-8 literals for human readability.
+	return unescapeUnicodeYAML(data), nil
+}
+
+// unicodeEscapePattern matches yaml.v3 unicode escape sequences:
+// \uXXXX (4 hex digits) and \UXXXXXXXX (8 hex digits).
+var unicodeEscapePattern = regexp.MustCompile(`\\[uU][0-9a-fA-F]{4,8}`)
+
+// unescapeUnicodeYAML replaces yaml.v3 unicode escape sequences with
+// their UTF-8 literals. yaml.v3 escapes non-ASCII characters like emoji
+// (e.g. 👤 → "\U0001F464"), which hurts readability.
+func unescapeUnicodeYAML(data []byte) []byte {
+	return unicodeEscapePattern.ReplaceAllFunc(data, func(match []byte) []byte {
+		// Parse the hex value (skip the \u or \U prefix)
+		hexStr := string(match[2:])
+		r, err := strconv.ParseInt(hexStr, 16, 32)
+		if err != nil {
+			return match
+		}
+		return []byte(string(rune(r)))
+	})
 }
 
 // parseVersion parses a "major.minor" version string into two integers.
