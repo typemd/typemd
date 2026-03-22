@@ -355,6 +355,59 @@ The right panel follows the sidebar cursor:
 | `?` or `h` | Help |
 | `q` | Quit |
 
+## Skill Instructions
+
+typemd embeds reusable skill instructions in the binary. Use `tmd instructions` to access them — enriched with vault context for AI integrations.
+
+### Available Skills
+
+| Skill | Purpose |
+|-------|---------|
+| `explore` | Analyze existing markdown files and suggest type schemas (read-only) |
+| `importer` | Convert existing markdown files into typemd objects |
+| `guide` | This reference guide |
+
+### Usage
+
+```bash
+# List all available skills
+tmd instructions
+
+# Get skill instructions as JSON with vault context (type summaries)
+tmd instructions explore
+
+# Get raw SKILL.md content (for saving into a skills directory)
+tmd instructions explore --skill
+```
+
+### JSON Output
+
+When you run `tmd instructions <skill>` inside a vault, the output includes:
+
+- `name` — skill name
+- `description` — when to use this skill
+- `instructions` — the full skill body (markdown, no frontmatter)
+- `context.types` — all types in the vault with their emoji, description, and properties (name, type, description)
+
+This context lets an AI understand the vault's data model without additional exploration.
+
+### Vault Overrides
+
+Place a file at `.typemd/instructions/<skill>.md` to override an embedded skill. The override follows the same SKILL.md format (YAML frontmatter with `name` and `description`, followed by markdown body). If no frontmatter is present, the embedded skill's metadata is preserved and only the instructions body is replaced.
+
+### Integration Pattern
+
+To give an AI tool full vault awareness:
+
+1. Run `tmd instructions guide` to get the reference guide with vault context
+2. Pass the JSON output as context to the AI
+3. The AI now knows all CLI commands, type schemas, and the vault's current data model
+
+For specific tasks, use the appropriate skill:
+
+- Analyzing files before importing → `tmd instructions explore`
+- Converting files into objects → `tmd instructions importer`
+
 ## Tips for Working with typemd
 
 - **Always read type schemas first** before creating or modifying objects — check `.typemd/types/*/schema.yaml`
