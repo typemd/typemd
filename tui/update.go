@@ -123,10 +123,11 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		return m, nil
 
 	case "tab":
+		prevFocus := m.focus
 		switch m.focus {
 		case focusLeft:
 			if m.rightPanel == panelTypeEditor || m.rightPanel == panelTemplate {
-				m.focus = focusBody // focusBody doubles as "right panel focus" for type/template editor
+				m.focus = focusBody
 			} else {
 				m.focus = focusBody
 			}
@@ -142,6 +143,10 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			}
 		case focusProps:
 			m.focus = focusLeft
+		}
+		// Refresh props content when entering/leaving focusProps to show/hide cursor
+		if m.focus == focusProps || prevFocus == focusProps {
+			m.updatePropsContent()
 		}
 		return m, nil
 
