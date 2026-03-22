@@ -365,7 +365,6 @@ typemd embeds reusable skill instructions in the binary. Use `tmd instructions` 
 |-------|---------|
 | `explore` | Analyze existing markdown files and suggest type schemas (read-only) |
 | `importer` | Convert existing markdown files into typemd objects |
-| `guide` | This reference guide |
 
 ### Usage
 
@@ -397,16 +396,13 @@ Place a file at `.typemd/instructions/<skill>.md` to override an embedded skill.
 
 ### Integration Pattern
 
-To give an AI tool full vault awareness:
+To give an AI tool vault awareness for a specific task:
 
-1. Run `tmd instructions guide` to get the reference guide with vault context
+1. Run `tmd instructions explore` or `tmd instructions importer`
 2. Pass the JSON output as context to the AI
-3. The AI now knows all CLI commands, type schemas, and the vault's current data model
+3. The AI gets the skill instructions plus the vault's current data model
 
-For specific tasks, use the appropriate skill:
-
-- Analyzing files before importing → `tmd instructions explore`
-- Converting files into objects → `tmd instructions importer`
+Combined with this guide (loaded as a Claude Code plugin), the AI has full knowledge of typemd commands, schemas, and vault-specific types.
 
 ## Tips for Working with typemd
 

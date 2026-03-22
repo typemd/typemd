@@ -5,8 +5,8 @@ Feature: Skill instructions
 
   Scenario: List available skills
     When I list available skills
-    Then I should get 3 skills
-    And the skills should include "explore", "importer", "guide"
+    Then I should get 2 skills
+    And the skills should include "explore", "importer"
     And each skill should have a name and description
 
   Scenario: Get skill by name

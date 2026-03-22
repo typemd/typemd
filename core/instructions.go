@@ -60,7 +60,6 @@ type SkillListEntry struct {
 var skillFiles = []string{
 	"skills/explore/SKILL.md",
 	"skills/importer/SKILL.md",
-	"skills/guide/SKILL.md",
 }
 
 var (

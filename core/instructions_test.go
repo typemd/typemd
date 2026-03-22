@@ -88,13 +88,13 @@ func TestGetSkillRaw_Unknown(t *testing.T) {
 
 func TestListSkills_Count(t *testing.T) {
 	skills := ListSkills()
-	if len(skills) != 3 {
-		t.Errorf("expected 3 skills, got %d", len(skills))
+	if len(skills) != 2 {
+		t.Errorf("expected 2 skills, got %d", len(skills))
 	}
 }
 
 func TestGetSkill_EachSkillValid(t *testing.T) {
-	for _, name := range []string{"explore", "importer", "guide"} {
+	for _, name := range []string{"explore", "importer"} {
 		skill, err := GetSkill(name)
 		if err != nil {
 			t.Errorf("GetSkill(%q): %v", name, err)
