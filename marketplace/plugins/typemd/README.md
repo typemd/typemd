@@ -1,6 +1,6 @@
-# guides
+# typemd
 
-Reference guides for working with [typemd](https://github.com/typemd/typemd) vaults. Contains two skills:
+Reference guides and workflow skills for working with [typemd](https://github.com/typemd/typemd) vaults.
 
 ## vault-guide
 
@@ -16,7 +16,7 @@ Guide for using `tmd instructions` to output embedded skills (explore, importer)
 
 ```
 /plugin marketplace add typemd/marketplace
-/plugin install guides@typemd-marketplace
+/plugin install typemd@typemd-marketplace
 ```
 
 ## Prerequisites

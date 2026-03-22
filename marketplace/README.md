@@ -22,7 +22,7 @@ Browse and install plugins:
 
 | Plugin | Description |
 |--------|-------------|
-| `guides` | typemd reference guides — vault-guide (CLI, schemas, object format) and instructions-guide (`tmd instructions` usage for AI integrations) |
+| `typemd` | typemd reference guides and workflow skills — vault-guide, instructions-guide, explore, and importer |
 
 ## Contributing
 

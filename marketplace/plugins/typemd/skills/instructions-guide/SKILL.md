@@ -113,7 +113,7 @@ tmd instructions explore --skill > .claude/skills/explore/SKILL.md
 ### Combine with vault-guide
 
 For full vault awareness, use both:
-1. Install the `vault-guide` skill (from the guides plugin) for CLI, schema, and object format knowledge
+1. Install the `vault-guide` skill (from the typemd plugin) for CLI, schema, and object format knowledge
 2. Use `tmd instructions` at runtime for vault-specific type context
 
 The vault-guide provides static knowledge (how typemd works), while `tmd instructions` provides dynamic context (what types exist in this vault).

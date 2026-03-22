@@ -9,8 +9,8 @@
   },
   "plugins": [
     {
-      "name": "guides",
-      "source": "./plugins/guides",
+      "name": "typemd",
+      "source": "./plugins/typemd",
       "description": "typemd reference guide for AI — CLI commands, type schemas, object format, and tmd instructions usage",
       "version": "0.1.0",
       "category": "reference",

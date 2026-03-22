@@ -37,13 +37,13 @@ Two embedded skills:
 
 Want to customize a skill? Drop a `.typemd/instructions/<skill>.md` file to override it.
 
-## Marketplace: guides Plugin
+## Marketplace: typemd Plugin
 
-We also launched the first plugin on the [typemd marketplace](https://github.com/typemd/typemd/tree/main/marketplace) — **guides**. Once installed, Claude Code automatically learns how to work with your vault:
+We also launched the first plugin on the [typemd marketplace](https://github.com/typemd/typemd/tree/main/marketplace) — **typemd**. Once installed, Claude Code automatically learns how to work with your vault:
 
 ```bash
 /plugin marketplace add typemd/marketplace
-/plugin install guides@typemd-marketplace
+/plugin install typemd@typemd-marketplace
 ```
 
 For the full setup walkthrough, see the [AI Setup guide](https://docs.typemd.io/getting-started/ai-setup).

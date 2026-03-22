@@ -15,7 +15,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **web/** — Web UI: React + shadcn/ui (future)
 - **app/** — Desktop app via Wails + shared React frontend (future)
 - **websites/** — Non-Go websites (site, docs, blog)
-- **marketplace/** — Claude Code marketplace plugins (guides plugin with vault-guide and instructions-guide skills)
+- **marketplace/** — Claude Code marketplace plugins (typemd plugin with vault-guide, instructions-guide, explore, and importer skills)
 
 ## Core Package Architecture
 

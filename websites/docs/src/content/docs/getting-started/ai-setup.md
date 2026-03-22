@@ -15,15 +15,15 @@ typemd integrates with AI through two channels:
 - [typemd](/getting-started/installation) installed with a vault initialized
 - [Claude Code](https://claude.com/code) installed
 
-## 1. Install the guides plugin
+## 1. Install the typemd plugin
 
-The **guides** plugin teaches Claude Code how to work with your vault. Add the typemd marketplace and install it:
+The **typemd** plugin teaches Claude Code how to work with your vault. Add the typemd marketplace and install it:
 
 ```bash
 claude
 # Inside Claude Code:
 /plugin marketplace add typemd/marketplace
-/plugin install guides@typemd-marketplace
+/plugin install typemd@typemd-marketplace
 ```
 
 This installs two skills:
@@ -79,7 +79,7 @@ The JSON output includes your vault's type summaries (names, emojis, description
 
 ## What's next
 
-With the guides plugin installed and AI enabled, you can:
+With the typemd plugin installed and AI enabled, you can:
 
 - Ask Claude Code to **analyze your markdown files** and suggest type schemas (explore skill)
 - Ask Claude Code to **import existing files** into your vault (importer skill)

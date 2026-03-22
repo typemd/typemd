@@ -37,13 +37,13 @@ tmd instructions explore
 
 想自訂 skill？放一個 `.typemd/instructions/<skill>.md` 就能覆寫。
 
-## Marketplace：guides plugin
+## Marketplace：typemd plugin
 
-我們也推出了 [typemd marketplace](https://github.com/typemd/typemd/tree/main/marketplace) 的第一個 plugin——**guides**。安裝後 Claude Code 會自動學會如何操作你的 vault：
+我們也推出了 [typemd marketplace](https://github.com/typemd/typemd/tree/main/marketplace) 的第一個 plugin——**typemd**。安裝後 Claude Code 會自動學會如何操作你的 vault：
 
 ```bash
 /plugin marketplace add typemd/marketplace
-/plugin install guides@typemd-marketplace
+/plugin install typemd@typemd-marketplace
 ```
 
 完整設定流程請看 [AI Setup 指南](https://docs.typemd.io/getting-started/ai-setup)。
