@@ -1,9 +1,9 @@
 ---
-name: markdown-import
+name: importer
 description: Convert existing markdown files into typemd objects. Use when the user wants to import, migrate, or convert markdown files into their typemd vault.
 ---
 
-# Markdown Import
+# Importer
 
 Help the user convert existing markdown files into typemd objects.
 

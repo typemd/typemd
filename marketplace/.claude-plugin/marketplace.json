@@ -9,8 +9,8 @@
   },
   "plugins": [
     {
-      "name": "markdown-import",
-      "source": "./plugins/markdown-import",
+      "name": "importer",
+      "source": "./plugins/importer",
       "description": "Convert existing markdown files into typemd objects with frontmatter, type detection, and relation discovery",
       "version": "0.1.0",
       "category": "workflow",

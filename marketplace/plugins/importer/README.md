@@ -1,4 +1,4 @@
-# markdown-import
+# importer
 
 Convert existing markdown files into [typemd](https://github.com/typemd/typemd) objects with automatic type detection, frontmatter generation, and relation discovery.
 
@@ -21,7 +21,7 @@ This skill helps you migrate existing markdown notes into your typemd vault. It:
 
 ```
 /plugin marketplace add typemd/marketplace
-/plugin install markdown-import@typemd-marketplace
+/plugin install importer@typemd-marketplace
 ```
 
 ## Usage

@@ -22,7 +22,7 @@ Browse and install plugins:
 
 | Plugin | Description |
 |--------|-------------|
-| `markdown-import` | Convert existing markdown files into typemd objects with frontmatter, type detection, and relation discovery |
+| `importer` | Convert existing markdown files into typemd objects with frontmatter, type detection, and relation discovery |
 | `vault-guide` | typemd reference guide — teaches Claude how to work with vaults, CLI commands, type schemas, and objects |
 
 ## Contributing
