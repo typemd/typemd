@@ -64,6 +64,14 @@ func updateEdit(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 
 // updateNormal handles key events in normal (non-modal) mode.
 func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
+	// Property editor in editing state intercepts all keys
+	if m.focus == focusProps && m.propEdit != nil && m.propEdit.isEditing() {
+		newM, cmd, consumed := updatePropEditor(m, msg)
+		if consumed {
+			return newM, cmd
+		}
+	}
+
 	switch msg.String() {
 	case "q", "ctrl+c":
 		if m.vault != nil {
