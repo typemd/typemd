@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Embedded skill registry
-The system SHALL embed marketplace SKILL.md files into the Go binary and provide a registry of available skills. Each skill SHALL have a name, description, and instructions body parsed from SKILL.md frontmatter.
+The system SHALL embed SKILL.md files into the Go binary and provide a registry of available skills. Each skill SHALL have a name, description, and instructions body parsed from SKILL.md frontmatter.
 
 #### Scenario: List available skills
 - **WHEN** user runs `tmd instructions` with no arguments

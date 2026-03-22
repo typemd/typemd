@@ -8,7 +8,6 @@ Feature: Instructions command
     Then the command should succeed
     And the output should contain "explore"
     And the output should contain "importer"
-    And the output should contain "importer"
 
   Scenario: List skills as JSON
     When I run instructions with json flag
