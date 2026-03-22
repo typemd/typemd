@@ -137,8 +137,8 @@ gh issue view <number> --json title,body,labels,assignees
 
 **Issue Type Routing:**
 
-- If the issue has a **`discussion` label** → invoke the `resolve-discussion` skill and stop.
-- If the issue has a **`tech-only` label** → mark as tech-only. This skips the OpenSpec design phase entirely (Phase 1). After Workspace Setup, proceed directly to **Phase 2: Implement** without OpenSpec.
+- If the issue has a **`💬 discussion` label** → invoke the `resolve-discussion` skill and stop.
+- If the issue has a **`🔩 tech-only` label** → mark as tech-only. This skips the OpenSpec design phase entirely (Phase 1). After Workspace Setup, proceed directly to **Phase 2: Implement** without OpenSpec.
 
 **Readiness check (AI-judged):**
 

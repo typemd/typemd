@@ -71,27 +71,41 @@ Suggest the type based on context. Ask for confirmation if ambiguous.
 
 ### Step 4: Determine labels
 
-After setting the issue type, assign **one or more component labels**. Optionally add extra labels if applicable.
+After setting the issue type, assign labels based on the feature's **impact area** in TypeMD. Multiple labels are allowed.
 
-**Component label** (pick one or more):
+**Top-level labels** (pick one or more):
 
-| Label | Scope |
-|---|---|
-| `core` | Core library — objects, types, relations, index (`core/`) |
-| `cli` | CLI commands (`cmd/`) |
-| `tui` | Terminal UI (`tui/`) |
-| `mcp` | MCP server (`mcp/`) |
-| `web` | Web UI (`web/`) |
-| `app` | Desktop app via Wails (`app/`) |
+| Label | Scope | When to use |
+|---|---|---|
+| `🧱 core` | Core library (`core/`) | Affects core design but no specific sub-category fits |
+| `💻 cli` | CLI commands (`cmd/`) | Affects CLI commands and argument design |
+| `🖥️ tui` | Terminal UI (`tui/`) | Affects TUI interface and interaction flows |
+| `🤖 mcp` | MCP server (`mcp/`) | Affects AI agent integration |
+| `🌐 web` | Web UI (`web/`) | Affects web interface design |
+
+**`core` sub-labels** (use together with `🧱 core`):
+
+| Label | Scope | When to use |
+|---|---|---|
+| `🏗️ core/schema` | Type system, inheritance, namespace | Affects object type definitions, schema design |
+| `🔍 core/query` | Query, filter, sort | Affects query syntax, dynamic views, saved queries |
+| `🔗 core/relation` | Relations, backlinks, wiki-links | Affects inter-object relations, reference system |
+| `🔄 core/sync` | Sync, collaboration, import/export | Affects multi-device sync, cross-vault, collaboration |
+| `⚙️ core/automation` | Computed properties, scheduling, reminders | Affects automated computation, scheduled tasks |
+
+**Labeling principles:**
+- If a core sub-category fits → use `🧱 core` + the sub-label (e.g. `🧱 core` + `🔍 core/query`)
+- If it affects core but no sub-category fits → use `🧱 core` alone
+- If it spans multiple areas → use multiple labels (e.g. `🧱 core` + `🖥️ tui`)
 
 **Optional extra labels**:
 
 | Label | When to use |
 |---|---|
-| `breaking-change` | Introduces breaking changes to public API or CLI |
-| `discussion` | Needs discussion before implementation |
-| `documentation` | Docs changes |
-| `tech-only` | Pure technical change — refactoring, dependency updates, CI fixes, internal restructuring — no user-facing spec changes |
+| `💥 breaking-change` | Introduces breaking changes to public API or CLI |
+| `💬 discussion` | Needs discussion before implementation |
+| `📝 documentation` | Docs changes |
+| `🔩 tech-only` | Pure technical change — refactoring, dependency updates, CI fixes, internal restructuring — no user-facing spec changes |
 
 **Tech-only detection:** During the brainstorming phase (Step 1), assess whether the issue is a **pure technical change** — one that does not alter user-facing behavior, APIs, or specs. Examples:
 
