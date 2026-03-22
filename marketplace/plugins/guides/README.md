@@ -1,32 +1,22 @@
-# guide
+# guides
 
-A [typemd](https://github.com/typemd/typemd) reference guide that teaches AI how to work with typemd vaults and use `tmd instructions` for enriched skill output.
+Reference guides for working with [typemd](https://github.com/typemd/typemd) vaults. Contains two skills:
 
-## What It Does
+## vault-guide
 
-This skill loads a comprehensive reference of typemd into the AI's context, covering:
+Comprehensive typemd reference that teaches AI how to design and manage vaults — CLI commands, type schemas, object format, wiki-links, views, templates, and TUI keybindings.
 
-- **CLI commands** — all `tmd` subcommands with usage and flags
-- **Object format** — markdown + YAML frontmatter structure, system properties
-- **Type schemas** — property types, relations, shared properties
-- **Wiki-links** — syntax and backlink tracking
-- **TUI** — panels, keybindings, modes
-- **Vault structure** — directory layout, SQLite index
-- **Skill instructions** — how to use `tmd instructions` to output embedded skills (explore, importer) enriched with vault context for AI integrations
+Activates automatically when working in a typemd vault (`.typemd/` directory present).
+
+## instructions-guide
+
+Guide for using `tmd instructions` to output embedded skills (explore, importer) enriched with vault context. Covers integration patterns for feeding vault-aware context to AI tools.
 
 ## Installation
 
 ```
 /plugin marketplace add typemd/marketplace
-/plugin install guide@typemd-marketplace
-```
-
-## When It Activates
-
-Claude loads the skill automatically when it detects you're working in a typemd vault (`.typemd/` directory present). You can also reference it explicitly:
-
-```
-/guide:instructions-guide
+/plugin install guides@typemd-marketplace
 ```
 
 ## Prerequisites
