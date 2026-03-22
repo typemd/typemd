@@ -5,19 +5,17 @@ sidebar:
   order: 2
 ---
 
-## Homebrew（macOS）
-
 ```bash
 brew install typemd/tap/typemd-cli
 ```
 
-## 從原始碼安裝
-
-確保你已安裝 [Go](https://go.dev/)，然後執行：
+或從原始碼安裝（需要 [Go](https://go.dev/)）：
 
 ```bash
 go install github.com/typemd/typemd/cmd/tmd@latest
 ```
+
+也可以從 [GitHub Releases](https://github.com/typemd/typemd/releases) 下載預編譯的執行檔。
 
 ## 驗證安裝
 

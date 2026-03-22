@@ -63,21 +63,17 @@ The full Object ID is `type/<slug>-<ulid>`, e.g. `book/golang-in-action-01jqr3k5
 
 ## Installation
 
-### Homebrew (macOS)
-
 ```bash
 brew install typemd/tap/typemd-cli
 ```
 
-### Go
+Or from source:
 
 ```bash
 go install github.com/typemd/typemd/cmd/tmd@latest
 ```
 
-### Binary
-
-Download from [GitHub Releases](https://github.com/typemd/typemd/releases).
+Pre-built binaries are also available on [GitHub Releases](https://github.com/typemd/typemd/releases).
 
 ## Usage
 

@@ -62,21 +62,17 @@ Object 以 Markdown 檔案搭配 YAML frontmatter 儲存。`objects/` 底下的�
 
 ## 安裝
 
-### Homebrew（macOS）
-
 ```bash
 brew install typemd/tap/typemd-cli
 ```
 
-### Go
+或從原始碼安裝：
 
 ```bash
 go install github.com/typemd/typemd/cmd/tmd@latest
 ```
 
-### 二進位檔
-
-從 [GitHub Releases](https://github.com/typemd/typemd/releases) 下載。
+也可以從 [GitHub Releases](https://github.com/typemd/typemd/releases) 下載預編譯的執行檔。
 
 ## 使用方式
 
