@@ -1,6 +1,6 @@
 ---
-name: guide
-description: typemd reference guide. Use when working in a typemd vault — provides knowledge of CLI commands, type schemas, object format, wiki-links, and vault structure.
+name: instructions-guide
+description: typemd reference guide for AI. Use when working in a typemd vault — provides CLI commands, type schemas, object format, wiki-links, vault structure, and tmd instructions usage for AI integrations.
 ---
 
 # typemd Reference Guide

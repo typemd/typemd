@@ -9,7 +9,7 @@ Analyze existing markdown files and suggest type schemas and properties for a ty
 
 ## Prerequisites
 
-If the `vault-guide` plugin is installed, load it first — it provides the complete typemd reference (type schema format, property types, and vault structure) that informs your recommendations.
+If the `guide` plugin is installed, load it first — it provides the complete typemd reference (type schema format, property types, and vault structure) that informs your recommendations.
 
 ## Constraints
 
