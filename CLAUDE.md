@@ -15,7 +15,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **web/** — Web UI: React + shadcn/ui (future)
 - **app/** — Desktop app via Wails + shared React frontend (future)
 - **websites/** — Non-Go websites (site, docs, blog)
-- **marketplace/** — Claude Code marketplace plugins (guides plugin with vault-guide and instructions-guide skills)
+- **marketplace/** — Claude Code marketplace plugins (typemd plugin with vault-guide, instructions-guide, explore, and importer skills)
 
 ## Core Package Architecture
 
@@ -154,7 +154,7 @@ graph LR
 | `template.go` | Template entity + Vault facade methods (ListTemplates/LoadTemplate/SaveTemplate/DeleteTemplate) |
 | `type_schema.go` | TypeSchema entity + helpers + Vault type CRUD (SaveType/DeleteType/CountObjectsByType) + LoadType with schema cache + InvalidateSchemaCache |
 | `type_schema_marshal.go` | YAML serialization (MarshalTypeSchema) + version handling (CompareVersions) + color validation (ValidColorPresets) |
-| `type_schema_validate.go` | Schema validation (ValidateSchema) + object validation (ValidateObject) + property type validators |
+| `type_schema_validate.go` | Schema validation (ValidateSchema) + object validation (ValidateObject) + property type validators + ValidatePropertyValue (string input validation for inline editing) |
 | `ulid.go` | GenerateULID + StripULID + ulidSuffixPattern for ULID generation and stripping |
 | `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateRelationReferences, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
@@ -165,6 +165,8 @@ graph LR
 | `ai/prompts.go` | Default system prompts for describe, tag, and explore operations |
 | `view.go` | ViewConfig/FilterRule/GroupRule structs + ViewLayout constants + custom UnmarshalYAML (legacy string→[]GroupRule migration) + Vault view CRUD (ListViews/LoadView/SaveView/DeleteView/DefaultView) |
 | `wikilink.go` | WikiLink/StoredWikiLink structs + ParseWikiLinks + RenderWikiLinks + Vault.ListWikiLinks/ListBacklinks facades |
+| `prop_editor.go` | Property editor sub-model (propEditor): cursor navigation, editable property filtering, textinput/select/multi_select/checkbox edit widgets, Render with cursor indicator |
+| `prop_editor_update.go` | Property editor Update: navigation (j/k), Enter to edit, Esc to cancel, type-specific validation via core.ValidatePropertyValue, applyPropertyValue save pipeline |
 | `widget/toast.go` | ToastModel (transient notifications): Show/Update/View/Overlay, auto-dismiss via tea.Tick + seq, group aggregation, level filtering (Info/Warning/Error), configurable via ToastConfig |
 
 ### TUI Architecture
@@ -185,7 +187,9 @@ Type creation uses a **title panel wizard** (`createTypeState` in `tui/create_ty
 
 The TUI supports **AI-powered assistance** when `ai.enabled: true` in config and `claude` CLI is installed. Pressing `g` in object detail view opens an AI action picker popup (Generate description / Suggest tags). Pressing `ctrl+e` from the sidebar enters schema explore mode. AI operations use the `claude` CLI as a subprocess (`claude -p --output-format json --json-schema ...`). AI state is tracked via `aiState` (idle, action picker, loading, preview, showing tags) with corresponding help bar messages and property panel overlays (`tui/ai.go`, `tui/ai_update.go`, `tui/ai_render.go`). AI errors are surfaced as toast notifications.
 
-The TUI uses a **toast notification system** (`widget.ToastModel` in `tui/widget/toast.go`) for transient messages. Toasts appear as a floating overlay in the bottom-right corner via lipgloss Layer/Compositor. Three severity levels: Info, Warning, Error. Toasts auto-dismiss after a configurable duration (default 3s) and can be manually dismissed via a configurable key (default Esc, which is consumed by the toast). Multiple messages from a single event are aggregated via group keys (e.g., `⚠ 2 not found`, `⚠ 1 ambiguous`). Toast is initialized from `tui.toast.*` config via `newToastFromConfig()`. Current use cases: sync unresolved reference warnings and AI operation errors.
+The TUI supports **inline property editing** via the `propEditor` sub-model (`tui/prop_editor.go`, `prop_editor_update.go`). When the properties panel is focused (Tab from body), a cursor (▸) highlights the current editable property. Navigation uses j/k; Enter activates type-appropriate editing; Esc returns to sidebar. Read-only properties (created_at, updated_at, relations, backlinks, tags) are displayed but skipped during navigation. Edit widgets by property type: **string/number/date/datetime/url** use a textinput with type-specific validation (via `core.ValidatePropertyValue`); **checkbox** toggles directly between ☐/☑ on Enter/Space; **select** opens an option list picker; **multi_select** opens a multi-picker with Space toggle and Enter confirm. Validation errors appear as toast notifications. Edits auto-save on confirm. The help bar shows `[PROPS]` during navigation and `[EDIT]` during active editing. The properties panel border changes to edit color (orange) during active editing.
+
+The TUI uses a **toast notification system** (`widget.ToastModel` in `tui/widget/toast.go`) for transient messages. Toasts appear as a floating overlay in the bottom-right corner via lipgloss Layer/Compositor. Three severity levels: Info, Warning, Error. Toasts auto-dismiss after a configurable duration (default 3s) and can be manually dismissed via a configurable key (default Esc, which is consumed by the toast). Multiple messages from a single event are aggregated via group keys (e.g., `⚠ 2 not found`, `⚠ 1 ambiguous`). Toast is initialized from `tui.toast.*` config via `newToastFromConfig()`. Current use cases: sync unresolved reference warnings, AI operation errors, and property validation errors.
 
 ## Data Model
 

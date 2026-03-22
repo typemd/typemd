@@ -29,7 +29,7 @@ TypeMD lets you think in **Objects** — books, people, ideas, meetings — conn
 - **Wiki-links & Backlinks** — link objects inline with `[[type/name-ulid]]` syntax, with automatic backlink tracking
 - **Full-text search** — find anything across your vault
 - **Structured queries** — filter objects by type, property, or relation
-- **TUI** — Three-panel interface powered by [Bubble Tea](https://github.com/charmbracelet/bubbletea), with auto-refresh on file changes
+- **TUI** — Three-panel interface powered by [Bubble Tea](https://github.com/charmbracelet/bubbletea), with inline property editing and auto-refresh on file changes
 - **AI Assist** — generate descriptions, suggest tags, and explore schemas with Claude AI in the TUI
 - **MCP Server** — integrate with AI assistants via Model Context Protocol
 - **Local-first** — everything lives on your machine as plain Markdown files
