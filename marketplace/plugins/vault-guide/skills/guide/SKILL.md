@@ -1,5 +1,5 @@
 ---
-name: vault-guide
+name: guide
 description: typemd reference guide. Use when working in a typemd vault — provides knowledge of CLI commands, type schemas, object format, wiki-links, and vault structure.
 ---
 

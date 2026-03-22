@@ -94,7 +94,7 @@ func TestListSkills_Count(t *testing.T) {
 }
 
 func TestGetSkill_EachSkillValid(t *testing.T) {
-	for _, name := range []string{"explore", "importer", "vault-guide"} {
+	for _, name := range []string{"explore", "importer", "guide"} {
 		skill, err := GetSkill(name)
 		if err != nil {
 			t.Errorf("GetSkill(%q): %v", name, err)
