@@ -204,12 +204,17 @@ func TestFormatValue(t *testing.T) {
 		{
 			name:     "checkbox true",
 			prop:     DisplayProperty{Key: "active", Value: true, Type: "checkbox"},
-			expected: "✓",
+			expected: "☑",
 		},
 		{
 			name:     "checkbox false",
 			prop:     DisplayProperty{Key: "active", Value: false, Type: "checkbox"},
-			expected: "",
+			expected: "☐",
+		},
+		{
+			name:     "checkbox nil",
+			prop:     DisplayProperty{Key: "active", Value: nil, Type: "checkbox"},
+			expected: "☐",
 		},
 		{
 			name:     "date",
@@ -277,12 +282,12 @@ func TestFormatDelegatesToFormatValue(t *testing.T) {
 		{
 			name:     "checkbox true",
 			prop:     DisplayProperty{Key: "active", Value: true, Type: "checkbox"},
-			expected: "active: ✓",
+			expected: "active: ☑",
 		},
 		{
 			name:     "checkbox false",
 			prop:     DisplayProperty{Key: "active", Value: false, Type: "checkbox"},
-			expected: "active: ",
+			expected: "active: ☐",
 		},
 		{
 			name:     "date",

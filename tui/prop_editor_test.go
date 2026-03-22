@@ -1,0 +1,355 @@
+package tui
+
+import (
+	"strings"
+	"testing"
+
+	"github.com/typemd/typemd/core"
+	tea "charm.land/bubbletea/v2"
+)
+
+// testDisplayProps returns a typical set of display properties for testing.
+func testDisplayProps() []core.DisplayProperty {
+	return []core.DisplayProperty{
+		{Key: "name", Value: "Test Object", Type: "string"},
+		{Key: "description", Value: "A test object", Type: "string"},
+		{Key: "title", Value: "Hello", Type: "string"},
+		{Key: "rating", Value: 5, Type: "number"},
+		{Key: "published", Value: false, Type: "checkbox"},
+		{Key: "status", Value: "draft", Type: "select"},
+		{Key: "created_at", Value: "2024-01-01", Type: "date"},
+		{Key: "updated_at", Value: "2024-01-02", Type: "date"},
+		{Key: "tags", Value: nil, IsRelation: true},
+		{Key: "author", Value: "person/alice", IsRelation: true},
+		{Key: "books", IsReverse: true, FromID: "book/clean-code"},
+	}
+}
+
+func testPropSchema() *core.TypeSchema {
+	return &core.TypeSchema{
+		Name: "book",
+		Properties: []core.Property{
+			{Name: "title", Type: "string"},
+			{Name: "rating", Type: "number"},
+			{Name: "published", Type: "checkbox"},
+			{Name: "status", Type: "select", Options: []core.Option{
+				{Value: "draft"},
+				{Value: "published"},
+				{Value: "archived"},
+			}},
+			{Name: "author", Type: "relation", Target: "person"},
+		},
+	}
+}
+
+// --- Property cursor navigation tests ---
+
+func TestPropEditor_CursorAppearsOnCreation(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	// Should have items (excluding name, pinned, etc.)
+	if len(pe.items) == 0 {
+		t.Fatal("expected non-empty items list")
+	}
+
+	// Cursor should be on first editable item
+	item := pe.currentItem()
+	if item == nil {
+		t.Fatal("expected cursor on an item")
+	}
+	if !item.editable {
+		t.Errorf("cursor should be on editable item, got key=%s editable=%v", item.dp.Key, item.editable)
+	}
+}
+
+func TestPropEditor_CursorSkipsName(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	for _, item := range pe.items {
+		if item.dp.Key == "name" {
+			t.Error("name property should not appear in items list")
+		}
+	}
+}
+
+func TestPropEditor_CursorSkipsImmutableSystemProps(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	// created_at and updated_at should not be editable
+	for _, item := range pe.items {
+		if item.dp.Key == "created_at" || item.dp.Key == "updated_at" {
+			if item.editable {
+				t.Errorf("%s should not be editable", item.dp.Key)
+			}
+		}
+	}
+}
+
+func TestPropEditor_CursorSkipsRelations(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	for _, item := range pe.items {
+		if item.dp.IsRelation && item.editable {
+			t.Errorf("relation property %s should not be editable", item.dp.Key)
+		}
+		if item.dp.IsReverse && item.editable {
+			t.Errorf("reverse relation property %s should not be editable", item.dp.Key)
+		}
+	}
+}
+
+func TestPropEditor_CursorSkipsTags(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	for _, item := range pe.items {
+		if item.dp.Key == "tags" && item.editable {
+			t.Error("tags property should not be editable")
+		}
+	}
+}
+
+func TestPropEditor_MoveDown(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	firstKey := pe.currentItem().dp.Key
+	pe.moveDown()
+	secondKey := pe.currentItem().dp.Key
+
+	if firstKey == secondKey {
+		t.Error("cursor should have moved to a different property")
+	}
+	if !pe.currentItem().editable {
+		t.Error("cursor should be on an editable property after moveDown")
+	}
+}
+
+func TestPropEditor_MoveUp(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	// Move down first, then up
+	pe.moveDown()
+	secondKey := pe.currentItem().dp.Key
+	pe.moveUp()
+	firstKey := pe.currentItem().dp.Key
+
+	if firstKey == secondKey {
+		t.Error("cursor should have moved back after moveUp")
+	}
+}
+
+func TestPropEditor_MoveUpAtTop(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	firstKey := pe.currentItem().dp.Key
+	pe.moveUp() // already at top
+	sameKey := pe.currentItem().dp.Key
+
+	if firstKey != sameKey {
+		t.Error("cursor should stay at top when moveUp at boundary")
+	}
+}
+
+func TestPropEditor_MoveDownAtBottom(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	// Move to bottom
+	for range 20 {
+		pe.moveDown()
+	}
+	bottomKey := pe.currentItem().dp.Key
+	pe.moveDown() // already at bottom
+	sameKey := pe.currentItem().dp.Key
+
+	if bottomKey != sameKey {
+		t.Error("cursor should stay at bottom when moveDown at boundary")
+	}
+}
+
+// --- Textinput editing tests ---
+
+func TestPropEditor_ActivateTextInput(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	// Move to a string property
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "title" {
+		pe.moveDown()
+	}
+	if pe.currentItem() == nil || pe.currentItem().dp.Key != "title" {
+		t.Fatal("could not navigate to title property")
+	}
+
+	pe.activateEdit()
+
+	if pe.mode != propModeTextInput {
+		t.Errorf("expected propModeTextInput, got %d", pe.mode)
+	}
+	if pe.textInput.Value() != "Hello" {
+		t.Errorf("textinput should be pre-filled with 'Hello', got %q", pe.textInput.Value())
+	}
+}
+
+func TestPropEditor_CancelTextInput(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "title" {
+		pe.moveDown()
+	}
+	pe.activateEdit()
+	pe.cancelEdit()
+
+	if pe.mode != propModeNavigate {
+		t.Error("mode should be propModeNavigate after cancel")
+	}
+}
+
+// --- Checkbox toggle tests ---
+
+func TestPropEditor_CheckboxIsNotTextInput(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	// Move to checkbox property
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "published" {
+		pe.moveDown()
+	}
+	if pe.currentItem() == nil || pe.currentItem().dp.Key != "published" {
+		t.Fatal("could not navigate to published property")
+	}
+
+	// activateEdit should return nil for checkbox (direct toggle handled elsewhere)
+	cmd := pe.activateEdit()
+	if cmd != nil {
+		t.Error("checkbox should not return a command from activateEdit")
+	}
+	if pe.mode != propModeNavigate {
+		t.Error("checkbox should not enter textinput mode")
+	}
+}
+
+// --- Select picker tests ---
+
+func TestPropEditor_ActivateSelectPicker(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	// Move to status (select) property
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "status" {
+		pe.moveDown()
+	}
+	if pe.currentItem() == nil || pe.currentItem().dp.Key != "status" {
+		t.Fatal("could not navigate to status property")
+	}
+
+	pe.activateEdit()
+
+	if pe.mode != propModeSelectPick {
+		t.Errorf("expected propModeSelectPick, got %d", pe.mode)
+	}
+	if len(pe.pickerOptions) != 3 {
+		t.Errorf("expected 3 options, got %d", len(pe.pickerOptions))
+	}
+	// Current value "draft" should be highlighted
+	if pe.pickerCursor != 0 {
+		t.Errorf("picker cursor should be on 'draft' (index 0), got %d", pe.pickerCursor)
+	}
+}
+
+func TestPropEditor_SelectPickerNavigation(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "status" {
+		pe.moveDown()
+	}
+	pe.activateEdit()
+
+	// Move down in picker
+	if pe.pickerCursor != 0 {
+		t.Fatalf("expected cursor at 0, got %d", pe.pickerCursor)
+	}
+	pe.pickerCursor++
+	if pe.pickerCursor != 1 {
+		t.Errorf("expected cursor at 1, got %d", pe.pickerCursor)
+	}
+}
+
+func TestPropEditor_CancelSelectPicker(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "status" {
+		pe.moveDown()
+	}
+	pe.activateEdit()
+	pe.cancelEdit()
+
+	if pe.mode != propModeNavigate {
+		t.Error("mode should be propModeNavigate after cancel")
+	}
+}
+
+// --- Render tests ---
+
+func TestPropEditor_RenderWithCursor(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+	output := pe.Render(true) // focused
+
+	if output == "" {
+		t.Error("render output should not be empty")
+	}
+	// Should contain Properties header
+	if !strings.Contains(output, "Properties") {
+		t.Error("output should contain 'Properties' header")
+	}
+}
+
+func TestPropEditor_RenderWithoutCursor(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+	output := pe.Render(false) // not focused
+
+	if output == "" {
+		t.Error("render output should not be empty")
+	}
+}
+
+// --- Integration tests with model ---
+
+func TestModel_PropNavigation_UpDown(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusProps
+	m.propsVisible = true
+	// Manually initialize propEdit since no vault
+	m.propEdit = newPropEditor(testDisplayProps(), testPropSchema())
+
+	startCursor := m.propEdit.cursor
+
+	// Press down
+	msg := tea.KeyPressMsg{Code: 'j', Text: "j"}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.propEdit.cursor == startCursor && len(updated.propEdit.items) > 1 {
+		hasMoreEditable := false
+		for i := startCursor + 1; i < len(updated.propEdit.items); i++ {
+			if updated.propEdit.items[i].editable {
+				hasMoreEditable = true
+				break
+			}
+		}
+		if hasMoreEditable {
+			t.Error("cursor should have moved down")
+		}
+	}
+}
+
+func TestModel_PropEscReturnsToSidebar(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusProps
+	m.propsVisible = true
+	m.propEdit = newPropEditor(testDisplayProps(), testPropSchema())
+
+	msg := tea.KeyPressMsg{Code: tea.KeyEscape, Text: "esc"}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.focus != focusLeft {
+		t.Errorf("focus should be focusLeft after Esc, got %d", updated.focus)
+	}
+}
+

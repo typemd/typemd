@@ -111,7 +111,7 @@ Requires `ai.enabled: true` in `.typemd/config.yaml` and the `claude` CLI instal
 
 ### Toast Notifications
 
-The TUI shows transient toast notifications in the bottom-right corner for events like sync warnings (unresolved references) and AI errors. Toasts auto-dismiss after 3 seconds (configurable via `tui.toast.duration_ms`). Press `Esc` to dismiss manually — while a toast is visible, `Esc` is consumed by the toast and does not propagate to other panels. See [Configuration](/basics/configuration/) for all toast settings.
+The TUI shows transient toast notifications in the bottom-right corner for events like sync warnings (unresolved references), AI errors, and property validation errors. Toasts auto-dismiss after 3 seconds (configurable via `tui.toast.duration_ms`). Press `Esc` to dismiss manually — while a toast is visible, `Esc` is consumed by the toast and does not propagate to other panels. See [Configuration](/basics/configuration/) for all toast settings.
 
 ### View Mode
 
@@ -176,6 +176,38 @@ Active when the type editor panel has focus. Press `Tab` or `Enter` on a type he
 | `p` | Toggle pin on property |
 | `Tab`/`Esc` | Return focus to sidebar |
 | `q`/`Ctrl+C` | Quit |
+
+### `[PROPS]` — Property Navigation and Editing
+
+Active when the properties panel is focused. Press `Tab` from the body panel to enter this mode. A cursor (▸) highlights the current editable property. Read-only properties (`created_at`, `updated_at`, relations, backlinks, tags) are displayed dimmed and skipped during navigation.
+
+| Key | Action |
+|-----|--------|
+| `↑`/`k`, `↓`/`j` | Navigate between editable properties |
+| `Enter` | Activate editing for current property |
+| `Space` | Toggle checkbox property (when on checkbox) |
+| `Esc` | Return focus to sidebar |
+| `Tab` | Switch focus to another panel |
+
+#### Editing by property type
+
+| Property Type | Widget | Behavior |
+|---|---|---|
+| string, number, date, datetime, url | Textinput | Pre-filled with current value. `Enter` confirms, `Esc` cancels. |
+| checkbox | Toggle | `Enter` or `Space` toggles between ☐ and ☑. Saves immediately. |
+| select | Option picker | Shows available options. `↑`/`↓` navigate, `Enter` selects, `Esc` cancels. |
+| multi_select | Multi-picker | Shows options with checkboxes. `Space` toggles, `Enter` confirms all, `Esc` cancels. |
+
+**Input validation:** When confirming a text edit, the value is validated:
+- **Number** — must be a valid integer or decimal
+- **Date** — must be YYYY-MM-DD format
+- **Datetime** — must be valid ISO 8601 (e.g. `2024-01-15T10:30:00`)
+- **URL** — must start with `http://` or `https://`
+- **Select** — must match one of the defined options
+
+If validation fails, a toast notification shows the error and the edit remains active. Press `Esc` to cancel.
+
+Edits are auto-saved on confirm. The panel border changes to orange during active editing, and the help bar shows `[EDIT]`.
 
 ### `[EDIT]` — Body Editing
 

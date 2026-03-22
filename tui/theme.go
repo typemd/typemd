@@ -34,6 +34,7 @@ var (
 	colorWikiLink     color.Color = lipgloss.Color(defaultColorWikiLink)
 	wikiLinkStyleBase             = lipgloss.NewStyle().Foreground(colorWikiLink)
 	highlightStyle                = lipgloss.NewStyle().Bold(true).Reverse(true)
+	dimStyle                      = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
 )
 
 // loadTheme reads .typemd/tui.yaml from the vault root and overrides default

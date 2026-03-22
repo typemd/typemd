@@ -73,6 +73,9 @@ type model struct {
 	propsWidth    int  // adjustable width for properties panel
 	propsVisible  bool // toggle visibility
 
+	// Property editor (inline editing in properties panel)
+	propEdit *propEditor // non-nil when properties panel has cursor/editing
+
 	// Shared detail state
 	displayProps []core.DisplayProperty
 
@@ -659,6 +662,21 @@ func (m *model) applyLoadedObject(obj *core.Object) {
 	m.selected = obj
 	m.displayProps, _ = m.vault.BuildDisplayProperties(obj)
 	m.refreshLoadedModTime(obj)
+	m.refreshPropEditor()
+}
+
+// refreshPropEditor updates the property editor with current display properties.
+func (m *model) refreshPropEditor() {
+	if m.selected == nil || m.vault == nil {
+		m.propEdit = nil
+		return
+	}
+	schema, _ := m.vault.LoadType(m.selected.Type)
+	if m.propEdit == nil {
+		m.propEdit = newPropEditor(m.displayProps, schema)
+	} else {
+		m.propEdit.updateItems(m.displayProps, schema)
+	}
 }
 
 // selectCurrentRow updates the selected object based on current cursor position.
@@ -903,6 +921,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		searchInput:   initSearchInput(),
 		toast:         toast,
 	}
+	m.refreshPropEditor()
 
 	p := tea.NewProgram(m)
 	_, err = p.Run()

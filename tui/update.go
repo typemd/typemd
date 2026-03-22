@@ -30,6 +30,14 @@ func updateConflict(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 
 // updateEdit handles key events in edit mode.
 func updateEdit(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
+	// Property editor handles its own editing when props focused and propEdit is active
+	if m.focus == focusProps && m.propEdit != nil && m.propEdit.isEditing() {
+		newM, cmd, consumed := updatePropEditor(m, msg)
+		if consumed {
+			return newM, cmd
+		}
+	}
+
 	if msg.String() == "esc" {
 		if m.focus == focusBody && m.selected != nil {
 			newBody := m.bodyTextarea.Value()
@@ -56,6 +64,14 @@ func updateEdit(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 
 // updateNormal handles key events in normal (non-modal) mode.
 func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
+	// Property editor in editing state intercepts all keys
+	if m.focus == focusProps && m.propEdit != nil && m.propEdit.isEditing() {
+		newM, cmd, consumed := updatePropEditor(m, msg)
+		if consumed {
+			return newM, cmd
+		}
+	}
+
 	switch msg.String() {
 	case "q", "ctrl+c":
 		if m.vault != nil {
@@ -95,9 +111,6 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		if m.focus == focusBody && m.selected != nil {
 			return m, m.enterBodyEditMode()
 		}
-		if m.focus == focusProps {
-			m.editMode = true
-		}
 		return m, nil
 
 	case "r":
@@ -110,10 +123,11 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		return m, nil
 
 	case "tab":
+		prevFocus := m.focus
 		switch m.focus {
 		case focusLeft:
 			if m.rightPanel == panelTypeEditor || m.rightPanel == panelTemplate {
-				m.focus = focusBody // focusBody doubles as "right panel focus" for type/template editor
+				m.focus = focusBody
 			} else {
 				m.focus = focusBody
 			}
@@ -129,6 +143,10 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			}
 		case focusProps:
 			m.focus = focusLeft
+		}
+		// Refresh props content when entering/leaving focusProps to show/hide cursor
+		if m.focus == focusProps || prevFocus == focusProps {
+			m.updatePropsContent()
 		}
 		return m, nil
 
@@ -173,6 +191,12 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		return m, nil
 
 	case "esc":
+		// Property editor: return to sidebar
+		if m.focus == focusProps && m.propEdit != nil {
+			m.focus = focusLeft
+			m.updateDetail()
+			return m, nil
+		}
 		// Clear search results and return to normal list
 		if m.searchResults != nil {
 			m.searchResults = nil
@@ -189,6 +213,11 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			m.selectCurrentRow()
 		} else if m.focus == focusBody {
 			m.bodyViewport.ScrollUp(1)
+		} else if m.focus == focusProps && m.propEdit != nil {
+			newM, cmd, consumed := updatePropNavigate(m, msg)
+			if consumed {
+				return newM, cmd
+			}
 		} else if m.focus == focusProps {
 			m.propsViewport.ScrollUp(1)
 		}
@@ -202,6 +231,11 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			m.selectCurrentRow()
 		} else if m.focus == focusBody {
 			m.bodyViewport.ScrollDown(1)
+		} else if m.focus == focusProps && m.propEdit != nil {
+			newM, cmd, consumed := updatePropNavigate(m, msg)
+			if consumed {
+				return newM, cmd
+			}
 		} else if m.focus == focusProps {
 			m.propsViewport.ScrollDown(1)
 		}
@@ -242,6 +276,12 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		return m, nil
 
 	case "enter":
+		if m.focus == focusProps && m.propEdit != nil {
+			newM, cmd, consumed := updatePropNavigate(m, msg)
+			if consumed {
+				return newM, cmd
+			}
+		}
 		if m.focus == focusLeft {
 			rows := m.currentRows()
 			if m.cursor >= 0 && m.cursor < len(rows) {
@@ -262,6 +302,12 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		return m, nil
 
 	case " ", "space":
+		if m.focus == focusProps && m.propEdit != nil {
+			newM, cmd, consumed := updatePropNavigate(m, msg)
+			if consumed {
+				return newM, cmd
+			}
+		}
 		if m.focus == focusLeft {
 			rows := m.currentRows()
 			if m.cursor >= 0 && m.cursor < len(rows) {
