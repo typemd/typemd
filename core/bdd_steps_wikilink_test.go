@@ -233,6 +233,136 @@ func (dc *domainContext) theRenderedBodyShouldNotContain(unexpected string) erro
 	return nil
 }
 
+// ── Shorthand wiki-link steps ───────────────────────────────────────────────
+
+func (dc *domainContext) anotherObjectNamedExists(typeName, name string) {
+	obj, err := dc.vault.NewObject(typeName, name, "")
+	if err != nil {
+		panic(fmt.Sprintf("create another object %s/%s failed: %v", typeName, name, err))
+	}
+	dc.objects[name+"_2"] = obj
+}
+
+func (dc *domainContext) bodyContainsAShorthandWikiLink(sourceName, target string) {
+	source := dc.objects[sourceName]
+	if source == nil {
+		panic(fmt.Sprintf("source object %q not found", sourceName))
+	}
+	body := fmt.Sprintf("---\nname: %s\n---\n\nSee [[%s]].\n", sourceName, target)
+	os.WriteFile(dc.vault.ObjectPath(source.Type, source.Filename), []byte(body), 0644)
+}
+
+func (dc *domainContext) bodyContainsAShorthandWikiLinkWithDisplayText(sourceName, target, displayText string) {
+	source := dc.objects[sourceName]
+	if source == nil {
+		panic(fmt.Sprintf("source object %q not found", sourceName))
+	}
+	body := fmt.Sprintf("---\nname: %s\n---\n\nSee [[%s|%s]].\n", sourceName, target, displayText)
+	os.WriteFile(dc.vault.ObjectPath(source.Type, source.Filename), []byte(body), 0644)
+}
+
+func (dc *domainContext) theWikiLinkShouldResolveTo(targetName string) error {
+	target := dc.objects[targetName]
+	if target == nil {
+		return fmt.Errorf("object %q not found", targetName)
+	}
+	if len(dc.wikiLinks) == 0 {
+		return fmt.Errorf("no wiki-links to check")
+	}
+	if dc.wikiLinks[0].ToID != target.ID {
+		return fmt.Errorf("wiki-link ToID = %q, want %q", dc.wikiLinks[0].ToID, target.ID)
+	}
+	return nil
+}
+
+func (dc *domainContext) bodyOnDiskShouldContainTheFullIDOf(sourceName, targetName string) error {
+	source := dc.objects[sourceName]
+	target := dc.objects[targetName]
+	if source == nil || target == nil {
+		return fmt.Errorf("object %q or %q not found", sourceName, targetName)
+	}
+	data, err := os.ReadFile(dc.vault.ObjectPath(source.Type, source.Filename))
+	if err != nil {
+		return fmt.Errorf("read file: %v", err)
+	}
+	expected := "[[" + target.ID + "]]"
+	if !strings.Contains(string(data), expected) {
+		return fmt.Errorf("body does not contain %q, got:\n%s", expected, string(data))
+	}
+	return nil
+}
+
+func (dc *domainContext) bodyOnDiskShouldContainTheFullIDOfWithDisplayText(sourceName, targetName, displayText string) error {
+	source := dc.objects[sourceName]
+	target := dc.objects[targetName]
+	if source == nil || target == nil {
+		return fmt.Errorf("object %q or %q not found", sourceName, targetName)
+	}
+	data, err := os.ReadFile(dc.vault.ObjectPath(source.Type, source.Filename))
+	if err != nil {
+		return fmt.Errorf("read file: %v", err)
+	}
+	expected := "[[" + target.ID + "|" + displayText + "]]"
+	if !strings.Contains(string(data), expected) {
+		return fmt.Errorf("body does not contain %q, got:\n%s", expected, string(data))
+	}
+	return nil
+}
+
+func (dc *domainContext) bodyOnDiskShouldContain(sourceName, expected string) error {
+	source := dc.objects[sourceName]
+	if source == nil {
+		return fmt.Errorf("object %q not found", sourceName)
+	}
+	data, err := os.ReadFile(dc.vault.ObjectPath(source.Type, source.Filename))
+	if err != nil {
+		return fmt.Errorf("read file: %v", err)
+	}
+	if !strings.Contains(string(data), expected) {
+		return fmt.Errorf("body does not contain %q, got:\n%s", expected, string(data))
+	}
+	return nil
+}
+
+func (dc *domainContext) iSyncTheIndexAndCaptureTheResult() {
+	result, err := dc.vault.SyncIndex()
+	dc.lastErr = err
+	dc.syncResult = result
+}
+
+func (dc *domainContext) theSyncResultShouldHaveNWikiLinksExpanded(expected int) error {
+	if dc.syncResult == nil {
+		return fmt.Errorf("no sync result captured")
+	}
+	if dc.syncResult.WikiLinksExpanded != expected {
+		return fmt.Errorf("WikiLinksExpanded = %d, want %d", dc.syncResult.WikiLinksExpanded, expected)
+	}
+	return nil
+}
+
+func (dc *domainContext) theSyncResultShouldHaveNUnresolvedWikiLinks(expected int) error {
+	if dc.syncResult == nil {
+		return fmt.Errorf("no sync result captured")
+	}
+	if len(dc.syncResult.UnresolvedWikiLinks) != expected {
+		return fmt.Errorf("UnresolvedWikiLinks = %d, want %d", len(dc.syncResult.UnresolvedWikiLinks), expected)
+	}
+	return nil
+}
+
+func (dc *domainContext) theUnresolvedWikiLinkReasonShouldBe(expected string) error {
+	if dc.syncResult == nil {
+		return fmt.Errorf("no sync result captured")
+	}
+	if len(dc.syncResult.UnresolvedWikiLinks) == 0 {
+		return fmt.Errorf("no unresolved wiki-links")
+	}
+	if dc.syncResult.UnresolvedWikiLinks[0].Reason != expected {
+		return fmt.Errorf("reason = %q, want %q", dc.syncResult.UnresolvedWikiLinks[0].Reason, expected)
+	}
+	return nil
+}
+
 func initWikiLinkSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a vault is ready with note schemas$`, dc.aVaultIsReadyWithNoteSchemas)
 	ctx.Step(`^"([^"]*)" body contains a wiki-link to "([^"]*)"$`, dc.bodyContainsAWikiLinkTo)
@@ -252,4 +382,17 @@ func initWikiLinkSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^I render the body of "([^"]*)"$`, dc.iRenderTheBodyOf)
 	ctx.Step(`^the rendered body should contain "([^"]*)"$`, dc.theRenderedBodyShouldContain)
 	ctx.Step(`^the rendered body should not contain "([^"]*)"$`, dc.theRenderedBodyShouldNotContain)
+
+	// Shorthand wiki-link steps
+	ctx.Step(`^another "([^"]*)" object named "([^"]*)" exists$`, dc.anotherObjectNamedExists)
+	ctx.Step(`^"([^"]*)" body contains a shorthand wiki-link "([^"]*)"$`, dc.bodyContainsAShorthandWikiLink)
+	ctx.Step(`^"([^"]*)" body contains a shorthand wiki-link "([^"]*)" with display text "([^"]*)"$`, dc.bodyContainsAShorthandWikiLinkWithDisplayText)
+	ctx.Step(`^the wiki-link should resolve to "([^"]*)"$`, dc.theWikiLinkShouldResolveTo)
+	ctx.Step(`^"([^"]*)" body on disk should contain the full ID of "([^"]*)"$`, dc.bodyOnDiskShouldContainTheFullIDOf)
+	ctx.Step(`^"([^"]*)" body on disk should contain the full ID of "([^"]*)" with display text "([^"]*)"$`, dc.bodyOnDiskShouldContainTheFullIDOfWithDisplayText)
+	ctx.Step(`^"([^"]*)" body on disk should contain "([^"]*)"$`, dc.bodyOnDiskShouldContain)
+	ctx.Step(`^I sync the index and capture the result$`, dc.iSyncTheIndexAndCaptureTheResult)
+	ctx.Step(`^the sync result should have (\d+) wiki-links? expanded$`, dc.theSyncResultShouldHaveNWikiLinksExpanded)
+	ctx.Step(`^the sync result should have (\d+) unresolved wiki-links?$`, dc.theSyncResultShouldHaveNUnresolvedWikiLinks)
+	ctx.Step(`^the unresolved wiki-link reason should be "([^"]*)"$`, dc.theUnresolvedWikiLinkReasonShouldBe)
 }

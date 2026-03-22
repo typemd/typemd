@@ -24,13 +24,23 @@ type UnresolvedRelation struct {
 	Matches  []string // candidate IDs for ambiguous matches
 }
 
+// UnresolvedWikiLink represents a wiki-link that could not be resolved during sync.
+type UnresolvedWikiLink struct {
+	ObjectID string   // the object containing the link
+	Target   string   // the unresolved target text
+	Reason   string   // "not_found" or "ambiguous"
+	Matches  []string // candidate IDs for ambiguous matches
+}
+
 // SyncResult holds statistics from a SyncIndex operation.
 type SyncResult struct {
-	Synced     int                  // number of objects upserted into the index
-	Deleted    int
-	Orphaned   []OrphanedRelation
-	Expanded   int                  // number of relation prefixes auto-expanded to full IDs
-	Unresolved []UnresolvedRelation // relation references that could not be resolved
+	Synced             int                  // number of objects upserted into the index
+	Deleted            int
+	Orphaned           []OrphanedRelation
+	Expanded           int                  // number of relation prefixes auto-expanded to full IDs
+	Unresolved         []UnresolvedRelation // relation references that could not be resolved
+	WikiLinksExpanded  int                  // number of shorthand wiki-links expanded to full IDs
+	UnresolvedWikiLinks []UnresolvedWikiLink // wiki-links that could not be resolved
 }
 
 // syncContext holds intermediate state collected during sync.

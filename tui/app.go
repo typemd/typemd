@@ -576,9 +576,14 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 
 	m.selectCurrentRow()
 
-	// Show toast for unresolved references
-	if result != nil && len(result.Unresolved) > 0 {
-		return m.toast.Show(widget.ToastWarning, unresolvedToToastItems(result.Unresolved))
+	// Show toast for unresolved references (relations + wiki-links)
+	if result != nil {
+		var items []widget.ToastItem
+		items = append(items, unresolvedToToastItems(result.Unresolved)...)
+		items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
+		if len(items) > 0 {
+			return m.toast.Show(widget.ToastWarning, items)
+		}
 	}
 	return nil
 }
@@ -599,6 +604,17 @@ func unresolvedToToastItems(unresolved []core.UnresolvedRelation) []widget.Toast
 	for i, u := range unresolved {
 		items[i] = widget.ToastItem{
 			Message: fmt.Sprintf("%s.%s: %s", u.ObjectID, u.Property, u.Value),
+			Group:   reasonToGroup(u.Reason),
+		}
+	}
+	return items
+}
+
+func unresolvedWikiLinksToToastItems(unresolved []core.UnresolvedWikiLink) []widget.ToastItem {
+	items := make([]widget.ToastItem, len(unresolved))
+	for i, u := range unresolved {
+		items[i] = widget.ToastItem{
+			Message: fmt.Sprintf("%s: [[%s]]", u.ObjectID, u.Target),
 			Group:   reasonToGroup(u.Reason),
 		}
 	}

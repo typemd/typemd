@@ -44,7 +44,7 @@ tmd type validate
 
 ### 階段 4：Link 驗證
 
-偵測壞掉的連結——object 內文中的 `[[target]]` 參照，但目標 object 不存在。
+偵測壞掉的連結——object 內文中的 `[[target]]` 參照，但目標 object 不存在。對於匹配到多個物件的簡寫目標（`[[type/name]]` 或 `[[name]]`），會回報有歧義的目標，並列出匹配的完整 ID 清單。
 
 ### 階段 5：Name 唯一性驗證
 

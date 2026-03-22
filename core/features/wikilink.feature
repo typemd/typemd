@@ -86,3 +86,110 @@ Feature: Links and backlinks
     When I render the body of "doc"
     Then the rendered body should contain "note/my-note"
     And the rendered body should not contain "[["
+
+  # ── Shorthand wiki-link resolution ─────────────────────────────────────────
+
+  Scenario: Type-qualified shorthand link resolves to unique match
+    Given a vault is ready with note schemas
+    And a "book" object named "clean-code" exists
+    And "clean-code" body contains a shorthand wiki-link "book/clean-code"
+    When I sync the index
+    Then "clean-code" should have 1 wiki-link
+    And the wiki-link should resolve to "clean-code"
+
+  Scenario: Same-type shorthand link resolves to unique match
+    Given a vault is ready with note schemas
+    And a "note" object named "target-note" exists
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "target-note"
+    When I sync the index
+    Then "source-note" should have 1 wiki-link
+    And the wiki-link should resolve to "target-note"
+    And "target-note" should have 1 backlink from "source-note"
+
+  Scenario: Type-qualified shorthand link with no match is broken
+    Given a vault is ready with note schemas
+    And a "book" object named "clean-code" exists
+    And "clean-code" body contains a shorthand wiki-link "book/nonexistent"
+    When I sync the index
+    Then "clean-code" should have 1 wiki-link
+    And the wiki-link should have an empty resolved ID
+
+  Scenario: Same-type shorthand link with no match is broken
+    Given a vault is ready with note schemas
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "nonexistent"
+    When I sync the index
+    Then "source-note" should have 1 wiki-link
+    And the wiki-link should have an empty resolved ID
+
+  Scenario: Ambiguous type-qualified shorthand link is broken
+    Given a vault is ready with note schemas
+    And a "book" object named "golang" exists
+    And another "book" object named "golang" exists
+    And a "note" object named "my-note" exists
+    And "my-note" body contains a shorthand wiki-link "book/golang"
+    When I sync the index
+    Then "my-note" should have 1 wiki-link
+    And the wiki-link should have an empty resolved ID
+
+  # ── Shorthand wiki-link write-back ─────────────────────────────────────────
+
+  Scenario: Resolved shorthand is written back to source file
+    Given a vault is ready with note schemas
+    And a "note" object named "target-note" exists
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "target-note"
+    When I sync the index
+    Then "source-note" body on disk should contain the full ID of "target-note"
+
+  Scenario: Type-qualified shorthand is written back to source file
+    Given a vault is ready with note schemas
+    And a "book" object named "clean-code" exists
+    And a "note" object named "my-note" exists
+    And "my-note" body contains a shorthand wiki-link "book/clean-code"
+    When I sync the index
+    Then "my-note" body on disk should contain the full ID of "clean-code"
+
+  Scenario: Display text is preserved during write-back
+    Given a vault is ready with note schemas
+    And a "note" object named "target-note" exists
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "target-note" with display text "My Target"
+    When I sync the index
+    Then "source-note" body on disk should contain the full ID of "target-note" with display text "My Target"
+
+  Scenario: Unresolved shorthand is not modified in source file
+    Given a vault is ready with note schemas
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "nonexistent"
+    When I sync the index
+    Then "source-note" body on disk should contain "[[nonexistent]]"
+
+  Scenario: Full ID link is not modified during sync
+    Given a vault is ready with note schemas
+    And a "note" object named "target-note" exists
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a wiki-link to "target-note"
+    When I sync the index
+    Then "source-note" body on disk should contain the full ID of "target-note"
+
+  # ── Sync result reporting ──────────────────────────────────────────────────
+
+  Scenario: Sync result counts expanded wiki-links
+    Given a vault is ready with note schemas
+    And a "note" object named "target-note" exists
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "target-note"
+    When I sync the index and capture the result
+    Then the sync result should have 1 wiki-link expanded
+
+  Scenario: Sync result reports ambiguous wiki-links
+    Given a vault is ready with note schemas
+    And a "book" object named "golang" exists
+    And another "book" object named "golang" exists
+    And a "note" object named "my-note" exists
+    And "my-note" body contains a shorthand wiki-link "book/golang"
+    When I sync the index and capture the result
+    Then the sync result should have 1 unresolved wiki-link
+    And the unresolved wiki-link reason should be "ambiguous"

@@ -155,3 +155,207 @@ func TestRenderWikiLinksStyled_nilStyle(t *testing.T) {
 		t.Errorf("expected display text, got: %q", got)
 	}
 }
+
+func TestResolveWikiLinkTarget(t *testing.T) {
+	// Use 26-char ULID suffixes to match ulidSuffixPattern
+	const (
+		cleanCodeID = "book/clean-code-01jqr3k5mpbvn8e0f2g7h9tx00"
+		golangID    = "book/golang-01jqr3k5mpbvn8e0f2g7h9tx01"
+		myNoteID    = "note/my-note-01jqr3k5mpbvn8e0f2g7h9tx02"
+		johnDoeID   = "person/john-doe-01jqr3k5mpbvn8e0f2g7h9tx03"
+	)
+	diskIDs := map[string]bool{
+		cleanCodeID: true,
+		golangID:    true,
+		myNoteID:    true,
+		johnDoeID:   true,
+	}
+	nameIndex := map[string]map[string][]string{
+		"book": {
+			"clean-code": {cleanCodeID},
+			"golang":     {golangID},
+		},
+		"note": {
+			"my-note": {myNoteID},
+		},
+		"person": {
+			"john-doe": {johnDoeID},
+		},
+	}
+
+	tests := []struct {
+		name       string
+		target     string
+		sourceType string
+		wantID     string
+		wantChange bool
+		wantErr    bool
+	}{
+		{
+			name:       "full ID resolves exactly",
+			target:     cleanCodeID,
+			sourceType: "note",
+			wantID:     cleanCodeID,
+		},
+		{
+			name:       "full ID not found",
+			target:     "book/nonexistent-01jqr3k5mpbvn8e0f2g7h9tx99",
+			sourceType: "note",
+			wantID:     "",
+		},
+		{
+			name:       "type-qualified name resolves",
+			target:     "book/clean-code",
+			sourceType: "note",
+			wantID:     cleanCodeID,
+			wantChange: true,
+		},
+		{
+			name:       "type-qualified name not found",
+			target:     "book/nonexistent",
+			sourceType: "note",
+			wantErr:    true,
+		},
+		{
+			name:       "same-type shorthand resolves",
+			target:     "my-note",
+			sourceType: "note",
+			wantID:     myNoteID,
+			wantChange: true,
+		},
+		{
+			name:       "same-type shorthand not found",
+			target:     "nonexistent",
+			sourceType: "note",
+			wantErr:    true,
+		},
+		{
+			name:       "empty target",
+			target:     "",
+			sourceType: "note",
+			wantErr:    true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			res := resolveWikiLinkTarget(tt.target, tt.sourceType, diskIDs, nameIndex)
+			if res.resolvedID != tt.wantID {
+				t.Errorf("resolvedID = %q, want %q", res.resolvedID, tt.wantID)
+			}
+			if res.changed != tt.wantChange {
+				t.Errorf("changed = %v, want %v", res.changed, tt.wantChange)
+			}
+			if (res.err != nil) != tt.wantErr {
+				t.Errorf("err = %v, wantErr = %v", res.err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestResolveWikiLinkTarget_Ambiguous(t *testing.T) {
+	const (
+		golangIntroID = "book/golang-intro-01jqr3k5mpbvn8e0f2g7h9tx04"
+		golangGuideID = "book/golang-guide-01jqr3k5mpbvn8e0f2g7h9tx05"
+	)
+	diskIDs := map[string]bool{
+		golangIntroID: true,
+		golangGuideID: true,
+	}
+	nameIndex := map[string]map[string][]string{
+		"book": {
+			"golang": {golangIntroID, golangGuideID},
+		},
+	}
+
+	res := resolveWikiLinkTarget("book/golang", "note", diskIDs, nameIndex)
+	if res.resolvedID != "" {
+		t.Errorf("resolvedID = %q, want empty", res.resolvedID)
+	}
+	if res.err == nil {
+		t.Fatal("expected error for ambiguous match")
+	}
+	ame, ok := res.err.(*AmbiguousMatchError)
+	if !ok {
+		t.Fatalf("expected AmbiguousMatchError, got %T", res.err)
+	}
+	if len(ame.Matches) != 2 {
+		t.Errorf("matches = %d, want 2", len(ame.Matches))
+	}
+}
+
+func TestExpandWikiLinksInBody(t *testing.T) {
+	tests := []struct {
+		name        string
+		body        string
+		resolutions map[string]string
+		wantBody    string
+		wantCount   int
+	}{
+		{
+			name:        "no resolutions",
+			body:        "See [[clean-code]].",
+			resolutions: map[string]string{},
+			wantBody:    "See [[clean-code]].",
+			wantCount:   0,
+		},
+		{
+			name: "single shorthand expanded",
+			body: "See [[clean-code]].",
+			resolutions: map[string]string{
+				"clean-code": "book/clean-code-01abc",
+			},
+			wantBody:  "See [[book/clean-code-01abc]].",
+			wantCount: 1,
+		},
+		{
+			name: "display text preserved",
+			body: "By [[clean-code|Clean Code]].",
+			resolutions: map[string]string{
+				"clean-code": "book/clean-code-01abc",
+			},
+			wantBody:  "By [[book/clean-code-01abc|Clean Code]].",
+			wantCount: 1,
+		},
+		{
+			name: "multiple links in one body",
+			body: "See [[clean-code]] and [[golang]].",
+			resolutions: map[string]string{
+				"clean-code": "book/clean-code-01abc",
+				"golang":     "book/golang-01def",
+			},
+			wantBody:  "See [[book/clean-code-01abc]] and [[book/golang-01def]].",
+			wantCount: 2,
+		},
+		{
+			name: "unresolved target not modified",
+			body: "See [[clean-code]] and [[unknown]].",
+			resolutions: map[string]string{
+				"clean-code": "book/clean-code-01abc",
+			},
+			wantBody:  "See [[book/clean-code-01abc]] and [[unknown]].",
+			wantCount: 1,
+		},
+		{
+			name: "same target twice",
+			body: "First [[clean-code]] and second [[clean-code]].",
+			resolutions: map[string]string{
+				"clean-code": "book/clean-code-01abc",
+			},
+			wantBody:  "First [[book/clean-code-01abc]] and second [[book/clean-code-01abc]].",
+			wantCount: 2,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotBody, gotCount := expandWikiLinksInBody(tt.body, tt.resolutions)
+			if gotBody != tt.wantBody {
+				t.Errorf("body =\n%q\nwant:\n%q", gotBody, tt.wantBody)
+			}
+			if gotCount != tt.wantCount {
+				t.Errorf("count = %d, want %d", gotCount, tt.wantCount)
+			}
+		})
+	}
+}

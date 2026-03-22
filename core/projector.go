@@ -130,12 +130,33 @@ func buildSyncContext(objects []*Object) *syncContext {
 }
 
 // syncWikiLinksAndTags syncs wikilinks and tag relations from a syncContext.
-func (p *Projector) syncWikiLinksAndTags(ctx *syncContext) error {
+func (p *Projector) syncWikiLinksAndTags(ctx *syncContext, result *SyncResult) error {
+	modifiedBodies := make(map[string]string) // id → new body after expansion
 	for id, body := range ctx.diskBodies {
-		if err := p.syncWikiLinks(id, body, ctx.diskIDs); err != nil {
+		obj := ctx.diskObjects[id]
+		sourceType := ""
+		if obj != nil {
+			sourceType = obj.Type
+		}
+		if err := p.syncWikiLinks(id, body, sourceType, ctx, result, modifiedBodies); err != nil {
 			return fmt.Errorf("sync wikilinks for %s: %w", id, err)
 		}
 	}
+
+	// Write back expanded bodies to disk
+	for id, newBody := range modifiedBodies {
+		obj := ctx.diskObjects[id]
+		if obj == nil {
+			continue
+		}
+		obj.Body = newBody
+		schema := ctx.schemas[obj.Type]
+		keyOrder := OrderedPropKeys(obj.Properties, schema)
+		if err := p.repo.Save(obj, keyOrder); err != nil {
+			return fmt.Errorf("write-back expanded wiki-links for %s: %w", id, err)
+		}
+	}
+
 	return p.syncTagRelations(ctx)
 }
 
@@ -205,7 +226,7 @@ func (p *Projector) Sync() (*SyncResult, error) {
 	}
 
 	// Sync wikilinks and tag relations
-	if err := p.syncWikiLinksAndTags(ctx); err != nil {
+	if err := p.syncWikiLinksAndTags(ctx, result); err != nil {
 		return nil, err
 	}
 
@@ -296,7 +317,7 @@ func (p *Projector) SyncFiles(paths []string, objectsDir string) (*SyncResult, e
 			return nil, err
 		}
 
-		if err := p.syncWikiLinksAndTags(ctx); err != nil {
+		if err := p.syncWikiLinksAndTags(ctx, result); err != nil {
 			return nil, err
 		}
 	}
@@ -479,24 +500,43 @@ func resolveErrorMatches(err error) []string {
 	return nil
 }
 
-// syncWikiLinks extracts wiki-links from body and stores them in the index.
-func (p *Projector) syncWikiLinks(objectID, body string, knownIDs map[string]bool) error {
+// syncWikiLinks extracts wiki-links from body, resolves shorthand targets,
+// stores them in the index, and tracks expansions for write-back.
+func (p *Projector) syncWikiLinks(objectID, body, sourceType string, ctx *syncContext, result *SyncResult, modifiedBodies map[string]string) error {
 	links := ParseWikiLinks(body)
 	if len(links) == 0 {
 		return p.index.SyncWikiLinks(objectID, nil)
 	}
+
 	entries := make([]WikiLinkEntry, len(links))
+	resolutions := make(map[string]string) // shorthand target → full ID (for write-back)
 	for i, link := range links {
-		toID := ""
-		if knownIDs[link.Target] {
-			toID = link.Target
-		}
+		res := resolveWikiLinkTarget(link.Target, sourceType, ctx.diskIDs, ctx.nameIndex)
 		entries[i] = WikiLinkEntry{
-			ToID:        toID,
+			ToID:        res.resolvedID,
 			Target:      link.Target,
 			DisplayText: link.DisplayText,
 		}
+		if res.changed && res.resolvedID != "" {
+			resolutions[link.Target] = res.resolvedID
+			result.WikiLinksExpanded++
+		}
+		if res.err != nil {
+			result.UnresolvedWikiLinks = append(result.UnresolvedWikiLinks, UnresolvedWikiLink{
+				ObjectID: objectID,
+				Target:   link.Target,
+				Reason:   resolveErrorReason(res.err),
+				Matches:  resolveErrorMatches(res.err),
+			})
+		}
 	}
+
+	// Track body modifications for write-back
+	if len(resolutions) > 0 {
+		newBody, _ := expandWikiLinksInBody(body, resolutions)
+		modifiedBodies[objectID] = newBody
+	}
+
 	return p.index.SyncWikiLinks(objectID, entries)
 }
 
