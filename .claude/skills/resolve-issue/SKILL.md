@@ -8,7 +8,7 @@ description: |
 
 Orchestrate the full lifecycle of resolving a GitHub issue — from reading the issue to opening a PR — with minimal interruption.
 
-All progress is tracked via **OpenSpec changes**, enabling resume from any interruption point.
+Progress is tracked via **OpenSpec changes** for user-facing spec changes. Pure technical changes (labeled `tech-only`) skip OpenSpec entirely.
 
 ## Resume Detection
 
@@ -138,6 +138,7 @@ gh issue view <number> --json title,body,labels,assignees
 **Issue Type Routing:**
 
 - If the issue has a **`discussion` label** → invoke the `resolve-discussion` skill and stop.
+- If the issue has a **`tech-only` label** → mark as tech-only. This skips the OpenSpec design phase entirely (Phase 1). After Workspace Setup, proceed directly to **Phase 2: Implement** without OpenSpec.
 
 **Readiness check (AI-judged):**
 
@@ -159,9 +160,23 @@ Where `<slug>` is a short kebab-case summary derived from the issue title (max 5
 
 ## Phases
 
+### Tech-only Fast Path
+
+If the issue is labeled `tech-only` (detected in **Understand the Issue**), **skip Phase 1 entirely**. There is no OpenSpec change — no proposal, design, specs, or tasks artifacts are created.
+
+Instead, after Workspace Setup, proceed directly to **Phase 2: Implement**. For tech-only issues:
+
+- Read the issue body for the technical approach and scope
+- Use `superpowers:writing-plans` to create a lightweight implementation plan (no OpenSpec)
+- Implement directly using the appropriate approach (BDD, subagent-driven, or parallel agents)
+
+Then continue to **Post-Implementation Review** and **Phase 3** as normal (skipping the Archive step since there is no OpenSpec change to archive).
+
 ### Phase 1: Design
 
 > **Note:** Phase 0 (Explore) has been removed. All exploration — Scope, Approach, Edge Cases — is now done during `create-issue` brainstorming. The issue body should already contain this context.
+
+> **Note:** This phase is skipped for `tech-only` issues. See **Tech-only Fast Path** above.
 
 Use the `openspec-propose` skill to create an OpenSpec change for this issue.
 
@@ -206,7 +221,9 @@ Once all artifacts are generated, proceed directly to Phase 2.
 
 ### Phase 2: Implement
 
-Use the `openspec-apply-change` skill to execute the tasks from the OpenSpec change. The apply skill reads `tasks.md` and implements each task in order.
+For **tech-only issues**: implement based on the lightweight plan created in the Tech-only Fast Path. There is no OpenSpec `tasks.md` — use the plan from `superpowers:writing-plans` instead.
+
+For **regular issues**: use the `openspec-apply-change` skill to execute the tasks from the OpenSpec change. The apply skill reads `tasks.md` and implements each task in order.
 
 Choose the appropriate implementation approach:
 
@@ -234,7 +251,7 @@ Execute the following steps in order:
 
 2. **Commit and Push** — invoke `git:commit-push` skill.
 
-3. **Archive** — use the `openspec-archive-change` skill to archive the completed change. This syncs any delta specs to the main `openspec/specs/` directory and moves the change to `openspec/changes/archive/`.
+3. **Archive** (skip for `tech-only` issues) — use the `openspec-archive-change` skill to archive the completed change. This syncs any delta specs to the main `openspec/specs/` directory and moves the change to `openspec/changes/archive/`.
 
 4. **Open PR** — create a pull request using the project's PR template at `.github/pull_request_template.md` as the body structure:
 

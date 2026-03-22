@@ -91,6 +91,18 @@ After setting the issue type, assign **one or more component labels**. Optionall
 | `breaking-change` | Introduces breaking changes to public API or CLI |
 | `discussion` | Needs discussion before implementation |
 | `documentation` | Docs changes |
+| `tech-only` | Pure technical change — refactoring, dependency updates, CI fixes, internal restructuring — no user-facing spec changes |
+
+**Tech-only detection:** During the brainstorming phase (Step 1), assess whether the issue is a **pure technical change** — one that does not alter user-facing behavior, APIs, or specs. Examples:
+
+- Refactoring internal code structure
+- Dependency version bumps
+- CI/CD pipeline fixes
+- Code style / lint fixes
+- Performance optimizations with no behavior change
+- Internal naming or file organization changes
+
+If the issue is tech-only, automatically suggest adding the `tech-only` label. This label tells `resolve-issue` to skip the OpenSpec design phase and go straight to implementation.
 
 Suggest labels based on context. Ask for confirmation if ambiguous.
 
