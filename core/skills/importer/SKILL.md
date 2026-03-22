@@ -9,7 +9,7 @@ Help the user convert existing markdown files into typemd objects.
 
 ## Prerequisites
 
-If the `guide` plugin is installed, load it first — it provides the complete typemd reference (CLI commands, type schema format, property types, views, and vault structure) that informs every decision in this workflow.
+If the `guides` plugin is installed, load it first — it provides the complete typemd reference (CLI commands, type schema format, property types, views, and vault structure) that informs every decision in this workflow.
 
 ## Before You Start
 
