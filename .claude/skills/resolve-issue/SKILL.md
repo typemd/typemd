@@ -6,7 +6,7 @@ description: |
 
 # Resolve Issue
 
-Orchestrate the full lifecycle of resolving a GitHub issue — from reading the issue to opening a PR — with user confirmation at each phase.
+Orchestrate the full lifecycle of resolving a GitHub issue — from reading the issue to opening a PR — with minimal interruption.
 
 All progress is tracked via **OpenSpec changes**, enabling resume from any interruption point.
 
@@ -18,22 +18,7 @@ Before starting, check if an OpenSpec change already exists for this issue:
 openspec list --json
 ```
 
-Look for a change name matching the issue (e.g., `issue-<N>-<slug>`). If found, check its status:
-
-```bash
-openspec status --change "<name>" --json
-```
-
-Based on artifact completion:
-
-- **No proposal yet** → resume from Phase 0 (Explore). The explore phase is interactive, so the user can skip ahead to Phase 1 if they've already explored.
-- **proposal/design/specs done, tasks done** → resume from Phase 2 (Implement), check task progress in `tasks.md`
-- **All tasks complete** → resume from Phase 3 (Verify and Ship)
-
-If prior progress is detected, present a summary and ask the user via AskUserQuestion:
-
-- **"Continue from where we left off"** — resume from the detected point
-- **"Start over"** — delete the existing change and begin from Preflight
+Look for a change name matching the issue (e.g., `issue-<N>-<slug>`). If found, **delete it and start fresh** — always begin from Preflight.
 
 If no matching change exists, start from Preflight.
 
@@ -58,11 +43,11 @@ The argument can be one of three forms:
 
 ### Issue Selection (when no issue number is specified)
 
-If the argument is a **version number** or **empty**, use the two-step flow below.
+If the argument is a **version number** or **empty**, use the flow below.
 
 **Step 1: Choose a Release**
 
-If no version is specified, list all open Release issues first:
+If no version is specified, list all open Release issues and **automatically select the one with the smallest version number** (e.g., `v0.5.0` before `v0.6.0`):
 
 ```bash
 ./scripts/find-release-issues
@@ -79,7 +64,7 @@ Returns all open Release-type issues (verified via GraphQL `issueType`):
 }
 ```
 
-Present the releases to the user via AskUserQuestion and let them pick one. If a version was already provided as an argument, skip this step.
+If a version was already provided as an argument, use that version directly.
 
 **Step 2: Expand sub-issues for the chosen release**
 
@@ -109,13 +94,17 @@ Evaluate each issue using these criteria (highest priority first):
 
 **All issue types are valid candidates**, including `discussion` issues. If an issue belongs to a Release, it needs to be resolved in that timeframe regardless of its label.
 
-**Step 4: Present top 3 candidates**
+**Step 4: Auto-select the best candidate**
 
-Ask the user via AskUserQuestion with the top 3 recommended issues:
+Rank issues by the criteria above and **automatically select the top candidate**. However, before proceeding, check if a branch matching `fix/issue-<N>-*` or `feat/issue-<N>-*` already exists for that issue:
 
-- **"#N: \<title\>"** — for each candidate, include a one-line reason why it's recommended (e.g., "Blocks 3 other issues", "Critical bug", "Quick win for release X")
+```bash
+git branch --list "fix/issue-<N>-*" "feat/issue-<N>-*"
+```
 
-The user selects one, then proceed to **Check Issue State** with that issue number.
+If a matching branch already exists, **skip that candidate** and try the next one. This avoids picking up issues that are already in progress in another session.
+
+Inform the user which issue was selected and why, then proceed to **Check Issue State**.
 
 ### Standalone Issue Lookup
 
@@ -136,46 +125,30 @@ gh issue view <number> --json state,closedByPullRequestsReferences
 ```
 
 - If the issue is **closed**, inform the user and stop.
-- If there is already an **open PR** linked to this issue, inform the user and ask whether to continue or stop.
+- If there is already an **open PR** linked to this issue, inform the user and **stop**.
 
 ### Understand the Issue
 
-Read the issue and confirm understanding with the user.
+Read the issue and assess whether it's ready for implementation.
 
 ```bash
 gh issue view <number> --json title,body,labels,assignees
 ```
 
-Present a summary:
-
-- **Title**
-- **Type** (Bug / Feature / Task / Epic)
-- **Labels**
-- **Release** (which Release issue it belongs to, if any)
-- **Key requirements** extracted from the body
-
-Ask the user via AskUserQuestion:
-
-- **"Looks correct"** — proceed
-- **"I have additional context"** — let the user add info before proceeding
-
-### Issue Type Routing
-
-After confirming understanding, check the labels already retrieved above:
+**Issue Type Routing:**
 
 - If the issue has a **`discussion` label** → invoke the `resolve-discussion` skill and stop.
-- Otherwise → continue to **Workspace Setup** below.
+
+**Readiness check (AI-judged):**
+
+Review the issue body for completeness. The issue is ready if the Scope, Approach, and Edge Cases sections (for Feature/Task) or the Problem and Steps to Reproduce sections (for Bug) are adequately filled in from the `create-issue` brainstorming phase.
+
+- If the issue is **ready** → inform the user which issue you're working on and proceed directly to **Workspace Setup**.
+- If the issue has **gaps or ambiguities** that would block implementation → stop and ask the user for clarification via AskUserQuestion before proceeding.
 
 ## Workspace Setup
 
-Before entering the phases, set up an isolated working environment so that all artifacts (explore notes, design docs, code) live on a feature branch.
-
-If a branch matching `fix/issue-<N>-*` or `feat/issue-<N>-*` already exists, inform the user and ask whether to reuse it or create a new one.
-
-Ask the user how to set up the working environment via AskUserQuestion:
-
-- **"Worktree (isolated)"** — invoke `superpowers:using-git-worktrees` skill
-- **"Branch in current repo"** — create a branch directly
+Always use a **git worktree** for isolated development. Invoke the `superpowers:using-git-worktrees` skill.
 
 Branch naming convention:
 
@@ -184,38 +157,11 @@ Branch naming convention:
 
 Where `<slug>` is a short kebab-case summary derived from the issue title (max 5 words).
 
-```bash
-git checkout -b <branch-name>
-```
-
 ## Phases
 
-### Phase 0: Explore
-
-Use the `openspec-explore` skill to interactively explore the problem space with the user before committing to a design.
-
-The goal of this phase is to:
-
-- Clarify ambiguous requirements or edge cases in the issue
-- Investigate the relevant codebase areas (existing code, data model, dependencies)
-- Discuss trade-offs and possible approaches
-- Surface hidden complexity or constraints early
-
-The explore session should be grounded in the issue context gathered during Preflight. Pass the issue summary, key requirements, and any additional user context into the explore session.
-
-This phase is interactive — continue the exploration dialogue until the problem is well-understood.
-
-**Gate check before proceeding:** Since Phase 1 (Design) flows directly into Phase 2 (Implement) without a separate review pause, the explore phase must reach sufficient depth. Before leaving this phase, confirm with the user via AskUserQuestion:
-
-- **Scope** — what's in and what's out
-- **Approach** — the high-level technical direction (which packages, what patterns)
-- **Edge cases** — any tricky scenarios surfaced during exploration
-
-The user may end the exploration explicitly (e.g., "looks good", "let's proceed") or the explore skill may naturally conclude. Either way, ensure the three points above have been addressed.
-
-Once exploration is complete, proceed to Phase 1.
-
 ### Phase 1: Design
+
+> **Note:** Phase 0 (Explore) has been removed. All exploration — Scope, Approach, Edge Cases — is now done during `create-issue` brainstorming. The issue body should already contain this context.
 
 Use the `openspec-propose` skill to create an OpenSpec change for this issue.
 
@@ -270,7 +216,7 @@ Choose the appropriate implementation approach:
 
 If unsure, default to BDD with sequential implementation.
 
-At key decision points, check with the user before proceeding.
+**Do not stop to ask the user** unless the planned approach is genuinely blocked (e.g., a required API doesn't exist, a dependency conflict makes the design infeasible). Scope being larger than expected is not a reason to stop — complete the full implementation.
 
 ### Post-Implementation Review
 

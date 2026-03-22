@@ -30,7 +30,13 @@ Use the `superpowers:brainstorming` skill to explore the user's idea. The brains
 - Check existing patterns — how similar features are already implemented
 - Surface potential edge cases or conflicts with existing behavior
 
-This technical context feeds directly into the issue body (see Scope and Approach sections in body templates) and reduces rework during `resolve-issue` Phase 0 (Explore).
+**IMPORTANT:** This brainstorming phase **replaces** `resolve-issue` Phase 0 (Explore). The issue body must contain enough technical context for `resolve-issue` to skip exploration and proceed directly to design and implementation. Specifically, the following sections must be adequately filled:
+
+- **Scope** — what's in and what's out
+- **Approach** — high-level technical direction (which packages, what patterns, key design decisions)
+- **Edge Cases** — tricky scenarios, conflicts with existing behavior, or open questions
+
+If any of these cannot be determined during brainstorming (e.g., the user wants to defer a decision), add the `discussion` label so that `resolve-issue` knows to pause and clarify before implementing.
 
 Once brainstorming concludes with a clear direction, proceed to the next step.
 
