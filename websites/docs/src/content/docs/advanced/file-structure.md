@@ -24,6 +24,8 @@ vault/
 │   │       └── schema.yaml
 │   ├── config.yaml         # vault configuration (optional)
 │   ├── properties.yaml     # shared property definitions (optional)
+│   ├── instructions/       # skill overrides (optional)
+│   │   └── explore.md      # override for explore skill
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
 ├── templates/              # object templates by type (optional)
@@ -36,7 +38,7 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-- `.typemd/` — configuration and internal state (vault config, type schemas, shared properties, index, TUI state)
+- `.typemd/` — configuration and internal state (vault config, type schemas, shared properties, skill overrides, index, TUI state)
 - `templates/` — optional object templates organized by type
 - `objects/` — all Object files organized by type
 

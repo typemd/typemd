@@ -9,20 +9,12 @@
   },
   "plugins": [
     {
-      "name": "importer",
-      "source": "./plugins/importer",
-      "description": "Convert existing markdown files into typemd objects with frontmatter, type detection, and relation discovery",
-      "version": "0.1.0",
-      "category": "workflow",
-      "tags": ["import", "markdown", "migration", "convert"]
-    },
-    {
-      "name": "vault-guide",
-      "source": "./plugins/vault-guide",
-      "description": "typemd reference guide — teaches Claude how to work with typemd vaults, CLI commands, type schemas, and objects",
+      "name": "guides",
+      "source": "./plugins/guides",
+      "description": "typemd reference guide for AI — CLI commands, type schemas, object format, and tmd instructions usage",
       "version": "0.1.0",
       "category": "reference",
-      "tags": ["reference", "guide", "documentation", "vault"]
+      "tags": ["reference", "guide", "instructions", "vault"]
     }
   ]
 }

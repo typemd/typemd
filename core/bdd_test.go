@@ -169,6 +169,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initIncrementalSyncSteps(ctx, dc)
 	initRelationSyncSteps(ctx, dc)
 	initFormatSteps(ctx, dc)
+	initInstructionsSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

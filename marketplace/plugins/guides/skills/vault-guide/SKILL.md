@@ -1,9 +1,9 @@
 ---
 name: vault-guide
-description: typemd reference guide. Use when working in a typemd vault — provides knowledge of CLI commands, type schemas, object format, wiki-links, and vault structure.
+description: typemd vault reference. Use when designing type schemas, creating objects, managing relations, or working with vault structure — provides CLI commands, type schema format, object format, wiki-links, views, templates, and TUI keybindings.
 ---
 
-# typemd Reference Guide
+# typemd Vault Guide
 
 You are working in a **typemd vault** — a local-first knowledge management system where objects (books, people, ideas) are stored as Markdown files with YAML frontmatter, connected by relations, and indexed in SQLite.
 

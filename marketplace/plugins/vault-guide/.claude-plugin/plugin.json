@@ -1,9 +1,0 @@
-{
-  "name": "vault-guide",
-  "description": "typemd reference guide — teaches Claude how to work with typemd vaults, CLI commands, type schemas, and objects",
-  "version": "0.1.0",
-  "author": {
-    "name": "typemd"
-  },
-  "keywords": ["reference", "guide", "documentation", "vault"]
-}
