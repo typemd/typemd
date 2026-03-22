@@ -921,6 +921,7 @@ func Start(vaultPath string, readOnly bool, reindex bool) error {
 		searchInput:   initSearchInput(),
 		toast:         toast,
 	}
+	m.refreshPropEditor()
 
 	p := tea.NewProgram(m)
 	_, err = p.Run()
