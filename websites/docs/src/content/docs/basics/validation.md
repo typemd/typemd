@@ -44,7 +44,7 @@ Checks all stored relations to ensure both the source and target objects exist.
 
 ### Phase 4: Link Validation
 
-Detects broken links — `[[target]]` references in object body content where the target object does not exist.
+Detects broken links — `[[target]]` references in object body content where the target object does not exist. For shorthand targets (`[[type/name]]` or `[[name]]`) that match multiple objects, the ambiguous target is reported along with the list of matching full IDs.
 
 ### Phase 5: Name Uniqueness Validation
 

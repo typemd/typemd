@@ -124,6 +124,7 @@ func checkRelationRef(ref, objectID, propName string, errs *[]error) {
 // ValidateWikiLinks checks for broken wiki-links (targets that don't resolve to existing objects).
 // It walks object files directly rather than relying on the SQLite index,
 // so validation works correctly even without a prior sync.
+// Supports shorthand targets: type-qualified (type/name) and same-type (name).
 func ValidateWikiLinks(v *Vault) []error {
 	var errs []error
 	objects, err := v.repo.Walk()
@@ -131,17 +132,24 @@ func ValidateWikiLinks(v *Vault) []error {
 		return []error{fmt.Errorf("walk objects: %w", err)}
 	}
 
-	knownIDs := make(map[string]bool, len(objects))
-	for _, obj := range objects {
-		knownIDs[obj.ID] = true
-	}
+	// Build sync context for name index and known IDs
+	ctx := buildSyncContext(objects)
 
 	for _, obj := range objects {
 		links := ParseWikiLinks(obj.Body)
 		for _, link := range links {
-			if !knownIDs[link.Target] {
-				errs = append(errs, fmt.Errorf("%s: broken wiki-link [[%s]]", obj.ID, link.Target))
+			res := resolveWikiLinkTarget(link.Target, obj.Type, ctx.diskIDs, ctx.nameIndex)
+			if res.resolvedID != "" {
+				continue // resolved successfully
 			}
+			if res.err != nil {
+				if ame, ok := res.err.(*AmbiguousMatchError); ok {
+					errs = append(errs, fmt.Errorf("%s: ambiguous wiki-link [[%s]] — matches: %s",
+						obj.ID, link.Target, strings.Join(ame.Matches, ", ")))
+					continue
+				}
+			}
+			errs = append(errs, fmt.Errorf("%s: broken wiki-link [[%s]]", obj.ID, link.Target))
 		}
 	}
 	return errs

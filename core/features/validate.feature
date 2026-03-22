@@ -51,3 +51,22 @@ Feature: Validation
     When I validate wiki-links
     Then there should be 1 wiki-link error
     And the error should mention "broken wiki-link"
+
+  Scenario: Resolvable shorthand wiki-link passes validation
+    Given a vault is ready with note schemas
+    And a "note" object named "target-note" exists
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "target-note"
+    When I validate wiki-links
+    Then there should be no wiki-link errors
+
+  Scenario: Ambiguous shorthand wiki-link is reported with suggestions
+    Given a vault is ready with note schemas
+    And a "book" object named "golang" exists
+    And another "book" object named "golang" exists
+    And a "note" object named "my-note" exists
+    And "my-note" body contains a shorthand wiki-link "book/golang"
+    When I validate wiki-links
+    Then there should be 1 wiki-link error
+    And the error should mention "ambiguous"
+    And the error should mention "book/golang"
