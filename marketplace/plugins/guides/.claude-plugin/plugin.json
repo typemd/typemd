@@ -1,5 +1,5 @@
 {
-  "name": "guide",
+  "name": "guides",
   "description": "typemd reference guide for AI — CLI commands, type schemas, object format, and tmd instructions usage",
   "version": "0.1.0",
   "author": {
