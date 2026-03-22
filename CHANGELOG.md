@@ -4,6 +4,34 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v0.6.0] - 2026-03-22
+
+### Added
+
+- AI MVP — auto-describe objects, suggest tags, and explore schema improvements in TUI; press `g` on an object for AI actions, `Ctrl+E` on a type for schema explore (#294)
+- `tmd instructions` Command — output embedded skill instructions enriched with vault context (type summaries) as JSON; supports `--skill` for raw SKILL.md output and `--json` for list mode (#311)
+- Skill Instructions Override — place `.typemd/instructions/<skill>.md` to override embedded skills per-vault (#311)
+- Marketplace Guides Plugin — `vault-guide` skill teaches AI how to manage vaults; `instructions-guide` skill teaches AI how to use `tmd instructions` for context feeding
+- Shell Completion — tab-complete object IDs, type names, and relation names in all CLI commands (#119)
+- Interactive Disambiguation — fuzzy picker when a prefix matches multiple objects (#147)
+- Shorthand Wiki-Links — `[[name]]` and `[[type/name]]` syntax auto-resolved to full IDs during sync (#176)
+- Stats Dashboard — TUI stats mode showing vault-wide and per-type statistics (#280)
+- Toast Notifications — transient overlay messages in TUI for sync warnings, AI errors, and other events (#303)
+- `tmd format` Command — normalize object frontmatter ordering and formatting (#281)
+- Sync Warnings — TUI surfaces not-found and ambiguous relation reference warnings via toast (#297)
+- Object Rename — press `r` in TUI to rename an object
+
+### Changed
+
+- Prefix Matching in Relations — relation property values now support prefix matching during sync (#74)
+- Wiki-Link Validation — `ValidateWikiLinks` resolves from files instead of DB for accuracy (#306)
+
+### Fixed
+
+- Brew formula name corrected to `typemd-cli` across all documentation
+
+[v0.6.0]: https://github.com/typemd/typemd/releases/tag/v0.6.0
+
 ## [v0.5.0] - 2026-03-20
 
 ### Breaking Changes

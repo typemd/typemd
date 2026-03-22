@@ -4,6 +4,34 @@
 
 格式依循 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [v0.6.0] - 2026-03-22
+
+### 新增
+
+- AI MVP — TUI 中的 AI 功能：自動產生描述、建議標籤、schema 探索；在物件上按 `g` 開啟 AI 動作、在型別上按 `Ctrl+E` 進入 schema 探索 (#294)
+- `tmd instructions` 指令 — 輸出嵌入的 skill 指令並附帶 vault context（型別摘要），以 JSON 格式呈現；支援 `--skill` 輸出原始 SKILL.md、`--json` 列出所有 skill (#311)
+- Skill 指令覆寫 — 在 `.typemd/instructions/<skill>.md` 放置檔案即可覆寫嵌入的 skill (#311)
+- Marketplace Guides Plugin — `vault-guide` skill 教 AI 管理 vault；`instructions-guide` skill 教 AI 使用 `tmd instructions`
+- Shell 自動補全 — 在所有 CLI 指令中 tab 補全物件 ID、型別名稱和關聯名稱 (#119)
+- 互動式消歧義 — 當前綴匹配多個物件時彈出模糊選取器 (#147)
+- 簡寫 Wiki-Links — `[[name]]` 和 `[[type/name]]` 語法在同步時自動解析為完整 ID (#176)
+- Stats 儀表板 — TUI 中的統計模式，顯示 vault 總覽和各型別統計 (#280)
+- Toast 通知 — TUI 中的暫時性覆蓋訊息，用於同步警告、AI 錯誤等事件 (#303)
+- `tmd format` 指令 — 正規化物件 frontmatter 的排序和格式 (#281)
+- 同步警告 — TUI 透過 toast 顯示找不到和模糊的關聯參照警告 (#297)
+- 物件重新命名 — 在 TUI 中按 `r` 重新命名物件
+
+### 變更
+
+- 關聯中的前綴匹配 — 關聯屬性值在同步時支援前綴匹配 (#74)
+- Wiki-Link 驗證 — `ValidateWikiLinks` 改從檔案解析而非資料庫，提升準確性 (#306)
+
+### 修正
+
+- 修正所有文件中的 brew formula 名稱為 `typemd-cli`
+
+[v0.6.0]: https://github.com/typemd/typemd/releases/tag/v0.6.0
+
 ## [v0.5.0] - 2026-03-20
 
 ### 破壞性變更
