@@ -45,6 +45,7 @@ export default defineConfig({
 						{ label: 'Introduction', slug: 'getting-started/introduction' },
 						{ label: 'Installation', slug: 'getting-started/installation' },
 						{ label: 'Quick Start', slug: 'getting-started/quick-start' },
+						{ label: 'AI Setup', slug: 'getting-started/ai-setup' },
 					],
 				},
 				{
