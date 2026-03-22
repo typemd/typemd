@@ -55,9 +55,18 @@ func (m *model) updateDetail() {
 	}
 	m.bodyViewport.SetContent(bodyContent)
 
+	m.updatePropsContent()
+}
+
+// updatePropsContent refreshes only the properties panel viewport content.
+func (m *model) updatePropsContent() {
 	var propsContent string
 	if m.aiState != aiIdle {
 		propsContent = renderPropertiesWithAI(m.selected, m.displayProps, *m)
+	} else if m.propEdit != nil && m.focus == focusProps {
+		propsContent = m.propEdit.Render(true)
+	} else if m.propEdit != nil {
+		propsContent = m.propEdit.Render(false)
 	} else {
 		propsContent = renderProperties(m.selected, m.displayProps)
 	}
@@ -461,7 +470,11 @@ func (m model) View() tea.View {
 				Height(bodyPropsPanelH).
 				MaxHeight(bodyPropsPanelH)
 			if m.focus == focusProps {
-				propsStyle = propsStyle.BorderForeground(activeBorderColor)
+				propsBorderColor := colorFocusBorder
+				if m.propEdit != nil && m.propEdit.isEditing() {
+					propsBorderColor = colorEditBorder
+				}
+				propsStyle = propsStyle.BorderForeground(propsBorderColor)
 			}
 			rightSide = lipgloss.JoinHorizontal(lipgloss.Top,
 				rightSide,
@@ -528,6 +541,10 @@ func (m model) View() tea.View {
 		helpBar = "  [AI]  tab: accept  |  esc: reject"
 	} else if m.aiState == aiShowingTags {
 		helpBar = "  [AI TAGS]  ↑↓: navigate  |  space: toggle  |  enter: apply  |  esc: cancel"
+	} else if m.propEdit != nil && m.propEdit.isEditing() {
+		helpBar = "  [EDIT]  enter: confirm  |  esc: cancel"
+	} else if m.focus == focusProps && m.propEdit != nil {
+		helpBar = "  [PROPS]  ↑↓: navigate  |  enter: edit  |  esc: back  |  tab: switch"
 	} else if m.editMode {
 		helpBar = "  [EDIT]  esc: exit edit mode"
 	} else {

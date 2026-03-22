@@ -40,6 +40,12 @@ func (p DisplayProperty) FormatValue() string {
 	if p.IsReverse {
 		return "← " + displayObjectID(p.FromID)
 	}
+	if p.Type == "checkbox" {
+		if b, ok := p.Value.(bool); ok && b {
+			return "☑"
+		}
+		return "☐"
+	}
 	if p.Value == nil {
 		return ""
 	}
@@ -48,13 +54,6 @@ func (p DisplayProperty) FormatValue() string {
 	}
 
 	switch p.Type {
-	case "checkbox":
-		if b, ok := p.Value.(bool); ok {
-			if b {
-				return "✓"
-			}
-			return ""
-		}
 	case "date":
 		if t, ok := p.Value.(time.Time); ok {
 			return t.Format("2006-01-02")

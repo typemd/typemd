@@ -453,17 +453,18 @@ func TestModel_EnterEditMode_Body(t *testing.T) {
 	}
 }
 
-func TestModel_EnterEditMode_Props(t *testing.T) {
+func TestModel_PropEditor_NavigateOnFocusProps(t *testing.T) {
 	m := setupTestModel(t)
 	m.focus = focusProps
 	m.propsVisible = true
 
+	// 'e' on props panel should not enter body edit mode
 	msg := tea.KeyPressMsg{Code: 'e', Text: "e"}
 	newM, _ := m.Update(msg)
 	updated := newM.(model)
 
-	if !updated.editMode {
-		t.Error("editMode should be true after pressing 'e' when focused on props")
+	if updated.editMode {
+		t.Error("editMode should NOT enter when pressing 'e' on props (body edit only)")
 	}
 }
 

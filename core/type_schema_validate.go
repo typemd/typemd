@@ -365,3 +365,90 @@ func validateMultiSelect(prop Property, val any) []error {
 	}
 	return errs
 }
+
+// ValidatePropertyValue validates a string input against a property type.
+// This is used by the TUI for inline editing validation before accepting user input.
+// For select/multi_select types, pass the property's Options; otherwise options can be nil.
+// Returns nil if valid, or an error describing the validation failure.
+func ValidatePropertyValue(propType string, options []Option, input string) error {
+	switch propType {
+	case "string":
+		return nil // any string is valid
+	case "number":
+		return validateNumberInput(input)
+	case "date":
+		if !dateRegexp.MatchString(input) {
+			return fmt.Errorf("expected date in YYYY-MM-DD format, got %q", input)
+		}
+		if _, err := time.Parse("2006-01-02", input); err != nil {
+			return fmt.Errorf("invalid date %q: %v", input, err)
+		}
+		return nil
+	case "datetime":
+		formats := []string{
+			time.RFC3339,
+			"2006-01-02T15:04:05",
+			"2006-01-02T15:04:05Z",
+		}
+		for _, f := range formats {
+			if _, err := time.Parse(f, input); err == nil {
+				return nil
+			}
+		}
+		return fmt.Errorf("expected datetime in ISO 8601 format (e.g. 2006-01-02T15:04:05), got %q", input)
+	case "url":
+		u, err := url.Parse(input)
+		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+			return fmt.Errorf("url must start with http:// or https://, got %q", input)
+		}
+		return nil
+	case "select":
+		for _, opt := range options {
+			if opt.Value == input {
+				return nil
+			}
+		}
+		vals := make([]string, len(options))
+		for i, o := range options {
+			vals[i] = o.Value
+		}
+		return fmt.Errorf("value %q not in allowed options %v", input, vals)
+	default:
+		return nil
+	}
+}
+
+// validateNumberInput checks if a string is a valid number (int or float).
+func validateNumberInput(input string) error {
+	if input == "" {
+		return fmt.Errorf("expected a number, got empty string")
+	}
+	// Allow optional leading minus, digits, optional decimal point with digits
+	valid := true
+	dotSeen := false
+	for i, c := range input {
+		if c == '-' && i == 0 {
+			continue
+		}
+		if c == '.' && !dotSeen {
+			dotSeen = true
+			continue
+		}
+		if c < '0' || c > '9' {
+			valid = false
+			break
+		}
+	}
+	// Don't allow just "-" or "." or "-."
+	if input == "-" || input == "." || input == "-." {
+		valid = false
+	}
+	// Don't allow trailing dot like "123."
+	if len(input) > 0 && input[len(input)-1] == '.' {
+		valid = false
+	}
+	if !valid {
+		return fmt.Errorf("expected a number, got %q", input)
+	}
+	return nil
+}
