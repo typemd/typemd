@@ -1,10 +1,13 @@
 ---
 name: resolve-discussion
-description: Use when resolving a GitHub issue labeled `discussion` — facilitates decision-making on open questions, documents conclusions as an issue comment, creates follow-up issues if needed, and closes the discussion. Triggered by resolve-issue when it detects a discussion-labeled issue, or directly when user asks to "resolve discussion #N", "close discussion", "wrap up discussion".
+description: Use when resolving a GitHub issue labeled `discussion` — facilitates decision-making on open questions, documents conclusions as an issue comment, creates follow-up issues if needed, and closes the discussion. Triggered by resolve-issue when it detects a discussion-labeled issue, or directly when user asks to "resolve discussion #N", "close discussion", "wrap up discussion". Can also accept a version number (e.g., "0.5.0") to select from that release's discussion sub-issues, or auto-select the best discussion issue when no argument is specified.
 allowed-tools:
   - Bash(gh issue view:*)
   - Bash(gh issue comment:*)
   - Bash(gh issue close:*)
+  - Bash(gh issue list:*)
+  - Bash(./scripts/find-release-issues:*)
+  - Bash(./scripts/get-issue-details:*)
 ---
 
 # Resolve Discussion
@@ -13,9 +16,81 @@ Facilitate decision-making for discussion issues, document conclusions, and clos
 
 Discussion issues don't produce code — they produce **decisions**. The goal is to reach conclusions on open questions, document them, and create actionable follow-up issues if needed.
 
-## Prerequisites
+## Preflight
 
-Always read the issue first to ensure context is available, regardless of how this skill was invoked:
+### Argument Parsing
+
+The argument can be one of three forms:
+
+| Input | Example | Interpretation |
+|-------|---------|---------------|
+| Issue number | `42`, `#42` | Resolve that specific discussion issue → skip to **Check Issue State** |
+| Version number | `0.5.0`, `v0.5.0` | Expand that version's sub-issues, filter to discussions, then select one |
+| Empty | *(none)* | List all open `💬 discussion` issues → select one |
+
+**How to detect:**
+- Matches `#?\d+` (with optional `#` prefix) → issue number
+- Matches `v?\d+\.\d+\.\d+` → version number
+- Otherwise → empty / auto-select
+
+### Issue Selection (when no issue number is specified)
+
+Discussion issues require user interaction, so **always let the user choose** — never auto-select.
+
+**Step 1: Find discussion issues**
+
+If a **version number** is provided:
+
+```bash
+./scripts/find-release-issues <version>
+```
+
+From the returned sub-issues, filter to only those with the `💬 discussion` label. If none found, inform the user and stop.
+
+If **no argument** is provided, first check release-scoped discussions, then fall back to unscoped:
+
+1. List all open Release issues and auto-select the smallest version:
+
+```bash
+./scripts/find-release-issues
+```
+
+2. Expand the selected release's sub-issues and filter to `💬 discussion` label.
+
+3. If no release-scoped discussions found, fall back to all open discussion issues:
+
+```bash
+gh issue list --label "💬 discussion" --state open --json number,title,labels --limit 20
+```
+
+If no open discussion issues exist at all, inform the user and stop.
+
+**Step 2: Present candidates to the user**
+
+Always present the list via AskUserQuestion and let the user choose which discussion to resolve. If only one exists, still confirm with the user before proceeding (discussions need user buy-in).
+
+### Standalone Issue Lookup
+
+When a specific issue number is given, fetch its details:
+
+```bash
+./scripts/get-issue-details <number>
+```
+
+### Check Issue State
+
+Verify the issue is actionable:
+
+```bash
+gh issue view <number> --json state,labels
+```
+
+- If the issue is **closed**, inform the user and stop.
+- If the issue does **not** have the `💬 discussion` label, inform the user this is not a discussion issue and suggest using `resolve-issue` instead. Stop.
+
+### Understand the Issue
+
+Read the full issue context:
 
 ```bash
 gh issue view <number> --json title,body,labels,assignees
