@@ -106,8 +106,6 @@ ai:
 
 只需更改 `ai.default` 即可切換 provider，無需修改其他設定。
 
-**向後相容：** 如果你現有的設定只有 `ai.enabled: true` 加上選用的 `ai.model`，它會繼續正常運作。typemd 會自動將其遷移為名為 `claude` 的 `cli` provider。
-
 ### 提示與探索設定
 
 | Key | 型別 | 預設值 | 說明 |

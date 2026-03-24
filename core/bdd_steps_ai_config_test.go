@@ -22,14 +22,6 @@ func (dc *domainContext) aiShouldNotBeEnabled() error {
 	return nil
 }
 
-func (dc *domainContext) theAIModelShouldBe(expected string) error {
-	got := dc.vault.Config().AI.Model
-	if got != expected {
-		return fmt.Errorf("expected AI model %q, got %q", expected, got)
-	}
-	return nil
-}
-
 func (dc *domainContext) theAIDescribePromptShouldBe(expected string) error {
 	got := dc.vault.Config().AI.Prompts.Describe
 	if got != expected {
@@ -73,7 +65,6 @@ func (dc *domainContext) theAIExploreBodyTruncateShouldBe(expected int) error {
 func initAIConfigSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^AI should be enabled$`, dc.aiShouldBeEnabled)
 	ctx.Step(`^AI should not be enabled$`, dc.aiShouldNotBeEnabled)
-	ctx.Step(`^the AI model should be "([^"]*)"$`, dc.theAIModelShouldBe)
 	ctx.Step(`^the AI describe prompt should be "([^"]*)"$`, dc.theAIDescribePromptShouldBe)
 	ctx.Step(`^the AI tag prompt should be "([^"]*)"$`, dc.theAITagPromptShouldBe)
 	ctx.Step(`^the AI explore prompt should be "([^"]*)"$`, dc.theAIExplorePromptShouldBe)

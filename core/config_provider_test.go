@@ -105,7 +105,6 @@ prompts:
 func TestAIConfig_EmptyProviders(t *testing.T) {
 	input := `
 enabled: true
-model: claude-haiku-4-5-20251001
 `
 	var cfg AIConfig
 	if err := yaml.Unmarshal([]byte(input), &cfg); err != nil {
@@ -117,8 +116,5 @@ model: claude-haiku-4-5-20251001
 	}
 	if cfg.Default != "" {
 		t.Errorf("expected empty default, got %q", cfg.Default)
-	}
-	if cfg.Model != "claude-haiku-4-5-20251001" {
-		t.Errorf("expected model 'claude-haiku-4-5-20251001', got %q", cfg.Model)
 	}
 }

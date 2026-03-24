@@ -116,8 +116,6 @@ ai:
 
 Switch providers by changing `ai.default` — no other changes needed.
 
-**Backward compatibility:** If you have an existing config with just `ai.enabled: true` and optionally `ai.model`, it continues to work. typemd auto-migrates this to a `cli` provider named `claude`.
-
 ### Prompt and explore settings
 
 | Key | Type | Default | Description |

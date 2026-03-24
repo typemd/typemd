@@ -36,17 +36,16 @@ Feature: AI provider resolution
     Then no error should occur
     And AI service should be available
 
-  Scenario: Legacy flat config still works
+  Scenario: Enabled without providers yields no AI service
     Given a vault is initialized
     And a config file with content:
       """
       ai:
         enabled: true
-        model: claude-haiku-4-5-20251001
       """
     When I open the vault
     Then no error should occur
-    And AI service should be available
+    And AI service should not be available
 
   Scenario: Default points to undefined provider
     Given a vault is initialized
