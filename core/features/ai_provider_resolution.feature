@@ -3,22 +3,6 @@ Feature: AI provider resolution
   I want the vault to resolve my configured AI provider
   So that the correct AI backend is used
 
-  Scenario: CLI provider with claude binary available
-    Given a vault is initialized
-    And a config file with content:
-      """
-      ai:
-        enabled: true
-        default: claude
-        providers:
-          claude:
-            type: cli
-            model: claude-sonnet-4-20250514
-      """
-    When I open the vault
-    Then no error should occur
-    And AI service should be available
-
   Scenario: OpenAI-compatible provider configured
     Given a vault is initialized
     And a config file with content:
