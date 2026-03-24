@@ -189,8 +189,8 @@ func TestConfigListCmd_All(t *testing.T) {
 		t.Errorf("expected 'tui.debounce_ms: (default: 200)', got %q", output)
 	}
 	// Unset key with no default should show key only
-	if !strings.Contains(output, "ai.model:\n") {
-		t.Errorf("expected 'ai.model:' with no value, got %q", output)
+	if !strings.Contains(output, "ai.default:\n") {
+		t.Errorf("expected 'ai.default:' with no value, got %q", output)
 	}
 }
 

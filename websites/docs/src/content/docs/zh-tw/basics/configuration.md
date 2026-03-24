@@ -27,7 +27,15 @@ tui:
   stats_type_layout: fullscreen
 ai:
   enabled: true
-  model: claude-sonnet-4-6-20250627
+  default: claude
+  providers:
+    claude:
+      type: cli
+      model: claude-sonnet-4-6-20250627
+    ollama:
+      type: openai-compatible
+      base_url: http://localhost:11434
+      model: qwen3-coder:30b
   prompts:
     describe: "自訂描述的系統提示"
   explore:
@@ -62,12 +70,46 @@ tmd object create "My Idea"
 
 ## AI 設定
 
-AI 功能需要安裝並認證 [Claude CLI](https://docs.anthropic.com/en/docs/claude-code)。
+AI 功能支援多個 provider。`cli` 類型使用 [Claude CLI](https://docs.anthropic.com/en/docs/claude-code)；`openai-compatible` 類型可搭配任何 OpenAI 相容 API（Ollama、LM Studio、vLLM、LocalAI 等）。
+
+### Provider 設定
 
 | Key | 型別 | 預設值 | 說明 |
 |-----|------|--------|------|
 | `ai.enabled` | bool | `false` | 啟用 TUI 中的 AI 功能 |
-| `ai.model` | string | *(claude 預設)* | 覆蓋 Claude 模型（例如 `claude-haiku-4-5-20251001`） |
+| `ai.default` | string | *(空)* | 從 `ai.providers` 中選擇使用的 provider 名稱 |
+| `ai.providers.<name>.type` | string | — | Provider 類型：`cli` 或 `openai-compatible` |
+| `ai.providers.<name>.model` | string | *(空)* | 模型識別碼 |
+| `ai.providers.<name>.base_url` | string | *(空)* | HTTP 端點（`openai-compatible` 必填） |
+| `ai.providers.<name>.api_key` | string | *(空)* | 選用的 Bearer token 認證 |
+
+多 provider 範例：
+
+```yaml
+ai:
+  enabled: true
+  default: ollama
+  providers:
+    claude:
+      type: cli
+      model: claude-sonnet-4-6-20250627
+    ollama:
+      type: openai-compatible
+      base_url: http://localhost:11434
+      model: qwen3-coder:30b
+    my-server:
+      type: openai-compatible
+      base_url: http://192.168.1.100:8080
+      model: llama3.2
+      api_key: sk-my-key
+```
+
+只需更改 `ai.default` 即可切換 provider，無需修改其他設定。
+
+### 提示與探索設定
+
+| Key | 型別 | 預設值 | 說明 |
+|-----|------|--------|------|
 | `ai.prompts.describe` | string | *(內建)* | 自訂描述產生的系統提示 |
 | `ai.prompts.tag` | string | *(內建)* | 自訂標籤建議的系統提示 |
 | `ai.prompts.explore` | string | *(內建)* | 自訂 schema 探索的系統提示 |

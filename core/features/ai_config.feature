@@ -20,18 +20,6 @@ Feature: AI configuration
     Then no error should occur
     And AI should not be enabled
 
-  Scenario: AI config with model override
-    Given a vault is initialized
-    And a config file with content:
-      """
-      ai:
-        enabled: true
-        model: claude-haiku-4-5-20251001
-      """
-    When I open the vault
-    Then no error should occur
-    And the AI model should be "claude-haiku-4-5-20251001"
-
   Scenario: AI config with custom prompts
     Given a vault is initialized
     And a config file with content:

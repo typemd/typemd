@@ -23,10 +23,20 @@ type VaultConfig struct {
 
 // AIConfig holds AI-specific configuration.
 type AIConfig struct {
-	Enabled bool          `yaml:"enabled,omitempty"`
-	Model   string        `yaml:"model,omitempty"`
-	Prompts PromptsConfig `yaml:"prompts,omitempty"`
-	Explore ExploreConfig `yaml:"explore,omitempty"`
+	Enabled   bool                      `yaml:"enabled,omitempty"`
+	Default   string                    `yaml:"default,omitempty"`
+	Providers map[string]ProviderConfig `yaml:"providers,omitempty"`
+	Language  string                    `yaml:"language,omitempty"`
+	Prompts   PromptsConfig             `yaml:"prompts,omitempty"`
+	Explore   ExploreConfig             `yaml:"explore,omitempty"`
+}
+
+// ProviderConfig holds per-provider settings.
+type ProviderConfig struct {
+	Type   string `yaml:"type"`
+	BaseURL string `yaml:"base_url,omitempty"`
+	Model  string `yaml:"model,omitempty"`
+	APIKey string `yaml:"api_key,omitempty"`
 }
 
 // PromptsConfig holds customizable system prompts for AI operations.
@@ -150,6 +160,16 @@ var configKeyRegistry = map[string]configKeyEntry{
 		},
 		Default: "false",
 	},
+	"ai.default": {
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Default },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Default = value },
+		Default: "",
+	},
+	"ai.language": {
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Language },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Language = value },
+		Default: "",
+	},
 	"ai.enabled": {
 		Get: func(cfg *VaultConfig) string {
 			if cfg.AI.Enabled {
@@ -161,11 +181,6 @@ var configKeyRegistry = map[string]configKeyEntry{
 			cfg.AI.Enabled = value == "true"
 		},
 		Default: "false",
-	},
-	"ai.model": {
-		Get:     func(cfg *VaultConfig) string { return cfg.AI.Model },
-		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Model = value },
-		Default: "",
 	},
 	"ai.prompts.describe": {
 		Get:     func(cfg *VaultConfig) string { return cfg.AI.Prompts.Describe },

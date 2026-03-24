@@ -30,7 +30,15 @@ tui:
     dismiss_key: esc
 ai:
   enabled: true
-  model: claude-sonnet-4-6-20250627
+  default: claude
+  providers:
+    claude:
+      type: cli
+      model: claude-sonnet-4-6-20250627
+    ollama:
+      type: openai-compatible
+      base_url: http://localhost:11434
+      model: qwen3-coder:30b
   prompts:
     describe: "Custom prompt for descriptions"
   explore:
@@ -72,12 +80,46 @@ Toast notifications appear in the bottom-right corner of the TUI for transient m
 
 ## AI settings
 
-AI features require the [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) to be installed and authenticated.
+AI features support multiple providers. The `cli` type uses the [Claude CLI](https://docs.anthropic.com/en/docs/claude-code) binary; the `openai-compatible` type works with any OpenAI-compatible API (Ollama, LM Studio, vLLM, LocalAI, etc.).
+
+### Provider configuration
 
 | Key | Type | Default | Description |
 |-----|------|---------|-------------|
 | `ai.enabled` | bool | `false` | Enable AI features in the TUI |
-| `ai.model` | string | *(claude default)* | Override the Claude model (e.g. `claude-haiku-4-5-20251001`) |
+| `ai.default` | string | *(empty)* | Name of the active provider from `ai.providers` |
+| `ai.providers.<name>.type` | string | — | Provider type: `cli` or `openai-compatible` |
+| `ai.providers.<name>.model` | string | *(empty)* | Model identifier |
+| `ai.providers.<name>.base_url` | string | *(empty)* | HTTP endpoint (required for `openai-compatible`) |
+| `ai.providers.<name>.api_key` | string | *(empty)* | Optional Bearer token for authentication |
+
+Example with multiple providers:
+
+```yaml
+ai:
+  enabled: true
+  default: ollama
+  providers:
+    claude:
+      type: cli
+      model: claude-sonnet-4-6-20250627
+    ollama:
+      type: openai-compatible
+      base_url: http://localhost:11434
+      model: qwen3-coder:30b
+    my-server:
+      type: openai-compatible
+      base_url: http://192.168.1.100:8080
+      model: llama3.2
+      api_key: sk-my-key
+```
+
+Switch providers by changing `ai.default` — no other changes needed.
+
+### Prompt and explore settings
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
 | `ai.prompts.describe` | string | *(built-in)* | Custom system prompt for description generation |
 | `ai.prompts.tag` | string | *(built-in)* | Custom system prompt for tag suggestions |
 | `ai.prompts.explore` | string | *(built-in)* | Custom system prompt for schema exploration |

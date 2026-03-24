@@ -155,26 +155,61 @@ func (v *Vault) Open() error {
 	return nil
 }
 
-// initAI initializes the AI service if enabled and claude binary is available.
+// initAI initializes the AI service based on the configured provider.
 func (v *Vault) initAI(cfg *VaultConfig) {
 	v.aiService = nil
 	if !cfg.AI.Enabled {
 		return
 	}
-	binaryPath, err := ai.LookupBinary()
-	if err != nil {
+
+	provider, model := v.resolveProvider(cfg)
+	if provider == nil {
 		return
 	}
-	provider := &ai.ClaudeCLI{
-		Binary: binaryPath,
-		Model:  cfg.AI.Model,
-	}
+
 	v.aiService = ai.NewAIService(provider, ai.ServiceConfig{
-		Model:          cfg.AI.Model,
+		Model:          model,
+		Language:       cfg.AI.Language,
 		DescribePrompt: cfg.AI.Prompts.Describe,
 		TagPrompt:      cfg.AI.Prompts.Tag,
 		ExplorePrompt:  cfg.AI.Prompts.Explore,
 	})
+}
+
+// resolveProvider looks up the active provider from config and instantiates it.
+// Returns the provider and the configured model name.
+func (v *Vault) resolveProvider(cfg *VaultConfig) (ai.Provider, string) {
+	if len(cfg.AI.Providers) == 0 {
+		return nil, ""
+	}
+
+	providerCfg, ok := cfg.AI.Providers[cfg.AI.Default]
+	if !ok {
+		return nil, ""
+	}
+
+	switch providerCfg.Type {
+	case ai.ProviderTypeCLI:
+		binaryPath, err := ai.LookupBinary()
+		if err != nil {
+			return nil, ""
+		}
+		return &ai.ClaudeCLI{
+			Binary: binaryPath,
+			Model:  providerCfg.Model,
+		}, providerCfg.Model
+	case ai.ProviderTypeOpenAICompatible:
+		if providerCfg.BaseURL == "" {
+			return nil, ""
+		}
+		return &ai.OpenAICompatible{
+			BaseURL: providerCfg.BaseURL,
+			Model:   providerCfg.Model,
+			APIKey:  providerCfg.APIKey,
+		}, providerCfg.Model
+	default:
+		return nil, ""
+	}
 }
 
 // AIService returns the AI service, or nil if AI is not available.

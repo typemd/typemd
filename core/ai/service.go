@@ -16,6 +16,7 @@ type AIService struct {
 // ServiceConfig holds configuration for the AIService.
 type ServiceConfig struct {
 	Model          string
+	Language       string
 	DescribePrompt string
 	TagPrompt      string
 	ExplorePrompt  string
@@ -89,6 +90,14 @@ func NewAIService(provider Provider, cfg ServiceConfig) *AIService {
 	}
 }
 
+// withLanguage appends a language instruction to the system prompt if configured.
+func (s *AIService) withLanguage(systemPrompt string) string {
+	if s.config.Language == "" {
+		return systemPrompt
+	}
+	return systemPrompt + "\n\nIMPORTANT: Respond in " + s.config.Language + "."
+}
+
 // Describe generates a description for an object using AI.
 func (s *AIService) Describe(ctx context.Context, obj ObjectContext, schema SchemaContext) (string, error) {
 	prompt := s.buildDescribePrompt(obj, schema)
@@ -100,7 +109,7 @@ func (s *AIService) Describe(ctx context.Context, obj ObjectContext, schema Sche
 	jsonSchema := json.RawMessage(`{"type":"object","properties":{"description":{"type":"string"}},"required":["description"]}`)
 
 	resp, err := s.provider.Complete(ctx, &CompletionRequest{
-		SystemPrompt: systemPrompt,
+		SystemPrompt: s.withLanguage(systemPrompt),
 		UserPrompt:   prompt,
 		JSONSchema:   jsonSchema,
 		Model:        s.config.Model,
@@ -128,7 +137,7 @@ func (s *AIService) SuggestTags(ctx context.Context, obj ObjectContext, schema S
 	jsonSchema := json.RawMessage(`{"type":"object","properties":{"tags":{"type":"array","items":{"type":"object","properties":{"name":{"type":"string"},"is_new":{"type":"boolean"},"reason":{"type":"string"}},"required":["name","is_new","reason"]}}},"required":["tags"]}`)
 
 	resp, err := s.provider.Complete(ctx, &CompletionRequest{
-		SystemPrompt: systemPrompt,
+		SystemPrompt: s.withLanguage(systemPrompt),
 		UserPrompt:   prompt,
 		JSONSchema:   jsonSchema,
 		Model:        s.config.Model,
@@ -156,7 +165,7 @@ func (s *AIService) ExploreSchema(ctx context.Context, schema SchemaContext, obj
 	jsonSchema := json.RawMessage(`{"type":"object","properties":{"suggestions":{"type":"array","items":{"type":"object","properties":{"type":{"type":"string","enum":["add","modify","remove"]},"property_name":{"type":"string"},"property_type":{"type":"string"},"reason":{"type":"string"},"description":{"type":"string"}},"required":["type","property_name","reason"]}}},"required":["suggestions"]}`)
 
 	resp, err := s.provider.Complete(ctx, &CompletionRequest{
-		SystemPrompt: systemPrompt,
+		SystemPrompt: s.withLanguage(systemPrompt),
 		UserPrompt:   prompt,
 		JSONSchema:   jsonSchema,
 		Model:        s.config.Model,

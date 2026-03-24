@@ -2,3 +2,10 @@ cli:
   default_type: book
 ai:
   enabled: true
+  default: ollama
+  language: 正體中文，台灣用語
+  providers:
+    ollama:
+      type: openai-compatible
+      base_url: http://localhost:11434
+      model: gpt-oss:20b
