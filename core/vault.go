@@ -169,6 +169,7 @@ func (v *Vault) initAI(cfg *VaultConfig) {
 
 	v.aiService = ai.NewAIService(provider, ai.ServiceConfig{
 		Model:          model,
+		Language:       cfg.AI.Language,
 		DescribePrompt: cfg.AI.Prompts.Describe,
 		TagPrompt:      cfg.AI.Prompts.Tag,
 		ExplorePrompt:  cfg.AI.Prompts.Explore,

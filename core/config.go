@@ -26,6 +26,7 @@ type AIConfig struct {
 	Enabled   bool                      `yaml:"enabled,omitempty"`
 	Default   string                    `yaml:"default,omitempty"`
 	Providers map[string]ProviderConfig `yaml:"providers,omitempty"`
+	Language  string                    `yaml:"language,omitempty"`
 	Prompts   PromptsConfig             `yaml:"prompts,omitempty"`
 	Explore   ExploreConfig             `yaml:"explore,omitempty"`
 }
@@ -162,6 +163,11 @@ var configKeyRegistry = map[string]configKeyEntry{
 	"ai.default": {
 		Get:     func(cfg *VaultConfig) string { return cfg.AI.Default },
 		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Default = value },
+		Default: "",
+	},
+	"ai.language": {
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Language },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Language = value },
 		Default: "",
 	},
 	"ai.enabled": {
