@@ -23,10 +23,20 @@ type VaultConfig struct {
 
 // AIConfig holds AI-specific configuration.
 type AIConfig struct {
-	Enabled bool          `yaml:"enabled,omitempty"`
-	Model   string        `yaml:"model,omitempty"`
-	Prompts PromptsConfig `yaml:"prompts,omitempty"`
-	Explore ExploreConfig `yaml:"explore,omitempty"`
+	Enabled   bool                      `yaml:"enabled,omitempty"`
+	Model     string                    `yaml:"model,omitempty"`
+	Default   string                    `yaml:"default,omitempty"`
+	Providers map[string]ProviderConfig `yaml:"providers,omitempty"`
+	Prompts   PromptsConfig             `yaml:"prompts,omitempty"`
+	Explore   ExploreConfig             `yaml:"explore,omitempty"`
+}
+
+// ProviderConfig holds per-provider settings.
+type ProviderConfig struct {
+	Type   string `yaml:"type"`
+	BaseURL string `yaml:"base_url,omitempty"`
+	Model  string `yaml:"model,omitempty"`
+	APIKey string `yaml:"api_key,omitempty"`
 }
 
 // PromptsConfig holds customizable system prompts for AI operations.
@@ -150,6 +160,11 @@ var configKeyRegistry = map[string]configKeyEntry{
 		},
 		Default: "false",
 	},
+	"ai.default": {
+		Get:     func(cfg *VaultConfig) string { return cfg.AI.Default },
+		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Default = value },
+		Default: "",
+	},
 	"ai.enabled": {
 		Get: func(cfg *VaultConfig) string {
 			if cfg.AI.Enabled {
@@ -231,7 +246,28 @@ func loadVaultConfig(metaDir string) (*VaultConfig, error) {
 	if err := yaml.Unmarshal(data, &cfg); err != nil {
 		return nil, fmt.Errorf("parse config: %w", err)
 	}
+	migrateAIConfig(&cfg.AI)
 	return &cfg, nil
+}
+
+// migrateAIConfig migrates flat AI config to the multi-provider structure.
+// If ai.providers is empty and ai.enabled is true, creates a "claude" CLI provider
+// from the legacy ai.model field. Migration is in-memory only.
+func migrateAIConfig(ai *AIConfig) {
+	if !ai.Enabled {
+		return
+	}
+	if len(ai.Providers) > 0 {
+		return
+	}
+	// Auto-create a cli provider from legacy fields
+	ai.Providers = map[string]ProviderConfig{
+		"claude": {
+			Type:  "cli",
+			Model: ai.Model,
+		},
+	}
+	ai.Default = "claude"
 }
 
 // WriteConfig writes a VaultConfig to the vault's config.yaml file

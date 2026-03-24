@@ -170,6 +170,9 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initRelationSyncSteps(ctx, dc)
 	initFormatSteps(ctx, dc)
 	initInstructionsSteps(ctx, dc)
+	initAIConfigSteps(ctx, dc)
+	initAIAvailabilitySteps(ctx, dc)
+	initAIMultiProviderSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

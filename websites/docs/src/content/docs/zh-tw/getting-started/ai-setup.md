@@ -7,13 +7,13 @@ sidebar:
 
 typemd 透過兩個管道整合 AI：
 
-- **TUI AI 功能** — 自動產生描述、自動建議標籤、schema 探索，由 `claude` CLI 驅動
+- **TUI AI 功能** — 自動產生描述、自動建議標籤、schema 探索，由 AI provider 驅動（Claude CLI、Ollama、LM Studio 等）
 - **Skill instructions** — `tmd instructions` 輸出嵌入的 skill 指令並附帶 vault context，可供任何 AI 工具使用
 
 ## 前置條件
 
 - 已安裝 [typemd](/zh-tw/getting-started/installation) 並初始化 vault
-- 已安裝 [Claude Code](https://claude.com/code)
+- 一個 AI provider：[Claude Code](https://claude.com/code)、[Ollama](https://ollama.com)、[LM Studio](https://lmstudio.ai)、或任何 OpenAI 相容 API
 
 ## 1. 安裝 typemd plugin
 
@@ -51,14 +51,28 @@ ai:
 tmd config set ai.enabled true
 ```
 
+預設會使用 Claude CLI。若要使用其他 provider，請明確設定：
+
+```yaml
+# .typemd/config.yaml — 使用 Ollama
+ai:
+  enabled: true
+  default: ollama
+  providers:
+    ollama:
+      type: openai-compatible
+      base_url: http://localhost:11434
+      model: qwen3-coder:30b
+```
+
+你可以設定多個 provider，並透過更改 `ai.default` 在它們之間切換。完整設定請參考[設定 — AI 設定](/zh-tw/basics/configuration/#ai-設定)。
+
 啟用後，TUI 中可以使用以下 AI 操作：
 
 | 按鍵 | 動作 |
 |------|------|
 | `g` | 開啟 AI 動作選單（在物件上）— 產生描述 / 建議標籤 |
 | `Ctrl+E` | Schema 探索模式（在 type 上）— AI 分析物件並建議 schema 改進 |
-
-這些功能需要 `claude` CLI 已安裝且在 PATH 中可存取。
 
 ## 3. 使用 skill instructions
 
