@@ -7,6 +7,8 @@ import (
 	"time"
 )
 
+var ErrObjectLocked = errors.New("object is locked")
+
 // ObjectService orchestrates command-side operations on objects.
 // It coordinates entities, repositories, and the index, and collects domain events.
 type ObjectService struct {
@@ -124,7 +126,17 @@ func (s *ObjectService) Create(typeName, filename, templateName string) (*Object
 }
 
 // Save persists an object's properties and body to file and index.
+// Returns ErrObjectLocked if the object is locked.
 func (s *ObjectService) Save(obj *Object) error {
+	if obj.IsLocked() {
+		return ErrObjectLocked
+	}
+	return s.saveInternal(obj)
+}
+
+// saveInternal persists an object without checking the lock guard.
+// Used by Save (with guard), SetLocked (bypass), and bidirectional link/unlink on targets.
+func (s *ObjectService) saveInternal(obj *Object) error {
 	obj.MarkUpdated()
 	schema, _ := s.repo.GetSchema(obj.Type)
 	keyOrder := OrderedPropKeys(obj.Properties, schema)
@@ -152,6 +164,10 @@ func (s *ObjectService) SetProperty(id, key string, value any) error {
 		return fmt.Errorf("get object: %w", err)
 	}
 
+	if obj.IsLocked() {
+		return ErrObjectLocked
+	}
+
 	schema, err := s.repo.GetSchema(obj.Type)
 	if err != nil {
 		return fmt.Errorf("load type: %w", err)
@@ -162,7 +178,7 @@ func (s *ObjectService) SetProperty(id, key string, value any) error {
 		return err
 	}
 
-	if err := s.Save(obj); err != nil {
+	if err := s.saveInternal(obj); err != nil {
 		return err
 	}
 
@@ -175,6 +191,10 @@ func (s *ObjectService) Link(fromID, relName, toID string) error {
 	fromObj, fromSchema, err := s.loadObjectAndSchema(fromID)
 	if err != nil {
 		return fmt.Errorf("get source: %w", err)
+	}
+
+	if fromObj.IsLocked() {
+		return ErrObjectLocked
 	}
 
 	relProp := fromSchema.FindRelation(relName)
@@ -194,7 +214,7 @@ func (s *ObjectService) Link(fromID, relName, toID string) error {
 	if err != nil {
 		return fmt.Errorf("relation already exists: %s -[%s]-> %s", fromID, relName, toID)
 	}
-	if err := s.Save(fromObj); err != nil {
+	if err := s.saveInternal(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
 	if err := s.index.InsertRelation(relName, fromID, toID); err != nil {
@@ -220,7 +240,7 @@ func (s *ObjectService) Link(fromID, relName, toID string) error {
 		if err != nil && !errors.Is(err, errDuplicateRelation) {
 			return fmt.Errorf("set inverse relation: %w", err)
 		}
-		if err := s.Save(toObj); err != nil {
+		if err := s.saveInternal(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}
 		if err := s.index.InsertRelation(relProp.Inverse, toID, fromID); err != nil {
@@ -243,13 +263,17 @@ func (s *ObjectService) Unlink(fromID, relName, toID string, both bool) error {
 		return fmt.Errorf("get source: %w", err)
 	}
 
+	if fromObj.IsLocked() {
+		return ErrObjectLocked
+	}
+
 	relProp := fromSchema.FindRelation(relName)
 	if relProp == nil {
 		return fmt.Errorf("relation %q not found in type %q", relName, fromObj.Type)
 	}
 
 	event := fromObj.Unlink(relName, toID, relProp)
-	if err := s.Save(fromObj); err != nil {
+	if err := s.saveInternal(fromObj); err != nil {
 		return fmt.Errorf("write source object: %w", err)
 	}
 	if err := s.index.DeleteRelation(relName, fromID, toID); err != nil {
@@ -272,7 +296,7 @@ func (s *ObjectService) Unlink(fromID, relName, toID string, both bool) error {
 		}
 
 		invEvent := toObj.Unlink(relProp.Inverse, fromID, inverseProp)
-		if err := s.Save(toObj); err != nil {
+		if err := s.saveInternal(toObj); err != nil {
 			return fmt.Errorf("write target object: %w", err)
 		}
 		if err := s.index.DeleteRelation(relProp.Inverse, toID, fromID); err != nil {
@@ -296,6 +320,20 @@ func (s *ObjectService) loadObjectAndSchema(id string) (*Object, *TypeSchema, er
 		return nil, nil, fmt.Errorf("load type: %w", err)
 	}
 	return obj, schema, nil
+}
+
+// SetLocked toggles the locked state of an object, bypassing the lock guard.
+func (s *ObjectService) SetLocked(id string, locked bool) error {
+	obj, err := s.repo.Get(id)
+	if err != nil {
+		return fmt.Errorf("get object: %w", err)
+	}
+	if locked {
+		obj.Properties[LockedProperty] = true
+	} else {
+		delete(obj.Properties, LockedProperty)
+	}
+	return s.saveInternal(obj)
 }
 
 // checkNameUnique returns an error if an object with the given name already exists.

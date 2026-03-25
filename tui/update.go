@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"github.com/typemd/typemd/tui/widget"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
 )
@@ -109,6 +110,9 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			return m, nil
 		}
 		if m.focus == focusBody && m.selected != nil {
+			if m.selected.IsLocked() {
+				return m, m.toast.Show(widget.ToastWarning, []widget.ToastItem{{Message: "Object is locked. Unlock to edit."}})
+			}
 			return m, m.enterBodyEditMode()
 		}
 		return m, nil
@@ -118,6 +122,9 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			return m, nil
 		}
 		if m.selected != nil && m.rightPanel == panelObject {
+			if m.selected.IsLocked() {
+				return m, m.toast.Show(widget.ToastWarning, []widget.ToastItem{{Message: "Object is locked. Unlock to edit."}})
+			}
 			return m, m.startRename()
 		}
 		return m, nil
@@ -137,6 +144,11 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			} else if m.rightPanel == panelTemplate {
 				m.focus = focusBody // template editor handles tab internally for body/props
 			} else if m.propsVisible {
+				// Prevent entering property editor for locked objects
+				if m.selected != nil && m.selected.IsLocked() {
+					toastCmd := m.toast.Show(widget.ToastWarning, []widget.ToastItem{{Message: "Object is locked. Unlock to edit."}})
+					return m, toastCmd
+				}
 				m.focus = focusProps
 			} else {
 				m.focus = focusLeft

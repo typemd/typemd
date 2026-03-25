@@ -3,7 +3,7 @@ Feature: System property registry
   automatically present on all objects regardless of type schema.
 
   Scenario: Registry contains all system properties in order
-    Then the system property registry should contain "name, description, created_at, updated_at, tags"
+    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked"
 
   Scenario: IsSystemProperty recognizes system properties
     Then "name" should be a system property
@@ -143,6 +143,9 @@ Feature: System property registry
     Then "name" should not be an immutable system property
     And "description" should not be an immutable system property
     And "tags" should not be an immutable system property
+
+  Scenario: locked is not immutable
+    Then "locked" should not be an immutable system property
 
   Scenario: Non-system properties are not immutable
     Then "title" should not be an immutable system property

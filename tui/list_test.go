@@ -25,6 +25,50 @@ func TestRenderList_GroupHeaderWithEmoji(t *testing.T) {
 	}
 }
 
+func TestRenderList_LockedObjectShowsLockIcon(t *testing.T) {
+	groups := []typeGroup{
+		{
+			Name:   "book",
+			Plural: "books",
+			Emoji:  "📚",
+			Objects: []*core.Object{
+				{ID: "book/locked-one", Type: "book", Filename: "locked-one", Properties: map[string]any{core.LockedProperty: true, "name": "Locked Book"}},
+				{ID: "book/unlocked-one", Type: "book", Filename: "unlocked-one", Properties: map[string]any{"name": "Unlocked Book"}},
+			},
+			Expanded: true,
+		},
+	}
+
+	result := renderList(groups, 0, 0, true, 60, 10)
+
+	if !strings.Contains(result, "🔒 Locked Book") {
+		t.Errorf("expected lock icon for locked object, got: %s", result)
+	}
+	// Unlocked object should NOT have lock icon
+	if strings.Contains(result, "🔒 Unlocked Book") {
+		t.Errorf("unlocked object should not have lock icon, got: %s", result)
+	}
+}
+
+func TestRenderList_UnlockedObjectNoLockIcon(t *testing.T) {
+	groups := []typeGroup{
+		{
+			Name:   "note",
+			Plural: "notes",
+			Objects: []*core.Object{
+				{ID: "note/test", Type: "note", Filename: "test", Properties: map[string]any{"name": "My Note"}},
+			},
+			Expanded: true,
+		},
+	}
+
+	result := renderList(groups, 0, 0, true, 40, 10)
+
+	if strings.Contains(result, "🔒") {
+		t.Errorf("unlocked object should not have lock icon, got: %s", result)
+	}
+}
+
 func TestRenderList_GroupHeaderWithoutEmoji(t *testing.T) {
 	groups := []typeGroup{
 		{

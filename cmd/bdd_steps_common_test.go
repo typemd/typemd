@@ -155,6 +155,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initDisambiguateSteps(sc, cc)
 	initFixSteps(sc, cc)
 	initInstructionsSteps(sc, cc)
+	initLockSteps(sc, cc)
 }
 
 func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {

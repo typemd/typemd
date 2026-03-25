@@ -1,11 +1,11 @@
 ### Requirement: System property registry defines all system-managed properties
 
-The core package SHALL maintain a registry of system properties as a package-level slice. Each entry SHALL declare a property name and type. Entries with `type: relation` SHALL additionally declare `Target` and `Multiple` fields. The registry SHALL define properties in display order: `name`, `description`, `created_at`, `updated_at`, `tags`.
+The core package SHALL maintain a registry of system properties as a package-level slice. Each entry SHALL declare a property name and type. Entries with `type: relation` SHALL additionally declare `Target` and `Multiple` fields. The registry SHALL define properties in display order: `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`.
 
 #### Scenario: Registry contains all system properties
 
 - **WHEN** the system property registry is queried
-- **THEN** it SHALL contain entries for `name` (text), `description` (text), `created_at` (datetime), `updated_at` (datetime), and `tags` (relation, target: tag, multiple: true) in that order
+- **THEN** it SHALL contain entries for `name` (text), `description` (text), `created_at` (datetime), `updated_at` (datetime), `tags` (relation, target: tag, multiple: true), and `locked` (checkbox) in that order
 
 ### Requirement: IsSystemProperty identifies reserved property names
 
@@ -36,6 +36,11 @@ The `IsSystemProperty(name)` function SHALL return `true` for any property name 
 - **WHEN** `IsSystemProperty("tags")` is called
 - **THEN** it SHALL return `true`
 
+#### Scenario: Recognized system property locked
+
+- **WHEN** `IsSystemProperty("locked")` is called
+- **THEN** it SHALL return `true`
+
 #### Scenario: Non-system property
 
 - **WHEN** `IsSystemProperty("title")` is called
@@ -48,7 +53,7 @@ The `SystemPropertyNames()` function SHALL return a slice of all system property
 #### Scenario: Property names in order
 
 - **WHEN** `SystemPropertyNames()` is called
-- **THEN** it SHALL return `["name", "description", "created_at", "updated_at", "tags"]`
+- **THEN** it SHALL return `["name", "description", "created_at", "updated_at", "tags", "locked"]`
 
 ### Requirement: Type schema validation rejects all system property names
 
@@ -72,6 +77,11 @@ The `SystemPropertyNames()` function SHALL return a slice of all system property
 #### Scenario: Schema defines tags property
 
 - **WHEN** a type schema defines a property named `tags`
+- **THEN** validation SHALL return an error containing "reserved system property"
+
+#### Scenario: Schema defines locked property
+
+- **WHEN** a type schema defines a property named `locked`
 - **THEN** validation SHALL return an error containing "reserved system property"
 
 ### Requirement: Shared property validation rejects all system property names
@@ -98,6 +108,11 @@ The `SystemPropertyNames()` function SHALL return a slice of all system property
 - **WHEN** a shared properties file defines a property named `tags`
 - **THEN** validation SHALL return an error containing "reserved system property"
 
+#### Scenario: Shared property named locked
+
+- **WHEN** a shared properties file defines a property named `locked`
+- **THEN** validation SHALL return an error containing "reserved system property"
+
 ### Requirement: SyncIndex preserves all system properties
 
 During property filtering in `SyncIndex`, all system properties present in the object's frontmatter SHALL be preserved in the filtered property set, regardless of type schema definitions.
@@ -110,7 +125,7 @@ During property filtering in `SyncIndex`, all system properties present in the o
 
 ### Requirement: System properties are classified by mutability
 
-Each system property SHALL be classified as either **user-authored** (mutable by user or template) or **auto-managed** (immutable, always reflects actual system values). The `IsImmutableSystemProperty(name)` function SHALL return `true` for auto-managed properties (`created_at`, `updated_at`) and `false` for user-authored properties (`name`, `description`, `tags`) and non-system properties.
+Each system property SHALL be classified as either **user-authored** (mutable by user or template) or **auto-managed** (immutable, always reflects actual system values). The `IsImmutableSystemProperty(name)` function SHALL return `true` for auto-managed properties (`created_at`, `updated_at`) and `false` for user-authored properties (`name`, `description`, `tags`, `locked`) and non-system properties.
 
 #### Scenario: Auto-managed properties are immutable
 
@@ -137,6 +152,11 @@ Each system property SHALL be classified as either **user-authored** (mutable by
 - **WHEN** `IsImmutableSystemProperty("tags")` is called
 - **THEN** it SHALL return `false`
 
+#### Scenario: User-authored property locked is not immutable
+
+- **WHEN** `IsImmutableSystemProperty("locked")` is called
+- **THEN** it SHALL return `false`
+
 #### Scenario: Non-system properties are not immutable
 
 - **WHEN** `IsImmutableSystemProperty("title")` is called
@@ -144,13 +164,13 @@ Each system property SHALL be classified as either **user-authored** (mutable by
 
 ### Requirement: Frontmatter orders system properties first
 
-`OrderedPropKeys` SHALL place system properties before schema-defined properties, in registry order (name, description, created_at, updated_at, tags). Schema-defined properties follow in schema order. Extra properties are appended alphabetically.
+`OrderedPropKeys` SHALL place system properties before schema-defined properties, in registry order (name, description, created_at, updated_at, tags, locked). Schema-defined properties follow in schema order. Extra properties are appended alphabetically.
 
 #### Scenario: Full property ordering
 
-- **WHEN** an object has properties `name`, `description`, `created_at`, `updated_at`, `tags`, `title`, and `rating`
+- **WHEN** an object has properties `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, `title`, and `rating`
 - **AND** the schema defines `title` then `rating`
-- **THEN** `OrderedPropKeys` SHALL return `["name", "description", "created_at", "updated_at", "tags", "title", "rating"]`
+- **THEN** `OrderedPropKeys` SHALL return `["name", "description", "created_at", "updated_at", "tags", "locked", "title", "rating"]`
 
 #### Scenario: System properties absent
 
