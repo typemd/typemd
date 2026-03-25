@@ -31,6 +31,10 @@ type viewMode struct {
 	cursor  int
 	scroll  int
 
+	// Column cursor and cell editing for table view
+	colCursor int
+	cellEdit  *cellEdit
+
 	// When viewing an object from the view list
 	detailObject *core.Object
 
@@ -170,6 +174,9 @@ func (vm *viewMode) CanQuit() bool {
 	if vm.editor != nil {
 		return vm.editor.CanQuit()
 	}
+	if vm.cellEdit != nil {
+		return false
+	}
 	return vm.detailObject == nil
 }
 
@@ -212,6 +219,76 @@ func (vm *viewMode) EditorHelpBar() string {
 	return vm.editor.HelpBar()
 }
 
+// isTableLayout returns true if the current view uses the table layout.
+func (vm *viewMode) isTableLayout() bool {
+	return vm.view != nil && vm.view.Layout == core.ViewLayoutTable
+}
+
+// nextEditableCell moves the cursor to the next editable cell (Tab navigation).
+// Returns true if cursor moved. Uses a step limit to prevent infinite loops
+// when all cells are read-only.
+func (vm *viewMode) nextEditableCell() bool {
+	cols := vm.viewColumns()
+	rows := vm.visibleRows()
+	maxCol := len(cols)
+	totalCells := len(rows) * (maxCol + 1)
+
+	col := vm.colCursor
+	row := vm.cursor
+
+	for steps := 0; steps < totalCells; steps++ {
+		col++
+		if col > maxCol {
+			col = 0
+			row++
+			for row < len(rows) && rows[row].isHeader {
+				row++
+			}
+			if row >= len(rows) {
+				return false
+			}
+		}
+		if !vm.isCellReadOnly(col, cols) {
+			vm.colCursor = col
+			vm.cursor = row
+			return true
+		}
+	}
+	return false
+}
+
+// prevEditableCell moves the cursor to the previous editable cell (Shift+Tab).
+// Returns true if cursor moved.
+func (vm *viewMode) prevEditableCell() bool {
+	cols := vm.viewColumns()
+	rows := vm.visibleRows()
+	maxCol := len(cols)
+	totalCells := len(rows) * (maxCol + 1)
+
+	col := vm.colCursor
+	row := vm.cursor
+
+	for steps := 0; steps < totalCells; steps++ {
+		col--
+		if col < 0 {
+			col = maxCol
+			row--
+			for row >= 0 && rows[row].isHeader {
+				row--
+			}
+			if row < 0 {
+				return false
+			}
+		}
+		if !vm.isCellReadOnly(col, cols) {
+			vm.colCursor = col
+			vm.cursor = row
+			return true
+		}
+	}
+	return false
+}
+
 // Update handles messages for the view mode.
 func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
 	// Handle editor messages
@@ -222,6 +299,10 @@ func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
 		return vm, nil
 	case viewEditorDeletedMsg:
 		// Handled by parent (app.go)
+		return vm, nil
+	case viewCellSavedMsg:
+		// Object was saved via cell edit — reload view data
+		vm.reloadObjects()
 		return vm, nil
 	}
 
@@ -238,8 +319,24 @@ func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
 		return vm, cmd
 	}
 
+	// Delegate to cell edit if active
+	if vm.cellEdit != nil {
+		if keyMsg, ok := msg.(tea.KeyPressMsg); ok {
+			return vm.updateCellEdit(keyMsg)
+		}
+		// Non-key messages during editing: delegate textinput for blink
+		if vm.cellEdit.mode == cellModeTextInput {
+			var cmd tea.Cmd
+			vm.cellEdit.textInput, cmd = vm.cellEdit.textInput.Update(msg)
+			return vm, cmd
+		}
+		return vm, nil
+	}
+
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
+		isTable := vm.isTableLayout()
+
 		switch msg.String() {
 		case "up", "k":
 			if vm.cursor > 0 {
@@ -256,14 +353,57 @@ func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
 					vm.updatePreview()
 				}
 			}
-		case "enter", " ":
+		case "left", "h":
+			if isTable && vm.previewObject == nil && vm.editor == nil {
+				rows := vm.visibleRows()
+				if vm.cursor < len(rows) && !rows[vm.cursor].isHeader {
+					if vm.colCursor > 0 {
+						vm.colCursor--
+					}
+				}
+			}
+		case "right", "l":
+			if isTable && vm.previewObject == nil && vm.editor == nil {
+				rows := vm.visibleRows()
+				cols := vm.viewColumns()
+				if vm.cursor < len(rows) && !rows[vm.cursor].isHeader {
+					if vm.colCursor < len(cols) {
+						vm.colCursor++
+					}
+				}
+			}
+		case "tab":
+			if isTable && vm.previewObject == nil && vm.editor == nil {
+				vm.nextEditableCell()
+			}
+		case "shift+tab":
+			if isTable && vm.previewObject == nil && vm.editor == nil {
+				vm.prevEditableCell()
+			}
+		case "enter", " ", "space":
 			rows := vm.visibleRows()
 			if vm.cursor < len(rows) {
 				row := rows[vm.cursor]
 				if row.isHeader {
 					vm.groups[row.groupIdx].Expanded = !vm.groups[row.groupIdx].Expanded
+					vm.cancelCellEdit()
+				} else if isTable && vm.previewObject == nil && vm.editor == nil {
+					cols := vm.viewColumns()
+					cmd := vm.activateCellEdit(row, vm.colCursor, cols)
+					return vm, cmd
 				} else if row.object != nil {
 					vm.detailObject = row.object
+				}
+			}
+		case "o":
+			// Open object detail view (replaces Enter behavior in table mode)
+			if isTable {
+				rows := vm.visibleRows()
+				if vm.cursor < len(rows) {
+					row := rows[vm.cursor]
+					if !row.isHeader && row.object != nil {
+						vm.detailObject = row.object
+					}
 				}
 			}
 		case "p":
@@ -272,11 +412,13 @@ func (vm *viewMode) Update(msg tea.Msg) (*viewMode, tea.Cmd) {
 				vm.previewObject = nil
 			} else {
 				vm.editor = nil
+				vm.cellEdit = nil
 				vm.updatePreview()
 			}
 		case "e":
 			// Open view editor (close preview)
 			vm.previewObject = nil
+			vm.cellEdit = nil
 			vm.editor = newViewEditor(vm.typeName, vm.viewName, vm.view, vm.schema, vm.vault)
 		}
 	}
@@ -460,7 +602,8 @@ func (vm *viewMode) viewList(rows []viewRow) string {
 	return b.String()
 }
 
-// viewTable renders objects in a columnar table with headers and separators.
+// viewTable renders objects in a columnar table with headers, separators,
+// and crosshair highlighting for the active cell.
 func (vm *viewMode) viewTable(rows []viewRow) string {
 	cols := vm.viewColumns()
 	nameW := 20
@@ -490,6 +633,12 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 		cols = cols[:maxCols]
 	}
 
+	// Clamp colCursor to visible columns
+	maxCol := len(cols) // 0=NAME, 1..len(cols)
+	if vm.colCursor > maxCol {
+		vm.colCursor = maxCol
+	}
+
 	// Ensure scroll keeps cursor visible
 	visibleH := vm.height - 4 // header + separator + padding
 	if visibleH < 1 {
@@ -497,14 +646,27 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 	}
 	vm.scroll = widget.AdjustScroll(vm.cursor, vm.scroll, visibleH)
 
-	highlightStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("0")).
-		Background(lipgloss.Color("6"))
+	// Styles
 	dimStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("8"))
 	headerStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("4")).
 		Bold(true)
+	activeHeaderStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("4")).
+		Background(lipgloss.Color("236")).
+		Bold(true)
+	activeCellStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("0")).
+		Background(lipgloss.Color("6"))
+	rowHighlightStyle := lipgloss.NewStyle().
+		Background(lipgloss.Color("235"))
+	dimRowHighlightStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("8")).
+		Background(lipgloss.Color("235"))
+	editCellStyle := lipgloss.NewStyle().
+		Foreground(lipgloss.Color("0")).
+		Background(lipgloss.Color("214"))
 
 	// Build sort indicator map
 	sortIndicators := make(map[string]string)
@@ -520,13 +682,25 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 
 	var b strings.Builder
 
-	// Column header
-	header := "  " + padRight("NAME", nameW)
-	for _, col := range cols {
-		label := strings.ToUpper(col) + sortIndicators[col]
-		header += "  " + padRight(truncate(label, colW), colW)
+	// Column header with crosshair tint on active column
+	b.WriteString("  ")
+	nameHeader := padRight("NAME", nameW)
+	if vm.colCursor == 0 {
+		b.WriteString(activeHeaderStyle.Render(nameHeader))
+	} else {
+		b.WriteString(headerStyle.Render(nameHeader))
 	}
-	b.WriteString(headerStyle.Render(header) + "\n")
+	for ci, col := range cols {
+		label := strings.ToUpper(col) + sortIndicators[col]
+		cellText := padRight(truncate(label, colW), colW)
+		if ci+1 == vm.colCursor {
+			b.WriteString("  " + activeHeaderStyle.Render(cellText))
+		} else {
+			b.WriteString("  " + headerStyle.Render(cellText))
+		}
+	}
+	b.WriteString("\n")
+
 	// Separator
 	sep := "  " + strings.Repeat("─", nameW)
 	for range cols {
@@ -537,7 +711,7 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 	// Rows
 	for i := vm.scroll; i < len(rows) && i < vm.scroll+visibleH; i++ {
 		row := rows[i]
-		isCurrent := i == vm.cursor
+		isCursorRow := i == vm.cursor
 
 		if row.isHeader {
 			headerText := fmt.Sprintf(" ── %s ──", row.label)
@@ -548,24 +722,66 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 				name = row.object.Filename
 			}
 
-			line := "  " + padRight(truncate(name, nameW), nameW)
-			for _, col := range cols {
+			b.WriteString("  ")
+
+			// NAME cell (column index 0)
+			nameText := padRight(truncate(name, nameW), nameW)
+			isEditingThis := vm.cellEdit != nil && isCursorRow && vm.colCursor == 0
+			if isEditingThis && vm.cellEdit.mode == cellModeTextInput {
+				// Show textinput in the cell
+				inputView := vm.cellEdit.textInput.View()
+				nameText = padRight(truncate(inputView, nameW), nameW)
+				b.WriteString(editCellStyle.Render(nameText))
+			} else if isCursorRow && vm.colCursor == 0 {
+				b.WriteString(activeCellStyle.Render(nameText))
+			} else if isCursorRow {
+				b.WriteString(rowHighlightStyle.Render(nameText))
+			} else {
+				b.WriteString(nameText)
+			}
+
+			// Property cells (column index 1+)
+			for ci, col := range cols {
+				colIdx := ci + 1
 				val := vm.displayPropValue(row.object, col)
-				if val == "" {
-					cell := padRight("·", colW)
-					if !isCurrent {
-						cell = dimStyle.Render(cell)
+				isEditingThisCell := vm.cellEdit != nil && isCursorRow && vm.colCursor == colIdx
+
+				var cellText string
+				if isEditingThisCell {
+					switch vm.cellEdit.mode {
+					case cellModeTextInput:
+						inputView := vm.cellEdit.textInput.View()
+						cellText = padRight(truncate(inputView, colW), colW)
+					case cellModeSelectPick:
+						if vm.cellEdit.pickerCursor < len(vm.cellEdit.pickerOptions) {
+							cellText = padRight(truncate(vm.cellEdit.pickerOptions[vm.cellEdit.pickerCursor].Value, colW), colW)
+						}
+					case cellModeMultiPick:
+						cellText = padRight(truncate("[picking...]", colW), colW)
 					}
-					line += "  " + cell
+					b.WriteString("  " + editCellStyle.Render(cellText))
+				} else if val == "" {
+					cellText = padRight("·", colW)
+					if isCursorRow && colIdx == vm.colCursor {
+						b.WriteString("  " + activeCellStyle.Render(cellText))
+					} else if isCursorRow {
+						b.WriteString("  " + dimRowHighlightStyle.Render(cellText))
+					} else {
+						b.WriteString("  " + dimStyle.Render(cellText))
+					}
 				} else {
-					line += "  " + padRight(truncate(val, colW), colW)
+					cellText = padRight(truncate(val, colW), colW)
+					if isCursorRow && colIdx == vm.colCursor {
+						b.WriteString("  " + activeCellStyle.Render(cellText))
+					} else if isCursorRow {
+						b.WriteString("  " + rowHighlightStyle.Render(cellText))
+					} else {
+						b.WriteString("  " + cellText)
+					}
 				}
 			}
-			if isCurrent {
-				b.WriteString(highlightStyle.Render(padRight(line, vm.width)) + "\n")
-			} else {
-				b.WriteString(line + "\n")
-			}
+
+			b.WriteString("\n")
 		}
 	}
 
@@ -650,8 +866,21 @@ func (vm *viewMode) HelpBar() string {
 	if vm.detailObject != nil {
 		return "esc: back to list"
 	}
+	if vm.cellEdit != nil {
+		switch vm.cellEdit.mode {
+		case cellModeTextInput:
+			return "[EDIT] enter: confirm  esc: cancel"
+		case cellModeSelectPick:
+			return "[PICK] ↑/↓: navigate  enter: select  esc: cancel"
+		case cellModeMultiPick:
+			return "[PICK] ↑/↓: navigate  space: toggle  enter: confirm  esc: cancel"
+		}
+	}
 	if vm.previewObject != nil {
 		return "↑/↓: navigate  enter: open  p: close preview  e: edit view  esc: exit view"
+	}
+	if vm.isTableLayout() {
+		return "↑/↓/←/→: navigate  enter: edit cell  o: open  tab: next cell  p: preview  e: edit view  esc: exit"
 	}
 	return "↑/↓: navigate  enter: open  p: preview  e: edit view  esc: exit view"
 }

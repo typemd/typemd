@@ -259,6 +259,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case viewCellToastMsg:
+		cmd := m.toast.Show(msg.Level, []widget.ToastItem{{Message: msg.Message}})
+		return m, cmd
+
+	case viewCellSavedMsg:
+		// Forward to view mode to reload data
+		if m.viewMode != nil {
+			vm, cmd := m.viewMode.Update(msg)
+			m.viewMode = vm
+			return m, cmd
+		}
+		return m, nil
+
 	case flashDismissMsg:
 		if m.create != nil && msg.seq == m.create.flashSeq {
 			m.create.flash = ""
@@ -560,6 +573,12 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 	}
 
 	m.rebuildGroups()
+
+	// Cancel active cell edit in view mode on external file change
+	if m.viewMode != nil && m.viewMode.cellEdit != nil {
+		m.viewMode.cancelCellEdit()
+		m.viewMode.reloadObjects()
+	}
 
 	// Remember selected object ID to restore selection
 	var selectedID string
