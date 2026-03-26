@@ -192,7 +192,6 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			if err == nil {
 				m.selected = obj
 			}
-			m.rebuildGroups()
 			m.updateDetail()
 			msg := "Locked"
 			if locked {
