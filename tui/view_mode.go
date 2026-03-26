@@ -224,6 +224,11 @@ func (vm *viewMode) isTableLayout() bool {
 	return vm.view != nil && vm.view.Layout == core.ViewLayoutTable
 }
 
+// IsEditing returns true if a cell edit is active.
+func (vm *viewMode) IsEditing() bool {
+	return vm.cellEdit != nil
+}
+
 // nextEditableCell moves the cursor to the next editable cell (Tab navigation).
 // Returns true if cursor moved. Uses a step limit to prevent infinite loops
 // when all cells are read-only.

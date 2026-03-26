@@ -575,7 +575,7 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 	m.rebuildGroups()
 
 	// Cancel active cell edit in view mode on external file change
-	if m.viewMode != nil && m.viewMode.cellEdit != nil {
+	if m.viewMode != nil && m.viewMode.IsEditing() {
 		m.viewMode.cancelCellEdit()
 		m.viewMode.reloadObjects()
 	}

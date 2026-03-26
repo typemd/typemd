@@ -118,16 +118,35 @@ The TUI shows transient toast notifications in the bottom-right corner for event
 Press `v` on a type group header or object to enter **view mode**. This replaces the three-panel layout with a full-width display of objects. View mode supports two layouts:
 
 - **List layout** — Each row shows the object's emoji and name, optionally followed by inline property values separated by " · ". This is the default layout for new views.
-- **Table layout** — A columnar display with a NAME column followed by property columns. Column headers include sort indicators (↑/↓) when active. The number of columns adjusts to the terminal width.
+- **Table layout** — A columnar display with a NAME column followed by property columns. Column headers include sort indicators (↑/↓) when active. The number of columns adjusts to the terminal width. Supports inline cell editing with crosshair highlighting.
+
+**Common keybindings (both layouts):**
 
 | Key | Action |
 |-----|--------|
 | `↑`/`k`, `↓`/`j` | Navigate rows |
-| `Enter`/`Space` | Open object detail / Toggle group expand/collapse |
 | `e` | Open view editor (right split panel) |
 | `p` | Toggle preview panel (right side) |
 | `Esc` | Return to sidebar |
 | `q`/`Ctrl+C` | Quit |
+
+**List layout:**
+
+| Key | Action |
+|-----|--------|
+| `Enter`/`Space` | Open object detail / Toggle group expand/collapse |
+
+**Table layout** adds cell navigation and inline editing:
+
+| Key | Action |
+|-----|--------|
+| `←`/`h`, `→`/`l` | Navigate columns |
+| `Enter`/`Space` | Edit focused cell (toggle checkbox directly) / Toggle group expand/collapse |
+| `o` | Open object detail view |
+| `Tab` | Move to next editable cell (skips read-only) |
+| `Shift+Tab` | Move to previous editable cell |
+
+A crosshair highlight shows the active cell: the cursor row gets a dim background, the cursor column header gets a tint, and the active cell gets a strong highlight. Editing uses type-appropriate widgets: textinput for string/number/date/datetime/url, option picker for select, multi-picker for multi\_select, and direct toggle for checkbox. Read-only columns (relations, created\_at, updated\_at) are navigable but not editable. Edits auto-save on confirm (`Enter`); press `Esc` to cancel.
 
 When **preview** is active (`p`), the right side shows the selected object's properties and body content. The preview follows the cursor as you navigate. Preview and view editor are mutually exclusive.
 
