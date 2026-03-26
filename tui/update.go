@@ -179,6 +179,29 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		}
 		return m, nil
 
+	case "L":
+		if m.readOnly {
+			return m, nil
+		}
+		if m.selected != nil && m.vault != nil && m.rightPanel == panelObject {
+			locked := m.selected.IsLocked()
+			if err := m.vault.SetLocked(m.selected.ID, !locked); err != nil {
+				return m, m.toast.Show(widget.ToastError, []widget.ToastItem{{Message: err.Error()}})
+			}
+			obj, err := m.vault.GetObject(m.selected.ID)
+			if err == nil {
+				m.selected = obj
+			}
+			m.rebuildGroups()
+			m.updateDetail()
+			msg := "Locked"
+			if locked {
+				msg = "Unlocked"
+			}
+			return m, m.toast.Show(widget.ToastInfo, []widget.ToastItem{{Message: msg}})
+		}
+		return m, nil
+
 	case "v":
 		// Enter view mode for the current type
 		if m.focus == focusLeft && m.vault != nil {
