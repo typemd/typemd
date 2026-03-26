@@ -23,19 +23,28 @@ func titlePrefix(emoji, typeName string) string {
 
 // renderTitleContent builds the title string for the title panel.
 // Format: "emoji type · name" or "type · name" when no emoji.
+// Locked objects show a 🔒 badge right-aligned within the available width.
 func renderTitleContent(obj *core.Object, typeName, emoji string, width int) string {
 	if obj == nil {
 		return ""
 	}
-	lockPrefix := ""
-	if obj.IsLocked() {
-		lockPrefix = " 🔒"
+	title := titlePrefix(emoji, typeName) + " · " + obj.GetName()
+	if !obj.IsLocked() {
+		if width > 0 {
+			title = runewidth.Truncate(title, width, "…")
+		}
+		return title
 	}
-	title := lockPrefix + titlePrefix(emoji, typeName) + " · " + obj.GetName()
+	badge := " 🔒"
+	badgeW := runewidth.StringWidth(badge)
 	if width > 0 {
-		title = runewidth.Truncate(title, width, "…")
+		title = runewidth.Truncate(title, width-badgeW, "…")
+		pad := width - runewidth.StringWidth(title) - badgeW
+		if pad > 0 {
+			title += strings.Repeat(" ", pad)
+		}
 	}
-	return title
+	return title + badge
 }
 
 // renderBody builds the body panel content: pinned properties at top, then markdown body.
