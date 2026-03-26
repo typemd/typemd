@@ -580,6 +580,17 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 
 	m.rebuildGroups()
 
+	// Build toast for unresolved references (shared by both paths below)
+	var toastCmd tea.Cmd
+	if result != nil {
+		var items []widget.ToastItem
+		items = append(items, unresolvedToToastItems(result.Unresolved)...)
+		items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
+		if len(items) > 0 {
+			toastCmd = m.toast.Show(widget.ToastWarning, items)
+		}
+	}
+
 	// In view mode, skip sidebar cursor/selection restore — view mode
 	// manages its own object list via reloadObjects(). Also cancel any
 	// active cell edit since the underlying file changed externally.
@@ -588,16 +599,7 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 			m.viewMode.cancelCellEdit()
 		}
 		m.viewMode.reloadObjects()
-		// Show toast for unresolved references (relations + wiki-links)
-		if result != nil {
-			var items []widget.ToastItem
-			items = append(items, unresolvedToToastItems(result.Unresolved)...)
-			items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
-			if len(items) > 0 {
-				return m.toast.Show(widget.ToastWarning, items)
-			}
-		}
-		return nil
+		return toastCmd
 	}
 
 	// Remember selected object ID to restore selection
@@ -617,17 +619,7 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 	}
 
 	m.selectCurrentRow()
-
-	// Show toast for unresolved references (relations + wiki-links)
-	if result != nil {
-		var items []widget.ToastItem
-		items = append(items, unresolvedToToastItems(result.Unresolved)...)
-		items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
-		if len(items) > 0 {
-			return m.toast.Show(widget.ToastWarning, items)
-		}
-	}
-	return nil
+	return toastCmd
 }
 
 func reasonToGroup(reason string) string {
