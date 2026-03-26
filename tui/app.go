@@ -431,8 +431,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, tea.Quit
 			}
-			// Esc navigates back: editor → detail → list → sidebar
+			// Esc navigates back: cell edit → editor → detail → list → sidebar
 			if msg.String() == "esc" {
+				if m.viewMode.IsEditing() {
+					// Let viewMode.Update handle cancelling the cell edit
+					vm, cmd := m.viewMode.Update(msg)
+					m.viewMode = vm
+					return m, cmd
+				}
 				if m.viewMode.HasEditor() {
 					// Let viewMode.Update handle closing the editor
 					vm, cmd := m.viewMode.Update(msg)
@@ -574,10 +580,24 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 
 	m.rebuildGroups()
 
-	// Cancel active cell edit in view mode on external file change
-	if m.viewMode != nil && m.viewMode.IsEditing() {
-		m.viewMode.cancelCellEdit()
+	// In view mode, skip sidebar cursor/selection restore — view mode
+	// manages its own object list via reloadObjects(). Also cancel any
+	// active cell edit since the underlying file changed externally.
+	if m.rightPanel == panelView && m.viewMode != nil {
+		if m.viewMode.IsEditing() {
+			m.viewMode.cancelCellEdit()
+		}
 		m.viewMode.reloadObjects()
+		// Show toast for unresolved references (relations + wiki-links)
+		if result != nil {
+			var items []widget.ToastItem
+			items = append(items, unresolvedToToastItems(result.Unresolved)...)
+			items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
+			if len(items) > 0 {
+				return m.toast.Show(widget.ToastWarning, items)
+			}
+		}
+		return nil
 	}
 
 	// Remember selected object ID to restore selection

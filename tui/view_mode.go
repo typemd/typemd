@@ -733,10 +733,9 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 			nameText := padRight(truncate(name, nameW), nameW)
 			isEditingThis := vm.cellEdit != nil && isCursorRow && vm.colCursor == 0
 			if isEditingThis && vm.cellEdit.mode == cellModeTextInput {
-				// Show textinput in the cell
-				inputView := vm.cellEdit.textInput.View()
-				nameText = padRight(truncate(inputView, nameW), nameW)
-				b.WriteString(editCellStyle.Render(nameText))
+				// Render textinput with cursor in cell
+				vm.cellEdit.textInput.SetWidth(nameW)
+				b.WriteString(editCellStyle.Render(padRight(vm.cellEdit.textInput.View(), nameW)))
 			} else if isCursorRow && vm.colCursor == 0 {
 				b.WriteString(activeCellStyle.Render(nameText))
 			} else if isCursorRow {
@@ -755,8 +754,8 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 				if isEditingThisCell {
 					switch vm.cellEdit.mode {
 					case cellModeTextInput:
-						inputView := vm.cellEdit.textInput.View()
-						cellText = padRight(truncate(inputView, colW), colW)
+						vm.cellEdit.textInput.SetWidth(colW)
+						cellText = padRight(vm.cellEdit.textInput.View(), colW)
 					case cellModeSelectPick:
 						if vm.cellEdit.pickerCursor < len(vm.cellEdit.pickerOptions) {
 							cellText = padRight(truncate(vm.cellEdit.pickerOptions[vm.cellEdit.pickerCursor].Value, colW), colW)

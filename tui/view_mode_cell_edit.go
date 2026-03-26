@@ -21,11 +21,11 @@ const (
 // cellEdit tracks the state of an inline cell edit in the table view.
 // A nil *cellEdit means no edit is active.
 type cellEdit struct {
-	rowIdx   int          // row index in visibleRows
-	colIdx   int          // column index (0 = NAME, 1+ = property)
-	propName string       // property name being edited (or "name" for NAME column)
-	propType string       // property type (string, number, select, etc.)
-	obj      *core.Object // the object being edited
+	rowIdx    int          // row index in visibleRows
+	colIdx    int          // column index (0 = NAME, 1+ = property)
+	propName  string       // property name being edited (or "name" for NAME column)
+	propType  string       // property type (string, number, select, etc.)
+	obj       *core.Object // the object being edited
 	mode     cellEditMode
 
 	textInput     textinput.Model
@@ -185,8 +185,8 @@ func (vm *viewMode) activateCellEdit(row viewRow, colIdx int, cols []string) tea
 		// string, number, date, datetime, url — use textinput
 		ce.mode = cellModeTextInput
 		ti := textinput.New()
+		ti.Prompt = ""
 		ti.CharLimit = 500
-		ti.SetWidth(40)
 
 		// Pre-fill with current value
 		var currentVal string
