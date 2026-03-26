@@ -72,6 +72,16 @@ tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 Use `--both` to remove the inverse side as well. This only takes effect when the relation property has `bidirectional: true` and an `inverse` field defined in the schema.
 
+## Display indicators
+
+When viewing an Object's properties, Relations use directional indicators to show the link direction:
+
+| Indicator | Meaning | Example |
+|-----------|---------|---------|
+| `→` | Forward relation (this object links to another) | `→ person/alan-donovan` |
+| `←` | Reverse relation (linked via inverse property) | `← book/clean-code` |
+| `⟵` | Backlink (from wiki-links, not schema relations) | `⟵ note/my-note` |
+
 ## Relations vs. Links
 
 TypeMD also supports [Links](/concepts/links) (`[[type/slug]]`) for informal inline references. Relations are structured and schema-defined; Links are freeform and live in the Markdown body. See the [Links](/concepts/links) page for a detailed comparison.

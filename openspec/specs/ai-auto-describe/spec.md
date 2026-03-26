@@ -1,22 +1,22 @@
-### Requirement: ctrl+g on description field triggers AI description generation
+### Requirement: g on description field triggers AI description generation
 
-In TUI object detail view (`panelObject`), when the cursor is on the `description` property and the user presses `ctrl+g`, the system SHALL invoke `AIService.Describe()` with the current object and its type schema. The AI feature SHALL only be available when `vault.AIService()` is non-nil.
+In TUI object detail view (`panelObject`), when the cursor is on the `description` property and the user presses `g`, the system SHALL invoke `AIService.Describe()` with the current object and its type schema. The AI feature SHALL only be available when `vault.AIService()` is non-nil.
 
 #### Scenario: AI generates description for object with body content
 
-- **WHEN** user presses `ctrl+g` on the `description` field of an object that has body content
+- **WHEN** user presses `g` on the `description` field of an object that has body content
 - **THEN** the system SHALL show a loading indicator
 - **AND** SHALL call `AIService.Describe()` with the object and type schema
 - **AND** SHALL display the result as an inline preview
 
-#### Scenario: ctrl+g on description when AI is unavailable
+#### Scenario: g on description when AI is unavailable
 
-- **WHEN** user presses `ctrl+g` on `description` and `vault.AIService()` is nil
+- **WHEN** user presses `g` on `description` and `vault.AIService()` is nil
 - **THEN** nothing SHALL happen (silent no-op)
 
-#### Scenario: ctrl+g on a non-supported field
+#### Scenario: g on a non-supported field
 
-- **WHEN** user presses `ctrl+g` on a field that is not `description` or `tags`
+- **WHEN** user presses `g` on a field that is not `description` or `tags`
 - **THEN** nothing SHALL happen (silent no-op)
 
 ### Requirement: Inline preview shows AI-generated description before applying

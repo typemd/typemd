@@ -69,6 +69,24 @@ A saved configuration that controls how Objects of a Type are displayed — incl
 
 The human-readable part of an Object's filename. For example, `golang-in-action` in `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz.md`. Derived from the name you provide when creating an Object.
 
+When you create an Object with a natural-language name (e.g., "Clean Code"), TypeMD converts it to a slug using these rules:
+
+1. Convert to lowercase
+2. Replace spaces and underscores with hyphens
+3. Remove characters that are not letters, digits, or hyphens (Unicode letters like CJK and accented characters are preserved)
+4. Collapse consecutive hyphens into a single hyphen
+5. Trim leading and trailing hyphens
+
+| Input | Slug |
+|-------|------|
+| `Clean Code` | `clean-code` |
+| `What's the plan?` | `whats-the-plan` |
+| `my_great_idea` | `my-great-idea` |
+| `Chapter 3 Notes` | `chapter-3-notes` |
+| `clean-code` | `clean-code` (already valid) |
+
+The original input is always preserved as the `name` property — slug conversion only affects the filename.
+
 ## ULID
 
 A 26-character Universally Unique Lexicographically Sortable Identifier, automatically appended to the slug by the CLI. Ensures uniqueness even when two Objects share the same slug. Objects created manually (without the CLI) do not require a ULID.

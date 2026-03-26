@@ -126,6 +126,8 @@ func resetAllFlags() {
 	formatType = ""
 	instructionsJSON = false
 	instructionsSkill = false
+	statsTypeName = ""
+	statsJSON = false
 
 	// Reset Cobra local flags that use cmd.Flags().GetBool() instead of
 	// package-level vars. Without this, flags set in one scenario leak
@@ -156,6 +158,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initFixSteps(sc, cc)
 	initInstructionsSteps(sc, cc)
 	initLockSteps(sc, cc)
+	initStatsSteps(sc, cc)
 }
 
 func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
@@ -166,6 +169,8 @@ func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
 	ctx.Step(`^the command should succeed$`, cc.theCommandShouldSucceed)
 	ctx.Step(`^the command should fail$`, cc.theCommandShouldFail)
 	ctx.Step(`^the command should fail with "([^"]*)"$`, cc.theCommandShouldFailWith)
+	ctx.Step(`^the output should start with "([^"]*)"$`, cc.theOutputShouldStartWith)
+	ctx.Step(`^an? (\w+) object "([^"]*)" exists$`, cc.anObjectOfTypeExists)
 }
 
 func (cc *cmdContext) aVaultIsReady() error {
@@ -184,6 +189,19 @@ func (cc *cmdContext) theOutputShouldNotContain(unexpected string) error {
 		return fmt.Errorf("expected output NOT to contain %q, got:\n%s", unexpected, cc.stdout)
 	}
 	return nil
+}
+
+func (cc *cmdContext) theOutputShouldStartWith(prefix string) error {
+	trimmed := strings.TrimSpace(cc.stdout)
+	if !strings.HasPrefix(trimmed, prefix) {
+		return fmt.Errorf("expected output to start with %q, got:\n%s", prefix, cc.stdout)
+	}
+	return nil
+}
+
+func (cc *cmdContext) anObjectOfTypeExists(typeName, name string) error {
+	_, err := cc.vault.NewObject(typeName, name, "")
+	return err
 }
 
 func (cc *cmdContext) theOutputShouldBeEmpty() error {

@@ -1,17 +1,17 @@
-### Requirement: ctrl+g on tags field triggers AI tag suggestion
+### Requirement: g on tags field triggers AI tag suggestion
 
-In TUI object detail view (`panelObject`), when the cursor is on the `tags` property and the user presses `ctrl+g`, the system SHALL invoke `AIService.SuggestTags()` with the current object, its type schema, and the list of all existing tags in the vault.
+In TUI object detail view (`panelObject`), when the cursor is on the `tags` property and the user presses `g`, the system SHALL invoke `AIService.SuggestTags()` with the current object, its type schema, and the list of all existing tags in the vault.
 
 #### Scenario: AI suggests tags for an object
 
-- **WHEN** user presses `ctrl+g` on the `tags` field
+- **WHEN** user presses `g` on the `tags` field
 - **THEN** the system SHALL show a loading indicator
 - **AND** SHALL call `AIService.SuggestTags()` with the object, schema, and all existing tags
 - **AND** SHALL display results as a selectable popup list
 
-#### Scenario: ctrl+g on tags when AI is unavailable
+#### Scenario: g on tags when AI is unavailable
 
-- **WHEN** user presses `ctrl+g` on `tags` and `vault.AIService()` is nil
+- **WHEN** user presses `g` on `tags` and `vault.AIService()` is nil
 - **THEN** nothing SHALL happen (silent no-op)
 
 ### Requirement: Tag suggestion popup displays existing and new tags

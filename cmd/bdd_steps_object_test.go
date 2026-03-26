@@ -28,7 +28,6 @@ func initObjectSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
 	ctx.Step(`^I run object list$`, cc.iRunObjectList)
 	ctx.Step(`^I run object list with json$`, cc.iRunObjectListJSON)
 	ctx.Step(`^the output should have (\d+) lines containing "([^"]*)"$`, cc.theOutputShouldHaveNLinesContaining)
-	ctx.Step(`^the output should start with "\["$`, cc.theOutputShouldStartWithJSONArray)
 }
 
 // --- Object Create ---
@@ -138,10 +137,3 @@ func (cc *cmdContext) theOutputShouldHaveNLinesContaining(n int, substr string) 
 	return nil
 }
 
-func (cc *cmdContext) theOutputShouldStartWithJSONArray() error {
-	trimmed := strings.TrimSpace(cc.stdout)
-	if !strings.HasPrefix(trimmed, "[") {
-		return fmt.Errorf("expected output to start with '[', got:\n%s", cc.stdout)
-	}
-	return nil
-}
