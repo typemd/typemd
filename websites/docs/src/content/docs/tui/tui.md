@@ -211,13 +211,14 @@ Edits are auto-saved on confirm. The panel border changes to orange during activ
 
 ### Locked Objects
 
-Objects with `locked: true` in their frontmatter are protected from accidental editing. Locked objects display a 🔒 icon next to their name in the sidebar and search results.
+Objects with `locked: true` in their frontmatter are protected from accidental editing. Locked objects display a 🔒 badge right-aligned in the title panel.
 
 When an object is locked:
 
 - **`Tab`** (focus properties), **`e`** (edit body), and **`r`** (rename) are blocked — a toast notification shows "Object is locked".
 - The object body and properties remain fully readable.
-- To unlock, use the CLI: `tmd object unlock <id>`.
+- Press **`L`** (uppercase) to toggle the lock state of the selected object.
+- Alternatively, use the CLI: `tmd object lock <id>` / `tmd object unlock <id>`.
 
 ### `[EDIT]` — Body Editing
 

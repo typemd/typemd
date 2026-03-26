@@ -83,15 +83,28 @@ The `locked` property SHALL be stored as a boolean in the object's YAML frontmat
 - **THEN** the frontmatter output SHALL NOT include a `locked` key
 
 ### Requirement: TUI shows lock indicator for locked objects
-The TUI SHALL display a lock icon next to locked objects in the sidebar list and in the properties panel header.
+The TUI SHALL display a 🔒 badge right-aligned in the title panel when a locked object is selected.
 
-#### Scenario: Lock icon in sidebar
-- **WHEN** the sidebar displays an object with `locked: true`
-- **THEN** the object name SHALL be prefixed with a lock icon
+#### Scenario: Lock badge in title panel
+- **WHEN** the title panel displays an object with `locked: true`
+- **THEN** a 🔒 badge SHALL appear right-aligned in the title panel
 
-#### Scenario: No lock icon for unlocked objects
-- **WHEN** the sidebar displays an object without `locked: true`
-- **THEN** no lock icon SHALL be displayed
+#### Scenario: No lock badge for unlocked objects
+- **WHEN** the title panel displays an object without `locked: true`
+- **THEN** no lock badge SHALL be displayed
+
+### Requirement: TUI toggle lock via keybinding
+The TUI SHALL allow toggling the lock state of the selected object by pressing `L` (uppercase).
+
+#### Scenario: Toggle lock on unlocked object
+- **WHEN** the user presses `L` on an unlocked object in object detail view
+- **THEN** the object SHALL become locked
+- **AND** a toast notification SHALL display "Locked"
+
+#### Scenario: Toggle lock on locked object
+- **WHEN** the user presses `L` on a locked object in object detail view
+- **THEN** the object SHALL become unlocked
+- **AND** a toast notification SHALL display "Unlocked"
 
 ### Requirement: TUI prevents editing locked objects
 The TUI SHALL prevent entering property edit mode for locked objects. When a user attempts to edit a locked object, a toast notification SHALL inform them that the object is locked.
