@@ -52,6 +52,8 @@ project-root/
 |---------|-------------|
 | `tmd object create <type> [name] [-t tmpl]` | Create a new object (ULID auto-appended; name optional with name template; `-t` selects object template) |
 | `tmd object show <id>` | Display object properties, relations, and body |
+| `tmd object lock <id>` | Lock an object (prevents editing) |
+| `tmd object unlock <id>` | Unlock a locked object |
 | `tmd object list [--json]` | List all objects |
 
 Object IDs support **prefix matching** — `tmd object show book/clean` works if unambiguous.
@@ -139,8 +141,9 @@ Always appear first in frontmatter, in this order:
 | `created_at` | ISO 8601 datetime, set on creation | Yes, immutable |
 | `updated_at` | ISO 8601 datetime, updated on save | Yes |
 | `tags` | Relation to built-in tag type, multiple | No |
+| `locked` | Boolean, prevents editing when true | No |
 
-These are **reserved** — type schemas cannot define properties named `name`, `description`, `created_at`, `updated_at`, or `tags`.
+These are **reserved** — type schemas cannot define properties named `name`, `description`, `created_at`, `updated_at`, `tags`, or `locked`.
 
 ### Object ID Format
 
@@ -361,5 +364,5 @@ The right panel follows the sidebar cursor:
 - **Use `tmd doctor`** for a comprehensive health check, or `tmd type validate` for quick schema validation
 - **Object IDs include ULIDs** — don't guess them, use `tmd object list` to find exact IDs
 - **Relations are properties** — set them in frontmatter, not as wiki-links (wiki-links are for body text references)
-- **System properties are managed** — you can set `name` and `description`, but `created_at` is immutable and `updated_at` auto-updates on save
+- **System properties are managed** — you can set `name`, `description`, and `locked`, but `created_at` is immutable and `updated_at` auto-updates on save. When `locked: true`, the object cannot be edited until unlocked
 - **Prefix matching works** in CLI — `tmd object show book/clean` resolves if unambiguous

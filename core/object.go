@@ -61,6 +61,16 @@ func (o *Object) DisplayID() string {
 	return o.ParseID().DisplayID()
 }
 
+// IsLocked returns true if the object has the locked property set to true.
+func (o *Object) IsLocked() bool {
+	v, ok := o.Properties[LockedProperty]
+	if !ok {
+		return false
+	}
+	b, ok := v.(bool)
+	return ok && b
+}
+
 // MarkUpdated sets the updated_at timestamp to now.
 func (o *Object) MarkUpdated() {
 	o.Properties[UpdatedAtProperty] = time.Now().Format(time.RFC3339)
@@ -216,5 +226,13 @@ func (v *Vault) SaveObject(obj *Object) error {
 		return fmt.Errorf("vault not opened")
 	}
 	return v.Objects.Save(obj)
+}
+
+// SetLocked toggles the locked state of an object. Delegates to ObjectService.
+func (v *Vault) SetLocked(id string, locked bool) error {
+	if v.Objects == nil {
+		return fmt.Errorf("vault not opened")
+	}
+	return v.Objects.SetLocked(id, locked)
 }
 

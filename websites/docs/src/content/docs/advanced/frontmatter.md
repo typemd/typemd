@@ -19,6 +19,7 @@ created_at: 2025-03-10T14:30:00+08:00
 updated_at: 2025-03-12T09:15:00+08:00
 tags:
   - tag/programming-01jqr3k5mpbvn8e0f2g7h9txyz
+locked: true
 status: reading
 author: person/robert-martin-01jqr3k5mpbvn8e0f2g7h9txyz
 ---
@@ -37,7 +38,8 @@ Properties must follow a specific order in the frontmatter. System properties al
 3. `created_at`
 4. `updated_at`
 5. `tags`
-6. *(schema-defined properties in schema order)*
+6. `locked`
+7. *(schema-defined properties in schema order)*
 
 TypeMD preserves this ordering when saving files. If you add properties out of order, they will be reordered on the next save via the CLI or TUI.
 

@@ -9,7 +9,7 @@ Properties are named fields on an Object, defined by its [Type schema](/concepts
 
 ## System Properties
 
-Every Object supports five system properties managed by TypeMD. These provide the baseline metadata that every knowledge management tool needs — identity, description, temporal tracking, and categorization — without requiring users to define them in every type schema. Not all system properties are present in every Object's frontmatter: `name` is auto-populated on creation, `created_at` and `updated_at` are set when using the CLI, while `description` and `tags` only appear when explicitly set by the user.
+Every Object supports six system properties managed by TypeMD. These provide the baseline metadata that every knowledge management tool needs — identity, description, temporal tracking, categorization, and protection — without requiring users to define them in every type schema. Not all system properties are present in every Object's frontmatter: `name` is auto-populated on creation, `created_at` and `updated_at` are set when using the CLI, while `description`, `tags`, and `locked` only appear when explicitly set by the user.
 
 | Property | Description | Mutability | Why |
 |----------|-------------|------------|-----|
@@ -18,8 +18,9 @@ Every Object supports five system properties managed by TypeMD. These provide th
 | `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) | Auto-managed | Enables sorting by creation date and understanding the timeline of a vault |
 | `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) | Auto-managed | Enables sorting by recency and tracking the evolution of Objects |
 | `tags` | Array of tag references (relation to the built-in `tag` type, multiple) | User-authored | Cross-cutting categorization that works across all types |
+| `locked` | Boolean that prevents editing when `true` | User-authored | Protects finished or archival Objects from accidental modification |
 
-**User-authored** properties (`name`, `description`, `tags`) can be overridden by [object templates](/basics/templates). **Auto-managed** properties (`created_at`, `updated_at`) cannot be overridden — they always reflect the actual creation and modification times.
+**User-authored** properties (`name`, `description`, `tags`, `locked`) can be overridden by [object templates](/basics/templates). **Auto-managed** properties (`created_at`, `updated_at`) cannot be overridden — they always reflect the actual creation and modification times.
 
 These names are reserved and cannot be used in type schemas or [shared properties](#shared-properties). The only exception is `name`, which can appear in `properties` with a `template` field for [name templates](/basics/templates#name-templates).
 

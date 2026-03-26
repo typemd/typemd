@@ -27,7 +27,7 @@ func TestIsSystemProperty_CaseSensitive(t *testing.T) {
 
 func TestSystemPropertyNames_Order(t *testing.T) {
 	names := SystemPropertyNames()
-	expected := []string{"name", "description", "created_at", "updated_at", "tags"}
+	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked"}
 	if len(names) != len(expected) {
 		t.Fatalf("SystemPropertyNames() returned %d names, want %d", len(names), len(expected))
 	}

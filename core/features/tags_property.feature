@@ -5,7 +5,7 @@ Feature: Tags system property
     Then "tags" should be a system property
 
   Scenario: Tags appears in system property names
-    Then the system property registry should contain "name, description, created_at, updated_at, tags"
+    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked"
 
   Scenario: Frontmatter orders tags after updated_at
     Given a vault is ready

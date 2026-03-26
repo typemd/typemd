@@ -209,6 +209,17 @@ If validation fails, a toast notification shows the error and the edit remains a
 
 Edits are auto-saved on confirm. The panel border changes to orange during active editing, and the help bar shows `[EDIT]`.
 
+### Locked Objects
+
+Objects with `locked: true` in their frontmatter are protected from accidental editing. Locked objects display a 🔒 badge right-aligned in the title panel.
+
+When an object is locked:
+
+- **`Tab`** (focus properties), **`e`** (edit body), and **`r`** (rename) are blocked — a toast notification shows "Object is locked".
+- The object body and properties remain fully readable.
+- Press **`L`** (uppercase) to toggle the lock state of the selected object.
+- Alternatively, use the CLI: `tmd object lock <id>` / `tmd object unlock <id>`.
+
 ### `[EDIT]` — Body Editing
 
 Active when editing the object body text. Press `e` in VIEW mode while the body panel is focused.

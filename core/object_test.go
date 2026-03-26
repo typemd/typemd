@@ -1,10 +1,36 @@
 package core
 
 import (
+	"errors"
 	"os"
 	"strings"
 	"testing"
 )
+
+func TestIsLocked(t *testing.T) {
+	tests := []struct {
+		name     string
+		props    map[string]any
+		expected bool
+	}{
+		{"nil properties", nil, false},
+		{"empty properties", map[string]any{}, false},
+		{"locked true", map[string]any{LockedProperty: true}, true},
+		{"locked false", map[string]any{LockedProperty: false}, false},
+		{"locked string true", map[string]any{LockedProperty: "true"}, false},
+		{"locked nil", map[string]any{LockedProperty: nil}, false},
+		{"locked integer", map[string]any{LockedProperty: 1}, false},
+		{"no locked property", map[string]any{"name": "test"}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			obj := &Object{Properties: tt.props}
+			if obj.IsLocked() != tt.expected {
+				t.Errorf("IsLocked() = %v, want %v", obj.IsLocked(), tt.expected)
+			}
+		})
+	}
+}
 
 func TestWriteFrontmatter(t *testing.T) {
 	props := map[string]any{
@@ -610,5 +636,42 @@ func TestVault_ResolveObject(t *testing.T) {
 	}
 	if obj.ID != created.ID {
 		t.Errorf("ID = %q, want %q", obj.ID, created.ID)
+	}
+}
+
+func TestSaveLockedObjectReturnsError(t *testing.T) {
+	v := setupTestVault(t)
+
+	obj, err := v.NewObject("book", "locked-unit-test", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := v.SetLocked(obj.ID, true); err != nil {
+		t.Fatal(err)
+	}
+
+	obj, _ = v.GetObject(obj.ID)
+	err = v.SaveObject(obj)
+	if !errors.Is(err, ErrObjectLocked) {
+		t.Errorf("Save() error = %v, want ErrObjectLocked", err)
+	}
+}
+
+func TestSetPropertyLockedObjectReturnsError(t *testing.T) {
+	v := setupTestVault(t)
+
+	obj, err := v.NewObject("book", "locked-setprop-unit", "")
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	if err := v.SetLocked(obj.ID, true); err != nil {
+		t.Fatal(err)
+	}
+
+	err = v.SetProperty(obj.ID, "title", "New Title")
+	if !errors.Is(err, ErrObjectLocked) {
+		t.Errorf("SetProperty() error = %v, want ErrObjectLocked", err)
 	}
 }

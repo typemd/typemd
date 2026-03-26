@@ -338,6 +338,54 @@ func TestModel_PropNavigation_UpDown(t *testing.T) {
 	}
 }
 
+func TestModel_TabDoesNotEnterPropsForLockedObject(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusBody
+	m.propsVisible = true
+	m.rightPanel = panelObject
+	// Set selected object as locked
+	m.selected = &core.Object{
+		ID:         "book/test-locked",
+		Type:       "book",
+		Filename:   "test-locked",
+		Properties: map[string]any{core.LockedProperty: true},
+	}
+	m.propEdit = newPropEditor(testDisplayProps(), testPropSchema())
+
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.focus == focusProps {
+		t.Error("focus should NOT be focusProps for locked object after Tab")
+	}
+	if updated.focus != focusBody {
+		t.Errorf("focus should remain focusBody for locked object, got %d", updated.focus)
+	}
+}
+
+func TestModel_TabEntersPropsForUnlockedObject(t *testing.T) {
+	m := setupTestModel(t)
+	m.focus = focusBody
+	m.propsVisible = true
+	m.rightPanel = panelObject
+	m.selected = &core.Object{
+		ID:         "book/test-unlocked",
+		Type:       "book",
+		Filename:   "test-unlocked",
+		Properties: map[string]any{},
+	}
+	m.propEdit = newPropEditor(testDisplayProps(), testPropSchema())
+
+	msg := tea.KeyPressMsg{Code: tea.KeyTab}
+	newM, _ := m.Update(msg)
+	updated := newM.(model)
+
+	if updated.focus != focusProps {
+		t.Errorf("focus should be focusProps for unlocked object after Tab, got %d", updated.focus)
+	}
+}
+
 func TestModel_PropEscReturnsToSidebar(t *testing.T) {
 	m := setupTestModel(t)
 	m.focus = focusProps
