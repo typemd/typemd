@@ -100,7 +100,11 @@ func (m model) View() tea.View {
 			if vm.schema != nil {
 				emoji = vm.schema.Emoji
 			}
-			titleText = titlePrefix(emoji, m.selected.Type) + " · " + m.selected.GetName()
+			lockIcon := ""
+			if m.selected.IsLocked() {
+				lockIcon = "🔒 "
+			}
+			titleText = titlePrefix(emoji, m.selected.Type) + " · " + lockIcon + m.selected.GetName()
 		}
 
 		bodyH := contentH - titlePanelHeight
@@ -367,15 +371,11 @@ func (m model) View() tea.View {
 			var lines []string
 			for i, row := range rows {
 				name := row.Object.GetName()
-				lockPrefix := ""
-				if row.Object.IsLocked() {
-					lockPrefix = "🔒 "
-				}
-				maxWidth := leftW - 3 - runewidth.StringWidth(row.Object.Type) - 1 - runewidth.StringWidth(lockPrefix) // 3 = leading spaces, 1 = "/"
+				maxWidth := leftW - 3 - runewidth.StringWidth(row.Object.Type) - 1 // 3 = leading spaces, 1 = "/"
 				if maxWidth > 0 {
 					name = runewidth.Truncate(name, maxWidth, "…")
 				}
-				line := fmt.Sprintf("   %s%s/%s", lockPrefix, row.Object.Type, name)
+				line := fmt.Sprintf("   %s/%s", row.Object.Type, name)
 				if i == m.cursor {
 					style := highlightStyle
 					line = style.Render(line)

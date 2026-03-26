@@ -25,7 +25,7 @@ func TestRenderList_GroupHeaderWithEmoji(t *testing.T) {
 	}
 }
 
-func TestRenderList_LockedObjectShowsLockIcon(t *testing.T) {
+func TestRenderList_SidebarNoLockIcon(t *testing.T) {
 	groups := []typeGroup{
 		{
 			Name:   "book",
@@ -33,7 +33,6 @@ func TestRenderList_LockedObjectShowsLockIcon(t *testing.T) {
 			Emoji:  "📚",
 			Objects: []*core.Object{
 				{ID: "book/locked-one", Type: "book", Filename: "locked-one", Properties: map[string]any{core.LockedProperty: true, "name": "Locked Book"}},
-				{ID: "book/unlocked-one", Type: "book", Filename: "unlocked-one", Properties: map[string]any{"name": "Unlocked Book"}},
 			},
 			Expanded: true,
 		},
@@ -41,31 +40,34 @@ func TestRenderList_LockedObjectShowsLockIcon(t *testing.T) {
 
 	result := renderList(groups, 0, 0, true, 60, 10)
 
-	if !strings.Contains(result, "🔒 Locked Book") {
-		t.Errorf("expected lock icon for locked object, got: %s", result)
-	}
-	// Unlocked object should NOT have lock icon
-	if strings.Contains(result, "🔒 Unlocked Book") {
-		t.Errorf("unlocked object should not have lock icon, got: %s", result)
+	if strings.Contains(result, "🔒") {
+		t.Errorf("sidebar should not show lock icon, got: %s", result)
 	}
 }
 
-func TestRenderList_UnlockedObjectNoLockIcon(t *testing.T) {
-	groups := []typeGroup{
-		{
-			Name:   "note",
-			Plural: "notes",
-			Objects: []*core.Object{
-				{ID: "note/test", Type: "note", Filename: "test", Properties: map[string]any{"name": "My Note"}},
-			},
-			Expanded: true,
-		},
+func TestRenderTitleContent_LockedObjectShowsLockIcon(t *testing.T) {
+	obj := &core.Object{
+		ID:         "book/test",
+		Type:       "book",
+		Filename:   "test",
+		Properties: map[string]any{core.LockedProperty: true, "name": "Locked Book"},
 	}
+	result := renderTitleContent(obj, "book", "📚", 80)
+	if !strings.Contains(result, "🔒") {
+		t.Errorf("title should contain lock icon for locked object, got: %s", result)
+	}
+}
 
-	result := renderList(groups, 0, 0, true, 40, 10)
-
+func TestRenderTitleContent_UnlockedObjectNoLockIcon(t *testing.T) {
+	obj := &core.Object{
+		ID:         "book/test",
+		Type:       "book",
+		Filename:   "test",
+		Properties: map[string]any{"name": "Unlocked Book"},
+	}
+	result := renderTitleContent(obj, "book", "📚", 80)
 	if strings.Contains(result, "🔒") {
-		t.Errorf("unlocked object should not have lock icon, got: %s", result)
+		t.Errorf("title should not contain lock icon for unlocked object, got: %s", result)
 	}
 }
 

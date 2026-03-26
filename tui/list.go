@@ -142,15 +142,11 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 			}
 		case rowObject:
 			name := row.Object.GetName()
-			prefix := "   "
-			if row.Object.IsLocked() {
-				prefix = "   🔒 "
-			}
-			maxNameWidth := width - runewidth.StringWidth(prefix)
+			maxNameWidth := width - 3 // 3 = leading spaces "   "
 			if maxNameWidth > 0 {
 				name = runewidth.Truncate(name, maxNameWidth, "…")
 			}
-			line = fmt.Sprintf("%s%s", prefix, name)
+			line = fmt.Sprintf("   %s", name)
 		case rowNewType:
 			line = " + New Type"
 		}
