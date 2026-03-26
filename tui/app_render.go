@@ -100,11 +100,11 @@ func (m model) View() tea.View {
 			if vm.schema != nil {
 				emoji = vm.schema.Emoji
 			}
-			lockIcon := ""
+			lockPrefix := ""
 			if m.selected.IsLocked() {
-				lockIcon = "🔒 "
+				lockPrefix = " 🔒"
 			}
-			titleText = titlePrefix(emoji, m.selected.Type) + " · " + lockIcon + m.selected.GetName()
+			titleText = lockPrefix + titlePrefix(emoji, m.selected.Type) + " · " + m.selected.GetName()
 		}
 
 		bodyH := contentH - titlePanelHeight

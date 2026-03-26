@@ -27,11 +27,11 @@ func renderTitleContent(obj *core.Object, typeName, emoji string, width int) str
 	if obj == nil {
 		return ""
 	}
-	lockIcon := ""
+	lockPrefix := ""
 	if obj.IsLocked() {
-		lockIcon = "🔒 "
+		lockPrefix = " 🔒"
 	}
-	title := titlePrefix(emoji, typeName) + " · " + lockIcon + obj.GetName()
+	title := lockPrefix + titlePrefix(emoji, typeName) + " · " + obj.GetName()
 	if width > 0 {
 		title = runewidth.Truncate(title, width, "…")
 	}
