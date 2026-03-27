@@ -85,25 +85,34 @@ func TestPropEditor_CursorSkipsImmutableSystemProps(t *testing.T) {
 	}
 }
 
-func TestPropEditor_CursorSkipsRelations(t *testing.T) {
+func TestPropEditor_ForwardRelationsAreEditable(t *testing.T) {
 	pe := newPropEditor(testDisplayProps(), testPropSchema())
 
 	for _, item := range pe.items {
-		if item.dp.IsRelation && item.editable {
-			t.Errorf("relation property %s should not be editable", item.dp.Key)
+		if item.dp.IsRelation && !item.dp.IsReverse && !item.dp.IsBacklink {
+			if !item.editable {
+				t.Errorf("forward relation property %s should be editable", item.dp.Key)
+			}
 		}
+	}
+}
+
+func TestPropEditor_CursorSkipsReverseRelations(t *testing.T) {
+	pe := newPropEditor(testDisplayProps(), testPropSchema())
+
+	for _, item := range pe.items {
 		if item.dp.IsReverse && item.editable {
 			t.Errorf("reverse relation property %s should not be editable", item.dp.Key)
 		}
 	}
 }
 
-func TestPropEditor_CursorSkipsTags(t *testing.T) {
+func TestPropEditor_TagsAreEditable(t *testing.T) {
 	pe := newPropEditor(testDisplayProps(), testPropSchema())
 
 	for _, item := range pe.items {
-		if item.dp.Key == "tags" && item.editable {
-			t.Error("tags property should not be editable")
+		if item.dp.Key == "tags" && !item.editable {
+			t.Error("tags property should be editable")
 		}
 	}
 }
@@ -178,7 +187,7 @@ func TestPropEditor_ActivateTextInput(t *testing.T) {
 		t.Fatal("could not navigate to title property")
 	}
 
-	pe.activateEdit()
+	pe.activateEdit(nil)
 
 	if pe.mode != propModeTextInput {
 		t.Errorf("expected propModeTextInput, got %d", pe.mode)
@@ -194,7 +203,7 @@ func TestPropEditor_CancelTextInput(t *testing.T) {
 	for pe.currentItem() != nil && pe.currentItem().dp.Key != "title" {
 		pe.moveDown()
 	}
-	pe.activateEdit()
+	pe.activateEdit(nil)
 	pe.cancelEdit()
 
 	if pe.mode != propModeNavigate {
@@ -216,7 +225,7 @@ func TestPropEditor_CheckboxIsNotTextInput(t *testing.T) {
 	}
 
 	// activateEdit should return nil for checkbox (direct toggle handled elsewhere)
-	cmd := pe.activateEdit()
+	cmd := pe.activateEdit(nil)
 	if cmd != nil {
 		t.Error("checkbox should not return a command from activateEdit")
 	}
@@ -238,7 +247,7 @@ func TestPropEditor_ActivateSelectPicker(t *testing.T) {
 		t.Fatal("could not navigate to status property")
 	}
 
-	pe.activateEdit()
+	pe.activateEdit(nil)
 
 	if pe.mode != propModeSelectPick {
 		t.Errorf("expected propModeSelectPick, got %d", pe.mode)
@@ -258,7 +267,7 @@ func TestPropEditor_SelectPickerNavigation(t *testing.T) {
 	for pe.currentItem() != nil && pe.currentItem().dp.Key != "status" {
 		pe.moveDown()
 	}
-	pe.activateEdit()
+	pe.activateEdit(nil)
 
 	// Move down in picker
 	if pe.pickerCursor != 0 {
@@ -276,7 +285,7 @@ func TestPropEditor_CancelSelectPicker(t *testing.T) {
 	for pe.currentItem() != nil && pe.currentItem().dp.Key != "status" {
 		pe.moveDown()
 	}
-	pe.activateEdit()
+	pe.activateEdit(nil)
 	pe.cancelEdit()
 
 	if pe.mode != propModeNavigate {

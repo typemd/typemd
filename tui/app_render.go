@@ -541,6 +541,8 @@ func (m model) View() tea.View {
 		helpBar = "  [AI]  tab: accept  |  esc: reject"
 	} else if m.aiState == aiShowingTags {
 		helpBar = "  [AI TAGS]  ↑↓: navigate  |  space: toggle  |  enter: apply  |  esc: cancel"
+	} else if m.propEdit != nil && m.propEdit.isPicking() {
+		helpBar = "  [PICK]  ↑↓: navigate  |  enter: select  |  esc: cancel"
 	} else if m.propEdit != nil && m.propEdit.isEditing() {
 		helpBar = "  [EDIT]  enter: confirm  |  esc: cancel"
 	} else if m.focus == focusProps && m.propEdit != nil {

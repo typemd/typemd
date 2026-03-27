@@ -23,6 +23,10 @@ func updatePropEditor(m model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 		return updatePropSelectPick(m, msg)
 	case propModeMultiPick:
 		return updatePropMultiPick(m, msg)
+	case propModeRelationPick:
+		return updateRelationPick(m, msg)
+	case propModeRelationMultiPick:
+		return updateRelationMultiPick(m, msg)
 	default:
 		return updatePropNavigate(m, msg)
 	}
@@ -50,7 +54,7 @@ func updatePropNavigate(m model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 		if item.resolvedType() == "checkbox" {
 			return toggleCheckbox(m)
 		}
-		cmd := pe.activateEdit()
+		cmd := pe.activateEdit(m.vault)
 		m.updatePropsContent()
 		return m, cmd, true
 
