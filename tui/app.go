@@ -259,6 +259,19 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case viewCellToastMsg:
+		cmd := m.toast.Show(msg.Level, []widget.ToastItem{{Message: msg.Message}})
+		return m, cmd
+
+	case viewCellSavedMsg:
+		// Forward to view mode to reload data
+		if m.viewMode != nil {
+			vm, cmd := m.viewMode.Update(msg)
+			m.viewMode = vm
+			return m, cmd
+		}
+		return m, nil
+
 	case flashDismissMsg:
 		if m.create != nil && msg.seq == m.create.flashSeq {
 			m.create.flash = ""
@@ -418,8 +431,14 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 				}
 				return m, tea.Quit
 			}
-			// Esc navigates back: editor → detail → list → sidebar
+			// Esc navigates back: cell edit → editor → detail → list → sidebar
 			if msg.String() == "esc" {
+				if m.viewMode.IsEditing() {
+					// Let viewMode.Update handle cancelling the cell edit
+					vm, cmd := m.viewMode.Update(msg)
+					m.viewMode = vm
+					return m, cmd
+				}
 				if m.viewMode.HasEditor() {
 					// Let viewMode.Update handle closing the editor
 					vm, cmd := m.viewMode.Update(msg)
@@ -561,6 +580,28 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 
 	m.rebuildGroups()
 
+	// Build toast for unresolved references (shared by both paths below)
+	var toastCmd tea.Cmd
+	if result != nil {
+		var items []widget.ToastItem
+		items = append(items, unresolvedToToastItems(result.Unresolved)...)
+		items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
+		if len(items) > 0 {
+			toastCmd = m.toast.Show(widget.ToastWarning, items)
+		}
+	}
+
+	// In view mode, skip sidebar cursor/selection restore — view mode
+	// manages its own object list via reloadObjects(). Also cancel any
+	// active cell edit since the underlying file changed externally.
+	if m.rightPanel == panelView && m.viewMode != nil {
+		if m.viewMode.IsEditing() {
+			m.viewMode.cancelCellEdit()
+		}
+		m.viewMode.reloadObjects()
+		return toastCmd
+	}
+
 	// Remember selected object ID to restore selection
 	var selectedID string
 	if m.selected != nil {
@@ -578,17 +619,7 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 	}
 
 	m.selectCurrentRow()
-
-	// Show toast for unresolved references (relations + wiki-links)
-	if result != nil {
-		var items []widget.ToastItem
-		items = append(items, unresolvedToToastItems(result.Unresolved)...)
-		items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
-		if len(items) > 0 {
-			return m.toast.Show(widget.ToastWarning, items)
-		}
-	}
-	return nil
+	return toastCmd
 }
 
 func reasonToGroup(reason string) string {
