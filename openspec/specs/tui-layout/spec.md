@@ -1,3 +1,5 @@
+## Requirements
+
 ### Requirement: Title panel displays object identity
 The TUI detail view SHALL display a dedicated title panel above the body and properties panels showing the type emoji, type name, and object name (from `GetName()`).
 
@@ -34,6 +36,53 @@ The body panel SHALL NOT render the object title or separator line. The body pan
 - **WHEN** an object is selected and the body panel is rendered
 - **THEN** the body panel SHALL start directly with the markdown body content, without a title line or separator
 
+### Requirement: Title panel height is fixed
+The title panel SHALL occupy exactly 3 lines of vertical space (1 content line + 2 border lines).
+
+#### Scenario: Vertical space allocation
+- **WHEN** the TUI detail view is rendered with an object selected
+- **THEN** the body and properties panels SHALL have their content height reduced by 3 lines compared to the no-title-panel state
+
+### Requirement: Property supports optional pin field
+
+The Property struct SHALL support an optional `pin` field that stores a positive integer value. When a property definition in a type schema YAML includes a `pin` field, it SHALL be parsed and stored. When the field is omitted, the pin SHALL default to zero (not pinned).
+
+#### Scenario: Property with pin defined
+- **WHEN** a type schema property definition contains `pin: 1`
+- **THEN** the loaded Property SHALL have its Pin field set to 1
+
+#### Scenario: Property without pin defined
+- **WHEN** a type schema property definition does not contain a `pin` field
+- **THEN** the loaded Property SHALL have its Pin field set to 0
+
+### Requirement: Pin values must be positive integers
+
+When a property has a pin value set, it SHALL be a positive integer (greater than zero). Schema validation SHALL reject negative pin values.
+
+#### Scenario: Positive pin value accepted
+- **WHEN** a type schema property has `pin: 3`
+- **THEN** schema validation SHALL accept it without error
+
+#### Scenario: Negative pin value rejected
+- **WHEN** a type schema property has `pin: -1`
+- **THEN** schema validation SHALL return an error indicating invalid pin value
+
+### Requirement: Pin values unique within type scope
+
+Within a single type schema, no two properties SHALL have the same non-zero pin value. Schema validation SHALL reject duplicate pin values.
+
+#### Scenario: Unique pin values accepted
+- **WHEN** a type schema has properties with pin values 1 and 2
+- **THEN** schema validation SHALL accept it without error
+
+#### Scenario: Duplicate pin values rejected
+- **WHEN** a type schema has two properties both with `pin: 1`
+- **THEN** schema validation SHALL return an error indicating duplicate pin value 1
+
+#### Scenario: Unpinned properties do not conflict
+- **WHEN** a type schema has three properties where two have no pin and one has `pin: 1`
+- **THEN** schema validation SHALL accept it without error
+
 ### Requirement: Pinned properties displayed at top of body panel
 
 Properties with a non-zero `pin` value SHALL be rendered at the top of the body panel, above the markdown body content. Pinned properties SHALL be sorted by pin value ascending (lower number first). When a property has an emoji defined, it SHALL be displayed alongside the pinned value.
@@ -59,12 +108,20 @@ Properties with a non-zero `pin` value SHALL NOT appear in the Properties panel.
 - **WHEN** a type schema has property "status" with `pin: 1`
 - **THEN** "status" SHALL NOT appear in the Properties panel
 
-### Requirement: Title panel height is fixed
-The title panel SHALL occupy exactly 3 lines of vertical space (1 content line + 2 border lines).
+### Requirement: Properties panel displays property values
+The properties panel SHALL display unpinned, non-name properties. When the properties panel is focused, properties SHALL display with a cursor indicator on the currently selected property. Editable properties SHALL be visually distinguished from read-only properties.
 
-#### Scenario: Vertical space allocation
-- **WHEN** the TUI detail view is rendered with an object selected
-- **THEN** the body and properties panels SHALL have their content height reduced by 3 lines compared to the no-title-panel state
+#### Scenario: Cursor indicator on focused panel
+- **WHEN** the properties panel gains focus via Tab
+- **THEN** the first editable property SHALL be highlighted with a cursor indicator (e.g., `▸` prefix)
+
+#### Scenario: Read-only properties shown without cursor
+- **WHEN** the properties panel is focused
+- **THEN** read-only properties (created_at, updated_at, reverse relations, backlinks, relations) SHALL be displayed but SHALL NOT receive cursor highlight during navigation
+
+#### Scenario: Edit mode border color
+- **WHEN** a property is being actively edited (textinput visible or picker open)
+- **THEN** the properties panel border SHALL use the edit border color (orange)
 
 ### Requirement: TUI startup initializes from restored state
 The TUI `Start()` function SHALL attempt to load session state from `.typemd/tui-state.yaml` before applying default values. Restored state values take precedence over hardcoded defaults. If no state file exists or loading fails, the TUI SHALL use the current default behavior (first group expanded, first object selected).
@@ -95,17 +152,26 @@ The view editor SHALL provide a Layout section allowing users to switch between 
 - **WHEN** the user selects `list` in the Layout section of the view editor
 - **THEN** the view SHALL save with `layout: list` and the display SHALL switch to inline name format immediately
 
-### Requirement: Properties panel displays property values
-The properties panel SHALL display unpinned, non-name properties. When the properties panel is focused, properties SHALL display with a cursor indicator on the currently selected property. Editable properties SHALL be visually distinguished from read-only properties.
+### Requirement: Group header displays type emoji
 
-#### Scenario: Cursor indicator on focused panel
-- **WHEN** the properties panel gains focus via Tab
-- **THEN** the first editable property SHALL be highlighted with a cursor indicator (e.g., `▸` prefix)
+The TUI object list panel SHALL display the type's emoji prefix in group headers when the type schema defines an emoji field. Object list loading SHALL use `[]FilterRule` parameters when calling `Vault.QueryObjects()`.
 
-#### Scenario: Read-only properties shown without cursor
-- **WHEN** the properties panel is focused
-- **THEN** read-only properties (created_at, updated_at, reverse relations, backlinks, relations) SHALL be displayed but SHALL NOT receive cursor highlight during navigation
+#### Scenario: Type with emoji defined
+- **WHEN** a type schema has an emoji field (e.g., book with 📚)
+- **THEN** the group header displays as `▼ 📚 book (N)` where N is the object count
 
-#### Scenario: Edit mode border color
-- **WHEN** a property is being actively edited (textinput visible or picker open)
-- **THEN** the properties panel border SHALL use the edit border color (orange)
+#### Scenario: Type without emoji defined
+- **WHEN** a type schema does not have an emoji field
+- **THEN** the group header displays as `▼ book (N)` with no extra spacing or placeholder
+
+#### Scenario: Object list loading uses structured filter
+- **WHEN** the TUI loads the object list (via `app.go` or `view_mode.go`)
+- **THEN** it SHALL call `Vault.QueryObjects([]FilterRule{...})` instead of passing a filter string
+
+### Requirement: Normal mode help bar shows both creation keybindings
+
+When the sidebar is focused in normal mode, the help bar SHALL include both `n` (new) and `N` (quick create) keybinding hints.
+
+#### Scenario: Sidebar focused help bar
+- **WHEN** the sidebar is focused in normal mode with a type header or object selected
+- **THEN** the help bar SHALL include hints for both `n: new` and `N: quick create`
