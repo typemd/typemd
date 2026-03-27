@@ -272,6 +272,9 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 		}
 		return m, nil
 
+	case relationLinkedMsg, relationUnlinkedMsg, relationLinkErrMsg:
+		return handleRelationResult(m, msg)
+
 	case flashDismissMsg:
 		if m.create != nil && msg.seq == m.create.flashSeq {
 			m.create.flash = ""

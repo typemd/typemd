@@ -14,10 +14,12 @@ import (
 type propEditMode int
 
 const (
-	propModeNavigate    propEditMode = iota // cursor navigation, no editing
-	propModeTextInput                       // textinput active (string, number, date, datetime, url)
-	propModeSelectPick                      // select option picker open
-	propModeMultiPick                       // multi_select option picker open
+	propModeNavigate          propEditMode = iota // cursor navigation, no editing
+	propModeTextInput                              // textinput active (string, number, date, datetime, url)
+	propModeSelectPick                             // select option picker open
+	propModeMultiPick                              // multi_select option picker open
+	propModeRelationPick                           // single-value relation picker open
+	propModeRelationMultiPick                      // multi-value relation picker open
 )
 
 // propEditor manages cursor navigation and inline editing in the properties panel.
@@ -35,6 +37,13 @@ type propEditor struct {
 	pickerOptions []core.Option // available options for current select/multi_select
 	pickerCursor  int           // cursor within picker
 	pickerChecked []bool        // for multi_select: which options are checked
+
+	// Relation picker state
+	relCandidates     []relationCandidate // all candidates (unfiltered)
+	relFiltered       []relationCandidate // candidates matching search
+	relSearch         string              // current search text
+	relChecked        []bool              // for multi-value: which candidates are checked
+	relInitialChecked []bool              // snapshot at picker open for diff calculation
 }
 
 // propItem represents a single property row in the editor.
@@ -100,14 +109,12 @@ func isPropertyEditable(dp core.DisplayProperty) bool {
 	if core.IsImmutableSystemProperty(dp.Key) {
 		return false
 	}
-	// Tags (relation, handled by #88)
-	if dp.Key == core.TagsProperty {
+	// Reverse relations and backlinks are always read-only
+	if dp.IsReverse || dp.IsBacklink {
 		return false
 	}
-	// Relations, reverse relations, backlinks
-	if dp.IsRelation || dp.IsReverse || dp.IsBacklink {
-		return false
-	}
+	// Forward relations and tags are editable via relation picker
+	// All other property types are editable via their respective editors
 	return true
 }
 
@@ -167,10 +174,16 @@ func (pe *propEditor) currentItem() *propItem {
 }
 
 // activateEdit starts editing the current property based on its type.
-func (pe *propEditor) activateEdit() tea.Cmd {
+// vault is needed for relation picker candidate loading.
+func (pe *propEditor) activateEdit(vault *core.Vault) tea.Cmd {
 	item := pe.currentItem()
 	if item == nil || !item.editable {
 		return nil
+	}
+
+	// Relations (schema-defined or tags system property)
+	if item.dp.IsRelation || item.dp.Key == core.TagsProperty {
+		return pe.activateRelationPicker(item, vault)
 	}
 
 	switch item.resolvedType() {
@@ -253,6 +266,11 @@ func (pe *propEditor) activateMultiPicker(item *propItem) tea.Cmd {
 func (pe *propEditor) cancelEdit() {
 	pe.mode = propModeNavigate
 	pe.textInput = textinput.Model{}
+	pe.relCandidates = nil
+	pe.relFiltered = nil
+	pe.relSearch = ""
+	pe.relChecked = nil
+	pe.relInitialChecked = nil
 }
 
 // isEditing returns true if the editor is in any editing state.
@@ -342,6 +360,12 @@ func (pe *propEditor) Render(focused bool) string {
 		// If this item has a select/multi-select picker open
 		if (pe.mode == propModeSelectPick || pe.mode == propModeMultiPick) && i == pe.editIndex {
 			b.WriteString(pe.renderPickerItem(item, isCursor))
+			continue
+		}
+
+		// If this item has a relation picker open
+		if (pe.mode == propModeRelationPick || pe.mode == propModeRelationMultiPick) && i == pe.editIndex {
+			b.WriteString(pe.renderRelationPicker(item, isCursor))
 			continue
 		}
 
