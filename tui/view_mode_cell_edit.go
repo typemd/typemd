@@ -35,7 +35,7 @@ type cellEdit struct {
 	pickerCursor  int
 	pickerChecked []bool // for multi_select: which options are checked
 
-	dateEdit *dateEdit // active date editor (non-nil during date editing)
+	datePicker *datePicker
 }
 
 type viewCellToastMsg struct {
@@ -149,7 +149,7 @@ func (vm *viewMode) activateCellEdit(row viewRow, colIdx int, cols []string) tea
 	switch propType {
 	case "date":
 		ce.mode = cellModeDateSegment
-		ce.dateEdit = newDateEdit(parseDateValue(obj.Properties[propName]))
+		ce.datePicker = newDatePicker(parseDatePickerValue(obj.Properties[propName]))
 		vm.cellEdit = ce
 		return nil
 
@@ -256,8 +256,8 @@ func (vm *viewMode) applyCellValue() tea.Cmd {
 		obj.Properties[ce.propName] = parseEditedValue(ce.propType, input)
 
 	case cellModeDateSegment, cellModeDateCalendar:
-		if ce.dateEdit != nil {
-			obj.Properties[ce.propName] = ce.dateEdit.Value()
+		if ce.datePicker != nil {
+			obj.Properties[ce.propName] = ce.datePicker.Value()
 		}
 
 	case cellModeSelectPick:
@@ -317,8 +317,8 @@ func (vm *viewMode) updateCellEdit(msg tea.KeyPressMsg) (*viewMode, tea.Cmd) {
 		}
 
 	case cellModeDateSegment, cellModeDateCalendar:
-		if ce.dateEdit != nil {
-			consumed, done, confirmed := ce.dateEdit.Update(msg)
+		if ce.datePicker != nil {
+			consumed, done, confirmed := ce.datePicker.Update(msg)
 			if consumed {
 				if done {
 					if confirmed {
@@ -328,8 +328,7 @@ func (vm *viewMode) updateCellEdit(msg tea.KeyPressMsg) (*viewMode, tea.Cmd) {
 					vm.cancelCellEdit()
 					return vm, nil
 				}
-				// Sync cellEdit mode with dateEdit mode
-				if ce.dateEdit.Mode() == dateCalendarMode {
+				if ce.datePicker.Mode() == datePickerCalendar {
 					ce.mode = cellModeDateCalendar
 				} else {
 					ce.mode = cellModeDateSegment

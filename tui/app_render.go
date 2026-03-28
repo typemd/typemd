@@ -194,8 +194,8 @@ func (m model) View() tea.View {
 		screen := panels + "\n" + helpBar
 
 		// Date calendar overlay (table view cell edit)
-		if vm.cellEdit != nil && vm.cellEdit.mode == cellModeDateCalendar && vm.cellEdit.dateEdit != nil {
-			if cal := vm.cellEdit.dateEdit.CalendarOverlay(); cal != "" {
+		if vm.cellEdit != nil && vm.cellEdit.mode == cellModeDateCalendar && vm.cellEdit.datePicker != nil {
+			if cal := vm.cellEdit.datePicker.PickerOverlay(); cal != "" {
 				screen = renderDatePickerPopup(screen, cal, m.width, m.height)
 			}
 		}
@@ -589,8 +589,8 @@ func (m model) View() tea.View {
 	}
 
 	// Date calendar overlay (properties panel)
-	if m.propEdit != nil && m.propEdit.mode == propModeDateCalendar && m.propEdit.dateEdit != nil {
-		if cal := m.propEdit.dateEdit.CalendarOverlay(); cal != "" {
+	if m.propEdit != nil && m.propEdit.mode == propModeDateCalendar && m.propEdit.datePicker != nil {
+		if cal := m.propEdit.datePicker.PickerOverlay(); cal != "" {
 			screen = renderDatePickerPopup(screen, cal, m.width, m.height)
 		}
 	}

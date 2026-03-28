@@ -448,11 +448,11 @@ func TestPropEditor_ActivateDatePicker(t *testing.T) {
 	if pe.mode != propModeDateSegment {
 		t.Errorf("expected propModeDateSegment, got %d", pe.mode)
 	}
-	if pe.dateEdit == nil {
-		t.Fatal("dateEdit should not be nil")
+	if pe.datePicker == nil {
+		t.Fatal("datePicker should not be nil")
 	}
-	if pe.dateEdit.Value() != "2025-06-15" {
-		t.Errorf("expected pre-fill 2025-06-15, got %s", pe.dateEdit.Value())
+	if pe.datePicker.Value() != "2025-06-15" {
+		t.Errorf("expected pre-fill 2025-06-15, got %s", pe.datePicker.Value())
 	}
 }
 
@@ -465,7 +465,7 @@ func TestPropEditor_DatePickerCancelRestores(t *testing.T) {
 	pe.activateEdit(nil)
 
 	// Modify the date
-	pe.dateEdit.incrementSegment(1) // year + 1
+	pe.datePicker.incrementSegment(1) // year + 1
 
 	// Cancel
 	pe.cancelEdit()
@@ -473,8 +473,8 @@ func TestPropEditor_DatePickerCancelRestores(t *testing.T) {
 	if pe.mode != propModeNavigate {
 		t.Error("mode should be propModeNavigate after cancel")
 	}
-	if pe.dateEdit != nil {
-		t.Error("dateEdit should be nil after cancel")
+	if pe.datePicker != nil {
+		t.Error("datePicker should be nil after cancel")
 	}
 }
 
@@ -496,12 +496,12 @@ func TestPropEditor_DatePickerEmptyPreFillsToday(t *testing.T) {
 	}
 	pe.activateEdit(nil)
 
-	if pe.dateEdit == nil {
-		t.Fatal("dateEdit should not be nil")
+	if pe.datePicker == nil {
+		t.Fatal("datePicker should not be nil")
 	}
 
 	today := time.Now()
-	val := pe.dateEdit.Value()
+	val := pe.datePicker.Value()
 	expected := fmt.Sprintf("%04d-%02d-%02d", today.Year(), today.Month(), today.Day())
 	if val != expected {
 		t.Errorf("expected today's date %s for empty value, got %s", expected, val)
@@ -521,9 +521,9 @@ func TestPropEditor_DatePickerModeToggle(t *testing.T) {
 	}
 
 	// Toggle to calendar
-	pe.dateEdit.Update(tea.KeyPressMsg{Code: 'c', Text: "c"})
+	pe.datePicker.Update(tea.KeyPressMsg{Code: 'c', Text: "c"})
 	// Sync mode
-	if pe.dateEdit.Mode() == dateCalendarMode {
+	if pe.datePicker.Mode() == datePickerCalendar {
 		pe.mode = propModeDateCalendar
 	}
 	if pe.mode != propModeDateCalendar {

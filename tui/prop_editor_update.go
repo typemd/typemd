@@ -28,7 +28,7 @@ func updatePropEditor(m model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 	case propModeRelationMultiPick:
 		return updateRelationMultiPick(m, msg)
 	case propModeDateSegment, propModeDateCalendar:
-		return updatePropDateEdit(m, msg)
+		return updatePropDatePicker(m, msg)
 	default:
 		return updatePropNavigate(m, msg)
 	}
@@ -187,16 +187,15 @@ func updatePropMultiPick(m model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 	return m, nil, true
 }
 
-// updatePropDateEdit handles key events during date picker editing.
-func updatePropDateEdit(m model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
+func updatePropDatePicker(m model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 	pe := m.propEdit
-	if pe.dateEdit == nil {
+	if pe.datePicker == nil {
 		pe.cancelEdit()
 		m.updatePropsContent()
 		return m, nil, true
 	}
 
-	consumed, done, confirmed := pe.dateEdit.Update(msg)
+	consumed, done, confirmed := pe.datePicker.Update(msg)
 	if !consumed {
 		return m, nil, false
 	}
@@ -204,15 +203,14 @@ func updatePropDateEdit(m model, msg tea.KeyPressMsg) (model, tea.Cmd, bool) {
 	if done {
 		if confirmed {
 			item := &pe.items[pe.editIndex]
-			applyPropertyValue(&m, item.dp.Key, pe.dateEdit.Value())
+			applyPropertyValue(&m, item.dp.Key, pe.datePicker.Value())
 		}
 		pe.cancelEdit()
 		m.updateDetail()
 		return m, nil, true
 	}
 
-	// Sync propEditor mode with dateEdit mode
-	if pe.dateEdit.Mode() == dateCalendarMode {
+	if pe.datePicker.Mode() == datePickerCalendar {
 		pe.mode = propModeDateCalendar
 	} else {
 		pe.mode = propModeDateSegment

@@ -763,8 +763,8 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 					case cellModeMultiPick:
 						cellText = padRight(truncate("[picking...]", colW), colW)
 					case cellModeDateSegment, cellModeDateCalendar:
-						if vm.cellEdit.dateEdit != nil {
-							cellText = padRight(truncate(vm.cellEdit.dateEdit.View(), colW), colW)
+						if vm.cellEdit.datePicker != nil {
+							cellText = padRight(truncate(vm.cellEdit.datePicker.View(), colW), colW)
 						}
 					}
 					b.WriteString("  " + editCellStyle.Render(cellText))

@@ -48,7 +48,7 @@ type propEditor struct {
 	relInitialChecked []bool              // snapshot at picker open for diff calculation
 
 	// Date picker state
-	dateEdit *dateEdit // active date editor (non-nil during date editing)
+	datePicker *datePicker
 }
 
 // propItem represents a single property row in the editor.
@@ -199,7 +199,7 @@ func (pe *propEditor) activateEdit(vault *core.Vault) tea.Cmd {
 	case "multi_select":
 		return pe.activateMultiPicker(item)
 	case "date":
-		return pe.activateDateEdit(item)
+		return pe.activateDatePicker(item)
 	default:
 		return pe.activateTextInput(item)
 	}
@@ -269,12 +269,10 @@ func (pe *propEditor) activateMultiPicker(item *propItem) tea.Cmd {
 	return nil
 }
 
-// activateDateEdit opens the date picker for a date property.
-func (pe *propEditor) activateDateEdit(item *propItem) tea.Cmd {
+func (pe *propEditor) activateDatePicker(item *propItem) tea.Cmd {
 	pe.mode = propModeDateSegment
 	pe.editIndex = pe.cursor
-
-	pe.dateEdit = newDateEdit(parseDateValue(item.dp.Value))
+	pe.datePicker = newDatePicker(parseDatePickerValue(item.dp.Value))
 	return nil
 }
 
@@ -287,7 +285,7 @@ func (pe *propEditor) cancelEdit() {
 	pe.relSearch = ""
 	pe.relChecked = nil
 	pe.relInitialChecked = nil
-	pe.dateEdit = nil
+	pe.datePicker = nil
 }
 
 // isEditing returns true if the editor is in any editing state.
@@ -375,8 +373,8 @@ func (pe *propEditor) Render(focused bool) string {
 		}
 
 		// If this item has a date picker open
-		if (pe.mode == propModeDateSegment || pe.mode == propModeDateCalendar) && i == pe.editIndex && pe.dateEdit != nil {
-			b.WriteString(fmt.Sprintf(" %s: %s\n", item.dp.Key, pe.dateEdit.View()))
+		if (pe.mode == propModeDateSegment || pe.mode == propModeDateCalendar) && i == pe.editIndex && pe.datePicker != nil {
+			b.WriteString(fmt.Sprintf(" %s: %s\n", item.dp.Key, pe.datePicker.View()))
 			continue
 		}
 
