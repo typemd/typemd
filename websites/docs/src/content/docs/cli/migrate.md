@@ -24,7 +24,7 @@ tmd migrate book --rename old_field:new_field
 
 ## Schema migration (no type argument)
 
-When run without arguments, `tmd migrate` scans all type schemas — both single-file (`.typemd/types/<name>.yaml`) and directory-format (`.typemd/types/<name>/schema.yaml`) — and converts the legacy `enum` property type (with `values`) to the current `select` type (with `options`).
+When run without arguments, `tmd migrate` scans all type schemas (`.typemd/types/<name>/schema.yaml`) and converts the legacy `enum` property type (with `values`) to the current `select` type (with `options`).
 
 ```bash
 tmd migrate

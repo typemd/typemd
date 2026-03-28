@@ -16,7 +16,7 @@ sidebar:
 - **Enter** — 確認選擇
 - **Esc** — 跳過（不選任何）
 
-選取的 starter types 會寫入 `.typemd/types/*.yaml`，使用者擁有完整的編輯權。
+選取的 starter types 會寫入 `.typemd/types/<name>/schema.yaml`，使用者擁有完整的編輯權。
 
 ```bash
 tmd init

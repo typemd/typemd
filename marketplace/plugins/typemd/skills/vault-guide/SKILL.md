@@ -153,7 +153,7 @@ These are **reserved** — type schemas cannot define properties named `name`, `
 
 ## Type Schema Format
 
-Type schemas live in `.typemd/types/<type>/schema.yaml` (directory format) or `.typemd/types/<type>.yaml` (legacy single-file, auto-migrated to directory on load):
+Type schemas live in `.typemd/types/<type>/schema.yaml`:
 
 ```yaml
 name: book

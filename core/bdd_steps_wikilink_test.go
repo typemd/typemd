@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -13,12 +12,12 @@ import (
 
 func (dc *domainContext) aVaultIsReadyWithNoteSchemas() {
 	dc.aVaultIsReady()
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "book.yaml"),
-		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "person.yaml"),
-		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(dc.vault, "book",
+		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
+	mustWriteTypeSchema(dc.vault, "person",
+		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"))
+	mustWriteTypeSchema(dc.vault, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 }
 
 func (dc *domainContext) bodyContainsAWikiLinkTo(sourceName, targetName string) {

@@ -74,7 +74,7 @@ The `tmd init` command SHALL accept a `--no-starters` flag that skips the starte
 
 ### Requirement: Starter types written as regular type schema files
 
-Selected starter types SHALL be written as regular `.typemd/types/<name>.yaml` files, identical in format to user-created type schemas. They are fully owned and editable by the user after creation.
+Selected starter types SHALL be written as `.typemd/types/<name>/schema.yaml` files, identical in format to user-created type schemas. They are fully owned and editable by the user after creation.
 
 #### Scenario: Written files are standard type schemas
 

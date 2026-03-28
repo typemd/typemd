@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"sort"
 	"testing"
 )
@@ -12,10 +11,10 @@ func TestVault_SyncIndex_WikiLinks(t *testing.T) {
 	v := setupTestVault(t)
 
 	// Create type schemas
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"),
-		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"),
-		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book",
+		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
+	mustWriteTypeSchema(v, "person",
+		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"))
 
 	// Create objects
 	book, _ := v.NewObject("book", "clean-code", "")
@@ -62,8 +61,8 @@ func TestVault_SyncIndex_WikiLinks(t *testing.T) {
 func TestVault_SyncIndex_WikiLinks_BrokenLink(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"),
-		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book",
+		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
 
 	book, _ := v.NewObject("book", "clean-code", "")
 
@@ -93,10 +92,10 @@ func TestVault_SyncIndex_WikiLinks_BrokenLink(t *testing.T) {
 func TestVault_SyncIndex_WikiLinks_Updated(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"),
-		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"),
-		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book",
+		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
+	mustWriteTypeSchema(v, "person",
+		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"))
 
 	book, _ := v.NewObject("book", "clean-code", "")
 	personA, _ := v.NewObject("person", "alice", "")
@@ -135,10 +134,10 @@ func TestVault_SyncIndex_WikiLinks_Updated(t *testing.T) {
 func TestVault_SyncIndex_WikiLinks_DisplayText(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"),
-		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"),
-		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book",
+		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
+	mustWriteTypeSchema(v, "person",
+		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"))
 
 	book, _ := v.NewObject("book", "clean-code", "")
 	person, _ := v.NewObject("person", "robert-martin", "")
@@ -164,10 +163,10 @@ func TestVault_SyncIndex_WikiLinks_DisplayText(t *testing.T) {
 func TestVault_SyncIndex_WikiLinks_CleanedOnObjectDeletion(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"),
-		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"),
-		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book",
+		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
+	mustWriteTypeSchema(v, "person",
+		[]byte("name: person\nproperties:\n  - name: name\n    type: string\n"))
 
 	book, _ := v.NewObject("book", "clean-code", "")
 	person, _ := v.NewObject("person", "robert-martin", "")
@@ -223,8 +222,8 @@ func TestVault_ListBacklinks_DBNotOpen(t *testing.T) {
 func TestVault_ListBacklinks_MultipleSourcesSorted(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 
 	target, _ := v.NewObject("note", "target", "")
 	noteA, _ := v.NewObject("note", "alpha", "")

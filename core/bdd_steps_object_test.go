@@ -24,12 +24,7 @@ func (dc *domainContext) aVaultIsReady() {
 // into the vault's types directory. These were previously built-in defaults
 // but are now only available as user-defined types.
 func writeCommonTestTypeSchemas(v *Vault) {
-	mustWrite := func(path string, data []byte) {
-		if err := os.WriteFile(path, data, 0644); err != nil {
-			panic(fmt.Sprintf("writeCommonTestTypeSchemas: %v", err))
-		}
-	}
-	mustWrite(filepath.Join(v.TypesDir(), "book.yaml"), []byte(`name: book
+	mustWriteTypeSchema(v, "book", []byte(`name: book
 emoji: "📚"
 properties:
   - name: title
@@ -46,20 +41,31 @@ properties:
     type: number
     emoji: "⭐"
 `))
-	mustWrite(filepath.Join(v.TypesDir(), "person.yaml"), []byte(`name: person
+	mustWriteTypeSchema(v, "person", []byte(`name: person
 emoji: "👤"
 properties:
   - name: role
     type: string
     emoji: "💼"
 `))
-	mustWrite(filepath.Join(v.TypesDir(), "note.yaml"), []byte(`name: note
+	mustWriteTypeSchema(v, "note", []byte(`name: note
 emoji: "📝"
 properties:
   - name: title
     type: string
     emoji: "🏷️"
 `))
+}
+
+// mustWriteTypeSchema writes a type schema for tests.
+func mustWriteTypeSchema(v *Vault, typeName string, data []byte) {
+	dir := filepath.Join(v.TypesDir(), typeName)
+	if err := os.MkdirAll(dir, 0755); err != nil {
+		panic(fmt.Sprintf("mustWriteTypeSchema: mkdir %s: %v", typeName, err))
+	}
+	if err := os.WriteFile(filepath.Join(dir, "schema.yaml"), data, 0644); err != nil {
+		panic(fmt.Sprintf("mustWriteTypeSchema: write %s: %v", typeName, err))
+	}
 }
 
 func (dc *domainContext) iCreateAObjectNamed(typeName, name string) {

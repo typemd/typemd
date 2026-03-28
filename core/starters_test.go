@@ -106,9 +106,9 @@ func TestWriteStarterTypes_DuplicateNames(t *testing.T) {
 	if err := v.WriteStarterTypes([]string{"idea", "idea"}); err != nil {
 		t.Fatalf("WriteStarterTypes: %v", err)
 	}
-	path := filepath.Join(v.TypesDir(), "idea.yaml")
+	path := filepath.Join(v.TypesDir(), "idea", "schema.yaml")
 	if _, err := os.Stat(path); os.IsNotExist(err) {
-		t.Error("expected idea.yaml to exist")
+		t.Error("expected idea/schema.yaml to exist")
 	}
 }
 

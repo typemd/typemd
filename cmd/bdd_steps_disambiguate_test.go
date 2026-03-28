@@ -25,7 +25,10 @@ func (cc *cmdContext) aVaultWithTwoBooksSharing(prefix string) error {
 
 	// Add author relation and person type so link/unlink scenarios work.
 	typesDir := cc.vault.TypesDir()
-	if err := os.WriteFile(typesDir+"/book.yaml", []byte(`name: book
+	if err := os.MkdirAll(typesDir+"/book", 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(typesDir+"/book/schema.yaml", []byte(`name: book
 emoji: "\U0001F4DA"
 plural: books
 properties:
@@ -37,7 +40,10 @@ properties:
 `), 0644); err != nil {
 		return err
 	}
-	if err := os.WriteFile(typesDir+"/person.yaml", []byte(`name: person
+	if err := os.MkdirAll(typesDir+"/person", 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(typesDir+"/person/schema.yaml", []byte(`name: person
 emoji: "\U0001F464"
 plural: people
 properties:

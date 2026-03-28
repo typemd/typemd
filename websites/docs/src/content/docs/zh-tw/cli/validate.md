@@ -15,7 +15,7 @@ tmd type validate
 
 ### 階段 1：Schema 驗證
 
-掃描所有 `.typemd/types/*.yaml` 檔案並檢查：
+掃描所有 `.typemd/types/<name>/schema.yaml` 檔案並檢查：
 
 - `name` 欄位為必填
 - 每個屬性必須有 `name` 和 `type`

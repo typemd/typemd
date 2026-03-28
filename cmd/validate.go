@@ -31,7 +31,7 @@ var validateCmd = &cobra.Command{
 			sort.Strings(schemaNames)
 			for _, name := range schemaNames {
 				for _, e := range schemaErrs[name] {
-					fmt.Printf("  %s.yaml: %s\n", name, e)
+					fmt.Printf("  %s: %s\n", name, e)
 					totalErrors++
 				}
 			}

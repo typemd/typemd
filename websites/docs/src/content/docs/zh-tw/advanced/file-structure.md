@@ -101,10 +101,6 @@ properties:
 
 有兩個內建 type：`tag`（支援 `tags` 系統屬性，複數形式「tags」，`unique: true`）和 `page`（通用內容容器，複數形式「pages」，emoji 📄）。內建 type 無法刪除，但可以透過自訂 type schema 覆蓋。
 
-:::note
-舊版單檔格式（`.typemd/types/book.yaml`）會在首次載入時自動遷移為目錄格式（`book/schema.yaml`）。
-:::
-
 完整的 type schema 格式請參閱 [Type](/zh-tw/concepts/types)。
 
 ## Views

@@ -2,8 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -11,7 +9,7 @@ import (
 
 func (dc *domainContext) aTypeSchemaWithNameTemplate(typeName, template string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: name\n    template: %q\n  - name: content\n    type: string\n", typeName, template)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) iCreateAObjectWithNoName(typeName string) {
@@ -36,7 +34,7 @@ func (dc *domainContext) theObjectPropertyShouldContain(key, substr string) erro
 
 func (dc *domainContext) aTypeSchemaWithNamePropertyAndType(typeName, propType string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: name\n    type: %s\n", typeName, propType)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func initNameTemplateSteps(ctx *godog.ScenarioContext, dc *domainContext) {

@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -13,12 +12,12 @@ import (
 
 func (dc *domainContext) aTypeSchemaWithAStringProperty(typeName, propName string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: %s\n    type: string\n", typeName, propName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithASelectPropertyMissingOptions(typeName string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: status\n    type: select\n", typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) iValidateAllSchemas() {
@@ -59,8 +58,8 @@ func (dc *domainContext) thereShouldBeNRelationErrors(expected int) error {
 }
 
 func (dc *domainContext) twoLinkedNotesExist() {
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(dc.vault, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 
 	noteA, _ := dc.vault.NewObject("note", "alpha", "")
 	noteB, _ := dc.vault.NewObject("note", "beta", "")
@@ -81,8 +80,8 @@ func (dc *domainContext) aNoteWithABrokenWikiLinkExistsOnAFreshVault() {
 }
 
 func (dc *domainContext) createNoteWithBrokenWikiLink(sync bool) {
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(dc.vault, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 
 	note, _ := dc.vault.NewObject("note", "alpha", "")
 	dc.objects["alpha"] = note

@@ -15,7 +15,7 @@ tmd type validate
 
 ### Phase 1: Schema Validation
 
-Scans all `.typemd/types/*.yaml` files and checks:
+Scans all `.typemd/types/<name>/schema.yaml` files and checks:
 
 - `name` field is required
 - Each property must have a `name` and `type`

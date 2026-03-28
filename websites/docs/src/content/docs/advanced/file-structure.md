@@ -106,10 +106,6 @@ properties:
 
 Two types are built-in: `tag` (backs the `tags` system property, plural "tags", `unique: true`) and `page` (general-purpose content container, plural "pages", emoji 📄). Built-in types cannot be deleted but can be overridden by custom type schemas.
 
-:::note
-Legacy single-file format (`.typemd/types/book.yaml`) is automatically migrated to directory format (`book/schema.yaml`) on first load.
-:::
-
 ## Views
 
 Each type can have saved views that define how objects are filtered, sorted, and displayed. Views are stored as YAML files under `.typemd/types/<name>/views/`:

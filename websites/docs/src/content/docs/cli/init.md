@@ -16,7 +16,7 @@ After creating the vault structure, an interactive starter type selector is disp
 - **Enter** — confirm selection
 - **Esc** — skip (select none)
 
-Selected starter types are written as regular `.typemd/types/*.yaml` files, fully owned and editable.
+Selected starter types are written as `.typemd/types/<name>/schema.yaml` files, fully owned and editable.
 
 ```bash
 tmd init

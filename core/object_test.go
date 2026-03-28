@@ -334,9 +334,7 @@ properties:
     values: [todo, doing, done]
     default: todo
 `)
-	if err := os.WriteFile(v.TypesDir()+"/task.yaml", yamlContent, 0644); err != nil {
-		t.Fatalf("WriteFile error = %v", err)
-	}
+	mustWriteTypeSchema(v, "task", yamlContent)
 
 	obj, err := v.NewObject("task", "my-task", "")
 	if err != nil {

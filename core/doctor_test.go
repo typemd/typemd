@@ -205,8 +205,8 @@ func setupDoctorVault(t *testing.T) *Vault {
 	if err := v.Init(); err != nil {
 		t.Fatalf("init vault: %v", err)
 	}
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"),
-		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book",
+		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
 	if err := v.Open(); err != nil {
 		t.Fatalf("open vault: %v", err)
 	}

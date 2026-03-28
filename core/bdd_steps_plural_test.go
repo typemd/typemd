@@ -2,8 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cucumber/godog"
 )
@@ -12,12 +10,12 @@ import (
 
 func (dc *domainContext) aTypeSchemaWithPlural(typeName, plural string) {
 	schema := fmt.Sprintf("name: %s\nplural: %s\nproperties:\n  - name: title\n    type: string\n", typeName, plural)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithoutPlural(typeName string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: title\n    type: string\n", typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) theLoadedSchemaPluralShouldBe(expected string) error {

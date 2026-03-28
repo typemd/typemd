@@ -50,7 +50,7 @@ properties:
   - name: %s
     type: datetime
 `, typeName, propName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aSharedPropertiesFileWithASystemProperty(propName string) {

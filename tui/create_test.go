@@ -18,8 +18,10 @@ func setupCreateTestModel(t *testing.T) model {
 	if err := v.Init(); err != nil {
 		t.Fatalf("vault Init() error = %v", err)
 	}
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"), []byte("name: note\n"), 0644)
+	os.MkdirAll(filepath.Join(v.TypesDir(), "book"), 0755)
+	os.WriteFile(filepath.Join(v.TypesDir(), "book", "schema.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	os.MkdirAll(filepath.Join(v.TypesDir(), "note"), 0755)
+	os.WriteFile(filepath.Join(v.TypesDir(), "note", "schema.yaml"), []byte("name: note\n"), 0644)
 	if err := v.Open(); err != nil {
 		t.Fatalf("vault Open() error = %v", err)
 	}
@@ -146,7 +148,8 @@ func TestStartCreate_ReadOnly(t *testing.T) {
 
 func TestStartCreate_NameTemplatePrefill(t *testing.T) {
 	m := setupCreateTestModel(t)
-	os.WriteFile(filepath.Join(m.vault.TypesDir(), "journal.yaml"),
+	os.MkdirAll(filepath.Join(m.vault.TypesDir(), "journal"), 0755)
+	os.WriteFile(filepath.Join(m.vault.TypesDir(), "journal", "schema.yaml"),
 		[]byte("name: journal\nproperties:\n  - name: name\n    template: \"{{ date:YYYY-MM-DD }}\"\n"), 0644)
 	objects, _ := m.vault.QueryObjects(nil)
 	m.groups = buildGroups(objects, m.vault)
@@ -323,7 +326,8 @@ func TestCreate_EmptyNameRejected(t *testing.T) {
 
 func TestCreate_UniqueError(t *testing.T) {
 	m := setupCreateTestModel(t)
-	os.WriteFile(filepath.Join(m.vault.TypesDir(), "tag.yaml"), []byte("name: tag\nunique: true\n"), 0644)
+	os.MkdirAll(filepath.Join(m.vault.TypesDir(), "tag"), 0755)
+	os.WriteFile(filepath.Join(m.vault.TypesDir(), "tag", "schema.yaml"), []byte("name: tag\nunique: true\n"), 0644)
 	objects, _ := m.vault.QueryObjects(nil)
 	m.groups = buildGroups(objects, m.vault)
 

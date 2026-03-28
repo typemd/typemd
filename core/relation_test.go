@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -21,7 +19,7 @@ properties:
     bidirectional: true
     inverse: books
 `)
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), bookSchema, 0644)
+	mustWriteTypeSchema(v, "book", bookSchema)
 
 	personSchema := []byte(`name: person
 properties:
@@ -34,7 +32,7 @@ properties:
     bidirectional: true
     inverse: author
 `)
-	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"), personSchema, 0644)
+	mustWriteTypeSchema(v, "person", personSchema)
 
 	return v
 }

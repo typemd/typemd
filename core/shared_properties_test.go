@@ -2,7 +2,6 @@ package core
 
 import (
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -406,13 +405,13 @@ func TestLoadType_WithUseResolution(t *testing.T) {
 `), 0644)
 
 	// Create type schema with use
-	os.WriteFile(filepath.Join(v.TypesDir(), "project.yaml"), []byte(`name: project
+	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
   - name: title
     type: string
   - use: due_date
     pin: 1
-`), 0644)
+`))
 
 	schema, err := v.LoadType("project")
 	if err != nil {
@@ -437,10 +436,10 @@ func TestValidateAllSchemas_WithSharedProperties(t *testing.T) {
 `), 0644)
 
 	// Create valid type schema using shared property
-	os.WriteFile(filepath.Join(v.TypesDir(), "project.yaml"), []byte(`name: project
+	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
   - use: due_date
-`), 0644)
+`))
 
 	result := ValidateAllSchemas(v)
 	for k, errs := range result {
@@ -479,11 +478,11 @@ func TestLoadType_UseDescriptionOverride(t *testing.T) {
     description: "A date something is due"
 `), 0644)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "project.yaml"), []byte(`name: project
+	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
   - use: due_date
     description: "Project deadline"
-`), 0644)
+`))
 
 	schema, err := v.LoadType("project")
 	if err != nil {
@@ -508,10 +507,10 @@ func TestLoadType_UseDescriptionPreservedWhenNoOverride(t *testing.T) {
     description: "A date something is due"
 `), 0644)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "project.yaml"), []byte(`name: project
+	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
   - use: due_date
-`), 0644)
+`))
 
 	schema, err := v.LoadType("project")
 	if err != nil {

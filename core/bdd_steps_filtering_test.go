@@ -19,7 +19,7 @@ func (dc *domainContext) aTypeSchemaWithProperties(typeName, propList string) {
 		yamlProps += fmt.Sprintf("  - name: %s\n    type: string\n", strings.TrimSpace(p))
 	}
 	schema := fmt.Sprintf("name: %s\nproperties:\n%s", typeName, yamlProps)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aRawObjectFileWithProperties(relPath string, table *godog.Table) {

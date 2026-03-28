@@ -1,7 +1,7 @@
 Feature: Starter type templates
   Starter types are embedded YAML type schemas offered during vault initialization.
   Users can select which starter types to install; selected types are written as
-  regular .typemd/types/*.yaml files.
+  directory-format schemas under .typemd/types/<name>/schema.yaml.
 
   Scenario: List available starter types
     When I list available starter types
@@ -16,23 +16,23 @@ Feature: Starter type templates
   Scenario: Write selected starter types to vault
     Given a vault is initialized
     When I write starter types "idea,book" to the vault
-    Then the file ".typemd/types/idea.yaml" should exist
-    And the file ".typemd/types/book.yaml" should exist
-    And the file ".typemd/types/note.yaml" should not exist
+    Then the file ".typemd/types/idea/schema.yaml" should exist
+    And the file ".typemd/types/book/schema.yaml" should exist
+    And the file ".typemd/types/note/schema.yaml" should not exist
 
   Scenario: Write all starter types to vault
     Given a vault is initialized
     When I write all starter types to the vault
-    Then the file ".typemd/types/idea.yaml" should exist
-    And the file ".typemd/types/note.yaml" should exist
-    And the file ".typemd/types/book.yaml" should exist
+    Then the file ".typemd/types/idea/schema.yaml" should exist
+    And the file ".typemd/types/note/schema.yaml" should exist
+    And the file ".typemd/types/book/schema.yaml" should exist
 
   Scenario: Write no starter types
     Given a vault is initialized
     When I write starter types "" to the vault
-    Then the file ".typemd/types/idea.yaml" should not exist
-    And the file ".typemd/types/note.yaml" should not exist
-    And the file ".typemd/types/book.yaml" should not exist
+    Then the file ".typemd/types/idea/schema.yaml" should not exist
+    And the file ".typemd/types/note/schema.yaml" should not exist
+    And the file ".typemd/types/book/schema.yaml" should not exist
 
   Scenario: Written starter types are loadable
     Given a vault is initialized

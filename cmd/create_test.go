@@ -17,8 +17,10 @@ func setupTestVaultDir(t *testing.T) string {
 		t.Fatalf("Init() error = %v", err)
 	}
 	// Write test type schemas (book, person, note are no longer built-in)
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
-	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"), []byte("name: person\nproperties:\n  - name: role\n    type: string\n"), 0644)
+	os.MkdirAll(filepath.Join(v.TypesDir(), "book"), 0755)
+	os.WriteFile(filepath.Join(v.TypesDir(), "book", "schema.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	os.MkdirAll(filepath.Join(v.TypesDir(), "person"), 0755)
+	os.WriteFile(filepath.Join(v.TypesDir(), "person", "schema.yaml"), []byte("name: person\nproperties:\n  - name: role\n    type: string\n"), 0644)
 	if err := v.Open(); err != nil {
 		t.Fatalf("Open() error = %v", err)
 	}

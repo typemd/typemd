@@ -150,7 +150,7 @@ func (p Property) OptionValues() []string {
 
 // defaultTypes contains built-in type schemas.
 // "tag" backs the "tags" system property; "page" is a general-purpose content container.
-// All other types must be defined via .typemd/types/*.yaml files.
+// All other types must be defined via .typemd/types/<name>/schema.yaml files.
 var defaultTypes = map[string]TypeSchema{
 	TagTypeName: {
 		Name:   TagTypeName,

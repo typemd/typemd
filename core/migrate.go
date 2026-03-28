@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -133,8 +132,7 @@ type SchemaMigrateResult struct {
 }
 
 // MigrateSchemas scans type schemas and converts enum+values to select+options.
-// Supports both single-file (.typemd/types/<name>.yaml) and directory-format
-// (.typemd/types/<name>/schema.yaml) schemas.
+// Only scans directory-format schemas (.typemd/types/<name>/schema.yaml).
 // When dryRun is true, it reports what would change without modifying files.
 func (v *Vault) MigrateSchemas(dryRun bool) (*SchemaMigrateResult, error) {
 	result := &SchemaMigrateResult{}
@@ -148,26 +146,17 @@ func (v *Vault) MigrateSchemas(dryRun bool) (*SchemaMigrateResult, error) {
 	}
 
 	for _, entry := range entries {
-		var path, typeName string
-
-		if entry.IsDir() {
-			// Directory format: <name>/schema.yaml
-			path = filepath.Join(v.TypesDir(), entry.Name(), "schema.yaml")
-			if _, err := os.Stat(path); err != nil {
-				continue
-			}
-			typeName = entry.Name()
-		} else if strings.HasSuffix(entry.Name(), ".yaml") {
-			// Single-file format: <name>.yaml
-			path = filepath.Join(v.TypesDir(), entry.Name())
-			typeName = strings.TrimSuffix(entry.Name(), ".yaml")
-		} else {
+		if !entry.IsDir() {
+			continue
+		}
+		path := filepath.Join(v.TypesDir(), entry.Name(), "schema.yaml")
+		if _, err := os.Stat(path); err != nil {
 			continue
 		}
 
-		change, err := migrateSchemaFile(path, typeName, dryRun)
+		change, err := migrateSchemaFile(path, entry.Name(), dryRun)
 		if err != nil {
-			return nil, fmt.Errorf("migrate schema %s: %w", typeName, err)
+			return nil, fmt.Errorf("migrate schema %s: %w", entry.Name(), err)
 		}
 		if change != nil {
 			result.Changes = append(result.Changes, *change)
