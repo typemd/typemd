@@ -385,25 +385,21 @@ func findStr(s, substr string) bool {
 	return false
 }
 
+func findSentinelCursor(t *testing.T, te *typeEditor, sentinel int) int {
+	t.Helper()
+	for i, item := range te.displayItems() {
+		if item == sentinel {
+			return i
+		}
+	}
+	t.Fatalf("sentinel %d not found in displayItems", sentinel)
+	return -1
+}
+
 func TestTypeEditor_DeleteTemplateConfirm(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
 	te.templates = []string{"default", "fiction"}
-
-	// Navigate to first template item.
-	// displayItems: 6 meta + 2 pinned + 2 unpinned + 1 addProperty + templates...
-	// First template is at index 11.
-	items := te.displayItems()
-	tmplCursor := -1
-	for i, item := range items {
-		if item == templateSentinelBase {
-			tmplCursor = i
-			break
-		}
-	}
-	if tmplCursor < 0 {
-		t.Fatal("no template sentinel found in displayItems")
-	}
-	te.cursor = tmplCursor
+	te.cursor = findSentinelCursor(t, te, templateSentinelBase)
 
 	te.Update(keyMsg("d"))
 	if te.mode != teModeDeleteTemplate {
@@ -421,19 +417,7 @@ func TestTypeEditor_DeleteTemplateConfirm(t *testing.T) {
 func TestTypeEditor_DeleteTemplateCancel(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
 	te.templates = []string{"default"}
-
-	items := te.displayItems()
-	tmplCursor := -1
-	for i, item := range items {
-		if item == templateSentinelBase {
-			tmplCursor = i
-			break
-		}
-	}
-	if tmplCursor < 0 {
-		t.Fatal("no template sentinel found in displayItems")
-	}
-	te.cursor = tmplCursor
+	te.cursor = findSentinelCursor(t, te, templateSentinelBase)
 
 	te.Update(keyMsg("d"))
 	if te.mode != teModeDeleteTemplate {
@@ -461,15 +445,7 @@ func TestTypeEditor_DeleteOnMetaFieldIgnored(t *testing.T) {
 
 func TestTypeEditor_DeleteOnAddSentinelIgnored(t *testing.T) {
 	te := newTypeEditor(testSchema(), "book", false, nil)
-
-	// Find the addPropertySentinel position
-	items := te.displayItems()
-	for i, item := range items {
-		if item == addPropertySentinel {
-			te.cursor = i
-			break
-		}
-	}
+	te.cursor = findSentinelCursor(t, te, addPropertySentinel)
 
 	te.Update(keyMsg("d"))
 	if te.mode != teModeView {

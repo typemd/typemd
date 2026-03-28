@@ -289,12 +289,10 @@ func (te *typeEditor) HelpBar() string {
 		return "  [MOVE]  ↑↓: reorder  enter/esc: done"
 	case teModeAddWizard:
 		return "  [ADD PROPERTY]  follow prompts  esc: cancel/back"
-	case teModeDeleteProp:
+	case teModeDeleteProp, teModeDeleteTemplate:
 		return "  [DELETE]  y: confirm  n/esc: cancel"
 	case teModeDeleteType:
 		return "  [DELETE TYPE]  y: confirm  n/esc: cancel"
-	case teModeDeleteTemplate:
-		return "  [DELETE]  y: confirm  n/esc: cancel"
 	case teModeAddTemplate:
 		return "  [NEW TEMPLATE]  enter: create  esc: cancel"
 	case teModeAddView:

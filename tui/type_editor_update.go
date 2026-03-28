@@ -274,6 +274,8 @@ func (te *typeEditor) startDelete() {
 	}
 	item := items[te.cursor]
 	switch {
+	case item <= viewSentinelBase:
+		// views: not deletable from type editor
 	case item <= templateSentinelBase:
 		tmplIdx := templateSentinelBase - item
 		if tmplIdx >= 0 && tmplIdx < len(te.templates) {
@@ -323,6 +325,7 @@ func (te *typeEditor) updateDeleteTemplate(msg tea.KeyPressMsg) (*typeEditor, te
 						return te, nil
 					}
 				}
+				te.saveErr = ""
 				te.refreshTemplates()
 				total := te.totalItems()
 				if te.cursor >= total {
