@@ -39,6 +39,7 @@ func helpEntries(readOnly bool) []helpEntry {
 		helpEntry{keys.Stats.Help().Key, keys.Stats.Help().Desc},
 		helpEntry{keys.GrowPanel.Help().Key, keys.GrowPanel.Help().Desc},
 		helpEntry{keys.ShrinkPanel.Help().Key, keys.ShrinkPanel.Help().Desc},
+		helpEntry{keys.FocusMode.Help().Key, keys.FocusMode.Help().Desc},
 		helpEntry{keys.ToggleProps.Help().Key, keys.ToggleProps.Help().Desc},
 		helpEntry{keys.ToggleWrap.Help().Key, keys.ToggleWrap.Help().Desc},
 		helpEntry{keys.Help.Help().Key, keys.Help.Help().Desc},

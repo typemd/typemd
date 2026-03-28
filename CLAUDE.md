@@ -175,7 +175,7 @@ graph LR
 
 ### TUI Architecture
 
-The TUI uses a three-panel layout (sidebar, body, properties) with a **right panel mode** system:
+The TUI uses a three-panel layout (sidebar, body, properties) with a **focus mode** (`.` key) that hides sidebar and properties for a single full-width body panel. The layout also has a **right panel mode** system:
 
 - `panelEmpty` — no content selected
 - `panelObject` — object detail view (body + properties)
