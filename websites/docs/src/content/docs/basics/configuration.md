@@ -17,9 +17,11 @@ my-vault/
 
 ## Structure
 
-The config uses YAML with three top-level namespaces:
+The config uses YAML with top-level display settings and three namespaces:
 
 ```yaml
+date_format: "YYYY-MM-DD"
+datetime_format: "YYYY-MM-DD HH:mm:ss"
 cli:
   default_type: page
 tui:
@@ -44,6 +46,26 @@ ai:
   explore:
     sample_count: 20
     body_truncate: 1000
+```
+
+## Display format settings
+
+| Key | Type | Default | Description |
+|-----|------|---------|-------------|
+| `date_format` | string | `YYYY-MM-DD` | Display format for `date` properties |
+| `datetime_format` | string | `YYYY-MM-DD HH:mm:ss` | Display format for `datetime` properties and system timestamps (`created_at`, `updated_at`) |
+
+These settings control how dates appear in the TUI and CLI. Storage format is unchanged (ISO 8601 / RFC 3339).
+
+**Supported tokens:** `YYYY` (year), `MM` (month), `DD` (day), `HH` (24-hour), `mm` (minute), `ss` (second). Unrecognized characters pass through as literals.
+
+```yaml
+# European format
+date_format: "DD/MM/YYYY"
+datetime_format: "DD/MM/YYYY HH:mm:ss"
+
+# Japanese style
+date_format: "YYYY年MM月DD日"
 ```
 
 ## CLI settings

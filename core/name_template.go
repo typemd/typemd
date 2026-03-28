@@ -30,7 +30,7 @@ func EvaluateNameTemplate(template string, now time.Time) string {
 
 		switch kind {
 		case "date":
-			goFormat := convertDateFormat(arg)
+			goFormat := ConvertDateFormat(arg)
 			return now.Format(goFormat)
 		default:
 			return match
@@ -38,7 +38,9 @@ func EvaluateNameTemplate(template string, now time.Time) string {
 	})
 }
 
-// convertDateFormat converts user-friendly date format tokens to Go reference time.
-func convertDateFormat(format string) string {
+// ConvertDateFormat converts user-friendly date format tokens to Go reference time.
+// Tokens: YYYY (year), MM (month), DD (day), HH (24-hour), mm (minute), ss (second).
+// Unrecognized tokens pass through as literal text.
+func ConvertDateFormat(format string) string {
 	return dateFormatReplacer.Replace(format)
 }
