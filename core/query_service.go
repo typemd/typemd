@@ -1,6 +1,9 @@
 package core
 
-import "fmt"
+import (
+	"fmt"
+	"log/slog"
+)
 
 // QueryService orchestrates read-side operations.
 // It coordinates the repository (for source-of-truth reads by ID)
@@ -51,6 +54,7 @@ func (s *QueryService) Resolve(prefix string) (string, error) {
 
 // Query queries objects using structured filter rules with optional sort.
 func (s *QueryService) Query(filter []FilterRule, sort ...SortRule) ([]*Object, error) {
+	slog.Debug("query", "filters", len(filter))
 	results, err := s.index.Query(filter, sort...)
 	if err != nil {
 		return nil, err
@@ -64,6 +68,7 @@ func (s *QueryService) Search(keyword string) ([]*Object, error) {
 	if err != nil {
 		return nil, err
 	}
+	slog.Debug("search", "keyword", keyword, "results", len(results))
 	return objectResultsToObjects(results), nil
 }
 

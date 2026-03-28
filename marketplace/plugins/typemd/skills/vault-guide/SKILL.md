@@ -44,6 +44,7 @@ project-root/
 | `tmd` (no args) | Launch the TUI |
 | `tmd --vault <path>` | Specify vault directory (default: current directory) |
 | `tmd --readonly` | Open vault in read-only mode (TUI only) |
+| `tmd --debug` | Enable debug-level JSON logging to stderr |
 
 ### Objects
 

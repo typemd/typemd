@@ -159,6 +159,7 @@ graph LR
 | `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateRelationReferences, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
 | `config.go` | VaultConfig struct (DateFormat + DatetimeFormat + CLIConfig + TUIConfig + AIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
+| `logging.go` | InitLogging(level, output) — configures global slog.Default() with JSON handler; called once at startup by CLI (`--debug`), TUI (file output), or MCP (stderr) |
 | `ai/provider.go` | Provider interface + CompletionRequest/CompletionResponse types |
 | `ai/claude_cli.go` | ClaudeCLI provider implementation (subprocess invocation via `claude -p`) + LookupBinary |
 | `ai/openai_compatible.go` | OpenAICompatible provider implementation (HTTP POST to `/v1/chat/completions`) for Ollama, LM Studio, vLLM, etc. |
@@ -240,6 +241,11 @@ Blog posts are the exception: written in Traditional Chinese (zh-tw) first, then
 ```bash
 make test
 ```
+
+## Debugging
+
+- **CLI**: `tmd --debug <command>` enables DEBUG-level JSON logging to stderr. Useful for inspecting sync flow, query execution, and AI provider calls.
+- **TUI**: Always writes DEBUG-level JSON logs to `.typemd/logs/{YYYY-MM-DD}.log`. Check this file to diagnose TUI issues (sync, file watcher, property editing) without corrupting terminal output.
 
 ## Testing
 
