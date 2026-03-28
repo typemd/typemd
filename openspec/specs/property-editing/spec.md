@@ -24,7 +24,7 @@ When the properties panel is focused, the system SHALL display a cursor highligh
 - **THEN** the cursor SHALL remain on the first property (no wrap)
 
 ### Requirement: Read-only property skipping
-The cursor SHALL skip read-only properties during navigation. Read-only properties include: `created_at`, `updated_at`, reverse relations, backlinks, and relation properties.
+The cursor SHALL skip read-only properties during navigation. Read-only properties include: `created_at`, `updated_at`, reverse relations, backlinks, relation properties, and **local properties** (`IsLocal = true`).
 
 #### Scenario: Skip immutable system properties
 - **WHEN** the user navigates with j/k in the properties panel
@@ -45,6 +45,10 @@ The cursor SHALL skip read-only properties during navigation. Read-only properti
 #### Scenario: Skip tags property
 - **WHEN** the user navigates with j/k in the properties panel
 - **THEN** the `tags` property SHALL be skipped (relation to tag type, handled by #88)
+
+#### Scenario: Skip local properties
+- **WHEN** the user navigates with j/k in the properties panel
+- **THEN** local properties (IsLocal=true) SHALL be skipped
 
 ### Requirement: Pinned properties excluded from cursor
 Pinned properties (Pin > 0) are displayed in the body panel, not the properties panel. They SHALL NOT appear in cursor navigation.
