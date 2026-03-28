@@ -66,6 +66,15 @@ Object IDs support **prefix matching** — `tmd object show book/clean` works if
 | `tmd type show <type>` | Display schema definition with all properties |
 | `tmd type validate` | Validate schemas, objects, relations, and wiki-links |
 
+### Templates
+
+| Command | Description |
+|---------|-------------|
+| `tmd template list [type]` | List available templates (optionally filtered by type) |
+| `tmd template show <type/name>` | Display a template's properties and body |
+| `tmd template create <type/name>` | Create a new template and open in `$EDITOR` |
+| `tmd template delete <type/name> [-f]` | Delete a template (`-f` skips confirmation) |
+
 ### Diagnostics
 
 | Command | Description |
