@@ -198,7 +198,7 @@ Active when the type editor panel has focus. Press `Tab` or `Enter` on a type he
 
 ### `[PROPS]` — Property Navigation and Editing
 
-Active when the properties panel is focused. Press `Tab` from the body panel to enter this mode. A cursor (▸) highlights the current editable property. Read-only properties (`created_at`, `updated_at`, relations, backlinks, tags) are displayed dimmed and skipped during navigation.
+Active when the properties panel is focused. Press `Tab` from the body panel to enter this mode. A cursor (▸) highlights the current editable property. Read-only properties (`created_at`, `updated_at`, relations, backlinks, tags, local properties) are displayed dimmed and skipped during navigation. Local properties (frontmatter keys not defined in the type schema) appear after a `── Local Properties ──` separator.
 
 | Key | Action |
 |-----|--------|

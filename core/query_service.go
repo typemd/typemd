@@ -113,9 +113,10 @@ func (s *QueryService) BuildDisplayProperties(obj *Object) ([]DisplayProperty, e
 		return nil, fmt.Errorf("list relations: %w", err)
 	}
 
-	// Build ordered properties
+	// Build ordered properties, separating local (non-schema, non-system) properties
 	propKeys := OrderedPropKeys(merged, schema)
 	var result []DisplayProperty
+	var localProps []DisplayProperty
 	for _, k := range propKeys {
 		dp := DisplayProperty{
 			Key:   k,
@@ -126,10 +127,14 @@ func (s *QueryService) BuildDisplayProperties(obj *Object) ([]DisplayProperty, e
 			dp.Emoji = sp.Emoji
 			dp.Pin = sp.Pin
 			dp.IsRelation = sp.Type == "relation"
+			result = append(result, dp)
 		} else if sysProp := lookupSystemProperty(k); sysProp != nil {
 			dp.Type = sysProp.Type
+			result = append(result, dp)
+		} else {
+			dp.IsLocal = true
+			localProps = append(localProps, dp)
 		}
-		result = append(result, dp)
 	}
 
 	// Append reverse relations
@@ -157,6 +162,9 @@ func (s *QueryService) BuildDisplayProperties(obj *Object) ([]DisplayProperty, e
 			FromID:     bl.FromID,
 		})
 	}
+
+	// Append local properties last (after reverse relations and backlinks)
+	result = append(result, localProps...)
 
 	return result, nil
 }

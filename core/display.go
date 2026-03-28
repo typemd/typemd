@@ -25,6 +25,7 @@ type DisplayProperty struct {
 	IsRelation     bool
 	IsReverse      bool
 	IsBacklink     bool
+	IsLocal        bool   // true when property exists in object but not in type schema or system properties
 	FromID         string // populated for reverse relations and backlinks
 	DateFormat     string
 	DatetimeFormat string
