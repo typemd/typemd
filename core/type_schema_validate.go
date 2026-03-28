@@ -260,46 +260,81 @@ func ValidateObject(props map[string]any, schema *TypeSchema) []error {
 	return errs
 }
 
-// validateDate validates a date property value (YYYY-MM-DD format).
-// Handles time.Time values from YAML auto-parsing.
-func validateDate(name string, val any) []error {
+// datetimeFormats are the accepted string formats for datetime values.
+var datetimeFormats = []string{
+	time.RFC3339,
+	"2006-01-02T15:04:05",
+	"2006-01-02T15:04:05Z",
+}
+
+// validateDateInput validates a date string in YYYY-MM-DD format.
+func validateDateInput(input string) error {
+	if !dateRegexp.MatchString(input) {
+		return fmt.Errorf("expected date in YYYY-MM-DD format, got %q", input)
+	}
+	if _, err := time.Parse("2006-01-02", input); err != nil {
+		return fmt.Errorf("invalid date %q: %v", input, err)
+	}
+	return nil
+}
+
+// validateDatetimeInput validates a datetime string in ISO 8601 format.
+func validateDatetimeInput(input string) error {
+	for _, f := range datetimeFormats {
+		if _, err := time.Parse(f, input); err == nil {
+			return nil
+		}
+	}
+	return fmt.Errorf("expected datetime in ISO 8601 format (e.g. 2006-01-02T15:04:05), got %q", input)
+}
+
+// validateURLInput validates a URL string (must have http:// or https:// scheme).
+func validateURLInput(input string) error {
+	u, err := url.Parse(input)
+	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
+		return fmt.Errorf("url must start with http:// or https://, got %q", input)
+	}
+	return nil
+}
+
+// validateSelectInput validates a string against allowed select options.
+func validateSelectInput(options []Option, input string) error {
+	for _, opt := range options {
+		if opt.Value == input {
+			return nil
+		}
+	}
+	vals := make([]string, len(options))
+	for i, o := range options {
+		vals[i] = o.Value
+	}
+	return fmt.Errorf("value %q not in allowed options %v", input, vals)
+}
+
+// validateTimeProperty validates a time-based property value (date or datetime).
+// Handles time.Time values from YAML auto-parsing and string values.
+func validateTimeProperty(name string, val any, typeName string, validate func(string) error) []error {
 	switch v := val.(type) {
 	case time.Time:
-		return nil // YAML auto-parsed date
+		return nil
 	case string:
-		if !dateRegexp.MatchString(v) {
-			return []error{fmt.Errorf("property %q: expected date in YYYY-MM-DD format, got %q", name, v)}
-		}
-		if _, err := time.Parse("2006-01-02", v); err != nil {
-			return []error{fmt.Errorf("property %q: invalid date %q: %v", name, v, err)}
+		if err := validate(v); err != nil {
+			return []error{fmt.Errorf("property %q: %s", name, err)}
 		}
 		return nil
 	default:
-		return []error{fmt.Errorf("property %q: expected date string or time.Time, got %T", name, val)}
+		return []error{fmt.Errorf("property %q: expected %s string or time.Time, got %T", name, typeName, val)}
 	}
 }
 
+// validateDate validates a date property value (YYYY-MM-DD format).
+func validateDate(name string, val any) []error {
+	return validateTimeProperty(name, val, "date", validateDateInput)
+}
+
 // validateDatetime validates a datetime property value (ISO 8601 with time).
-// Handles time.Time values from YAML auto-parsing.
 func validateDatetime(name string, val any) []error {
-	switch v := val.(type) {
-	case time.Time:
-		return nil // YAML auto-parsed datetime
-	case string:
-		formats := []string{
-			time.RFC3339,
-			"2006-01-02T15:04:05",
-			"2006-01-02T15:04:05Z",
-		}
-		for _, f := range formats {
-			if _, err := time.Parse(f, v); err == nil {
-				return nil
-			}
-		}
-		return []error{fmt.Errorf("property %q: expected datetime in ISO 8601 format (e.g. 2006-01-02T15:04:05), got %q", name, v)}
-	default:
-		return []error{fmt.Errorf("property %q: expected datetime string or time.Time, got %T", name, val)}
-	}
+	return validateTimeProperty(name, val, "datetime", validateDatetimeInput)
 }
 
 // validateURL validates a url property value (must have http:// or https:// scheme).
@@ -308,9 +343,8 @@ func validateURL(name string, val any) []error {
 	if !ok {
 		return []error{fmt.Errorf("property %q: expected string for url, got %T", name, val)}
 	}
-	u, err := url.Parse(s)
-	if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
-		return []error{fmt.Errorf("property %q: url must start with http:// or https://, got %q", name, s)}
+	if err := validateURLInput(s); err != nil {
+		return []error{fmt.Errorf("property %q: %s", name, err)}
 	}
 	return nil
 }
@@ -321,12 +355,10 @@ func validateSelect(prop Property, val any) []error {
 	if !ok {
 		return []error{fmt.Errorf("property %q: expected string for select, got %T", prop.Name, val)}
 	}
-	for _, opt := range prop.Options {
-		if opt.Value == s {
-			return nil
-		}
+	if err := validateSelectInput(prop.Options, s); err != nil {
+		return []error{fmt.Errorf("property %q: %s", prop.Name, err)}
 	}
-	return []error{fmt.Errorf("property %q: value %q not in allowed options %v", prop.Name, s, prop.OptionValues())}
+	return nil
 }
 
 // validateMultiSelect validates a multi_select property value.
@@ -373,46 +405,17 @@ func validateMultiSelect(prop Property, val any) []error {
 func ValidatePropertyValue(propType string, options []Option, input string) error {
 	switch propType {
 	case "string":
-		return nil // any string is valid
+		return nil
 	case "number":
 		return validateNumberInput(input)
 	case "date":
-		if !dateRegexp.MatchString(input) {
-			return fmt.Errorf("expected date in YYYY-MM-DD format, got %q", input)
-		}
-		if _, err := time.Parse("2006-01-02", input); err != nil {
-			return fmt.Errorf("invalid date %q: %v", input, err)
-		}
-		return nil
+		return validateDateInput(input)
 	case "datetime":
-		formats := []string{
-			time.RFC3339,
-			"2006-01-02T15:04:05",
-			"2006-01-02T15:04:05Z",
-		}
-		for _, f := range formats {
-			if _, err := time.Parse(f, input); err == nil {
-				return nil
-			}
-		}
-		return fmt.Errorf("expected datetime in ISO 8601 format (e.g. 2006-01-02T15:04:05), got %q", input)
+		return validateDatetimeInput(input)
 	case "url":
-		u, err := url.Parse(input)
-		if err != nil || (u.Scheme != "http" && u.Scheme != "https") {
-			return fmt.Errorf("url must start with http:// or https://, got %q", input)
-		}
-		return nil
+		return validateURLInput(input)
 	case "select":
-		for _, opt := range options {
-			if opt.Value == input {
-				return nil
-			}
-		}
-		vals := make([]string, len(options))
-		for i, o := range options {
-			vals[i] = o.Value
-		}
-		return fmt.Errorf("value %q not in allowed options %v", input, vals)
+		return validateSelectInput(options, input)
 	default:
 		return nil
 	}
