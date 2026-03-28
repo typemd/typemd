@@ -242,6 +242,11 @@ Blog posts are the exception: written in Traditional Chinese (zh-tw) first, then
 make test
 ```
 
+## Debugging
+
+- **CLI**: `tmd --debug <command>` enables DEBUG-level JSON logging to stderr. Useful for inspecting sync flow, query execution, and AI provider calls.
+- **TUI**: Always writes DEBUG-level JSON logs to `.typemd/logs/{YYYY-MM-DD}.log`. Check this file to diagnose TUI issues (sync, file watcher, property editing) without corrupting terminal output.
+
 ## Testing
 
 This project uses two layers of testing:
