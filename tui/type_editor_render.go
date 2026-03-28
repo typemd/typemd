@@ -303,6 +303,15 @@ func (te *typeEditor) View() string {
 		}
 	}
 
+	if te.mode == teModeDeleteTemplate {
+		writeBlank()
+		item := items[te.cursor]
+		tmplIdx := templateSentinelBase - item
+		if tmplIdx >= 0 && tmplIdx < len(te.templates) {
+			writeLine(fmt.Sprintf(" Delete template '%s'? [y/n]", te.templates[tmplIdx]))
+		}
+	}
+
 	if te.mode == teModeDeleteType {
 		writeBlank()
 		writeLine(fmt.Sprintf(" Delete type '%s'? [y/n]", te.typeName))
