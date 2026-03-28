@@ -46,14 +46,12 @@ func (e *errorIndex) EnsureSchema() error                                 { retu
 
 // fallbackContext holds state for query fallback BDD scenarios.
 type fallbackContext struct {
-	rootDir      string
-	repo         ObjectRepository
-	qs           *QueryService
-	queryResults []*Object
+	rootDir       string
+	repo          ObjectRepository
+	qs            *QueryService
+	queryResults  []*Object
 	searchResults []*Object
-	vaultStats   *VaultStats
-	typeStats    *TypeStats
-	lastErr      error
+	lastErr       error
 }
 
 func newFallbackContext() *fallbackContext {
@@ -126,13 +124,6 @@ Article about Go programming.
 	fc.qs = NewQueryService(fc.repo, &errorIndex{})
 }
 
-func (fc *fallbackContext) iQueryWithFallbackFilter(filter string) {
-	rules := parseTestFilter(filter)
-	results, err := fc.qs.Query(rules)
-	fc.lastErr = err
-	fc.queryResults = results
-}
-
 func (fc *fallbackContext) iQueryWithFallbackFilterSortedBy(filter, prop, dir string) {
 	rules := parseTestFilter(filter)
 	sort := []SortRule{{Property: prop, Direction: dir}}
@@ -191,38 +182,6 @@ func (fc *fallbackContext) theFallbackSearchShouldReturnNResults(expected int) e
 	return nil
 }
 
-func (fc *fallbackContext) iRequestVaultStatsWithFallback() {
-	stats, err := fc.qs.VaultStats()
-	fc.lastErr = err
-	fc.vaultStats = stats
-}
-
-func (fc *fallbackContext) theFallbackVaultStatsTotalShouldBe(expected int) error {
-	if fc.lastErr != nil {
-		return fmt.Errorf("unexpected error: %v", fc.lastErr)
-	}
-	if fc.vaultStats.Total != expected {
-		return fmt.Errorf("vault stats total = %d, want %d", fc.vaultStats.Total, expected)
-	}
-	return nil
-}
-
-func (fc *fallbackContext) iRequestTypeStatsForWithFallback(typeName string) {
-	stats, err := fc.qs.TypeStats(typeName)
-	fc.lastErr = err
-	fc.typeStats = stats
-}
-
-func (fc *fallbackContext) theFallbackTypeStatsCountShouldBe(expected int) error {
-	if fc.lastErr != nil {
-		return fmt.Errorf("unexpected error: %v", fc.lastErr)
-	}
-	if fc.typeStats.Count != expected {
-		return fmt.Errorf("type stats count = %d, want %d", fc.typeStats.Count, expected)
-	}
-	return nil
-}
-
 func initQueryFallbackSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	fc := newFallbackContext()
 
@@ -237,7 +196,6 @@ func initQueryFallbackSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a vault with objects and a broken index$`, fc.aVaultWithObjectsAndBrokenIndex)
 
 	// When - Query
-	ctx.Step(`^I query with fallback filter "([^"]*)"$`, fc.iQueryWithFallbackFilter)
 	ctx.Step(`^I query with fallback filter "([^"]*)" sorted by "([^"]*)" "([^"]*)"$`, fc.iQueryWithFallbackFilterSortedBy)
 
 	// Then - Query
@@ -250,12 +208,4 @@ func initQueryFallbackSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 
 	// Then - Search
 	ctx.Step(`^the fallback search should return (\d+) results?$`, fc.theFallbackSearchShouldReturnNResults)
-
-	// When - Stats
-	ctx.Step(`^I request vault stats with fallback$`, fc.iRequestVaultStatsWithFallback)
-	ctx.Step(`^I request type stats for "([^"]*)" with fallback$`, fc.iRequestTypeStatsForWithFallback)
-
-	// Then - Stats
-	ctx.Step(`^the fallback vault stats total should be (\d+)$`, fc.theFallbackVaultStatsTotalShouldBe)
-	ctx.Step(`^the fallback type stats count should be (\d+)$`, fc.theFallbackTypeStatsCountShouldBe)
 }

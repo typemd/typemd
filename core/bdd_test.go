@@ -167,8 +167,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initViewCrudSteps(ctx, dc, vcCtx)
 	initQuerySortSteps(ctx, dc)
 	initFilterOperatorSteps(ctx, dc)
-	initFilterMatchSteps(ctx, dc)
-	initSortObjectsSteps(ctx, dc)
 	initStatsSteps(ctx, dc)
 	initSchemaCacheSteps(ctx, dc)
 	initIncrementalSyncSteps(ctx, dc)
