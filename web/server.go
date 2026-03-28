@@ -167,6 +167,10 @@ func (s *Server) handleListTypes(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleGetType(w http.ResponseWriter, r *http.Request) {
 	name := r.PathValue("name")
+	if !safePath(name) {
+		writeError(w, http.StatusBadRequest, "invalid type name")
+		return
+	}
 	ts, err := s.vault.LoadType(name)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "type not found")
@@ -229,12 +233,27 @@ func (s *Server) handleListObjects(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, items)
 }
 
-func objectID(r *http.Request) string {
-	return r.PathValue("type") + "/" + r.PathValue("slug")
+// safePath validates a URL path parameter contains no traversal sequences.
+func safePath(segment string) bool {
+	return !strings.Contains(segment, "..") && !strings.Contains(segment, "/") && !strings.Contains(segment, "\\")
+}
+
+func objectID(r *http.Request) (string, bool) {
+	t := r.PathValue("type")
+	s := r.PathValue("slug")
+	if !safePath(t) || !safePath(s) {
+		return "", false
+	}
+	return t + "/" + s, true
 }
 
 func (s *Server) handleGetObject(w http.ResponseWriter, r *http.Request) {
-	obj, err := s.vault.GetObject(objectID(r))
+	id, ok := objectID(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "invalid object ID")
+		return
+	}
+	obj, err := s.vault.GetObject(id)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "object not found")
 		return
@@ -243,13 +262,19 @@ func (s *Server) handleGetObject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleUpdateObject(w http.ResponseWriter, r *http.Request) {
+	id, ok := objectID(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "invalid object ID")
+		return
+	}
+
 	var req updateObjectRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		writeError(w, http.StatusBadRequest, "invalid JSON")
 		return
 	}
 
-	obj, err := s.vault.GetObject(objectID(r))
+	obj, err := s.vault.GetObject(id)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "object not found")
 		return
@@ -287,7 +312,12 @@ func (s *Server) handleCreateObject(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleGetDisplayProperties(w http.ResponseWriter, r *http.Request) {
-	obj, err := s.vault.GetObject(objectID(r))
+	id, ok := objectID(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "invalid object ID")
+		return
+	}
+	obj, err := s.vault.GetObject(id)
 	if err != nil {
 		writeError(w, http.StatusNotFound, "object not found")
 		return
@@ -317,8 +347,16 @@ func (s *Server) handleGetDisplayProperties(w http.ResponseWriter, r *http.Reque
 }
 
 func (s *Server) handleUpdateProperty(w http.ResponseWriter, r *http.Request) {
-	id := objectID(r)
+	id, ok := objectID(r)
+	if !ok {
+		writeError(w, http.StatusBadRequest, "invalid object ID")
+		return
+	}
 	key := r.PathValue("key")
+	if !safePath(key) {
+		writeError(w, http.StatusBadRequest, "invalid property key")
+		return
+	}
 
 	var req updatePropertyRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
@@ -368,6 +406,10 @@ func (s *Server) handleUpdateProperty(w http.ResponseWriter, r *http.Request) {
 
 func (s *Server) handleListTemplates(w http.ResponseWriter, r *http.Request) {
 	typeName := r.PathValue("type")
+	if !safePath(typeName) {
+		writeError(w, http.StatusBadRequest, "invalid type name")
+		return
+	}
 	templates, err := s.vault.ListTemplates(typeName)
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "list templates failed")

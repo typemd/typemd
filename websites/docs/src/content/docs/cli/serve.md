@@ -21,6 +21,7 @@ Opens the web UI at `http://localhost:3000` (default port). The interface mirror
 | Flag | Short | Default | Description |
 |------|-------|---------|-------------|
 | `--port` | `-p` | `3000` | Port to listen on |
+| `--host` | | `127.0.0.1` | Host to bind to (use `0.0.0.0` for all interfaces) |
 | `--vault` | | `.` | Path to vault directory (global flag) |
 
 ## Web UI Features

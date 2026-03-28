@@ -8,7 +8,10 @@ import (
 	"github.com/typemd/typemd/web"
 )
 
-var servePort int
+var (
+	servePort int
+	serveHost string
+)
 
 var serveCmd = &cobra.Command{
 	Use:   "serve",
@@ -24,13 +27,14 @@ var serveCmd = &cobra.Command{
 		frontend := web.FrontendFS()
 		srv := web.NewServer(vault, frontend)
 
-		addr := fmt.Sprintf(":%d", servePort)
-		fmt.Printf("TypeMD web UI: http://localhost%s\n", addr)
+		addr := fmt.Sprintf("%s:%d", serveHost, servePort)
+		fmt.Printf("TypeMD web UI: http://%s\n", addr)
 		return http.ListenAndServe(addr, srv)
 	},
 }
 
 func init() {
 	serveCmd.Flags().IntVarP(&servePort, "port", "p", 3000, "port to listen on")
+	serveCmd.Flags().StringVar(&serveHost, "host", "127.0.0.1", "host to bind to (use 0.0.0.0 for all interfaces)")
 	rootCmd.AddCommand(serveCmd)
 }
