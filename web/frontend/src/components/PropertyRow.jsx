@@ -22,12 +22,16 @@ export default function PropertyRow({ prop, objectId, locked, onSave, showDivide
     setEditing(true);
   };
 
+  const saveRef = useRef(false);
   const save = async () => {
+    if (saveRef.current) return;
+    saveRef.current = true;
     try {
       await vault.updateProperty(objectId, prop.key, value);
       setEditing(false);
       onSave();
     } catch (err) { console.error(err); }
+    finally { saveRef.current = false; }
   };
 
   const onKeyDown = (e) => {
@@ -44,16 +48,12 @@ export default function PropertyRow({ prop, objectId, locked, onSave, showDivide
 
   const renderEditor = () => {
     const cls = "w-full rounded-lg border px-3 py-2 text-[14px] outline-none";
-    const st = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text)" };
+    const st = { borderColor: "var(--color-border)", background: "var(--color-bg)", color: "var(--color-text)" };
 
     if (prop.type === "checkbox") {
-      return <input ref={inputRef} type="checkbox" checked={value === "true"}
-        onChange={(e) => {
-          vault.updateProperty(objectId, prop.key, e.target.checked ? "true" : "false")
-            .then(onSave).catch(console.error);
-          setEditing(false);
-        }}
-        className="h-5 w-5 rounded" style={{ accentColor: "var(--color-accent)" }} />;
+      toggleCheckbox();
+      setEditing(false);
+      return null;
     }
     if (prop.type === "date") {
       return <input ref={inputRef} type="date" value={value} onChange={(e) => setValue(e.target.value)}

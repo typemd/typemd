@@ -20,13 +20,15 @@ export default function App() {
 
   const loadObject = useCallback((id) => {
     if (!id) { setObject(null); setDisplayProps([]); setTypeSchema(null); return; }
+    const typeName = id.split("/")[0];
     Promise.all([
       vault.getObject(id),
       vault.getDisplayProperties(id),
-    ]).then(([obj, props]) => {
+      vault.getType(typeName).catch(() => null),
+    ]).then(([obj, props, schema]) => {
       setObject(obj);
       setDisplayProps(props || []);
-      vault.getType(obj.type).then(setTypeSchema).catch(() => setTypeSchema(null));
+      setTypeSchema(schema);
     }).catch(console.error);
   }, []);
 

@@ -4,10 +4,10 @@
 const API = "/api";
 
 async function request(path, options = {}) {
-  const res = await fetch(`${API}${path}`, {
-    headers: { "Content-Type": "application/json" },
-    ...options,
-  });
+  const headers = options.method && options.method !== "GET"
+    ? { "Content-Type": "application/json", ...options.headers }
+    : { ...options.headers };
+  const res = await fetch(`${API}${path}`, { ...options, headers });
   if (!res.ok) {
     const err = await res.json().catch(() => ({ error: res.statusText }));
     throw new Error(err.error || res.statusText);
