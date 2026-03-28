@@ -490,16 +490,32 @@ func TestViewSegment_Output(t *testing.T) {
 	}
 }
 
-func TestViewCalendar_Output(t *testing.T) {
+func TestViewCalendar_InlineShowsSegments(t *testing.T) {
 	de := newDateEdit(time.Date(2025, 6, 15, 0, 0, 0, 0, time.Local))
 	de.mode = dateCalendarMode
+	// View() should still return segment display even in calendar mode
 	view := de.View()
-	// Should contain month header and weekday headers
-	if !containsStr(view, "Jun 2025") {
-		t.Errorf("expected 'Jun 2025' in calendar view, got: %s", view)
+	if !containsStr(view, "Sun") {
+		t.Errorf("expected day of week in inline view during calendar mode, got: %s", view)
 	}
-	if !containsStr(view, "Mo Tu We Th Fr Sa Su") {
-		t.Errorf("expected weekday headers in calendar view, got: %s", view)
+}
+
+func TestCalendarOverlay_Output(t *testing.T) {
+	de := newDateEdit(time.Date(2025, 6, 15, 0, 0, 0, 0, time.Local))
+	de.mode = dateCalendarMode
+	cal := de.CalendarOverlay()
+	if !containsStr(cal, "Jun 2025") {
+		t.Errorf("expected 'Jun 2025' in calendar overlay, got: %s", cal)
+	}
+	if !containsStr(cal, "Mo Tu We Th Fr Sa Su") {
+		t.Errorf("expected weekday headers in calendar overlay, got: %s", cal)
+	}
+}
+
+func TestCalendarOverlay_EmptyInSegmentMode(t *testing.T) {
+	de := newDateEdit(time.Date(2025, 6, 15, 0, 0, 0, 0, time.Local))
+	if de.CalendarOverlay() != "" {
+		t.Error("expected empty overlay in segment mode")
 	}
 }
 

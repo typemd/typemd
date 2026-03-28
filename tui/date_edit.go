@@ -310,15 +310,20 @@ func (de *dateEdit) clearDigitBuf() {
 	de.digitCount = 0
 }
 
-// View renders the date picker in its current mode.
+// View returns the inline portion of the date picker.
+// In both modes, this shows the segmented date display.
+// In calendar mode, the calendar grid is rendered separately via CalendarOverlay().
 func (de *dateEdit) View() string {
-	switch de.mode {
-	case dateSegmentMode:
-		return de.viewSegment()
-	case dateCalendarMode:
-		return de.viewCalendar()
+	return de.viewSegment()
+}
+
+// CalendarOverlay returns the calendar grid content for overlay rendering.
+// Returns empty string when not in calendar mode.
+func (de *dateEdit) CalendarOverlay() string {
+	if de.mode != dateCalendarMode {
+		return ""
 	}
-	return ""
+	return de.viewCalendar()
 }
 
 func (de *dateEdit) viewSegment() string {
