@@ -1,6 +1,7 @@
 package tui
 
 import (
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -65,6 +66,7 @@ func watchDir(dir string, debounceMs int, buildMsg func(paths []string) tea.Msg)
 					return nil
 				}
 				if event.Op&(fsnotify.Write|fsnotify.Create|fsnotify.Remove|fsnotify.Rename) != 0 {
+					slog.Debug("file change detected", "path", event.Name)
 					// Collect this event's path
 					paths := []string{event.Name}
 
@@ -110,6 +112,7 @@ func watchObjects(objectsDir string, debounceMs int) tea.Cmd {
 // Returns a tea.Cmd that sends schemaChangedMsg when changes are detected.
 func watchTypes(typesDir string, debounceMs int) tea.Cmd {
 	return watchDir(typesDir, debounceMs, func(_ []string) tea.Msg {
+		slog.Debug("schema change detected, triggering reload")
 		return schemaChangedMsg{}
 	})
 }

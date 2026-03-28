@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -87,6 +88,7 @@ func (s *objectSyncer) upsertObject(obj *Object, index ObjectIndex) error {
 
 	propsJSON, err := json.Marshal(props)
 	if err != nil {
+		slog.Warn("skip object: cannot marshal properties", "id", obj.ID, "error", err)
 		return nil // skip unserializable
 	}
 
@@ -164,6 +166,7 @@ func (p *Projector) syncWikiLinksAndTags(ctx *syncContext, result *SyncResult) e
 // removes stale entries, cleans up orphaned relations, syncs wikilinks
 // and tag relations, and rebuilds the FTS index.
 func (p *Projector) Sync() (*SyncResult, error) {
+	slog.Debug("sync started")
 	result := &SyncResult{}
 
 	// Walk all objects from repository
@@ -230,6 +233,7 @@ func (p *Projector) Sync() (*SyncResult, error) {
 		return nil, err
 	}
 
+	slog.Debug("sync completed", "synced", result.Synced, "deleted", result.Deleted, "orphaned", result.Orphaned)
 	return result, p.index.Rebuild()
 }
 
@@ -259,6 +263,7 @@ func objectPathToID(path, objectsDir string) (string, bool) {
 // After incremental object sync, it performs a full wikilink and tag sync
 // using data already in the index (no filesystem walk).
 func (p *Projector) SyncFiles(paths []string, objectsDir string) (*SyncResult, error) {
+	slog.Debug("incremental sync started", "files", len(paths))
 	result := &SyncResult{}
 	syncer := newObjectSyncer(p.repo)
 

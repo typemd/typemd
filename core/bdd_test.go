@@ -129,6 +129,9 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 		return hookCtx, nil
 	})
 
+	lc := &loggingContext{}
+	initLoggingSteps(ctx, lc)
+
 	initCommonSteps(ctx, dc)
 	initVaultSteps(ctx, dc)
 	initObjectSteps(ctx, dc)

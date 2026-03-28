@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"strings"
 )
 
@@ -101,6 +102,7 @@ func (s *AIService) withLanguage(systemPrompt string) string {
 // Describe generates a description for an object using AI.
 func (s *AIService) Describe(ctx context.Context, obj ObjectContext, schema SchemaContext) (string, error) {
 	prompt := s.buildDescribePrompt(obj, schema)
+	slog.Debug("ai describe", "type", schema.TypeName, "object", obj.Name)
 	systemPrompt := s.config.DescribePrompt
 	if systemPrompt == "" {
 		systemPrompt = DefaultDescribePrompt
@@ -115,6 +117,7 @@ func (s *AIService) Describe(ctx context.Context, obj ObjectContext, schema Sche
 		Model:        s.config.Model,
 	})
 	if err != nil {
+		slog.Warn("ai describe failed", "error", err)
 		return "", fmt.Errorf("ai describe: %w", err)
 	}
 
@@ -129,6 +132,7 @@ func (s *AIService) Describe(ctx context.Context, obj ObjectContext, schema Sche
 // SuggestTags suggests tags for an object using AI.
 func (s *AIService) SuggestTags(ctx context.Context, obj ObjectContext, schema SchemaContext, existingTags []TagInfo) (*TagSuggestion, error) {
 	prompt := s.buildTagPrompt(obj, schema, existingTags)
+	slog.Debug("ai suggest tags", "type", schema.TypeName, "object", obj.Name)
 	systemPrompt := s.config.TagPrompt
 	if systemPrompt == "" {
 		systemPrompt = DefaultTagPrompt
@@ -143,6 +147,7 @@ func (s *AIService) SuggestTags(ctx context.Context, obj ObjectContext, schema S
 		Model:        s.config.Model,
 	})
 	if err != nil {
+		slog.Warn("ai suggest tags failed", "error", err)
 		return nil, fmt.Errorf("ai suggest tags: %w", err)
 	}
 
@@ -157,6 +162,7 @@ func (s *AIService) SuggestTags(ctx context.Context, obj ObjectContext, schema S
 // ExploreSchema analyzes objects to suggest schema improvements.
 func (s *AIService) ExploreSchema(ctx context.Context, schema SchemaContext, objects []ObjectContext) (*SchemaExploration, error) {
 	prompt := s.buildExplorePrompt(schema, objects)
+	slog.Debug("ai explore schema", "type", schema.TypeName, "objects", len(objects))
 	systemPrompt := s.config.ExplorePrompt
 	if systemPrompt == "" {
 		systemPrompt = DefaultExplorePrompt
@@ -171,6 +177,7 @@ func (s *AIService) ExploreSchema(ctx context.Context, schema SchemaContext, obj
 		Model:        s.config.Model,
 	})
 	if err != nil {
+		slog.Warn("ai explore schema failed", "error", err)
 		return nil, fmt.Errorf("ai explore schema: %w", err)
 	}
 

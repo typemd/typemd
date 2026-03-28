@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"time"
 )
 
@@ -121,6 +122,7 @@ func (s *ObjectService) Create(typeName, filename, templateName string) (*Object
 		return nil, fmt.Errorf("insert object: %w", err)
 	}
 
+	slog.Debug("object created", "id", newObj.ID, "type", typeName)
 	s.dispatcher.Dispatch([]DomainEvent{ObjectCreated{Object: newObj}})
 	return newObj, nil
 }
@@ -131,6 +133,7 @@ func (s *ObjectService) Save(obj *Object) error {
 	if obj.IsLocked() {
 		return ErrObjectLocked
 	}
+	slog.Debug("object save", "id", obj.ID)
 	return s.saveInternal(obj)
 }
 

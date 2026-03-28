@@ -1,8 +1,8 @@
 package mcp
 
 import (
-	"github.com/typemd/typemd/core"
 	"github.com/mark3labs/mcp-go/server"
+	"github.com/typemd/typemd/core"
 )
 
 // Serve creates and starts the MCP server via stdio.

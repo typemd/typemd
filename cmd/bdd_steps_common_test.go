@@ -117,6 +117,7 @@ func (cc *cmdContext) runCmdAndTrack(args ...string) {
 func resetAllFlags() {
 	vaultPath = ""
 	readOnly = false
+	debug = false
 	templateFlag = ""
 	typeFlag = ""
 	noStarters = false
@@ -148,6 +149,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	})
 
 	initCommonSteps(sc, cc)
+	initDebugSteps(sc, cc)
 	initInitSteps(sc, cc)
 	initObjectSteps(sc, cc)
 	initSearchSteps(sc, cc)
