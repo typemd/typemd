@@ -167,7 +167,6 @@ If the issue is labeled `tech-only` (detected in **Understand the Issue**), **sk
 Instead, after Workspace Setup, proceed directly to **Phase 2: Implement**. For tech-only issues:
 
 - Read the issue body for the technical approach and scope
-- Use `superpowers:writing-plans` to create a lightweight implementation plan (no OpenSpec)
 - Implement directly using the appropriate approach (BDD, subagent-driven, or parallel agents)
 
 Then continue to **Post-Implementation Review** and **Phase 3** as normal (skipping the Archive step since there is no OpenSpec change to archive).
@@ -221,7 +220,7 @@ Once all artifacts are generated, proceed directly to Phase 2.
 
 ### Phase 2: Implement
 
-For **tech-only issues**: implement based on the lightweight plan created in the Tech-only Fast Path. There is no OpenSpec `tasks.md` — use the plan from `superpowers:writing-plans` instead.
+For **tech-only issues**: implement based on the issue body directly. There is no OpenSpec `tasks.md`.
 
 For **regular issues**: use the `openspec-apply-change` skill to execute the tasks from the OpenSpec change. The apply skill reads `tasks.md` and implements each task in order.
 
