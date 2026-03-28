@@ -47,7 +47,7 @@ When a shorthand link resolves to exactly one object, it is automatically expand
 
 ## How it works
 
-1. When the index is synced (`tmd --reindex` or auto-sync), the indexer parses `[[...]]` patterns from each Object's body
+1. When the index is synced (on vault open), the indexer parses `[[...]]` patterns from each Object's body
 2. Targets are resolved against existing Objects — full IDs are matched exactly, shorthand targets are resolved by name within the appropriate type
 3. Resolved shorthand targets are written back to the source file as full IDs (like relation name expansion)
 4. Link records are stored in the SQLite index for fast backlink lookups

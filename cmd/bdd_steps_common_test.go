@@ -117,7 +117,6 @@ func (cc *cmdContext) runCmdAndTrack(args ...string) {
 func resetAllFlags() {
 	vaultPath = ""
 	readOnly = false
-	reindex = false
 	templateFlag = ""
 	typeFlag = ""
 	noStarters = false

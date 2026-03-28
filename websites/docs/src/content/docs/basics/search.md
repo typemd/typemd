@@ -15,7 +15,7 @@ When you open a vault, TypeMD builds a full-text search index from all Object fi
 - **Properties** — all frontmatter values (system and schema-defined)
 - **Body content** — the Markdown body of each Object
 
-The index is stored at `.typemd/index.db` and automatically stays in sync when you use the CLI or TUI. After manual file edits outside of TypeMD, use `tmd --reindex` to rebuild.
+The index is stored at `.typemd/index.db` and automatically stays in sync when you use the CLI or TUI. The index is automatically synced every time the vault is opened, even after manual file edits.
 
 ## CLI usage
 

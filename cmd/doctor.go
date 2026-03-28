@@ -23,7 +23,7 @@ var doctorCmd = &cobra.Command{
 
 A superset of "tmd type validate" with additional structural integrity checks.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

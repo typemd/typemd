@@ -16,7 +16,7 @@ Examples:
   tmd search "golang channel" --json`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

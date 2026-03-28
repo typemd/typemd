@@ -47,7 +47,7 @@ rating: 4.5
 A great book about Go...
 ```
 
-TUI 會自動偵測新檔案並顯示它。如果你 clone 了一個現有的 vault，資料庫會在首次開啟時自動建立——不需要手動執行 `tmd --reindex`。
+TUI 會自動偵測新檔案並顯示它。如果你 clone 了一個現有的 vault，索引會在首次開啟時自動從檔案同步建立。
 
 ## 4. 列出與搜尋
 

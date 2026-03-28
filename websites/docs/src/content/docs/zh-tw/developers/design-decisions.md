@@ -13,7 +13,7 @@ sidebar:
 
 Frontmatter 是真實來源（source of truth），確保檔案的可攜性——物件是自包含的 Markdown 檔案，可以做版本控制、同步和手動編輯。資料庫提供快速的反向查詢和關聯查詢，這些操作若從檔案計算會非常昂貴。
 
-當兩個儲存區不一致時（例如手動編輯檔案後），`tmd reindex` 會從 frontmatter 重建資料庫。
+當兩個儲存區不一致時（例如手動編輯檔案後），開啟 vault 時會從 frontmatter 重建資料庫。
 
 **被否決的替代方案**：
 - 僅儲存在資料庫——違反 local-first、檔案即真實來源的原則

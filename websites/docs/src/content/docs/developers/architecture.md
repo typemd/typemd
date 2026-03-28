@@ -120,7 +120,7 @@ graph LR
 
 **Query path**: QueryService reads from the index for search/filter operations, and from the repository when a full entity is needed by known ID.
 
-**Projection**: The Projector reconciles the two stores by walking all files and upserting into the index. This runs on vault open (if the index is empty) and on `tmd reindex`.
+**Projection**: The Projector reconciles the two stores by walking all files and upserting into the index. This runs on every vault open.
 
 ## Domain Events
 

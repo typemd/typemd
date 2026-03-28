@@ -120,7 +120,7 @@ name: My New Book
 
 ## 同步時會發生什麼
 
-TypeMD 處理你的檔案時（開啟 vault 時，或透過 `tmd --reindex`），會套用以下規則：
+TypeMD 處理你的檔案時（每次開啟 vault 時），會套用以下規則：
 
 - **缺少 `name`** — 如果省略，TypeMD 會從檔名的 slug 產生
 - **時間戳記** — `created_at` 和 `updated_at` 如果存在會被保留；如果缺少，會根據檔案中繼資料設定

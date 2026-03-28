@@ -30,10 +30,8 @@ func TestValidateCmd_TagUniqueness(t *testing.T) {
 
 	v.Close()
 
-	// Run validate command with reindex to pick up the raw file
+	// Run validate command — index is synced on vault open
 	vaultPath = dir
-	reindex = true
-	defer func() { reindex = false }()
 	rootCmd.SetArgs([]string{"type", "validate"})
 	err := rootCmd.Execute()
 

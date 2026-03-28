@@ -10,7 +10,7 @@ var mcpCmd = &cobra.Command{
 	Short: "Start MCP server via stdio",
 	Long:  `Start a Model Context Protocol (MCP) server using stdio transport. This allows AI clients to query the vault.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

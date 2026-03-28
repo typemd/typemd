@@ -23,7 +23,7 @@ Examples:
 	RunE: func(cmd *cobra.Command, args []string) error {
 		both, _ := cmd.Flags().GetBool("both")
 
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

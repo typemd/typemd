@@ -11,7 +11,6 @@ sidebar:
 tmd
 tmd --vault /path/to/vault
 tmd --readonly
-tmd --reindex
 ```
 
 ## 版面配置
@@ -331,35 +330,11 @@ TUI 在離開時會自動將會話狀態儲存到 `.typemd/tui-state.yaml`。下
 
 若狀態檔案遺失或損毀，TUI 會靜默 fallback 到預設啟動行為。
 
-## 重建索引
+## 索引同步
 
-`--reindex` flag 會強制將 `objects/` 目錄完整同步到資料庫，清理孤立的 relation，並重建全文搜尋索引。這是一個全域 flag，可以與任何指令組合使用。
+每次開啟 vault 時，TypeMD 會自動將 `objects/` 目錄完整同步到資料庫，清理孤立的 relation，並重建全文搜尋索引。不需要手動重建索引。
 
-> **注意：** 開啟 vault 時，TypeMD 會在索引為空或缺失時自動同步。只有在 vault 未開啟期間編輯了檔案，才需要使用 `--reindex`。
-
-```bash
-# 重建索引並啟動 TUI
-tmd --reindex
-
-# 重建索引並啟動 MCP server
-tmd mcp --reindex
-
-# 重建索引並列出 Object
-tmd object list --reindex
-```
-
-### 孤立 relation 清理
-
-當物件從磁碟中刪除時，指向或來自該物件的 relation 會變成孤立的。在 reindex 過程中，這些 dangling reference 會自動被偵測並從索引中移除。系統會顯示受影響的 relation 列表：
-
-```
-Warning: Found 2 orphaned relation(s):
-  book/golang-in-action -> person/deleted-author (relation: "author")
-  person/deleted-author -> book/golang-in-action (relation: "books")
-Orphaned relations have been removed from the index.
-```
-
-> **注意：** 這只會清理 SQLite 索引。`.md` 檔案中的 frontmatter 不會被修改 — 建議在刪除物件前先使用 `tmd relation unlink --both` 正確移除 relation。
+> **注意：** 檔案永遠是 source of truth。即使刪除 `.typemd/index.db`，重新開啟 vault 時索引也會自動從檔案重建，不會遺失任何資料。
 
 ## 自動重新整理
 

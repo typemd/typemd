@@ -13,7 +13,7 @@ Examples:
   tmd object list
   tmd object list --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

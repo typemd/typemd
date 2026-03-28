@@ -21,7 +21,7 @@ Examples:
 	Args: cobra.ExactArgs(3),
 	ValidArgsFunction: completeLinkArgs,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

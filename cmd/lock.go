@@ -26,7 +26,7 @@ Examples:
 		return completeObjectID(toComplete)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}
@@ -76,7 +76,7 @@ Examples:
 		return completeObjectID(toComplete)
 	},
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

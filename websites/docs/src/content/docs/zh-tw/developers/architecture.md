@@ -120,7 +120,7 @@ graph LR
 
 **查詢路徑**：QueryService 從索引讀取搜尋 / 篩選結果，需要完整實體時從 Repository 以 ID 讀取。
 
-**投影**：Projector 透過走訪所有檔案並 upsert 到索引來調和兩個儲存。這在 vault 開啟時（如果索引為空）和 `tmd reindex` 時執行。
+**投影**：Projector 透過走訪所有檔案並 upsert 到索引來調和兩個儲存。這在每次 vault 開啟時執行。
 
 ## 領域事件
 
