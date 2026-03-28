@@ -370,10 +370,19 @@ func (de *dateEdit) viewCalendar() string {
 	y, m := de.date.Year(), de.date.Month()
 	today := localToday()
 
+	// Grid width: "Mo Tu We Th Fr Sa Su" = 20 chars
+	const gridWidth = 20
+
 	var b strings.Builder
 
-	b.WriteString(fmt.Sprintf("  %s %d\n", m.String()[:3], y))
-	b.WriteString("  Mo Tu We Th Fr Sa Su\n")
+	// Month header — centered over the grid
+	header := fmt.Sprintf("%s %d", m.String()[:3], y)
+	pad := (gridWidth - len(header)) / 2
+	if pad < 0 {
+		pad = 0
+	}
+	b.WriteString(strings.Repeat(" ", pad) + header + "\n")
+	b.WriteString("Mo Tu We Th Fr Sa Su\n")
 
 	first := time.Date(y, m, 1, 0, 0, 0, 0, time.Local)
 	offset := int(first.Weekday())
@@ -384,7 +393,6 @@ func (de *dateEdit) viewCalendar() string {
 
 	lastDay := daysInMonth(y, m)
 
-	b.WriteString("  ")
 	for i := 0; i < offset; i++ {
 		b.WriteString("   ")
 	}
@@ -409,12 +417,11 @@ func (de *dateEdit) viewCalendar() string {
 			weekday = 7
 		}
 		if weekday == 7 && day < lastDay {
-			b.WriteString("\n  ")
-		} else {
+			b.WriteString("\n")
+		} else if day < lastDay {
 			b.WriteString(" ")
 		}
 	}
-	b.WriteString("\n")
 
 	return b.String()
 }
