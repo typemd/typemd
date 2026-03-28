@@ -11,7 +11,7 @@ For user-facing file structure details, see [File Structure](/advanced/file-stru
 
 ## Files as source of truth
 
-The fundamental design principle is that **files are always the source of truth**. The SQLite index is an acceleration layer that can be rebuilt from files at any time. If the index is deleted or corrupted, no data is lost — running `tmd reindex` or opening the vault will rebuild it.
+The fundamental design principle is that **files are always the source of truth**. The SQLite index is an acceleration layer that can be rebuilt from files at any time. If the index is deleted or corrupted, no data is lost — opening the vault will rebuild it.
 
 This design enables:
 
@@ -34,9 +34,8 @@ The index file is not meant to be edited directly. It is managed entirely by Typ
 
 The index is automatically synced in these situations:
 
-- **Vault open** — when opening a vault with an empty or missing database (e.g. after a fresh `git clone`), TypeMD walks all Object files and populates the index
+- **Vault open** — every time a vault is opened, TypeMD walks all Object files and syncs the index
 - **CLI/TUI operations** — creating, saving, or deleting Objects updates the index immediately
-- **Manual reindex** — run `tmd reindex` to rebuild the index after editing files outside of TypeMD
 
 The sync process is handled by the **Projector** component, which walks all Object files via the repository and upserts entries into the index. See [Architecture](/developers/architecture) for how the Projector fits into the system.
 

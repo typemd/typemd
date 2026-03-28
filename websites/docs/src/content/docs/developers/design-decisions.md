@@ -13,7 +13,7 @@ This page documents significant design decisions made during TypeMD's developmen
 
 Frontmatter is the source of truth for file portability — objects are self-contained Markdown files that can be version-controlled, synced, and edited manually. The database provides fast reverse lookups and relational queries that would be expensive to compute from files.
 
-When the two stores drift (e.g., after manual file edits), `tmd reindex` rebuilds the database from frontmatter.
+When the two stores drift (e.g., after manual file edits), opening the vault rebuilds the database from frontmatter.
 
 **Alternatives considered**:
 - Database-only storage — rejected because it violates the local-first, files-are-truth principle

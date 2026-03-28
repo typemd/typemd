@@ -93,18 +93,6 @@ func (dc *domainContext) anOrphanObjectDirectoryExists(dirName string) {
 	os.MkdirAll(orphanDir, 0755)
 }
 
-func (dc *domainContext) theIndexIsOutOfSync() {
-	// Create a valid object file on disk that the index doesn't know about.
-	// The doctor should detect and auto-fix this by re-syncing.
-	typeName := "book"
-	slug := "unindexed-" + mustULID()
-	filename := slug
-	objDir := filepath.Join(dc.vault.ObjectsDir(), typeName)
-	os.MkdirAll(objDir, 0755)
-	content := fmt.Sprintf("---\nname: %s\ntitle: Unindexed Book\n---\n", slug)
-	os.WriteFile(filepath.Join(objDir, filename+".md"), []byte(content), 0644)
-}
-
 func initDoctorSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^I run doctor$`, dc.iRunDoctor)
 	ctx.Step(`^the doctor report should have (\d+) categories$`, dc.theDoctorReportShouldHaveNCategories)
@@ -114,5 +102,4 @@ func initDoctorSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the doctor report should have (\d+) auto-fixed$`, dc.theDoctorReportShouldHaveNAutoFixed)
 	ctx.Step(`^a corrupted object file exists at "([^"]*)"$`, dc.aCorruptedObjectFileExistsAt)
 	ctx.Step(`^an orphan object directory "([^"]*)" exists$`, dc.anOrphanObjectDirectoryExists)
-	ctx.Step(`^the index is out of sync$`, dc.theIndexIsOutOfSync)
 }

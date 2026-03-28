@@ -19,27 +19,12 @@ func resolveVault(path string) *core.Vault {
 	return core.NewVault(path)
 }
 
-// openVault creates, opens, and optionally reindexes a vault.
+// openVault creates and opens a vault.
 // The caller must defer vault.Close().
-func openVault(path string, reindex bool) (*core.Vault, error) {
+func openVault(path string) (*core.Vault, error) {
 	vault := resolveVault(path)
 	if err := vault.Open(); err != nil {
 		return nil, err
-	}
-	if reindex {
-		result, err := vault.SyncIndex()
-		if err != nil {
-			vault.Close()
-			return nil, fmt.Errorf("reindex: %w", err)
-		}
-		fmt.Println("Index synced successfully.")
-		if len(result.Orphaned) > 0 {
-			fmt.Printf("Warning: Found %d orphaned relation(s):\n", len(result.Orphaned))
-			for _, o := range result.Orphaned {
-				fmt.Printf("  %s -> %s (relation: %q)\n", o.FromID, o.ToID, o.Name)
-			}
-			fmt.Println("Orphaned relations have been removed from the index.")
-		}
 	}
 	return vault, nil
 }

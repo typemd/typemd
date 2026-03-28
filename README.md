@@ -100,7 +100,6 @@ tmd relation link book/golang-in-action author person/alan-donovan
 tmd format                                # normalize frontmatter & schema formatting
 tmd doctor                                # vault health check
 tmd stats                                 # vault-wide statistics
-tmd --reindex                             # rebuild index after manual edits
 
 # MCP server for AI integration
 tmd mcp

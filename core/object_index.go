@@ -40,8 +40,6 @@ type ObjectIndex interface {
 	Upsert(id, typeName, filename, propsJSON, body string) error
 	Remove(id string) error
 	ListIDs() ([]string, error)
-	NeedsSync() (bool, error)
-
 	// Relation index maintenance
 	InsertRelation(name, fromID, toID string) error
 	DeleteRelation(name, fromID, toID string) error

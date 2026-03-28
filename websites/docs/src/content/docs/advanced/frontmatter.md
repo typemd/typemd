@@ -122,7 +122,7 @@ Notes about this book...
 
 ## What happens on sync
 
-When TypeMD processes your files (on vault open, or via `tmd --reindex`), it applies these rules:
+When TypeMD processes your files (on vault open), it applies these rules:
 
 - **Missing `name`** — if omitted, TypeMD generates it from the filename slug
 - **Timestamps** — `created_at` and `updated_at` are preserved if present; if missing, they are set based on file metadata

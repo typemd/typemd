@@ -217,8 +217,8 @@ func setupDoctorVault(t *testing.T) *Vault {
 func TestRunDoctor_HealthyVault(t *testing.T) {
 	v := setupDoctorVault(t)
 	report := RunDoctor(v)
-	if len(report.Categories) != 8 {
-		t.Errorf("categories = %d, want 8", len(report.Categories))
+	if len(report.Categories) != 7 {
+		t.Errorf("categories = %d, want 7", len(report.Categories))
 	}
 	if report.TotalIssues() != 0 {
 		t.Errorf("total issues = %d, want 0", report.TotalIssues())

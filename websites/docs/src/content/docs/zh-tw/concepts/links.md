@@ -47,7 +47,7 @@ Also check [[my-other-note]].
 
 ## 運作方式
 
-1. 當索引同步時（`tmd --reindex` 或自動同步），indexer 會從每個 Object 的內文解析 `[[...]]` 模式
+1. 當索引同步時（vault 開啟時自動執行），indexer 會從每個 Object 的內文解析 `[[...]]` 模式
 2. 目標會與現有 Object 進行比對——完整 ID 精確匹配，簡寫目標在對應 type 內依名稱解析
 3. 解析成功的簡寫目標會以完整 ID 寫回來源檔案（如同 relation 名稱展開）
 4. 連結記錄儲存在 SQLite 索引中，以便快速查詢反向連結

@@ -15,7 +15,7 @@ sidebar:
 - **屬性** — 所有 frontmatter 值（系統屬性和 schema 定義的屬性）
 - **內文** — 每個 Object 的 Markdown 內文
 
-索引儲存在 `.typemd/index.db`，使用 CLI 或 TUI 時會自動保持同步。在 TypeMD 外部手動編輯檔案後，使用 `tmd --reindex` 重建。
+索引儲存在 `.typemd/index.db`，每次開啟 vault 時會自動從檔案同步，使用 CLI 或 TUI 操作時也會即時更新。
 
 ## CLI 用法
 

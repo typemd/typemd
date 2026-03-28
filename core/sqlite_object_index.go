@@ -96,15 +96,6 @@ END;
 	return err
 }
 
-// NeedsSync returns true if the objects table has zero rows.
-func (idx *SQLiteObjectIndex) NeedsSync() (bool, error) {
-	var count int
-	if err := idx.db.QueryRow("SELECT COUNT(*) FROM objects").Scan(&count); err != nil {
-		return false, err
-	}
-	return count == 0, nil
-}
-
 // scanObjectResults scans SQL rows into ObjectResult slices.
 func scanObjectResults(rows *sql.Rows) ([]*ObjectResult, error) {
 	var results []*ObjectResult

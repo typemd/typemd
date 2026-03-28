@@ -43,7 +43,6 @@ project-root/
 | `tmd init` | Initialize a new vault in the current directory |
 | `tmd` (no args) | Launch the TUI |
 | `tmd --vault <path>` | Specify vault directory (default: current directory) |
-| `tmd --reindex` | Force reindex before running |
 | `tmd --readonly` | Open vault in read-only mode (TUI only) |
 
 ### Objects

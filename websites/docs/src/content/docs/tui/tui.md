@@ -11,7 +11,6 @@ Launches the TUI interactive interface for browsing objects.
 tmd
 tmd --vault /path/to/vault
 tmd --readonly
-tmd --reindex
 ```
 
 ## Layout
@@ -389,35 +388,13 @@ Search state is not persisted — each session starts with a fresh view.
 
 If the state file is missing or corrupt, the TUI silently falls back to default startup behavior.
 
-## Reindex
+## Index sync
 
-The `--reindex` flag forces a full sync of the `objects/` directory to the database, cleans up orphaned relations, and rebuilds the full-text search index. It is a global flag that can be combined with any command.
+The index is automatically synced every time the vault is opened. TypeMD walks all Object files, upserts them into the SQLite index, and cleans up orphaned relations — no manual intervention needed, even after editing files outside of TypeMD.
 
-> **Note:** When opening a vault, TypeMD automatically syncs the index if it is empty or missing. You only need `--reindex` when files have been edited while the vault was not open.
+When an object is deleted from disk, any relations pointing to or from that object become orphaned. These dangling references are automatically detected and removed from the index on the next vault open.
 
-```bash
-# Reindex and launch TUI
-tmd --reindex
-
-# Reindex and start MCP server
-tmd mcp --reindex
-
-# Reindex and list objects
-tmd object list --reindex
-```
-
-### Orphaned relation cleanup
-
-When an object is deleted from disk, any relations pointing to or from that object become orphaned. During reindex, these dangling references are automatically detected and removed from the index. A warning is displayed listing the affected relations:
-
-```
-Warning: Found 2 orphaned relation(s):
-  book/golang-in-action -> person/deleted-author (relation: "author")
-  person/deleted-author -> book/golang-in-action (relation: "books")
-Orphaned relations have been removed from the index.
-```
-
-> **Note:** This only cleans up the SQLite index. The frontmatter in `.md` files is not modified — use `tmd relation unlink --both` to properly remove relations before deleting objects.
+> **Note:** Index sync only updates the SQLite index. The frontmatter in `.md` files is not modified — use `tmd relation unlink --both` to properly remove relations before deleting objects.
 
 ## Auto-refresh
 

@@ -99,7 +99,6 @@ tmd relation link book/golang-in-action author person/alan-donovan
 tmd format                                # 正規化 frontmatter 與 schema 格式
 tmd doctor                                # vault 健康檢查
 tmd stats                                 # 統計摘要
-tmd --reindex                             # 手動編輯後重建索引
 
 # 啟動 MCP server 以整合 AI
 tmd mcp

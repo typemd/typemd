@@ -4,11 +4,11 @@ Feature: tmd fix wikilinks command
   Background:
     Given a vault is ready
 
-  Scenario: Expand shorthand wiki-links
+  Scenario: Shorthand wiki-links already expanded on vault open
     Given a "note" object with a shorthand wiki-link exists
     When I run fix wikilinks
     Then the command should succeed
-    And the output should contain "Expanded"
+    And the output should contain "No changes needed"
 
   Scenario: No changes needed
     When I run fix wikilinks

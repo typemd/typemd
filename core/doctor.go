@@ -77,7 +77,7 @@ func ScanCorruptedFiles(v *Vault) []CorruptedFile {
 	return corrupted
 }
 
-// RunDoctor performs a comprehensive vault health check across 8 categories.
+// RunDoctor performs a comprehensive vault health check across 7 categories.
 func RunDoctor(v *Vault) *DoctorReport {
 	report := &DoctorReport{}
 
@@ -90,7 +90,6 @@ func RunDoctor(v *Vault) *DoctorReport {
 
 	// Structural integrity checks
 	report.Categories = append(report.Categories, checkCorruptedFiles(v))
-	report.Categories = append(report.Categories, checkIndexSync(v))
 	report.Categories = append(report.Categories, checkOrphans(v))
 
 	return report
@@ -129,29 +128,6 @@ func checkCorruptedFiles(v *Vault) DoctorCategory {
 			Severity: SeverityError,
 			Message:  fmt.Sprintf("%s: %s", cf.Path, cf.Error),
 		})
-	}
-	return cat
-}
-
-func checkIndexSync(v *Vault) DoctorCategory {
-	cat := DoctorCategory{Name: "Index"}
-	needsSync, err := v.index.NeedsSync()
-	if err != nil {
-		cat.Issues = append(cat.Issues, DoctorIssue{
-			Severity: SeverityError,
-			Message:  fmt.Sprintf("check index: %s", err),
-		})
-		return cat
-	}
-	if needsSync {
-		if _, err := v.SyncIndex(); err != nil {
-			cat.Issues = append(cat.Issues, DoctorIssue{
-				Severity: SeverityError,
-				Message:  fmt.Sprintf("rebuild index: %s", err),
-			})
-		} else {
-			cat.AutoFixed = 1
-		}
 	}
 	return cat
 }

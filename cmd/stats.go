@@ -24,7 +24,7 @@ Examples:
   tmd stats --type book
   tmd stats --type book --json`,
 	RunE: func(cmd *cobra.Command, args []string) error {
-		vault, err := openVault(vaultPath, reindex)
+		vault, err := openVault(vaultPath)
 		if err != nil {
 			return err
 		}

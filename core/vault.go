@@ -140,16 +140,9 @@ func (v *Vault) Open() error {
 		return fmt.Errorf("ensure schema: %w", err)
 	}
 
-	sync, err := v.index.NeedsSync()
-	if err != nil {
+	if _, err := v.SyncIndex(); err != nil {
 		v.closeInternal()
-		return fmt.Errorf("check index: %w", err)
-	}
-	if sync {
-		if _, err := v.SyncIndex(); err != nil {
-			v.closeInternal()
-			return fmt.Errorf("auto sync index: %w", err)
-		}
+		return fmt.Errorf("sync index: %w", err)
 	}
 
 	return nil

@@ -235,25 +235,6 @@ func TestSQLiteObjectIndex_FTSCleanedOnRemove(t *testing.T) {
 	}
 }
 
-func TestSQLiteObjectIndex_NeedsSync(t *testing.T) {
-	idx := setupTestIndex(t)
-
-	needs, err := idx.NeedsSync()
-	if err != nil {
-		t.Fatalf("needsSync: %v", err)
-	}
-	if !needs {
-		t.Error("expected NeedsSync=true on empty index")
-	}
-
-	idx.Upsert("book/a-01abc", "book", "a-01abc", `{}`, "")
-
-	needs, _ = idx.NeedsSync()
-	if needs {
-		t.Error("expected NeedsSync=false after upsert")
-	}
-}
-
 func TestSQLiteObjectIndex_Relations(t *testing.T) {
 	idx := setupTestIndex(t)
 

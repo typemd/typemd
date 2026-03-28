@@ -59,7 +59,7 @@ func (cc *cmdContext) theObjectShouldBeLocked() error {
 	}
 	id := cc.createdObjectIDs[len(cc.createdObjectIDs)-1]
 
-	vault, err := openVault(cc.vaultDir, false)
+	vault, err := openVault(cc.vaultDir)
 	if err != nil {
 		return fmt.Errorf("openVault: %w", err)
 	}
@@ -81,7 +81,7 @@ func (cc *cmdContext) theObjectShouldNotBeLocked() error {
 	}
 	id := cc.createdObjectIDs[len(cc.createdObjectIDs)-1]
 
-	vault, err := openVault(cc.vaultDir, false)
+	vault, err := openVault(cc.vaultDir)
 	if err != nil {
 		return fmt.Errorf("openVault: %w", err)
 	}

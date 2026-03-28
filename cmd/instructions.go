@@ -61,7 +61,7 @@ func runGetSkill(name string, rawSkill bool) error {
 	}
 
 	// Try to open vault for context (optional)
-	vault, vaultErr := openVault(vaultPath, reindex)
+	vault, vaultErr := openVault(vaultPath)
 	var vaultRoot string
 	if vaultErr == nil {
 		defer vault.Close()
@@ -91,7 +91,7 @@ func runGetSkill(name string, rawSkill bool) error {
 
 func runGetSkillRaw(name string) error {
 	var vaultRoot string
-	vault, err := openVault(vaultPath, reindex)
+	vault, err := openVault(vaultPath)
 	if err == nil {
 		defer vault.Close()
 		vaultRoot = vault.Root
