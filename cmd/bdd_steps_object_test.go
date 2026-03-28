@@ -20,6 +20,7 @@ func initObjectSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
 
 	// Object show steps
 	ctx.Step(`^a vault with a book "([^"]*)"$`, cc.aVaultWithABook)
+	ctx.Step(`^a vault with a book "([^"]*)" with local property "([^"]*)" = "([^"]*)"$`, cc.aVaultWithABookWithLocalProperty)
 	ctx.Step(`^I run object show for the created book$`, cc.iRunObjectShowForCreatedBook)
 	ctx.Step(`^I run object show "([^"]*)"$`, cc.iRunObjectShow)
 
@@ -85,6 +86,19 @@ func (cc *cmdContext) aVaultWithABook(name string) error {
 	}
 	cc.createdObjectIDs = append(cc.createdObjectIDs, string(obj.ID))
 	return nil
+}
+
+func (cc *cmdContext) aVaultWithABookWithLocalProperty(name, propKey, propValue string) error {
+	if err := cc.aVaultWithABook(name); err != nil {
+		return err
+	}
+	id := cc.createdObjectIDs[len(cc.createdObjectIDs)-1]
+	obj, err := cc.vault.GetObject(id)
+	if err != nil {
+		return err
+	}
+	obj.Properties[propKey] = propValue
+	return cc.vault.SaveObject(obj)
 }
 
 func (cc *cmdContext) iRunObjectShowForCreatedBook() {

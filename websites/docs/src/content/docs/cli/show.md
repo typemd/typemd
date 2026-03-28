@@ -26,6 +26,10 @@ Properties
   author: → person/alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz
   backlinks: ⟵ note/reading-list-01jqr4a2bcdef0123456789xyz
 
+Local Properties
+────────────────
+  mood: reflective
+
 Body
 ────
   # Notes
@@ -33,3 +37,5 @@ Body
 ```
 
 Properties are displayed in schema-defined order. Relation properties use `→` for forward and `←` for inverse links. Wiki-link backlinks use `⟵` to indicate incoming references from other objects.
+
+If the object contains frontmatter properties not defined in the type schema ("local properties"), they are displayed in a separate **Local Properties** section. This section only appears when local properties exist.

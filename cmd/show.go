@@ -49,13 +49,33 @@ Examples:
 		fmt.Println(obj.DisplayID())
 		fmt.Println()
 
+		// Split properties into schema and local
+		var schemaProps, localProps []core.DisplayProperty
+		for _, p := range props {
+			if p.IsLocal {
+				localProps = append(localProps, p)
+			} else {
+				schemaProps = append(schemaProps, p)
+			}
+		}
+
 		// Properties & Relations
 		fmt.Println("Properties")
 		fmt.Println("──────────")
-		if len(props) == 0 {
+		if len(schemaProps) == 0 {
 			fmt.Println("  (none)")
 		} else {
-			for _, p := range props {
+			for _, p := range schemaProps {
+				fmt.Printf("  %s\n", p.Format())
+			}
+		}
+
+		// Local Properties (not in type schema)
+		if len(localProps) > 0 {
+			fmt.Println()
+			fmt.Println("Local Properties")
+			fmt.Println("────────────────")
+			for _, p := range localProps {
 				fmt.Printf("  %s\n", p.Format())
 			}
 		}

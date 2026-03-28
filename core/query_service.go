@@ -126,6 +126,8 @@ func (s *QueryService) BuildDisplayProperties(obj *Object) ([]DisplayProperty, e
 			dp.Emoji = sp.Emoji
 			dp.Pin = sp.Pin
 			dp.IsRelation = sp.Type == "relation"
+		} else if !IsSystemProperty(k) {
+			dp.IsLocal = true
 		}
 		result = append(result, dp)
 	}

@@ -118,6 +118,10 @@ func isPropertyEditable(dp core.DisplayProperty) bool {
 	if dp.IsReverse || dp.IsBacklink {
 		return false
 	}
+	// Local properties (not in schema, not system) are read-only
+	if dp.IsLocal {
+		return false
+	}
 	// Forward relations and tags are editable via relation picker
 	// All other property types are editable via their respective editors
 	return true
@@ -363,7 +367,14 @@ func (pe *propEditor) Render(focused bool) string {
 	b.WriteString(" Properties\n")
 	b.WriteString(" ──────────\n")
 
+	localSepRendered := false
 	for i, item := range pe.items {
+		// Render separator before the first local property
+		if item.dp.IsLocal && !localSepRendered {
+			b.WriteString(dimStyle.Render(" ── Local Properties ──") + "\n")
+			localSepRendered = true
+		}
+
 		isCursor := focused && i == pe.cursor && item.editable
 
 		// If this item is being edited with a textinput

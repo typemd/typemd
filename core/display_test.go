@@ -360,3 +360,111 @@ func TestFormat_BacklinkDisplayID(t *testing.T) {
 		t.Errorf("Format() = %q, want %q", got, expected)
 	}
 }
+
+func TestBuildDisplayProperties_IsLocal(t *testing.T) {
+	v := setupTestVault(t)
+
+	t.Run("extra property marked as local", func(t *testing.T) {
+		book, err := v.NewObject("book", "local-test", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Set an extra property not in the book schema
+		if err := v.SetProperty(book.ID, "custom_field", "hello"); err != nil {
+			t.Fatal(err)
+		}
+		book, _ = v.GetObject(book.ID)
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range props {
+			if p.Key == "custom_field" {
+				if !p.IsLocal {
+					t.Error("custom_field should be marked as IsLocal")
+				}
+				return
+			}
+		}
+		t.Error("custom_field not found in display properties")
+	})
+
+	t.Run("schema property not marked as local", func(t *testing.T) {
+		book, err := v.NewObject("book", "schema-test", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := v.SetProperty(book.ID, "title", "Go Book"); err != nil {
+			t.Fatal(err)
+		}
+		book, _ = v.GetObject(book.ID)
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range props {
+			if p.Key == "title" {
+				if p.IsLocal {
+					t.Error("title should NOT be marked as IsLocal")
+				}
+				return
+			}
+		}
+		t.Error("title not found in display properties")
+	})
+
+	t.Run("system properties not marked as local", func(t *testing.T) {
+		book, err := v.NewObject("book", "sys-test", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sysKeys := []string{"name", "created_at", "updated_at"}
+		for _, sk := range sysKeys {
+			for _, p := range props {
+				if p.Key == sk && p.IsLocal {
+					t.Errorf("system property %q should NOT be marked as IsLocal", sk)
+				}
+			}
+		}
+	})
+
+	t.Run("object with only local properties", func(t *testing.T) {
+		// Create a book, add extra props, then remove the schema
+		book, err := v.NewObject("book", "only-local", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := v.SetProperty(book.ID, "extra1", "val1"); err != nil {
+			t.Fatal(err)
+		}
+		if err := v.SetProperty(book.ID, "extra2", "val2"); err != nil {
+			t.Fatal(err)
+		}
+		// Remove the book schema so all non-system properties become local
+		os.RemoveAll(filepath.Join(v.TypesDir(), "book"))
+		os.Remove(filepath.Join(v.TypesDir(), "book.yaml"))
+		v.InvalidateSchemaCache()
+
+		book, _ = v.GetObject(book.ID)
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range props {
+			if IsSystemProperty(p.Key) {
+				if p.IsLocal {
+					t.Errorf("system property %q should NOT be local even without schema", p.Key)
+				}
+			} else {
+				if !p.IsLocal {
+					t.Errorf("non-system property %q should be local when schema is missing", p.Key)
+				}
+			}
+		}
+	})
+}
+
