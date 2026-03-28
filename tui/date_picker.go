@@ -26,9 +26,7 @@ const (
 )
 
 var (
-	dpSegmentFocusStyle = lipgloss.NewStyle().Bold(true).Reverse(true)
-	dpCursorStyle       = lipgloss.NewStyle().Bold(true).Reverse(true)
-	dpTodayStyle        = lipgloss.NewStyle().Bold(true).Underline(true)
+	dpTodayStyle = lipgloss.NewStyle().Bold(true).Underline(true)
 )
 
 const (
@@ -353,11 +351,11 @@ func (dp *datePicker) viewSegment() string {
 
 	switch dp.segment {
 	case segYear:
-		parts[0] = dpSegmentFocusStyle.Render(yearStr)
+		parts[0] = highlightStyle.Render(yearStr)
 	case segMonth:
-		parts[1] = dpSegmentFocusStyle.Render(monthStr)
+		parts[1] = highlightStyle.Render(monthStr)
 	case segDay:
-		parts[2] = dpSegmentFocusStyle.Render(dayStr)
+		parts[2] = highlightStyle.Render(dayStr)
 	}
 
 	return fmt.Sprintf("%s-%s-%s  %s", parts[0], parts[1], parts[2], dow)
@@ -402,7 +400,7 @@ func (dp *datePicker) viewPickerCalendar() string {
 		isToday := dayDate.Equal(today)
 
 		if isCursor {
-			row.WriteString(dpCursorStyle.Render(dayStr))
+			row.WriteString(highlightStyle.Render(dayStr))
 		} else if isToday {
 			row.WriteString(dpTodayStyle.Render(dayStr))
 		} else {
