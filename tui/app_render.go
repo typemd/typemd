@@ -23,30 +23,6 @@ func (m model) selectedTypeEmoji() string {
 	return ""
 }
 
-// softWrapLines wraps each line individually, preserving leading indentation on continuation lines.
-func softWrapLines(content string, width int) string {
-	lines := strings.Split(content, "\n")
-	var result []string
-	for _, line := range lines {
-		if lipgloss.Width(line) <= width {
-			result = append(result, line)
-			continue
-		}
-		// Detect leading whitespace
-		trimmed := strings.TrimLeft(line, " ")
-		indent := line[:len(line)-len(trimmed)]
-		wrapped := lipgloss.NewStyle().Width(width - lipgloss.Width(indent)).Render(trimmed)
-		for i, wl := range strings.Split(wrapped, "\n") {
-			if i == 0 {
-				result = append(result, indent+wl)
-			} else {
-				result = append(result, indent+wl)
-			}
-		}
-	}
-	return strings.Join(result, "\n")
-}
-
 // updateDetail refreshes viewport contents with current selected object.
 func (m *model) updateDetail() {
 	bodyContent := renderBody(m.selected, m.bodyViewport.Width(), m.displayProps)
@@ -384,7 +360,7 @@ func (m model) View() tea.View {
 				name := row.Object.GetName()
 				maxWidth := leftW - 3 - runewidth.StringWidth(row.Object.Type) - 1 // 3 = leading spaces, 1 = "/"
 				if maxWidth > 0 {
-					name = runewidth.Truncate(name, maxWidth, "…")
+					name = truncate(name, maxWidth)
 				}
 				line := fmt.Sprintf("   %s/%s", row.Object.Type, name)
 				if i == m.cursor {

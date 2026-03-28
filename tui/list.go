@@ -5,20 +5,8 @@ import (
 	"sort"
 	"strings"
 
-	"github.com/mattn/go-runewidth"
 	"github.com/typemd/typemd/core"
 )
-
-// padEmoji strips the variation selector (U+FE0F) and pads the emoji
-// to a consistent 2-cell display width for terminal alignment.
-func padEmoji(emoji string) string {
-	display := strings.ReplaceAll(emoji, "\uFE0F", "")
-	ew := runewidth.StringWidth(display)
-	if ew < 2 {
-		return display + strings.Repeat(" ", 2-ew)
-	}
-	return display
-}
 
 type rowKind int
 
@@ -144,7 +132,7 @@ func renderList(groups []typeGroup, cursor, scrollOffset int, focused bool, widt
 			name := row.Object.GetName()
 			maxNameWidth := width - 3 // 3 = leading spaces "   "
 			if maxNameWidth > 0 {
-				name = runewidth.Truncate(name, maxNameWidth, "…")
+				name = truncate(name, maxNameWidth)
 			}
 			line = fmt.Sprintf("   %s", name)
 		case rowNewType:
