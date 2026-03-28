@@ -32,3 +32,8 @@ func renderPopup(content string, termW, termH int, popupWidth int) string {
 func renderOverlayPopup(background, content string, termW, termH int, popupWidth int) string {
 	return widget.OverlayPopup(background, content, popupStyle(popupWidth), termW, termH)
 }
+
+// renderDatePickerPopup renders the date calendar overlay as a centered popup.
+func renderDatePickerPopup(background, calendarContent string, termW, termH int) string {
+	return widget.OverlayPopup(background, calendarContent, popupStyle(0), termW, termH)
+}
