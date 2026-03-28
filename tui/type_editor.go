@@ -31,6 +31,7 @@ const (
 	teModeAddWizard                 // add property wizard
 	teModeDeleteProp                // delete property confirmation
 	teModeDeleteType                // delete type confirmation
+	teModeDeleteTemplate            // delete template confirmation
 	teModeAddTemplate               // entering new template name
 	teModeAddView                   // entering new view name
 )
@@ -262,6 +263,8 @@ func (te *typeEditor) Update(msg tea.Msg) (*typeEditor, tea.Cmd) {
 		return te.updateDeleteProp(keyMsg)
 	case teModeDeleteType:
 		return te.updateDeleteType(keyMsg)
+	case teModeDeleteTemplate:
+		return te.updateDeleteTemplate(keyMsg)
 	case teModeAddTemplate:
 		return te.updateAddTemplate(keyMsg)
 	case teModeAddView:
@@ -286,7 +289,7 @@ func (te *typeEditor) HelpBar() string {
 		return "  [MOVE]  ↑↓: reorder  enter/esc: done"
 	case teModeAddWizard:
 		return "  [ADD PROPERTY]  follow prompts  esc: cancel/back"
-	case teModeDeleteProp:
+	case teModeDeleteProp, teModeDeleteTemplate:
 		return "  [DELETE]  y: confirm  n/esc: cancel"
 	case teModeDeleteType:
 		return "  [DELETE TYPE]  y: confirm  n/esc: cancel"

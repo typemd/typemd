@@ -273,10 +273,17 @@ func (te *typeEditor) startDelete() {
 		return
 	}
 	item := items[te.cursor]
-	if item < 0 {
-		return // can't delete meta fields, sentinels, or templates
+	switch {
+	case item <= viewSentinelBase:
+		// views: not deletable from type editor
+	case item <= templateSentinelBase:
+		tmplIdx := templateSentinelBase - item
+		if tmplIdx >= 0 && tmplIdx < len(te.templates) {
+			te.mode = teModeDeleteTemplate
+		}
+	case item >= 0:
+		te.mode = teModeDeleteProp
 	}
-	te.mode = teModeDeleteProp
 }
 
 func (te *typeEditor) updateDeleteProp(msg tea.KeyPressMsg) (*typeEditor, tea.Cmd) {
@@ -289,6 +296,37 @@ func (te *typeEditor) updateDeleteProp(msg tea.KeyPressMsg) (*typeEditor, tea.Cm
 				te.schema.Properties = append(te.schema.Properties[:item], te.schema.Properties[item+1:]...)
 				te.save()
 				// Clamp cursor
+				total := te.totalItems()
+				if te.cursor >= total {
+					te.cursor = total - 1
+				}
+			}
+		}
+		te.mode = teModeView
+	case "n", "esc":
+		te.mode = teModeView
+	}
+	return te, nil
+}
+
+func (te *typeEditor) updateDeleteTemplate(msg tea.KeyPressMsg) (*typeEditor, tea.Cmd) {
+	switch msg.String() {
+	case "y":
+		items := te.displayItems()
+		if te.cursor < len(items) {
+			item := items[te.cursor]
+			tmplIdx := templateSentinelBase - item
+			if tmplIdx >= 0 && tmplIdx < len(te.templates) {
+				tmplName := te.templates[tmplIdx]
+				if te.vault != nil {
+					if err := te.vault.DeleteTemplate(te.typeName, tmplName); err != nil {
+						te.saveErr = err.Error()
+						te.mode = teModeView
+						return te, nil
+					}
+				}
+				te.saveErr = ""
+				te.refreshTemplates()
 				total := te.totalItems()
 				if te.cursor >= total {
 					te.cursor = total - 1

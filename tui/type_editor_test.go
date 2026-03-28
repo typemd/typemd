@@ -384,3 +384,71 @@ func findStr(s, substr string) bool {
 	}
 	return false
 }
+
+func findSentinelCursor(t *testing.T, te *typeEditor, sentinel int) int {
+	t.Helper()
+	for i, item := range te.displayItems() {
+		if item == sentinel {
+			return i
+		}
+	}
+	t.Fatalf("sentinel %d not found in displayItems", sentinel)
+	return -1
+}
+
+func TestTypeEditor_DeleteTemplateConfirm(t *testing.T) {
+	te := newTypeEditor(testSchema(), "book", false, nil)
+	te.templates = []string{"default", "fiction"}
+	te.cursor = findSentinelCursor(t, te, templateSentinelBase)
+
+	te.Update(keyMsg("d"))
+	if te.mode != teModeDeleteTemplate {
+		t.Fatalf("mode after d on template = %d, want teModeDeleteTemplate", te.mode)
+	}
+
+	te.Update(keyMsg("y"))
+	if te.mode != teModeView {
+		t.Errorf("mode after confirm = %d, want teModeView", te.mode)
+	}
+	// Without vault, DeleteTemplate is a no-op, but templates list stays unchanged
+	// (refreshTemplates needs vault). Verify mode transition is correct.
+}
+
+func TestTypeEditor_DeleteTemplateCancel(t *testing.T) {
+	te := newTypeEditor(testSchema(), "book", false, nil)
+	te.templates = []string{"default"}
+	te.cursor = findSentinelCursor(t, te, templateSentinelBase)
+
+	te.Update(keyMsg("d"))
+	if te.mode != teModeDeleteTemplate {
+		t.Fatalf("mode after d on template = %d, want teModeDeleteTemplate", te.mode)
+	}
+
+	te.Update(keyMsg("n"))
+	if te.mode != teModeView {
+		t.Errorf("mode after cancel = %d, want teModeView", te.mode)
+	}
+	if len(te.templates) != 1 {
+		t.Errorf("templates after cancel = %d, want 1", len(te.templates))
+	}
+}
+
+func TestTypeEditor_DeleteOnMetaFieldIgnored(t *testing.T) {
+	te := newTypeEditor(testSchema(), "book", false, nil)
+	te.cursor = 0 // Name meta field
+
+	te.Update(keyMsg("d"))
+	if te.mode != teModeView {
+		t.Errorf("mode after d on meta = %d, want teModeView (no delete)", te.mode)
+	}
+}
+
+func TestTypeEditor_DeleteOnAddSentinelIgnored(t *testing.T) {
+	te := newTypeEditor(testSchema(), "book", false, nil)
+	te.cursor = findSentinelCursor(t, te, addPropertySentinel)
+
+	te.Update(keyMsg("d"))
+	if te.mode != teModeView {
+		t.Errorf("mode after d on addProperty = %d, want teModeView (no delete)", te.mode)
+	}
+}
