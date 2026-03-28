@@ -1,8 +1,7 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import vault from "./lib/vault";
 import Sidebar from "./components/Sidebar";
-import Body from "./components/Body";
-import Properties from "./components/Properties";
+import ObjectPage from "./components/ObjectPage";
 import CreateDialog from "./components/CreateDialog";
 
 export default function App() {
@@ -10,8 +9,7 @@ export default function App() {
   const [selectedId, setSelectedId] = useState(null);
   const [object, setObject] = useState(null);
   const [displayProps, setDisplayProps] = useState([]);
-  const [showProps, setShowProps] = useState(true);
-  const [focusMode, setFocusMode] = useState(false);
+  const [typeSchema, setTypeSchema] = useState(null);
   const [showCreate, setShowCreate] = useState(false);
   const [createType, setCreateType] = useState(null);
   const [sidebarKey, setSidebarKey] = useState(0);
@@ -21,20 +19,19 @@ export default function App() {
   }, []);
 
   const loadObject = useCallback((id) => {
-    if (!id) { setObject(null); setDisplayProps([]); return; }
+    if (!id) { setObject(null); setDisplayProps([]); setTypeSchema(null); return; }
     Promise.all([
       vault.getObject(id),
       vault.getDisplayProperties(id),
     ]).then(([obj, props]) => {
       setObject(obj);
       setDisplayProps(props || []);
+      vault.getType(obj.type).then(setTypeSchema).catch(() => setTypeSchema(null));
     }).catch(console.error);
   }, []);
 
   useEffect(() => { loadObject(selectedId); }, [selectedId, loadObject]);
-
   const refreshObject = useCallback(() => { loadObject(selectedId); }, [selectedId, loadObject]);
-
   const refreshTypes = useCallback(() => {
     vault.listTypes().then(setTypes).catch(console.error);
     setSidebarKey((k) => k + 1);
@@ -44,8 +41,6 @@ export default function App() {
     const handler = (e) => {
       const tag = e.target.tagName;
       if (tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT") return;
-      if (e.key === ".") { e.preventDefault(); setFocusMode((f) => !f); }
-      if (e.key === "p") { e.preventDefault(); setShowProps((s) => !s); }
       if (e.key === "n") { e.preventDefault(); setShowCreate(true); }
     };
     window.addEventListener("keydown", handler);
@@ -53,26 +48,33 @@ export default function App() {
   }, []);
 
   return (
-    <div className="flex h-screen" style={{ background: "var(--color-bg)" }}>
-      {!focusMode && (
-        <Sidebar
-          key={sidebarKey}
-          types={types}
-          selectedId={selectedId}
-          onSelect={setSelectedId}
-          onCreate={(t) => { setCreateType(t); setShowCreate(true); }}
-        />
-      )}
+    <div className="flex h-screen bg-white">
+      <Sidebar
+        key={sidebarKey}
+        types={types}
+        selectedId={selectedId}
+        onSelect={setSelectedId}
+        onCreate={(t) => { setCreateType(t); setShowCreate(true); }}
+      />
 
-      <Body object={object} onSave={refreshObject} />
-
-      {!focusMode && showProps && object && (
-        <Properties
-          object={object}
-          displayProps={displayProps}
-          onSave={refreshObject}
-        />
-      )}
+      <main className="flex-1 min-w-0 overflow-y-auto">
+        {object ? (
+          <ObjectPage
+            object={object}
+            displayProps={displayProps}
+            typeSchema={typeSchema}
+            onSave={refreshObject}
+          />
+        ) : (
+          <div className="flex h-full items-center justify-center">
+            <div className="text-center select-none" style={{ animation: "fadeIn 300ms ease-out" }}>
+              <p className="text-[15px]" style={{ color: "var(--color-text-muted)" }}>
+                Select an object to get started
+              </p>
+            </div>
+          </div>
+        )}
+      </main>
 
       {showCreate && (
         <CreateDialog

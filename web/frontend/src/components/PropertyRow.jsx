@@ -35,9 +35,6 @@ export default function PropertyRow({ prop, objectId, locked, onSave, showDivide
     if (e.key === "Escape") setEditing(false);
   };
 
-  const inputClass = "w-full rounded border px-1.5 py-0.5 text-[12px] outline-none";
-  const inputStyle = { borderColor: "var(--color-divider)", background: "white", color: "var(--color-text)" };
-
   const toggleCheckbox = () => {
     if (!isEditable) return;
     const checked = prop.value === true || prop.value === "true";
@@ -46,6 +43,9 @@ export default function PropertyRow({ prop, objectId, locked, onSave, showDivide
   };
 
   const renderEditor = () => {
+    const cls = "w-full rounded-lg border px-3 py-2 text-[14px] outline-none";
+    const st = { borderColor: "var(--color-border)", background: "white", color: "var(--color-text)" };
+
     if (prop.type === "checkbox") {
       return <input ref={inputRef} type="checkbox" checked={value === "true"}
         onChange={(e) => {
@@ -53,15 +53,15 @@ export default function PropertyRow({ prop, objectId, locked, onSave, showDivide
             .then(onSave).catch(console.error);
           setEditing(false);
         }}
-        className="h-3.5 w-3.5 accent-accent" />;
+        className="h-5 w-5 rounded" style={{ accentColor: "var(--color-accent)" }} />;
     }
     if (prop.type === "date") {
       return <input ref={inputRef} type="date" value={value} onChange={(e) => setValue(e.target.value)}
-        onBlur={save} onKeyDown={onKeyDown} className={inputClass} style={inputStyle} />;
+        onBlur={save} onKeyDown={onKeyDown} className={cls} style={st} />;
     }
     return <input ref={inputRef} type={prop.type === "number" || prop.type === "integer" ? "number" : "text"}
       value={value} onChange={(e) => setValue(e.target.value)}
-      onBlur={save} onKeyDown={onKeyDown} className={inputClass} style={inputStyle} />;
+      onBlur={save} onKeyDown={onKeyDown} className={cls} style={st} />;
   };
 
   const renderValue = () => {
@@ -69,11 +69,38 @@ export default function PropertyRow({ prop, objectId, locked, onSave, showDivide
       const checked = prop.value === true || prop.value === "true";
       return <input type="checkbox" checked={checked} disabled={!isEditable}
         onChange={toggleCheckbox}
-        className="h-3.5 w-3.5 accent-accent" style={{ cursor: isEditable ? "pointer" : "default" }} />;
+        className="h-5 w-5 rounded" style={{ accentColor: "var(--color-accent)", cursor: isEditable ? "pointer" : "default" }} />;
     }
+
+    if (prop.isRelation || prop.isReverse || prop.isBacklink) {
+      const arrow = prop.isBacklink ? "⟵" : prop.isReverse ? "←" : "→";
+      const label = prop.display?.replace(/^[→←⟵] /, "") || "";
+      return (
+        <span className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-medium"
+          style={{ background: "var(--color-accent-light)", color: "var(--color-accent-text)" }}>
+          <span className="text-[11px] opacity-50">{arrow}</span>
+          {label}
+        </span>
+      );
+    }
+
+    if (prop.key === "tags" || prop.type === "multi_select") {
+      const items = Array.isArray(prop.value) ? prop.value.map(String) : [];
+      if (items.length === 0) return <span style={{ color: "var(--color-text-muted)" }}>—</span>;
+      return (
+        <div className="flex flex-wrap gap-2">
+          {items.map((item, i) => (
+            <span key={i} className="inline-block rounded-full px-3 py-1 text-[13px] font-medium"
+              style={{ background: "var(--color-tag-bg)", color: "var(--color-tag-text)" }}>
+              {item}
+            </span>
+          ))}
+        </div>
+      );
+    }
+
     return (
-      <span className="text-[12.5px] break-words leading-snug"
-        style={{ color: prop.display ? "var(--color-text)" : "var(--color-muted)" }}>
+      <span className="text-[14px]" style={{ color: prop.display ? "var(--color-text)" : "var(--color-text-muted)" }}>
         {prop.display || "—"}
       </span>
     );
@@ -81,14 +108,22 @@ export default function PropertyRow({ prop, objectId, locked, onSave, showDivide
 
   return (
     <div
-      className={`px-3 py-[6px] ${isEditable ? "hover:bg-[--color-hover] cursor-pointer" : ""}`}
-      style={{ borderBottom: showDivider ? "0.5px solid var(--color-divider-light)" : "none" }}
+      className={`flex items-center min-h-[52px] ${isEditable ? "cursor-pointer hover:bg-[--color-surface-hover]" : ""}`}
+      style={{ borderBottom: showDivider ? "1px solid var(--color-border-subtle)" : "none" }}
       onDoubleClick={startEdit}
     >
-      <div className="mb-px truncate text-[11px]" style={{ color: "var(--color-muted)" }}>
-        {prop.emoji && <span className="mr-0.5">{prop.emoji}</span>}{prop.key}
+      {/* Key — with left padding and right border */}
+      <div className="w-[200px] shrink-0 flex items-center gap-2 px-6 py-3 self-stretch border-r"
+        style={{ borderColor: "var(--color-border-subtle)" }}>
+        <span className="text-[14px] truncate" title={prop.key}
+          style={{ color: "var(--color-text-secondary)" }}>
+          {prop.emoji && <span className="mr-1.5">{prop.emoji}</span>}
+          {prop.key}
+        </span>
       </div>
-      <div className="min-w-0">
+
+      {/* Value — with left padding */}
+      <div className="flex-1 min-w-0 px-6 py-3">
         {editing ? renderEditor() : renderValue()}
       </div>
     </div>

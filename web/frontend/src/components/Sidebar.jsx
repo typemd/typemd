@@ -26,53 +26,64 @@ export default function Sidebar({ types, selectedId, onSelect, onCreate }) {
   const toggle = (name) => setExpanded((prev) => ({ ...prev, [name]: !prev[name] }));
 
   return (
-    <aside className="flex w-56 shrink-0 flex-col overflow-y-auto border-r"
-      style={{ background: "var(--color-sidebar)", borderColor: "var(--color-divider)" }}>
-      <div className="px-4 py-3 text-[13px] font-semibold" style={{ color: "var(--color-secondary)" }}>
-        TypeMD
+    <aside className="w-[272px] shrink-0 flex flex-col h-full border-r overflow-hidden"
+      style={{ background: "var(--color-sidebar-bg)", borderColor: "var(--color-border)" }}>
+
+      {/* Top actions */}
+      <div className="px-5 pt-6 pb-3">
+        <button
+          onClick={() => onCreate(types[0]?.name || "")}
+          className="flex w-full items-center gap-2.5 rounded-lg px-3 py-2.5 text-[14px] font-medium transition-colors hover:bg-[--color-surface-hover]"
+          style={{ color: "var(--color-text-secondary)" }}>
+          <span className="text-[16px]">＋</span>
+          New Object
+        </button>
       </div>
 
-      <div className="flex-1 px-1.5 pb-3">
+      {/* Divider */}
+      <div className="mx-5 my-1" style={{ borderTop: "1px solid var(--color-border)" }} />
+
+      {/* Type list */}
+      <div className="flex-1 overflow-y-auto px-4 py-3">
         {types.map((type) => (
-          <div key={type.name} className="mb-px">
-            <button
-              onClick={() => toggle(type.name)}
-              className="group flex w-full items-center gap-1.5 rounded-md px-2 py-[5px] text-left text-[12px] font-medium hover:bg-[--color-hover] transition-colors"
-              style={{ color: "var(--color-secondary)" }}
-            >
-              <svg width="8" height="8" viewBox="0 0 8 8" className="shrink-0 transition-transform duration-150"
-                style={{ transform: expanded[type.name] ? "rotate(90deg)" : "rotate(0)", color: "var(--color-muted)" }}>
-                <path d="M2 1L6 4L2 7" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-              {type.emoji && <span className="text-sm leading-none">{type.emoji}</span>}
-              <span className="flex-1 truncate">{type.plural || type.name}</span>
-              <span className="text-[11px] tabular-nums opacity-0 group-hover:opacity-100" style={{ color: "var(--color-muted)" }}>
-                {type.count}
-              </span>
+          <div key={type.name} className="mb-1">
+            {/* Type group header */}
+            <button onClick={() => toggle(type.name)}
+              className="group flex w-full items-center gap-2.5 rounded-lg px-3 py-[9px] text-left text-[14px] transition-colors hover:bg-[--color-surface-hover]"
+              style={{ color: "var(--color-text)" }}>
+              {type.emoji
+                ? <span className="text-[16px] w-[22px] text-center shrink-0">{type.emoji}</span>
+                : <span className="w-[22px] text-center shrink-0 text-[13px]" style={{ color: "var(--color-text-muted)" }}>●</span>
+              }
+              <span className="flex-1 truncate font-medium">{type.plural || type.name}</span>
+              <span className="text-[12px] tabular-nums opacity-0 group-hover:opacity-100 transition-opacity"
+                style={{ color: "var(--color-text-muted)" }}>{type.count}</span>
             </button>
 
+            {/* Objects under this type */}
             {expanded[type.name] && (
-              <div className="ml-[14px] mt-px mb-1 pl-2.5 border-l" style={{ borderColor: "var(--color-divider-light)" }}>
+              <div className="ml-[22px] pl-3 mb-3 border-l" style={{ borderColor: "var(--color-border-subtle)" }}>
                 {(objectsByType[type.name] || []).map((obj) => {
                   const sel = selectedId === obj.id;
                   return (
                     <button key={obj.id} onClick={() => onSelect(obj.id)}
-                      className={`flex w-full items-center gap-1.5 rounded-md px-2 py-[4px] text-left text-[12.5px] transition-colors ${
-                        sel ? "bg-[--color-selected] font-medium" : "hover:bg-[--color-hover]"
+                      className={`flex w-full items-center gap-2 rounded-lg px-3 py-[8px] text-left text-[14px] transition-colors ${
+                        sel ? "font-medium" : "hover:bg-[--color-surface-hover]"
                       }`}
-                      style={{ color: sel ? "var(--color-selected-text)" : "var(--color-text)" }}
-                    >
-                      {obj.locked && <span className="text-[10px] opacity-40">🔒</span>}
+                      style={{
+                        background: sel ? "var(--color-accent-light)" : undefined,
+                        color: sel ? "var(--color-accent-text)" : "var(--color-text-secondary)",
+                      }}>
+                      {obj.locked && <span className="text-[11px] opacity-50">🔒</span>}
                       <span className="truncate">{obj.name}</span>
                     </button>
                   );
                 })}
+
                 <button onClick={() => onCreate(type.name)}
-                  className="flex w-full items-center gap-1 rounded-md px-2 py-[4px] text-[12px] hover:bg-[--color-hover] transition-colors"
-                  style={{ color: "var(--color-muted)" }}
-                >
-                  <span className="text-[11px]">＋</span>
-                  <span>New {type.name}</span>
+                  className="flex w-full items-center gap-2 rounded-lg px-3 py-[8px] text-[13px] transition-colors hover:bg-[--color-surface-hover]"
+                  style={{ color: "var(--color-text-muted)" }}>
+                  <span>+ New {type.name}</span>
                 </button>
               </div>
             )}
