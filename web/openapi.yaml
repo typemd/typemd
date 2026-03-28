@@ -1,0 +1,561 @@
+openapi: 3.1.0
+info:
+  title: typemd API
+  description: |
+    REST API for typemd — a local-first CLI knowledge management tool.
+    Objects (books, people, ideas) are stored as Markdown files with YAML frontmatter, connected by Relations.
+    This API is served by `tmd serve`.
+  version: 0.1.0
+  license:
+    name: MIT
+
+servers:
+  - url: http://localhost:3000
+    description: Default local server (`tmd serve`)
+
+tags:
+  - name: Types
+    description: Type schema operations
+  - name: Objects
+    description: Object CRUD operations
+  - name: Properties
+    description: Object property operations
+  - name: Templates
+    description: Object template operations
+
+paths:
+  /api/types:
+    get:
+      operationId: listTypes
+      summary: List all types
+      description: Returns all registered types with their metadata and object counts.
+      tags: [Types]
+      responses:
+        "200":
+          description: List of types
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/TypeItem"
+              example:
+                - name: book
+                  plural: books
+                  emoji: "📚"
+                  color: "#3B82F6"
+                  count: 42
+                - name: person
+                  plural: people
+                  emoji: "👤"
+                  color: ""
+                  count: 7
+
+  /api/types/{name}:
+    get:
+      operationId: getType
+      summary: Get type detail
+      description: Returns full type schema including property definitions.
+      tags: [Types]
+      parameters:
+        - $ref: "#/components/parameters/TypeName"
+      responses:
+        "200":
+          description: Type detail with properties
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/TypeDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+  /api/objects:
+    get:
+      operationId: listObjects
+      summary: List objects
+      description: |
+        Returns objects sorted by name ascending.
+        Optionally filter by type using the `type` query parameter.
+      tags: [Objects]
+      parameters:
+        - name: type
+          in: query
+          description: Filter by type name
+          required: false
+          schema:
+            type: string
+          example: book
+      responses:
+        "200":
+          description: List of objects
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ObjectItem"
+              example:
+                - id: book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+                  type: book
+                  name: Golang in Action
+                  locked: false
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+    post:
+      operationId: createObject
+      summary: Create a new object
+      description: Creates a new object of the specified type with the given name and optional template.
+      tags: [Objects]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CreateObjectRequest"
+      responses:
+        "201":
+          description: Object created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/objects/{type}/{slug}:
+    get:
+      operationId: getObject
+      summary: Get object detail
+      description: Returns full object detail including properties and markdown body.
+      tags: [Objects]
+      parameters:
+        - $ref: "#/components/parameters/ObjectType"
+        - $ref: "#/components/parameters/ObjectSlug"
+      responses:
+        "200":
+          description: Object detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+
+    put:
+      operationId: updateObject
+      summary: Update object body
+      description: Updates the markdown body of an existing object.
+      tags: [Objects]
+      parameters:
+        - $ref: "#/components/parameters/ObjectType"
+        - $ref: "#/components/parameters/ObjectSlug"
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdateObjectRequest"
+      responses:
+        "200":
+          description: Updated object detail
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ObjectDetail"
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/properties/{type}/{slug}:
+    get:
+      operationId: getDisplayProperties
+      summary: Get display properties
+      description: |
+        Returns computed display properties for an object, including
+        formatted values, relation metadata, and pinning order.
+      tags: [Properties]
+      parameters:
+        - $ref: "#/components/parameters/ObjectType"
+        - $ref: "#/components/parameters/ObjectSlug"
+      responses:
+        "200":
+          description: List of display properties
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/DisplayProperty"
+              example:
+                - key: author
+                  value: person/john-doe-01jqr3k5mpbvn8e0f2g7h9txyz
+                  display: "→ John Doe"
+                  type: relation
+                  emoji: "✍️"
+                  pin: 1
+                  isRelation: true
+                - key: rating
+                  value: 5
+                  display: "5"
+                  type: integer
+                  emoji: "⭐"
+                  pin: 2
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/properties/{type}/{slug}/{key}:
+    put:
+      operationId: updateProperty
+      summary: Update a single property
+      description: |
+        Updates a single property on an object by key.
+        The value is validated against the type schema before saving.
+        For multi_select properties, pass comma-separated values.
+      tags: [Properties]
+      parameters:
+        - $ref: "#/components/parameters/ObjectType"
+        - $ref: "#/components/parameters/ObjectSlug"
+        - name: key
+          in: path
+          required: true
+          description: Property key
+          schema:
+            type: string
+          example: rating
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/UpdatePropertyRequest"
+      responses:
+        "204":
+          description: Property updated successfully
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "404":
+          $ref: "#/components/responses/NotFound"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+  /api/templates/{type}:
+    get:
+      operationId: listTemplates
+      summary: List templates for a type
+      description: Returns available template names for the specified type.
+      tags: [Templates]
+      parameters:
+        - $ref: "#/components/parameters/TypeName"
+      responses:
+        "200":
+          description: List of template names
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: string
+              example:
+                - default
+                - fiction
+                - textbook
+        "400":
+          $ref: "#/components/responses/BadRequest"
+        "500":
+          $ref: "#/components/responses/InternalError"
+
+components:
+  parameters:
+    TypeName:
+      name: name
+      in: path
+      required: true
+      description: Type name
+      schema:
+        type: string
+      example: book
+
+    ObjectType:
+      name: type
+      in: path
+      required: true
+      description: Object type
+      schema:
+        type: string
+      example: book
+
+    ObjectSlug:
+      name: slug
+      in: path
+      required: true
+      description: Object slug (name slug + ULID, e.g. `golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
+      schema:
+        type: string
+      example: golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+
+  schemas:
+    TypeItem:
+      type: object
+      required: [name, plural, emoji, color, count]
+      properties:
+        name:
+          type: string
+          description: Type name identifier
+          example: book
+        plural:
+          type: string
+          description: Plural form of the type name
+          example: books
+        emoji:
+          type: string
+          description: Emoji icon for the type
+          example: "📚"
+        color:
+          type: string
+          description: Display color (hex or empty)
+          example: "#3B82F6"
+        count:
+          type: integer
+          description: Number of objects of this type
+          example: 42
+
+    TypeDetail:
+      type: object
+      required: [name, plural, emoji, color, properties]
+      properties:
+        name:
+          type: string
+          example: book
+        plural:
+          type: string
+          example: books
+        emoji:
+          type: string
+          example: "📚"
+        color:
+          type: string
+          example: "#3B82F6"
+        properties:
+          type: array
+          items:
+            $ref: "#/components/schemas/PropertyDef"
+
+    PropertyDef:
+      type: object
+      required: [name, type]
+      properties:
+        name:
+          type: string
+          description: Property name
+          example: author
+        type:
+          type: string
+          description: "Property type: string, text, number, integer, checkbox, date, datetime, url, select, multi_select, relation"
+          example: relation
+        emoji:
+          type: string
+          description: Emoji icon
+          example: "✍️"
+        pin:
+          type: integer
+          description: Pin order (0 = not pinned)
+          example: 1
+        target:
+          type: string
+          description: Target type name (for relation properties)
+          example: person
+        options:
+          type: array
+          description: Available options (for select/multi_select properties)
+          items:
+            $ref: "#/components/schemas/OptionItem"
+
+    OptionItem:
+      type: object
+      required: [value, label]
+      properties:
+        value:
+          type: string
+          description: Option value
+          example: fiction
+        label:
+          type: string
+          description: Display label (defaults to value if empty)
+          example: Fiction
+
+    ObjectItem:
+      type: object
+      required: [id, type, name, locked]
+      properties:
+        id:
+          type: string
+          description: "Full object ID (`type/slug-ulid`)"
+          example: book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+        type:
+          type: string
+          description: Object type
+          example: book
+        name:
+          type: string
+          description: Display name
+          example: Golang in Action
+        locked:
+          type: boolean
+          description: Whether the object is locked for editing
+          example: false
+
+    ObjectDetail:
+      type: object
+      required: [id, type, name, properties, body, locked]
+      properties:
+        id:
+          type: string
+          description: "Full object ID (`type/slug-ulid`)"
+          example: book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+        type:
+          type: string
+          description: Object type
+          example: book
+        name:
+          type: string
+          description: Display name
+          example: Golang in Action
+        properties:
+          type: object
+          additionalProperties: true
+          description: "Key-value map of frontmatter properties. Values are typed: strings, numbers, booleans, arrays, or RFC 3339 date strings."
+          example:
+            author: person/john-doe-01jqr3k5mpbvn8e0f2g7h9txyz
+            rating: 5
+            tags:
+              - programming
+              - golang
+        body:
+          type: string
+          description: Markdown body content
+          example: "# Chapter 1\n\nThis is the first chapter."
+        locked:
+          type: boolean
+          description: Whether the object is locked for editing
+          example: false
+
+    DisplayProperty:
+      type: object
+      required: [key, value, display, type]
+      properties:
+        key:
+          type: string
+          description: Property key
+          example: author
+        value:
+          description: Raw property value (string, number, boolean, array, or null)
+        display:
+          type: string
+          description: Human-readable formatted value
+          example: "→ John Doe"
+        type:
+          type: string
+          description: Property type from schema
+          example: relation
+        emoji:
+          type: string
+          description: Property emoji
+          example: "✍️"
+        pin:
+          type: integer
+          description: Pin order (0 = not pinned)
+          example: 1
+        isRelation:
+          type: boolean
+          description: Whether this is a forward relation
+        isReverse:
+          type: boolean
+          description: Whether this is a reverse relation
+        isBacklink:
+          type: boolean
+          description: Whether this is a wiki-link backlink
+
+    CreateObjectRequest:
+      type: object
+      required: [type, name]
+      properties:
+        type:
+          type: string
+          description: Type name for the new object
+          example: book
+        name:
+          type: string
+          description: Display name for the new object
+          example: Golang in Action
+        template:
+          type: string
+          description: Optional template name to apply
+          example: fiction
+
+    UpdateObjectRequest:
+      type: object
+      properties:
+        body:
+          type: string
+          description: New markdown body content
+          example: "# Updated Content\n\nNew body text."
+
+    UpdatePropertyRequest:
+      type: object
+      required: [value]
+      properties:
+        value:
+          type: string
+          description: "New property value as string. For checkbox: `true`/`false`. For multi_select: comma-separated values."
+          example: "5"
+
+    Error:
+      type: object
+      required: [error]
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: object not found
+
+  responses:
+    BadRequest:
+      description: Bad request
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: invalid object ID
+
+    NotFound:
+      description: Resource not found
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: object not found
+
+    InternalError:
+      description: Internal server error
+      content:
+        application/json:
+          schema:
+            $ref: "#/components/schemas/Error"
+          example:
+            error: query failed
