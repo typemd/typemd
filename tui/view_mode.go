@@ -762,6 +762,10 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 						}
 					case cellModeMultiPick:
 						cellText = padRight(truncate("[picking...]", colW), colW)
+					case cellModeDateSegment, cellModeDateCalendar:
+						if vm.cellEdit.dateEdit != nil {
+							cellText = padRight(truncate(vm.cellEdit.dateEdit.View(), colW), colW)
+						}
 					}
 					b.WriteString("  " + editCellStyle.Render(cellText))
 				} else if val == "" {
@@ -878,6 +882,10 @@ func (vm *viewMode) HelpBar() string {
 			return "[PICK] ↑/↓: navigate  enter: select  esc: cancel"
 		case cellModeMultiPick:
 			return "[PICK] ↑/↓: navigate  space: toggle  enter: confirm  esc: cancel"
+		case cellModeDateSegment:
+			return "[DATE] ←→: segment  ↑↓: adjust  c: calendar  enter: confirm  esc: cancel"
+		case cellModeDateCalendar:
+			return "[CAL] ←→↑↓: navigate  H/L: month  t: today  c: segments  enter: confirm  esc: cancel"
 		}
 	}
 	if vm.previewObject != nil {

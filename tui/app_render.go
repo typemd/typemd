@@ -543,6 +543,10 @@ func (m model) View() tea.View {
 		helpBar = "  [AI TAGS]  ↑↓: navigate  |  space: toggle  |  enter: apply  |  esc: cancel"
 	} else if m.propEdit != nil && m.propEdit.isPicking() {
 		helpBar = "  [PICK]  ↑↓: navigate  |  enter: select  |  esc: cancel"
+	} else if m.propEdit != nil && m.propEdit.mode == propModeDateSegment {
+		helpBar = "  [DATE]  ←→: segment  |  ↑↓: adjust  |  c: calendar  |  enter: confirm  |  esc: cancel"
+	} else if m.propEdit != nil && m.propEdit.mode == propModeDateCalendar {
+		helpBar = "  [CAL]  ←→↑↓: navigate  |  H/L: month  |  t: today  |  c: segments  |  enter: confirm  |  esc: cancel"
 	} else if m.propEdit != nil && m.propEdit.isEditing() {
 		helpBar = "  [EDIT]  enter: confirm  |  esc: cancel"
 	} else if m.focus == focusProps && m.propEdit != nil {

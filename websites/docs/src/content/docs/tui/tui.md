@@ -145,7 +145,7 @@ Press `v` on a type group header or object to enter **view mode**. This replaces
 | `Tab` | Move to next editable cell (skips read-only) |
 | `Shift+Tab` | Move to previous editable cell |
 
-A crosshair highlight shows the active cell: the cursor row gets a dim background, the cursor column header gets a tint, and the active cell gets a strong highlight. Editing uses type-appropriate widgets: textinput for string/number/date/datetime/url, option picker for select, multi-picker for multi\_select, and direct toggle for checkbox. Read-only columns (relations, created\_at, updated\_at) are navigable but not editable. Edits auto-save on confirm (`Enter`); press `Esc` to cancel.
+A crosshair highlight shows the active cell: the cursor row gets a dim background, the cursor column header gets a tint, and the active cell gets a strong highlight. Editing uses type-appropriate widgets: textinput for string/number/datetime/url, date picker for date (segmented input or inline calendar, toggle with `c`), option picker for select, multi-picker for multi\_select, and direct toggle for checkbox. Read-only columns (relations, created\_at, updated\_at) are navigable but not editable. Edits auto-save on confirm (`Enter`); press `Esc` to cancel.
 
 When **preview** is active (`p`), the right side shows the selected object's properties and body content. The preview follows the cursor as you navigate. Preview and view editor are mutually exclusive.
 
@@ -211,7 +211,8 @@ Active when the properties panel is focused. Press `Tab` from the body panel to 
 
 | Property Type | Widget | Behavior |
 |---|---|---|
-| string, number, date, datetime, url | Textinput | Pre-filled with current value. `Enter` confirms, `Esc` cancels. |
+| string, number, datetime, url | Textinput | Pre-filled with current value. `Enter` confirms, `Esc` cancels. |
+| date | Date picker | Two modes: **segmented input** (YYYY-MM-DD segments, `←`/`→` to switch segments, `↑`/`↓` to adjust, type digits directly, shows day of week) and **calendar** (mini month grid, `h`/`j`/`k`/`l` to navigate days, `H`/`L` to switch months, `t` to jump to today). Press `c` to toggle modes. `Enter` confirms, `Esc` cancels. |
 | checkbox | Toggle | `Enter` or `Space` toggles between ☐ and ☑. Saves immediately. |
 | select | Option picker | Shows available options. `↑`/`↓` navigate, `Enter` selects, `Esc` cancels. |
 | multi_select | Multi-picker | Shows options with checkboxes. `Space` toggles, `Enter` confirms all, `Esc` cancels. |
@@ -225,7 +226,7 @@ Active when the properties panel is focused. Press `Tab` from the body panel to 
 
 If validation fails, a toast notification shows the error and the edit remains active. Press `Esc` to cancel.
 
-Edits are auto-saved on confirm. The panel border changes to orange during active editing, and the help bar shows `[EDIT]`.
+Edits are auto-saved on confirm. The panel border changes to orange during active editing, and the help bar shows `[EDIT]` for textinput, `[DATE]` for date segmented input, `[CAL]` for date calendar, or `[PICK]` for picker selection.
 
 ### Locked Objects
 

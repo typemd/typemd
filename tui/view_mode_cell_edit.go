@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/typemd/typemd/core"
 	"github.com/typemd/typemd/tui/widget"
@@ -13,9 +14,11 @@ import (
 type cellEditMode int
 
 const (
-	cellModeTextInput  cellEditMode = iota // textinput for string, number, date, datetime, url
-	cellModeSelectPick                     // single-select option picker
-	cellModeMultiPick                      // multi-select option picker
+	cellModeTextInput    cellEditMode = iota // textinput for string, number, datetime, url
+	cellModeSelectPick                       // single-select option picker
+	cellModeMultiPick                        // multi-select option picker
+	cellModeDateSegment                      // date picker segmented input mode
+	cellModeDateCalendar                     // date picker calendar mode
 )
 
 // cellEdit tracks the state of an inline cell edit in the table view.
@@ -32,6 +35,8 @@ type cellEdit struct {
 	pickerOptions []core.Option
 	pickerCursor  int
 	pickerChecked []bool // for multi_select: which options are checked
+
+	dateEdit *dateEdit // active date editor (non-nil during date editing)
 }
 
 type viewCellToastMsg struct {
@@ -143,6 +148,16 @@ func (vm *viewMode) activateCellEdit(row viewRow, colIdx int, cols []string) tea
 	}
 
 	switch propType {
+	case "date":
+		ce.mode = cellModeDateSegment
+		var value time.Time
+		if t, ok := obj.Properties[propName].(time.Time); ok {
+			value = t
+		}
+		ce.dateEdit = newDateEdit(value)
+		vm.cellEdit = ce
+		return nil
+
 	case "select":
 		if len(options) == 0 {
 			return nil
@@ -245,6 +260,11 @@ func (vm *viewMode) applyCellValue() tea.Cmd {
 
 		obj.Properties[ce.propName] = parseEditedValue(ce.propType, input)
 
+	case cellModeDateSegment, cellModeDateCalendar:
+		if ce.dateEdit != nil {
+			obj.Properties[ce.propName] = ce.dateEdit.Value()
+		}
+
 	case cellModeSelectPick:
 		if ce.pickerCursor >= 0 && ce.pickerCursor < len(ce.pickerOptions) {
 			obj.Properties[ce.propName] = ce.pickerOptions[ce.pickerCursor].Value
@@ -300,6 +320,28 @@ func (vm *viewMode) updateCellEdit(msg tea.KeyPressMsg) (*viewMode, tea.Cmd) {
 			ce.textInput, cmd = ce.textInput.Update(msg)
 			return vm, cmd
 		}
+
+	case cellModeDateSegment, cellModeDateCalendar:
+		if ce.dateEdit != nil {
+			consumed, done, confirmed := ce.dateEdit.Update(msg)
+			if consumed {
+				if done {
+					if confirmed {
+						cmd := vm.applyCellValue()
+						return vm, cmd
+					}
+					vm.cancelCellEdit()
+					return vm, nil
+				}
+				// Sync cellEdit mode with dateEdit mode
+				if ce.dateEdit.Mode() == dateCalendarMode {
+					ce.mode = cellModeDateCalendar
+				} else {
+					ce.mode = cellModeDateSegment
+				}
+			}
+		}
+		return vm, nil
 
 	case cellModeSelectPick:
 		switch msg.String() {
