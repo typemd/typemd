@@ -224,7 +224,7 @@ func TestFormatValue(t *testing.T) {
 		{
 			name:     "datetime",
 			prop:     DisplayProperty{Key: "created", Value: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC), Type: "datetime"},
-			expected: "2024-01-15T10:30:00",
+			expected: "2024-01-15 10:30:00",
 		},
 		{
 			name:     "multi_select",
@@ -255,6 +255,74 @@ func TestFormatValue(t *testing.T) {
 			name:     "integer value",
 			prop:     DisplayProperty{Key: "count", Value: 42, Type: "number"},
 			expected: "42",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.prop.FormatValue()
+			if got != tt.expected {
+				t.Errorf("FormatValue() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFormatValueWithCustomDateFormat(t *testing.T) {
+	tests := []struct {
+		name     string
+		prop     DisplayProperty
+		expected string
+	}{
+		{
+			name:     "custom date format DD/MM/YYYY",
+			prop:     DisplayProperty{Key: "d", Value: time.Date(2026, 3, 28, 0, 0, 0, 0, time.UTC), Type: "date", DateFormat: "DD/MM/YYYY"},
+			expected: "28/03/2026",
+		},
+		{
+			name:     "custom datetime format with space",
+			prop:     DisplayProperty{Key: "dt", Value: time.Date(2026, 3, 28, 14, 30, 0, 0, time.UTC), Type: "datetime", DatetimeFormat: "DD/MM/YYYY HH:mm:ss"},
+			expected: "28/03/2026 14:30:00",
+		},
+		{
+			name:     "empty date format uses default",
+			prop:     DisplayProperty{Key: "d", Value: time.Date(2026, 3, 28, 0, 0, 0, 0, time.UTC), Type: "date", DateFormat: ""},
+			expected: "2026-03-28",
+		},
+		{
+			name:     "empty datetime format uses default with space separator",
+			prop:     DisplayProperty{Key: "dt", Value: time.Date(2026, 3, 28, 14, 30, 0, 0, time.UTC), Type: "datetime", DatetimeFormat: ""},
+			expected: "2026-03-28 14:30:00",
+		},
+		{
+			name:     "unrecognized tokens pass through",
+			prop:     DisplayProperty{Key: "d", Value: time.Date(2026, 3, 28, 0, 0, 0, 0, time.UTC), Type: "date", DateFormat: "YYYY年MM月DD日"},
+			expected: "2026年03月28日",
+		},
+		{
+			name:     "date value as string",
+			prop:     DisplayProperty{Key: "d", Value: "2026-03-28", Type: "date", DateFormat: "MM/DD/YYYY"},
+			expected: "03/28/2026",
+		},
+		{
+			name:     "datetime value as string",
+			prop:     DisplayProperty{Key: "dt", Value: "2026-03-28T14:30:00", Type: "datetime", DatetimeFormat: "YYYY/MM/DD HH:mm"},
+			expected: "2026/03/28 14:30",
+		},
+		{
+			name:     "datetime value as RFC3339 string",
+			prop:     DisplayProperty{Key: "dt", Value: "2026-03-28T14:30:00+08:00", Type: "datetime", DatetimeFormat: "YYYY/MM/DD HH:mm"},
+			expected: "2026/03/28 14:30",
+		},
+		{
+			name:     "nil date value returns empty",
+			prop:     DisplayProperty{Key: "d", Value: nil, Type: "date", DateFormat: "MM/DD/YYYY"},
+			expected: "",
+		},
+		{
+			name:     "custom datetime format omitting seconds",
+			prop:     DisplayProperty{Key: "dt", Value: time.Date(2026, 3, 28, 14, 30, 45, 0, time.UTC), Type: "datetime", DatetimeFormat: "YYYY-MM-DD HH:mm"},
+			expected: "2026-03-28 14:30",
 		},
 	}
 
@@ -360,3 +428,111 @@ func TestFormat_BacklinkDisplayID(t *testing.T) {
 		t.Errorf("Format() = %q, want %q", got, expected)
 	}
 }
+
+func TestBuildDisplayProperties_IsLocal(t *testing.T) {
+	v := setupTestVault(t)
+
+	t.Run("extra property marked as local", func(t *testing.T) {
+		book, err := v.NewObject("book", "local-test", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		// Set an extra property not in the book schema
+		if err := v.SetProperty(book.ID, "custom_field", "hello"); err != nil {
+			t.Fatal(err)
+		}
+		book, _ = v.GetObject(book.ID)
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range props {
+			if p.Key == "custom_field" {
+				if !p.IsLocal {
+					t.Error("custom_field should be marked as IsLocal")
+				}
+				return
+			}
+		}
+		t.Error("custom_field not found in display properties")
+	})
+
+	t.Run("schema property not marked as local", func(t *testing.T) {
+		book, err := v.NewObject("book", "schema-test", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := v.SetProperty(book.ID, "title", "Go Book"); err != nil {
+			t.Fatal(err)
+		}
+		book, _ = v.GetObject(book.ID)
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range props {
+			if p.Key == "title" {
+				if p.IsLocal {
+					t.Error("title should NOT be marked as IsLocal")
+				}
+				return
+			}
+		}
+		t.Error("title not found in display properties")
+	})
+
+	t.Run("system properties not marked as local", func(t *testing.T) {
+		book, err := v.NewObject("book", "sys-test", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		sysKeys := []string{"name", "created_at", "updated_at"}
+		for _, sk := range sysKeys {
+			for _, p := range props {
+				if p.Key == sk && p.IsLocal {
+					t.Errorf("system property %q should NOT be marked as IsLocal", sk)
+				}
+			}
+		}
+	})
+
+	t.Run("object with only local properties", func(t *testing.T) {
+		// Create a book, add extra props, then remove the schema
+		book, err := v.NewObject("book", "only-local", "")
+		if err != nil {
+			t.Fatal(err)
+		}
+		if err := v.SetProperty(book.ID, "extra1", "val1"); err != nil {
+			t.Fatal(err)
+		}
+		if err := v.SetProperty(book.ID, "extra2", "val2"); err != nil {
+			t.Fatal(err)
+		}
+		// Remove the book schema so all non-system properties become local
+		os.RemoveAll(filepath.Join(v.TypesDir(), "book"))
+		os.Remove(filepath.Join(v.TypesDir(), "book.yaml"))
+		v.InvalidateSchemaCache()
+
+		book, _ = v.GetObject(book.ID)
+		props, err := v.BuildDisplayProperties(book)
+		if err != nil {
+			t.Fatal(err)
+		}
+		for _, p := range props {
+			if IsSystemProperty(p.Key) {
+				if p.IsLocal {
+					t.Errorf("system property %q should NOT be local even without schema", p.Key)
+				}
+			} else {
+				if !p.IsLocal {
+					t.Errorf("non-system property %q should be local when schema is missing", p.Key)
+				}
+			}
+		}
+	})
+}
+

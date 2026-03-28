@@ -83,6 +83,8 @@ properties:
 
 ```yaml
 # .typemd/config.yaml
+date_format: "DD/MM/YYYY"
+datetime_format: "DD/MM/YYYY HH:mm:ss"
 cli:
   default_type: page
 ```
@@ -91,6 +93,8 @@ cli:
 
 | Key | 說明 |
 |-----|------|
+| `date_format` | date 屬性的顯示格式，使用 `YYYY`、`MM`、`DD` 等 token（預設：`YYYY-MM-DD`）。儲存格式不變。 |
+| `datetime_format` | datetime 屬性及系統時間戳的顯示格式，使用 `YYYY`、`MM`、`DD`、`HH`、`mm`、`ss` 等 token（預設：`YYYY-MM-DD HH:mm:ss`）。儲存格式不變。 |
 | `cli.default_type` | `tmd object create` 省略 type 參數時使用的預設 object type |
 
 Config 檔在 vault 開啟時載入。若檔案不存在或為空，所有設定使用零值（不會出錯）。無效的 YAML 會產生錯誤。

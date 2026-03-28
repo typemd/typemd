@@ -57,6 +57,16 @@ func IsImmutableSystemProperty(name string) bool {
 	return false
 }
 
+// lookupSystemProperty returns the SystemProperty for a given name, or nil if not found.
+func lookupSystemProperty(name string) *SystemProperty {
+	for i, sp := range systemProperties {
+		if sp.Name == name {
+			return &systemProperties[i]
+		}
+	}
+	return nil
+}
+
 // SystemPropertyNames returns all system property names in registry order.
 func SystemPropertyNames() []string {
 	names := make([]string, len(systemProperties))

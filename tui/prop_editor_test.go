@@ -549,3 +549,95 @@ func TestPropEditor_DatePickerRender(t *testing.T) {
 	}
 }
 
+// --- Local property separator tests ---
+
+func TestPropEditor_LocalSeparator_BetweenSchemaAndLocal(t *testing.T) {
+	props := []core.DisplayProperty{
+		{Key: "name", Value: "Test", Type: "string"},
+		{Key: "title", Value: "Hello", Type: "string"},
+		{Key: "custom_field", Value: "extra", Type: "string", IsLocal: true},
+	}
+	schema := &core.TypeSchema{
+		Name: "article",
+		Properties: []core.Property{
+			{Name: "title", Type: "string"},
+		},
+	}
+	pe := newPropEditor(props, schema)
+	output := pe.Render(false)
+
+	if !strings.Contains(output, "Local Properties") {
+		t.Error("separator should appear when there are local properties")
+	}
+
+	// Separator should appear between schema property and local property
+	titleIdx := strings.Index(output, "title")
+	sepIdx := strings.Index(output, "Local Properties")
+	localIdx := strings.Index(output, "custom_field")
+	if titleIdx == -1 || sepIdx == -1 || localIdx == -1 {
+		t.Fatalf("expected title, separator, and custom_field in output:\n%s", output)
+	}
+	if !(titleIdx < sepIdx && sepIdx < localIdx) {
+		t.Errorf("separator should appear between title and custom_field, got title@%d sep@%d local@%d", titleIdx, sepIdx, localIdx)
+	}
+}
+
+func TestPropEditor_LocalSeparator_NoLocalProperties(t *testing.T) {
+	props := []core.DisplayProperty{
+		{Key: "name", Value: "Test", Type: "string"},
+		{Key: "title", Value: "Hello", Type: "string"},
+		{Key: "rating", Value: 5, Type: "number"},
+	}
+	schema := &core.TypeSchema{
+		Name: "article",
+		Properties: []core.Property{
+			{Name: "title", Type: "string"},
+			{Name: "rating", Type: "number"},
+		},
+	}
+	pe := newPropEditor(props, schema)
+	output := pe.Render(false)
+
+	if strings.Contains(output, "Local Properties") {
+		t.Error("separator should NOT appear when there are no local properties")
+	}
+}
+
+func TestPropEditor_LocalSeparator_OnlyLocalProperties(t *testing.T) {
+	props := []core.DisplayProperty{
+		{Key: "name", Value: "Test", Type: "string"},
+		{Key: "custom_a", Value: "val_a", Type: "string", IsLocal: true},
+		{Key: "custom_b", Value: "val_b", Type: "string", IsLocal: true},
+	}
+	pe := newPropEditor(props, nil)
+	output := pe.Render(false)
+
+	if !strings.Contains(output, "Local Properties") {
+		t.Error("separator should appear before local properties even when there are no schema properties")
+	}
+
+	// Separator should appear before the first local property
+	sepIdx := strings.Index(output, "Local Properties")
+	localIdx := strings.Index(output, "custom_a")
+	if sepIdx == -1 || localIdx == -1 {
+		t.Fatalf("expected separator and custom_a in output:\n%s", output)
+	}
+	if sepIdx >= localIdx {
+		t.Errorf("separator should appear before custom_a, got sep@%d local@%d", sepIdx, localIdx)
+	}
+}
+
+func TestPropEditor_LocalPropertiesAreNotEditable(t *testing.T) {
+	props := []core.DisplayProperty{
+		{Key: "name", Value: "Test", Type: "string"},
+		{Key: "custom_field", Value: "extra", Type: "string", IsLocal: true},
+	}
+	pe := newPropEditor(props, nil)
+
+	for _, item := range pe.items {
+		if item.dp.IsLocal && item.editable {
+			t.Errorf("local property %q should not be editable", item.dp.Key)
+		}
+	}
+}
+

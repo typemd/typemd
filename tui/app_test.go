@@ -334,7 +334,7 @@ func TestModel_ResizeLeftPanel(t *testing.T) {
 	m.focus = focusLeft
 
 	before := m.leftW
-	msg := tea.KeyPressMsg{Code: ']', Text: "]"}
+	msg := tea.KeyPressMsg{Code: '=', Text: "="}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -352,7 +352,7 @@ func TestModel_ResizeBodyPanel(t *testing.T) {
 	m.propsVisible = true
 	m.propsWidth = 30
 
-	msg := tea.KeyPressMsg{Code: ']', Text: "]"}
+	msg := tea.KeyPressMsg{Code: '=', Text: "="}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -370,7 +370,7 @@ func TestModel_ResizePanelGrow(t *testing.T) {
 	m.focus = focusProps
 
 	before := m.propsWidth
-	msg := tea.KeyPressMsg{Code: ']', Text: "]"}
+	msg := tea.KeyPressMsg{Code: '=', Text: "="}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 
@@ -388,7 +388,7 @@ func TestModel_ResizePanelShrink(t *testing.T) {
 	// Ensure propsWidth is above minimum so shrink has room
 	m.propsWidth = 30
 
-	msg := tea.KeyPressMsg{Code: '[', Text: "["}
+	msg := tea.KeyPressMsg{Code: '-', Text: "-"}
 	newM, _ = m.Update(msg)
 	m = newM.(model)
 

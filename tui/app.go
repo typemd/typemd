@@ -113,8 +113,9 @@ type model struct {
 	softWrap bool
 
 	// Layout
-	width  int
-	height int
+	width     int
+	height    int
+	focusMode bool // body panel takes full width, sidebar and props hidden
 }
 
 func (m model) Init() tea.Cmd {

@@ -130,6 +130,9 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		return m, nil
 
 	case "tab":
+		if m.focusMode {
+			return m, nil
+		}
 		prevFocus := m.focus
 		switch m.focus {
 		case focusLeft:
@@ -275,12 +278,20 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		}
 		return m, nil
 
-	case "]":
+	case "=":
 		m.resizePanel(+2)
 		return m, nil
 
-	case "[":
+	case "-":
 		m.resizePanel(-2)
+		return m, nil
+
+	case ".":
+		m.focusMode = !m.focusMode
+		if m.focusMode {
+			m.focus = focusBody
+		}
+		m.recalcLayout()
 		return m, nil
 
 	case "p":

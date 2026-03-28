@@ -16,9 +16,11 @@ const configFileName = "config.yaml"
 
 // VaultConfig holds vault-level configuration loaded from .typemd/config.yaml.
 type VaultConfig struct {
-	CLI CLIConfig `yaml:"cli"`
-	TUI TUIConfig `yaml:"tui,omitempty"`
-	AI  AIConfig  `yaml:"ai,omitempty"`
+	DateFormat     string    `yaml:"date_format,omitempty"`
+	DatetimeFormat string    `yaml:"datetime_format,omitempty"`
+	CLI            CLIConfig `yaml:"cli"`
+	TUI            TUIConfig `yaml:"tui,omitempty"`
+	AI             AIConfig  `yaml:"ai,omitempty"`
 }
 
 // AIConfig holds AI-specific configuration.
@@ -82,6 +84,16 @@ type configKeyEntry struct {
 
 // configKeyRegistry maps dot-notation config keys to VaultConfig struct fields.
 var configKeyRegistry = map[string]configKeyEntry{
+	"date_format": {
+		Get:     func(cfg *VaultConfig) string { return cfg.DateFormat },
+		Set:     func(cfg *VaultConfig, value string) { cfg.DateFormat = value },
+		Default: DefaultDateFormat,
+	},
+	"datetime_format": {
+		Get:     func(cfg *VaultConfig) string { return cfg.DatetimeFormat },
+		Set:     func(cfg *VaultConfig, value string) { cfg.DatetimeFormat = value },
+		Default: DefaultDatetimeFormat,
+	},
 	"cli.default_type": {
 		Get:     func(cfg *VaultConfig) string { return cfg.CLI.DefaultType },
 		Set:     func(cfg *VaultConfig, value string) { cfg.CLI.DefaultType = value },
