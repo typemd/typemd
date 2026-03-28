@@ -1,6 +1,7 @@
 {
   "permissions": {
     "allow": [
+      "Bash(./scripts/create-issue *)",
       "Bash(./scripts/find-release-issues *)",
       "Bash(./scripts/get-issue-details *)",
       "Bash(gh api repos/typemd/typemd/milestones:*)",

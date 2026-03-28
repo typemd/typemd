@@ -182,62 +182,43 @@ Use AskUserQuestion with options like "Create" and "Needs changes" to get user c
 
 ### Step 8: Create issue
 
-Use GraphQL to create the issue with the issue type set.
-
-**IMPORTANT — use JSON file + `--input`**: The `gh api graphql -f` flag cannot pass array variables (like `labelIds`) correctly — it treats the JSON array as a single string, causing `NOT_FOUND` errors. Shell escaping of `!` in GraphQL types (e.g. `ID!`) also causes issues. Always write a JSON file with heredoc and pass it via `--input`.
+Use the `scripts/create-issue` helper script. It handles repo/label/issue ID resolution, GraphQL mutations, sub-issue linking, and blocker relationships in a single call.
 
 ```bash
-# Get repo ID
-REPO_ID=$(gh api repos/typemd/typemd --jq '.node_id')
-
-# Get label IDs (one per label)
-LABEL_ID_1=$(gh api repos/typemd/typemd/labels/<name1> --jq '.node_id')
-LABEL_ID_2=$(gh api repos/typemd/typemd/labels/<name2> --jq '.node_id')
-
-# Write GraphQL request as JSON file using heredoc (avoids shell escaping issues with `!`)
-cat > /tmp/create_issue.json << 'EOF'
-{
-  "query": "mutation($repoId: ID!, $title: String!, $body: String!, $typeId: ID!, $labelIds: [ID!], $parentId: ID) { createIssue(input: { repositoryId: $repoId, title: $title, body: $body, issueTypeId: $typeId, labelIds: $labelIds, parentIssueId: $parentId }) { issue { number url } } }",
-  "variables": {
-    "repoId": "<REPO_ID>",
-    "title": "<title>",
-    "body": "<body with \\n for newlines>",
-    "typeId": "<issue_type_id>",
-    "labelIds": ["<LABEL_ID_1>", "<LABEL_ID_2>"],
-    "parentId": null
-  }
-}
-EOF
-
-gh api graphql --input /tmp/create_issue.json
+bash scripts/create-issue \
+  --title "Issue title" \
+  --body "Issue body..." \
+  --type task \
+  --label "🧱 core" \
+  --label "🔩 tech-only" \
+  --release 220 \
+  --blocked-by 310
 ```
 
-Omit or set to `null` the `labelIds` or `parentId` fields if not applicable. Clean up the temp file after use with `rm -f /tmp/create_issue.json`.
+**Options:**
 
-**After creation**, if a Release issue was selected and the new issue has no other parent, add it as a sub-issue:
+| Flag | Description |
+|---|---|
+| `--title TEXT` | Issue title (required) |
+| `--body TEXT` | Issue body (required) |
+| `--type TYPE` | `task`, `bug`, `feature`, or `epic` (required) |
+| `--label NAME` | Label name, repeatable |
+| `--release NUMBER` | Release issue number — adds as sub-issue |
+| `--parent NUMBER` | Parent issue number (mutually exclusive with `--release` for sub-issue) |
+| `--blocked-by NUMBER` | Blocking issue number, repeatable |
+
+**Output:** JSON `{ "number": 325, "url": "https://..." }`
+
+**Notes:**
+- If `--release` is set and no `--parent`, the issue is added as a sub-issue of the release
+- If `--parent` is set, it's used as the parent and `--release` is skipped for sub-issue linking (reference the release in the body instead)
+- The `--body` value can contain newlines — the script handles escaping via temp files and `jq`
+
+**Removing a blocking relationship** (manual, not covered by the script):
 
 ```bash
-RELEASE_ID=$(gh issue view <release_number> --json id --jq '.id')
-ISSUE_ID=$(gh issue view <new_number> --json id --jq '.id')
-gh api graphql -f query="mutation { addSubIssue(input: { issueId: \"$RELEASE_ID\", subIssueId: \"$ISSUE_ID\" }) { subIssue { number } } }"
-```
-
-If the issue already has a parent (e.g. an Epic), skip the sub-issue link and instead edit the Release issue body to reference it.
-
-**After creation**, if there are blocking relationships, add them (one per blocking issue):
-
-```bash
-# Get the newly created issue's node ID
 ISSUE_ID=$(gh issue view <number> --json id --jq '.id')
 BLOCKER_ID=$(gh issue view <blocking_number> --json id --jq '.id')
-
-# addBlockedBy: issueId = the blocked issue, blockingIssueId = the blocker
-gh api graphql -f query="mutation { addBlockedBy(input: { issueId: \"$ISSUE_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }"
-```
-
-Repeat for each blocking issue. To remove a blocking relationship:
-
-```bash
 gh api graphql -f query="mutation { removeBlockedBy(input: { issueId: \"$ISSUE_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }"
 ```
 

@@ -1,0 +1,139 @@
+#!/usr/bin/env bash
+# Create a GitHub issue with type, labels, release, and relationships in one call.
+#
+# Usage: create-issue [options]
+#   --title TEXT          Issue title (required)
+#   --body TEXT           Issue body (required)
+#   --type TYPE           Issue type: task|bug|feature|epic (required)
+#   --label NAME          Label name, repeatable (e.g. --label "🧱 core" --label "🔩 tech-only")
+#   --release NUMBER      Release issue number to add as sub-issue
+#   --parent NUMBER       Parent issue number (mutually exclusive with --release for sub-issue)
+#   --blocked-by NUMBER   Blocking issue number, repeatable
+#   --repo OWNER/REPO     Repository (default: typemd/typemd)
+#
+# Output: JSON with number and url of the created issue.
+#
+# Examples:
+#   create-issue --title "Fix bug" --body "Details..." --type bug --label "🧱 core"
+#   create-issue --title "New feature" --body "..." --type feature \
+#     --label "🖥️ tui" --release 220 --blocked-by 310
+
+set -euo pipefail
+
+REPO="typemd/typemd"
+TITLE=""
+BODY=""
+TYPE=""
+LABELS=()
+RELEASE=""
+PARENT=""
+BLOCKED_BY=()
+
+# --- Parse arguments ---
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --title)      TITLE="$2"; shift 2 ;;
+    --body)       BODY="$2"; shift 2 ;;
+    --type)       TYPE="$2"; shift 2 ;;
+    --label)      LABELS+=("$2"); shift 2 ;;
+    --release)    RELEASE="$2"; shift 2 ;;
+    --parent)     PARENT="$2"; shift 2 ;;
+    --blocked-by) BLOCKED_BY+=("$2"); shift 2 ;;
+    --repo)       REPO="$2"; shift 2 ;;
+    *) printf 'Unknown option: %s\n' "$1" >&2; exit 1 ;;
+  esac
+done
+
+# --- Validate required args ---
+if [ -z "$TITLE" ] || [ -z "$BODY" ] || [ -z "$TYPE" ]; then
+  printf 'Error: --title, --body, and --type are required\n' >&2
+  exit 1
+fi
+
+# --- Map issue type to ID ---
+case "$TYPE" in
+  task)    TYPE_ID="IT_kwDOD9OO7M4B4kKu" ;;
+  bug)     TYPE_ID="IT_kwDOD9OO7M4B4kKv" ;;
+  feature) TYPE_ID="IT_kwDOD9OO7M4B4kKw" ;;
+  epic)    TYPE_ID="IT_kwDOD9OO7M4B4rT8" ;;
+  *)       printf 'Error: unknown type "%s". Must be one of: task, bug, feature, epic\n' "$TYPE" >&2; exit 1 ;;
+esac
+
+# --- Resolve repo node ID ---
+REPO_ID=$(gh api "repos/$REPO" --jq '.node_id')
+
+# --- Resolve label node IDs ---
+LABEL_IDS_JSON="null"
+if [ ${#LABELS[@]} -gt 0 ]; then
+  LABEL_IDS=()
+  for LABEL in "${LABELS[@]}"; do
+    ENCODED=$(jq -rn --arg l "$LABEL" '$l | @uri')
+    LID=$(gh api "repos/$REPO/labels/$ENCODED" --jq '.node_id')
+    LABEL_IDS+=("$LID")
+  done
+  LABEL_IDS_JSON=$(printf '%s\n' "${LABEL_IDS[@]}" | jq -R . | jq -s .)
+fi
+
+# --- Resolve parent node ID ---
+PARENT_ID_JSON="null"
+if [ -n "$PARENT" ]; then
+  PARENT_ID_JSON="\"$(gh issue view "$PARENT" --repo "$REPO" --json id --jq '.id')\""
+fi
+
+# --- Build and send create mutation ---
+# Use a temp file to avoid shell escaping issues with GraphQL ! types
+TMPFILE=$(mktemp /tmp/create-issue-XXXXXX.json)
+trap 'rm -f "$TMPFILE"' EXIT
+
+# Write body to a separate temp file, then use jq to safely embed it
+BODY_FILE=$(mktemp /tmp/create-issue-body-XXXXXX.txt)
+trap 'rm -f "$TMPFILE" "$BODY_FILE"' EXIT
+printf '%s' "$BODY" > "$BODY_FILE"
+
+jq -n \
+  --arg title "$TITLE" \
+  --rawfile body "$BODY_FILE" \
+  --arg repoId "$REPO_ID" \
+  --arg typeId "$TYPE_ID" \
+  --argjson labelIds "$LABEL_IDS_JSON" \
+  --argjson parentId "$PARENT_ID_JSON" \
+  '{
+    query: "mutation($repoId: ID!, $title: String!, $body: String!, $typeId: ID!, $labelIds: [ID!], $parentId: ID) { createIssue(input: { repositoryId: $repoId, title: $title, body: $body, issueTypeId: $typeId, labelIds: $labelIds, parentIssueId: $parentId }) { issue { number url } } }",
+    variables: {
+      repoId: $repoId,
+      title: $title,
+      body: ($body | rtrimstr("\n")),
+      typeId: $typeId,
+      labelIds: $labelIds,
+      parentId: $parentId
+    }
+  }' > "$TMPFILE"
+
+RESULT=$(gh api graphql --input "$TMPFILE")
+NUMBER=$(printf '%s' "$RESULT" | jq -r '.data.createIssue.issue.number')
+URL=$(printf '%s' "$RESULT" | jq -r '.data.createIssue.issue.url')
+
+if [ -z "$NUMBER" ] || [ "$NUMBER" = "null" ]; then
+  printf 'Error: failed to create issue\n' >&2
+  printf '%s\n' "$RESULT" >&2
+  exit 1
+fi
+
+# --- Add as sub-issue of release (if no parent was set) ---
+if [ -n "$RELEASE" ] && [ -z "$PARENT" ]; then
+  RELEASE_ID=$(gh issue view "$RELEASE" --repo "$REPO" --json id --jq '.id')
+  ISSUE_ID=$(gh issue view "$NUMBER" --repo "$REPO" --json id --jq '.id')
+  gh api graphql -f query="mutation { addSubIssue(input: { issueId: \"$RELEASE_ID\", subIssueId: \"$ISSUE_ID\" }) { subIssue { number } } }" > /dev/null
+fi
+
+# --- Add blocking relationships ---
+if [ ${#BLOCKED_BY[@]} -gt 0 ]; then
+  ISSUE_ID=$(gh issue view "$NUMBER" --repo "$REPO" --json id --jq '.id')
+  for BLOCKER_NUM in "${BLOCKED_BY[@]}"; do
+    BLOCKER_ID=$(gh issue view "$BLOCKER_NUM" --repo "$REPO" --json id --jq '.id')
+    gh api graphql -f query="mutation { addBlockedBy(input: { issueId: \"$ISSUE_ID\", blockingIssueId: \"$BLOCKER_ID\" }) { issue { number } } }" > /dev/null
+  done
+fi
+
+# --- Output result ---
+jq -n --argjson number "$NUMBER" --arg url "$URL" '{ number: $number, url: $url }'
