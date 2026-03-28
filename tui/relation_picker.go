@@ -418,33 +418,33 @@ func (pe *propEditor) renderRelationPicker(item propItem, isCursor bool) string 
 	var b strings.Builder
 
 	// Property label
-	prefix := " "
 	if isCursor {
-		prefix = "▸"
+		b.WriteString(fmt.Sprintf("▸%s:\n", item.dp.Key))
+	} else {
+		b.WriteString(fmt.Sprintf(" %s:\n", item.dp.Key))
 	}
-	b.WriteString(fmt.Sprintf("%s %s:\n", prefix, item.dp.Key))
 
 	// Search input
 	searchDisplay := pe.relSearch
 	if searchDisplay == "" {
 		searchDisplay = dimStyle.Render("type to filter...")
 	}
-	b.WriteString(fmt.Sprintf("   🔍 %s\n", searchDisplay))
+	b.WriteString(fmt.Sprintf("  🔍 %s\n", searchDisplay))
 
 	if pe.mode == propModeRelationPick {
 		// Single-select: "(none)" option at top
 		if pe.pickerCursor == 0 {
-			b.WriteString(highlightStyle.Render("   ▸ (none)") + "\n")
+			b.WriteString(highlightStyle.Render("  ▸ (none)") + "\n")
 		} else {
-			b.WriteString("     (none)\n")
+			b.WriteString("    (none)\n")
 		}
 
 		for i, c := range pe.relFiltered {
 			displayIdx := i + 1 // +1 for "(none)"
 			if displayIdx == pe.pickerCursor {
-				b.WriteString(highlightStyle.Render(fmt.Sprintf("   ▸ %s", c.displayName)) + "\n")
+				b.WriteString(highlightStyle.Render(fmt.Sprintf("  ▸ %s", c.displayName)) + "\n")
 			} else {
-				b.WriteString(fmt.Sprintf("     %s\n", c.displayName))
+				b.WriteString(fmt.Sprintf("    %s\n", c.displayName))
 			}
 		}
 	} else {
@@ -456,9 +456,9 @@ func (pe *propEditor) renderRelationPicker(item propItem, isCursor bool) string 
 				check = "☑"
 			}
 			if i == pe.pickerCursor {
-				b.WriteString(highlightStyle.Render(fmt.Sprintf("   %s %s", check, c.displayName)) + "\n")
+				b.WriteString(highlightStyle.Render(fmt.Sprintf("  %s %s", check, c.displayName)) + "\n")
 			} else {
-				b.WriteString(fmt.Sprintf("   %s %s\n", check, c.displayName))
+				b.WriteString(fmt.Sprintf("  %s %s\n", check, c.displayName))
 			}
 		}
 	}
