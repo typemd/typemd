@@ -618,13 +618,10 @@ func (ve *viewEditor) View() string {
 
 	var b strings.Builder
 
-	titleStyle := lipgloss.NewStyle().Bold(true)
-	dimStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
 	sectionStyle := lipgloss.NewStyle().Bold(true).Foreground(lipgloss.Color("4"))
-	activeStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("6"))
 	addStyle := lipgloss.NewStyle().Foreground(lipgloss.Color("2"))
 
-	b.WriteString(titleStyle.Render(fmt.Sprintf(" Edit: %s", ve.viewName)) + "\n")
+	b.WriteString(boldStyle.Render(fmt.Sprintf(" Edit: %s", ve.viewName)) + "\n")
 	b.WriteString(dimStyle.Render(" " + strings.Repeat("─", ve.width-4)) + "\n")
 
 	// Layout section (special: single toggle item)

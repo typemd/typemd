@@ -550,12 +550,6 @@ func (vm *viewMode) viewList(rows []viewRow) string {
 	}
 	vm.scroll = widget.AdjustScroll(vm.cursor, vm.scroll, visibleH)
 
-	highlightStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("0")).
-		Background(lipgloss.Color("6"))
-	dimStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("8"))
-
 	emoji := ""
 	if vm.schema != nil && vm.schema.Emoji != "" {
 		emoji = vm.schema.Emoji + " "
@@ -586,7 +580,7 @@ func (vm *viewMode) viewList(rows []viewRow) string {
 			}
 
 			if isCurrent {
-				b.WriteString(highlightStyle.Render(padRight(line, vm.width)) + "\n")
+				b.WriteString(activeStyle.Render(padRight(line, vm.width)) + "\n")
 			} else {
 				b.WriteString(line + "\n")
 			}
@@ -641,8 +635,6 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 	vm.scroll = widget.AdjustScroll(vm.cursor, vm.scroll, visibleH)
 
 	// Styles
-	dimStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("8"))
 	headerStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("4")).
 		Bold(true)
@@ -650,9 +642,7 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 		Foreground(lipgloss.Color("4")).
 		Background(lipgloss.Color("236")).
 		Bold(true)
-	activeCellStyle := lipgloss.NewStyle().
-		Foreground(lipgloss.Color("0")).
-		Background(lipgloss.Color("6"))
+	activeCellStyle := activeStyle
 	rowHighlightStyle := lipgloss.NewStyle().
 		Background(lipgloss.Color("235"))
 	dimRowHighlightStyle := lipgloss.NewStyle().
@@ -660,7 +650,7 @@ func (vm *viewMode) viewTable(rows []viewRow) string {
 		Background(lipgloss.Color("235"))
 	editCellStyle := lipgloss.NewStyle().
 		Foreground(lipgloss.Color("0")).
-		Background(lipgloss.Color("214"))
+		Background(colorEditBorder)
 
 	// Build sort indicator map
 	sortIndicators := make(map[string]string)

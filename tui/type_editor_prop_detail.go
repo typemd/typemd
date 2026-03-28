@@ -7,7 +7,6 @@ import (
 	"github.com/typemd/typemd/core"
 	"charm.land/bubbles/v2/textinput"
 	tea "charm.land/bubbletea/v2"
-	"charm.land/lipgloss/v2"
 )
 
 // ── Property Detail Panel ────────────────────────────────────────────────────
@@ -131,8 +130,7 @@ func (te *typeEditor) renderPropPopup(termW, termH int) string {
 		popupW = termW - 10
 	}
 
-	titleStyle := lipgloss.NewStyle().Bold(true)
-	title := titleStyle.Render(fmt.Sprintf("%s (%s)", p.Name, p.Type))
+	title := boldStyle.Render(fmt.Sprintf("%s (%s)", p.Name, p.Type))
 	fullContent := fmt.Sprintf("%s\n──────────────────\n%s", title, b.String())
 
 	return renderPopup(fullContent, termW, termH, popupW)
