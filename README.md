@@ -97,6 +97,12 @@ tmd object list
 # Connect objects (name references in frontmatter auto-expand on sync)
 tmd relation link book/golang-in-action author person/alan-donovan
 
+# Manage templates
+tmd template list                         # list all templates
+tmd template show book/review             # view template content
+tmd template create book/review           # create and open in $EDITOR
+tmd template delete book/review           # delete with confirmation
+
 # Maintenance
 tmd format                                # normalize frontmatter & schema formatting
 tmd doctor                                # vault health check
