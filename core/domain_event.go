@@ -52,6 +52,48 @@ type TagAutoCreated struct {
 
 func (e TagAutoCreated) eventName() string { return "tag.auto_created" }
 
+// ObjectDeleted is emitted when an object is removed from disk (stale cleanup).
+type ObjectDeleted struct{ ID string }
+
+func (e ObjectDeleted) eventName() string { return "object.deleted" }
+
+// ObjectUpserted is emitted when an object needs to be written to the index.
+type ObjectUpserted struct {
+	ID        string
+	Type      string
+	Filename  string
+	PropsJSON string
+	Body      string
+}
+
+func (e ObjectUpserted) eventName() string { return "object.upserted" }
+
+// WikiLinksSynced is emitted when wiki-links for an object have been resolved.
+type WikiLinksSynced struct {
+	ObjectID string
+	Links    []WikiLinkEntry
+}
+
+func (e WikiLinksSynced) eventName() string { return "wikilinks.synced" }
+
+// RelationIndexed is emitted when a single relation needs to be indexed.
+type RelationIndexed struct {
+	Name   string
+	FromID string
+	ToID   string
+}
+
+func (e RelationIndexed) eventName() string { return "relation.indexed" }
+
+// RelationsCleared is emitted to clear relations for a scope before rebuilding.
+type RelationsCleared struct {
+	ObjectID   string // if set, clear only this object's relations
+	NonTagOnly bool   // if true, clear all non-tag relations (full sync)
+	TagsOnly   bool   // if true, clear tag relations only
+}
+
+func (e RelationsCleared) eventName() string { return "relations.cleared" }
+
 // EventDispatcher collects and dispatches domain events to subscribers.
 type EventDispatcher struct {
 	handlers []EventHandler

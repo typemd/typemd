@@ -100,7 +100,8 @@ graph TB
 - `vault.go` — Vault facade + lifecycle (Open/Close/Init)
 - `object_service.go` — command use cases (create/save/link)
 - `query_service.go` — query use cases (search/filter/stats)
-- `projector.go` — file→index sync (full + incremental)
+- `reconciler.go` — file normalization + event emission (full + incremental); `reconciler_relation.go` — relation resolution + tag sync; `reconciler_wikilink.go` — wiki-link sync
+- `projector.go` — event-driven SQLite index writer
 - `config.go` — VaultConfig (date formats, CLI/TUI/AI config sections)
 
 ### TUI Architecture

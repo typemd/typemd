@@ -15,62 +15,67 @@ const (
 	ReasonAmbiguous = "ambiguous"
 )
 
-// UnresolvedRelation represents a relation reference that could not be resolved during sync.
+// UnresolvedRelation represents a relation reference that could not be resolved during reconciliation.
 type UnresolvedRelation struct {
-	ObjectID string // the object containing the reference
-	Property string // the relation property name
-	Value    string // the unresolved value
-	Reason   string // "not_found" or "ambiguous"
-	Matches  []string // candidate IDs for ambiguous matches
+	ObjectID string
+	Property string
+	Value    string
+	Reason   string
+	Matches  []string
 }
 
-// UnresolvedWikiLink represents a wiki-link that could not be resolved during sync.
+// UnresolvedWikiLink represents a wiki-link that could not be resolved during reconciliation.
 type UnresolvedWikiLink struct {
-	ObjectID string   // the object containing the link
-	Target   string   // the unresolved target text
-	Reason   string   // "not_found" or "ambiguous"
-	Matches  []string // candidate IDs for ambiguous matches
+	ObjectID string
+	Target   string
+	Reason   string
+	Matches  []string
 }
 
-// SyncResult holds statistics from a SyncIndex operation.
-type SyncResult struct {
-	Synced             int                  // number of objects upserted into the index
-	Deleted            int
-	Orphaned           []OrphanedRelation
-	Expanded           int                  // number of relation prefixes auto-expanded to full IDs
-	Unresolved         []UnresolvedRelation // relation references that could not be resolved
-	WikiLinksExpanded  int                  // number of shorthand wiki-links expanded to full IDs
-	UnresolvedWikiLinks []UnresolvedWikiLink // wiki-links that could not be resolved
+// ReconcileResult holds statistics from a Reconcile operation.
+type ReconcileResult struct {
+	Synced              int
+	Deleted             int
+	Expanded            int
+	Unresolved          []UnresolvedRelation
+	WikiLinksExpanded   int
+	UnresolvedWikiLinks []UnresolvedWikiLink
 }
 
-// syncContext holds intermediate state collected during sync.
+// syncContext holds intermediate state collected during reconciliation.
 type syncContext struct {
 	diskIDs     map[string]bool
 	diskBodies  map[string]string
 	diskTags    map[string]*Object
 	diskTagRefs map[string][]string
-	diskObjects map[string]*Object           // all objects by ID
-	schemas     map[string]*TypeSchema        // cached type schemas
-	nameIndex   map[string]map[string][]string // nameIndex[type][name] = []objectID
+	diskObjects map[string]*Object
+	schemas     map[string]*TypeSchema
+	nameIndex   map[string]map[string][]string
 }
 
-// SyncIndex scans the objects directory, upserts all found objects into the index,
-// removes stale entries, cleans up orphaned relations, and rebuilds the FTS index.
-func (v *Vault) SyncIndex() (*SyncResult, error) {
-	if v.projector == nil {
-		return nil, fmt.Errorf("vault not opened")
+// Reconcile normalizes all vault files and returns domain events describing what changed.
+func (v *Vault) Reconcile() ([]DomainEvent, *ReconcileResult, error) {
+	if v.reconciler == nil {
+		return nil, nil, fmt.Errorf("vault not opened")
 	}
-	return v.projector.Sync()
+	return v.reconciler.Reconcile()
 }
 
-// SyncFiles incrementally synchronizes specific files to the index.
-// Falls back to full SyncIndex if paths is empty.
-func (v *Vault) SyncFiles(paths []string) (*SyncResult, error) {
-	if v.projector == nil {
-		return nil, fmt.Errorf("vault not opened")
+// ReconcileFiles incrementally reconciles specific files and returns domain events.
+func (v *Vault) ReconcileFiles(paths []string) ([]DomainEvent, *ReconcileResult, error) {
+	if v.reconciler == nil {
+		return nil, nil, fmt.Errorf("vault not opened")
 	}
 	if len(paths) == 0 {
-		return v.projector.Sync()
+		return v.reconciler.Reconcile()
 	}
-	return v.projector.SyncFiles(paths, v.ObjectsDir())
+	return v.reconciler.ReconcileFiles(paths, v.ObjectsDir())
+}
+
+// Project applies domain events to the search index.
+func (v *Vault) Project(events []DomainEvent) error {
+	if v.projector == nil {
+		return fmt.Errorf("vault not opened")
+	}
+	return v.projector.Apply(events)
 }

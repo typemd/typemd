@@ -68,7 +68,8 @@ func (dc *domainContext) twoLinkedNotesExist() {
 
 	body := fmt.Sprintf("---\ntitle: Alpha\n---\n\nSee [[%s]].\n", noteB.ID)
 	os.WriteFile(dc.vault.ObjectPath(noteA.Type, noteA.Filename), []byte(body), 0644)
-	dc.vault.SyncIndex()
+	events, _, _ := dc.vault.Reconcile()
+	dc.vault.Project(events)
 }
 
 func (dc *domainContext) aNoteWithABrokenWikiLinkExists() {
@@ -89,7 +90,8 @@ func (dc *domainContext) createNoteWithBrokenWikiLink(sync bool) {
 	body := "---\ntitle: Alpha\n---\n\nSee [[note/nonexistent-01jjjjjjjjjjjjjjjjjjjjjjjj]].\n"
 	os.WriteFile(dc.vault.ObjectPath(note.Type, note.Filename), []byte(body), 0644)
 	if sync {
-		dc.vault.SyncIndex()
+		events, _, _ := dc.vault.Reconcile()
+		dc.vault.Project(events)
 	}
 }
 

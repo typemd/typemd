@@ -67,7 +67,12 @@ properties:
 	if err := v.Open(); err != nil {
 		return err
 	}
-	if _, err := v.SyncIndex(); err != nil {
+	events, _, err := v.Reconcile()
+	if err != nil {
+		v.Close()
+		return err
+	}
+	if err := v.Project(events); err != nil {
 		v.Close()
 		return err
 	}

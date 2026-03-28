@@ -67,8 +67,12 @@ func setupRelationTestVault(t *testing.T) *core.Vault {
 	}
 
 	// Sync index
-	if _, err := v.SyncIndex(); err != nil {
-		t.Fatalf("SyncIndex: %v", err)
+	events, _, err := v.Reconcile()
+	if err != nil {
+		t.Fatalf("Reconcile: %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project: %v", err)
 	}
 
 	t.Cleanup(func() { v.Close() })

@@ -79,8 +79,8 @@ func TestSyncUnresolvedToToast_OnlyAmbiguous(t *testing.T) {
 }
 
 func TestSyncNoUnresolved_NoToast(t *testing.T) {
-	// When SyncResult has no Unresolved items, no toast should be shown.
-	result := &core.SyncResult{
+	// When ReconcileResult has no Unresolved items, no toast should be shown.
+	result := &core.ReconcileResult{
 		Synced:     5,
 		Unresolved: nil,
 	}

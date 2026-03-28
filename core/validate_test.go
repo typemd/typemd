@@ -163,7 +163,8 @@ func TestValidateWikiLinks_NoBrokenLinks(t *testing.T) {
 
 	body := fmt.Sprintf("---\ntitle: Alpha\n---\n\nSee [[%s]].\n", noteB.ID)
 	os.WriteFile(v.ObjectPath(noteA.Type, noteA.Filename), []byte(body), 0644)
-	v.SyncIndex()
+	ev, _, _ := v.Reconcile()
+	v.Project(ev)
 
 	errs := ValidateWikiLinks(v)
 	if len(errs) != 0 {
@@ -181,7 +182,8 @@ func TestValidateWikiLinks_BrokenLink(t *testing.T) {
 
 	body := "---\ntitle: Alpha\n---\n\nSee [[note/nonexistent-01jjjjjjjjjjjjjjjjjjjjjjjj]].\n"
 	os.WriteFile(v.ObjectPath(note.Type, note.Filename), []byte(body), 0644)
-	v.SyncIndex()
+	ev, _, _ := v.Reconcile()
+	v.Project(ev)
 
 	errs := ValidateWikiLinks(v)
 	if len(errs) != 1 {

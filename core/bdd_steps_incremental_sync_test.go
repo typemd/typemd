@@ -12,7 +12,7 @@ type incrementalSyncContext struct {
 	dc          *domainContext
 	objectPath  string
 	objectID    string
-	syncResult  *SyncResult
+	syncResult  *ReconcileResult
 }
 
 func newIncrementalSyncContext(dc *domainContext) *incrementalSyncContext {
@@ -36,15 +36,21 @@ func (isc *incrementalSyncContext) iCreateAnObjectNamed(typeName, name string) {
 }
 
 func (isc *incrementalSyncContext) iSyncFilesForTheCreatedObject() {
-	result, err := isc.dc.vault.SyncFiles([]string{isc.objectPath})
+	events, result, err := isc.dc.vault.ReconcileFiles([]string{isc.objectPath})
+	if err == nil {
+		err = isc.dc.vault.Project(events)
+	}
 	isc.syncResult = result
 	isc.dc.lastErr = err
 }
 
 func (isc *incrementalSyncContext) aFullSyncIsPerformed() {
-	_, err := isc.dc.vault.SyncIndex()
+	events, _, err := isc.dc.vault.Reconcile()
 	if err != nil {
-		panic(fmt.Sprintf("full sync failed: %v", err))
+		panic(fmt.Sprintf("full reconcile failed: %v", err))
+	}
+	if err := isc.dc.vault.Project(events); err != nil {
+		panic(fmt.Sprintf("project failed: %v", err))
 	}
 }
 
@@ -53,7 +59,10 @@ func (isc *incrementalSyncContext) theObjectFileIsDeletedFromDisk() {
 }
 
 func (isc *incrementalSyncContext) iSyncFilesForTheDeletedObjectPath() {
-	result, err := isc.dc.vault.SyncFiles([]string{isc.objectPath})
+	events, result, err := isc.dc.vault.ReconcileFiles([]string{isc.objectPath})
+	if err == nil {
+		err = isc.dc.vault.Project(events)
+	}
 	isc.syncResult = result
 	isc.dc.lastErr = err
 }
@@ -83,7 +92,10 @@ func (isc *incrementalSyncContext) theObjectShouldNotBeInTheIndex() error {
 }
 
 func (isc *incrementalSyncContext) iSyncWithEmptyPaths() {
-	result, err := isc.dc.vault.SyncFiles(nil)
+	events, result, err := isc.dc.vault.ReconcileFiles(nil)
+	if err == nil {
+		err = isc.dc.vault.Project(events)
+	}
 	isc.syncResult = result
 	isc.dc.lastErr = err
 }

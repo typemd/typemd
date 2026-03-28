@@ -20,6 +20,7 @@ type Vault struct {
 	db                *sql.DB
 	index             ObjectIndex
 	repo              ObjectRepository
+	reconciler        *Reconciler
 	projector         *Projector
 	Objects           *ObjectService
 	Queries           *QueryService
@@ -131,18 +132,24 @@ func (v *Vault) Open() error {
 	v.config = cfg
 	v.initAI(cfg)
 
-	v.projector = NewProjector(v.repo, v.index, func(slug string) (*Object, error) {
+	v.reconciler = NewReconciler(v.repo, v.index, func(slug string) (*Object, error) {
 		return v.Objects.Create(TagTypeName, slug, "")
 	})
+	v.projector = NewProjector(v.index)
 
 	if err := v.index.EnsureSchema(); err != nil {
 		v.closeInternal()
 		return fmt.Errorf("ensure schema: %w", err)
 	}
 
-	if _, err := v.SyncIndex(); err != nil {
+	events, _, err := v.Reconcile()
+	if err != nil {
 		v.closeInternal()
-		return fmt.Errorf("sync index: %w", err)
+		return fmt.Errorf("reconcile: %w", err)
+	}
+	if err := v.Project(events); err != nil {
+		v.closeInternal()
+		return fmt.Errorf("project: %w", err)
 	}
 
 	return nil

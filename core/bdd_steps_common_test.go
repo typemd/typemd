@@ -74,7 +74,7 @@ type domainContext struct {
 	starterTypes []StarterType
 
 	// sync result for wiki-link scenarios
-	syncResult *SyncResult
+	syncResult *ReconcileResult
 }
 
 func newDomainContext() *domainContext {
