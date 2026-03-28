@@ -5,6 +5,11 @@ on:
     tags:
       - "v*"
   workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag (e.g. v0.7.0)"
+        required: true
+        type: string
 
 permissions:
   contents: write
@@ -16,6 +21,7 @@ jobs:
       - uses: actions/checkout@v6
         with:
           fetch-depth: 0
+          ref: ${{ inputs.tag }}
 
       - uses: actions/setup-go@v6
         with:
@@ -24,7 +30,8 @@ jobs:
       - uses: goreleaser/goreleaser-action@v6
         with:
           version: "~> v2"
-          args: release --clean ${{ github.event_name == 'workflow_dispatch' && '--snapshot --skip=publish' || '' }}
+          args: release --clean
         env:
+          GORELEASER_CURRENT_TAG: ${{ inputs.tag }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           HOMEBREW_TAP_TOKEN: ${{ secrets.HOMEBREW_TAP_TOKEN }}
