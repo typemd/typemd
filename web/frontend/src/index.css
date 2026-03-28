@@ -1,0 +1,68 @@
+@import "tailwindcss";
+@import url("https://fonts.googleapis.com/css2?family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,500;0,6..72,600;1,6..72,400&display=swap");
+
+@theme {
+  --color-bg: #ffffff;
+  --color-sidebar-bg: #f8f7f5;
+  --color-surface: #f4f3f0;
+  --color-surface-hover: #eeecea;
+  --color-surface-active: #e6e4e0;
+
+  --color-border: #e8e6e2;
+  --color-border-subtle: #f0eeea;
+
+  --color-text: #37352f;
+  --color-text-secondary: #787774;
+  --color-text-muted: #b4b4b0;
+  --color-text-light: #c8c8c4;
+
+  --color-accent: #2383e2;
+  --color-accent-light: #e8f2fc;
+  --color-accent-text: #1b6ec2;
+
+  --color-tag-bg: #f0f0ee;
+  --color-tag-text: #5a5a58;
+
+  --color-red: #eb5757;
+  --color-green: #4dab6f;
+
+  --font-title: "Newsreader", Georgia, "Times New Roman", serif;
+  --font-body: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+  --font-mono: "SF Mono", "JetBrains Mono", "Cascadia Code", monospace;
+  --font-ui: -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+}
+
+* { margin: 0; padding: 0; box-sizing: border-box; }
+html, body, #root { height: 100%; overflow: hidden; }
+
+body {
+  font-family: var(--font-body);
+  color: var(--color-text);
+  background: var(--color-bg);
+  font-size: 15px;
+  line-height: 1.65;
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-accent-light);
+}
+
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.09); border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.16); }
+
+input:focus, textarea:focus, select:focus {
+  outline: none;
+  box-shadow: 0 0 0 2px var(--color-accent-light);
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes slideUp {
+  from { opacity: 0; transform: translateY(6px); }
+  to { opacity: 1; transform: translateY(0); }
+}

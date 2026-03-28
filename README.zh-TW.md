@@ -30,6 +30,7 @@ TypeMD 讓你用 **Object** 來思考——書籍、人物、想法、會議—�
 - **全文搜尋** — 在你的 vault 中搜尋任何內容
 - **結構化查詢** — 依 Type、屬性或 Relation 篩選 Object
 - **TUI** — 由 [Bubble Tea](https://github.com/charmbracelet/bubbletea) 驅動的三欄介面，支援檔案變更自動重新整理
+- **Web UI** — 透過 `tmd serve` 在瀏覽器中使用三欄介面，支援屬性編輯與物件建立
 - **MCP Server** — 透過 Model Context Protocol 整合 AI 助手
 - **本地優先** — 一切都在你的電腦上，以純 Markdown 檔案儲存
 
@@ -99,6 +100,10 @@ tmd relation link book/golang-in-action author person/alan-donovan
 tmd format                                # 正規化 frontmatter 與 schema 格式
 tmd doctor                                # vault 健康檢查
 tmd stats                                 # 統計摘要
+
+# Web UI
+tmd serve                                 # 在 http://localhost:3000 啟動 Web UI
+tmd serve -p 8080                         # 自訂連接埠
 
 # 啟動 MCP server 以整合 AI
 tmd mcp
@@ -172,7 +177,7 @@ typemd/
 ├── cmd/        # CLI 指令（Cobra）
 ├── tui/        # 終端 UI（Bubble Tea）
 ├── mcp/        # MCP server，用於 AI 整合
-├── web/        # Web UI（規劃中）
+├── web/        # Web UI — Go HTTP server + React 前端
 ├── site/       # 官方網站（Astro）→ typemd.io
 ├── docs/       # 文件（Starlight）→ docs.typemd.io
 └── app/        # 桌面應用程式（規劃中）
@@ -184,6 +189,7 @@ typemd/
 
 - **語言**：Go
 - **TUI**：[Bubble Tea](https://github.com/charmbracelet/bubbletea) + [Lip Gloss](https://github.com/charmbracelet/lipgloss)
+- **Web UI**：React + [Tailwind CSS](https://tailwindcss.com) + [Vite](https://vite.dev)（嵌入 Go binary）
 - **MCP**：[mcp-go](https://github.com/mark3labs/mcp-go) — Model Context Protocol server
 - **索引**：SQLite 搭配 FTS5 全文搜尋
 - **儲存**：Markdown + YAML frontmatter

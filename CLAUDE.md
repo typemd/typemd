@@ -12,7 +12,8 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **tui/** — Terminal UI (Bubble Tea)
   - **tui/widget/** — Shared UI primitives (CenteredPopup, OverlayPopup, ToastModel via Layer/Compositor, scroll) used across TUI components
 - **mcp/** — MCP server
-- **web/** — Web UI: React + shadcn/ui (future)
+- **web/** — Web UI: Go HTTP server (`tmd serve`) + React frontend (Vite + Tailwind CSS)
+  - **web/frontend/** — React SPA with vault adapter pattern for API abstraction
 - **app/** — Desktop app via Wails + shared React frontend (future)
 - **websites/** — Non-Go websites (site, docs, blog)
 - **marketplace/** — Claude Code marketplace plugins (typemd plugin with vault-guide, instructions-guide, explore, and importer skills)
@@ -29,6 +30,7 @@ graph TB
         CMD[cmd/ — CLI]
         TUI[tui/ — Terminal UI]
         MCP[mcp/ — MCP Server]
+        WEB[web/ — Web UI]
     end
 
     subgraph Facade
@@ -59,6 +61,7 @@ graph TB
     CMD --> V
     TUI --> V
     MCP --> V
+    WEB --> V
 
     V --> OS
     V --> QS
@@ -126,12 +129,12 @@ Key sub-models: `typeEditor` (schema editing + wizard + templates), `viewMode` (
 
 ## Web UI Architecture
 
-- **Shared frontend**: `tmd serve`, try.typemd.io, and desktop app (Wails) share one React + shadcn/ui frontend
-- **Storage Interface**: Frontend talks to a `VaultStorage` abstraction
-  - `tmd serve` → Go HTTP API (read-write)
-  - try.typemd.io → GitHub REST API from browser, no backend (read-only initially, read-write later)
-  - Wails → Go bindings (read-write)
-- **No SQLite in browser**: try.typemd.io uses in-memory index built from GitHub API responses
+- **`tmd serve`** starts a Go HTTP server with REST API + embedded React SPA
+- **REST API** (`web/server.go`): endpoints under `/api/` for types, objects, properties, templates (read-write)
+- **React frontend** (`web/frontend/`): Vite + Tailwind CSS, three-panel layout mirroring the TUI (sidebar, body, properties)
+- **Vault adapter** (`web/frontend/src/lib/vault.js`): all API calls go through this single module; swap implementation for different backends
+- **Embedded frontend** (`web/frontend.go`): `//go:embed frontend/dist` bakes the built SPA into the Go binary; `tmd serve` serves it for non-API routes with SPA fallback
+- **Dev mode**: run `tmd serve` (port 3000) + `cd web/frontend && npm run dev` (port 5173, Vite proxies `/api` to 3000)
 - **Design principle**: SQLite is optional acceleration, not a hard dependency — files are always the source of truth
 
 ## Language Convention
@@ -148,8 +151,11 @@ Blog posts are the exception: written in Traditional Chinese (zh-tw) first, then
 ## Build & Test
 
 ```bash
-make test
+make test                  # builds frontend + go build + go test + go vet
+make build-frontend        # only build web/frontend/dist
 ```
+
+The Go binary embeds `web/frontend/dist` via `//go:embed`. Frontend must be built before `go build`.
 
 ## Debugging
 

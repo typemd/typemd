@@ -79,3 +79,11 @@ tmd object list
 # Full-text search
 tmd search "concurrency"
 ```
+
+## 6. Open the Web UI
+
+```bash
+tmd serve
+```
+
+Opens a browser-based interface at `http://localhost:3000` with the same three-panel layout as the TUI. See [`tmd serve`](/cli/serve) for details.
