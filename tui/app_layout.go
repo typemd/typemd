@@ -133,6 +133,13 @@ func (m model) hasTitlePanel() bool {
 
 // bodyWidth calculates the body panel width from remaining space.
 func (m model) bodyWidth() int {
+	if m.focusMode {
+		w := m.width - 2 // body border only
+		if w < 10 {
+			w = 10
+		}
+		return w
+	}
 	borders := 4 // left panel border (2) + body panel border (2)
 	if m.propsVisible {
 		borders += 2 // props panel border
@@ -145,6 +152,14 @@ func (m model) bodyWidth() int {
 		w = 10
 	}
 	return w
+}
+
+// recalcLayout recalculates dependent widths and refreshes viewports.
+func (m *model) recalcLayout() {
+	m.bodyViewport.SetWidth(m.bodyWidth())
+	m.propsViewport.SetWidth(m.propsWidth)
+	m.bodyTextarea.SetWidth(m.bodyWidth())
+	m.updateDetail()
 }
 
 // shouldAutoHideProps returns true if terminal is too narrow for three panels.

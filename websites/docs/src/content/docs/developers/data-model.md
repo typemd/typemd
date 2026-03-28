@@ -68,6 +68,8 @@ An optional configuration file at `.typemd/config.yaml` provides vault-level set
 
 ```yaml
 # .typemd/config.yaml
+date_format: "DD/MM/YYYY"
+datetime_format: "DD/MM/YYYY HH:mm:ss"
 cli:
   default_type: page
 ```
@@ -76,6 +78,8 @@ Currently supported settings:
 
 | Key | Description |
 |-----|-------------|
+| `date_format` | Display format for date properties using tokens `YYYY`, `MM`, `DD` (default: `YYYY-MM-DD`). Storage format is unchanged. |
+| `datetime_format` | Display format for datetime properties and system timestamps using tokens `YYYY`, `MM`, `DD`, `HH`, `mm`, `ss` (default: `YYYY-MM-DD HH:mm:ss`). Storage format is unchanged. |
 | `cli.default_type` | Default object type for `tmd object create` when type argument is omitted |
 
 The config file is loaded during vault open. If the file is missing or empty, all settings use their zero values (no error). Invalid YAML produces an error.

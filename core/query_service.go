@@ -128,11 +128,12 @@ func (s *QueryService) BuildDisplayProperties(obj *Object) ([]DisplayProperty, e
 			dp.Pin = sp.Pin
 			dp.IsRelation = sp.Type == "relation"
 			result = append(result, dp)
-		} else if !IsSystemProperty(k) {
+		} else if sysProp := lookupSystemProperty(k); sysProp != nil {
+			dp.Type = sysProp.Type
+			result = append(result, dp)
+		} else {
 			dp.IsLocal = true
 			localProps = append(localProps, dp)
-		} else {
-			result = append(result, dp)
 		}
 	}
 

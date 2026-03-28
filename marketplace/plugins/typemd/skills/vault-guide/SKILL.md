@@ -353,7 +353,8 @@ The right panel follows the sidebar cursor:
 | `v` | Enter view mode (on type header) |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft-wrap |
-| `[`/`]` | Resize panel |
+| `-`/`=` | Shrink/grow panel |
+| `.` | Toggle focus mode (full-width body) |
 | `?` or `h` | Help |
 | `q` | Quit |
 

@@ -9,18 +9,26 @@ import (
 // BacklinksDisplayKey is the property key used for wiki-link backlinks.
 const BacklinksDisplayKey = "backlinks"
 
+// Default display format tokens for date and datetime properties.
+const (
+	DefaultDateFormat     = "YYYY-MM-DD"
+	DefaultDatetimeFormat = "YYYY-MM-DD HH:mm:ss"
+)
+
 // DisplayProperty represents a single property prepared for display.
 type DisplayProperty struct {
-	Key        string
-	Value      any
-	Type       string // property type from schema (string, date, checkbox, etc.)
-	Emoji      string // property emoji from schema
-	Pin        int    // pin order (0 = not pinned, positive = pinned with order)
-	IsRelation bool
-	IsReverse  bool
-	IsBacklink bool
-	IsLocal    bool   // true when property exists in object but not in type schema or system properties
-	FromID     string // populated for reverse relations and backlinks
+	Key            string
+	Value          any
+	Type           string // property type from schema (string, date, checkbox, etc.)
+	Emoji          string // property emoji from schema
+	Pin            int    // pin order (0 = not pinned, positive = pinned with order)
+	IsRelation     bool
+	IsReverse      bool
+	IsBacklink     bool
+	IsLocal        bool   // true when property exists in object but not in type schema or system properties
+	FromID         string // populated for reverse relations and backlinks
+	DateFormat     string
+	DatetimeFormat string
 }
 
 // displayObjectID strips the ULID suffix from an object ID for human-readable display.
@@ -30,6 +38,22 @@ func displayObjectID(id string) string {
 		return parsed.DisplayID()
 	}
 	return StripULID(id)
+}
+
+// asTime tries to extract a time.Time from the property value.
+// It handles both time.Time values and string values parsed with the given layouts.
+func (p DisplayProperty) asTime(layouts ...string) (time.Time, bool) {
+	if t, ok := p.Value.(time.Time); ok {
+		return t, true
+	}
+	if s, ok := p.Value.(string); ok && s != "" {
+		for _, layout := range layouts {
+			if t, err := time.Parse(layout, s); err == nil {
+				return t, true
+			}
+		}
+	}
+	return time.Time{}, false
 }
 
 // FormatValue returns the formatted value without the key prefix.
@@ -56,12 +80,20 @@ func (p DisplayProperty) FormatValue() string {
 
 	switch p.Type {
 	case "date":
-		if t, ok := p.Value.(time.Time); ok {
-			return t.Format("2006-01-02")
+		if t, ok := p.asTime("2006-01-02"); ok {
+			f := p.DateFormat
+			if f == "" {
+				f = DefaultDateFormat
+			}
+			return t.Format(ConvertDateFormat(f))
 		}
 	case "datetime":
-		if t, ok := p.Value.(time.Time); ok {
-			return t.Format("2006-01-02T15:04:05")
+		if t, ok := p.asTime(time.RFC3339, "2006-01-02T15:04:05"); ok {
+			f := p.DatetimeFormat
+			if f == "" {
+				f = DefaultDatetimeFormat
+			}
+			return t.Format(ConvertDateFormat(f))
 		}
 	case "multi_select":
 		if arr, ok := p.Value.([]any); ok {
@@ -81,10 +113,32 @@ func (p DisplayProperty) Format() string {
 	return p.Key + ": " + p.FormatValue()
 }
 
-// BuildDisplayProperties assembles display-ready properties. Delegates to QueryService.
+// BuildDisplayProperties assembles display-ready properties. Delegates to QueryService
+// and injects configured date/datetime display formats from vault config.
 func (v *Vault) BuildDisplayProperties(obj *Object) ([]DisplayProperty, error) {
 	if v.Queries == nil {
 		return nil, nil
 	}
-	return v.Queries.BuildDisplayProperties(obj)
+	props, err := v.Queries.BuildDisplayProperties(obj)
+	if err != nil {
+		return nil, err
+	}
+
+	cfg := v.config
+	if cfg != nil {
+		for i := range props {
+			switch props[i].Type {
+			case "date":
+				if cfg.DateFormat != "" {
+					props[i].DateFormat = cfg.DateFormat
+				}
+			case "datetime":
+				if cfg.DatetimeFormat != "" {
+					props[i].DatetimeFormat = cfg.DatetimeFormat
+				}
+			}
+		}
+	}
+
+	return props, nil
 }

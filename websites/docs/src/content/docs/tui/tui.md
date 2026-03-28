@@ -93,7 +93,8 @@ The default mode. Browse objects and types in the sidebar.
 | `/` | Enter search mode |
 | `p` | Toggle properties panel |
 | `w` | Toggle soft wrap |
-| `[`/`]` | Shrink/grow focused panel |
+| `-`/`=` | Shrink/grow focused panel |
+| `.` | Toggle focus mode (full-width body) |
 | `g` | AI generate (describe / tag suggestions) |
 | `Ctrl+E` | AI schema explore |
 | `?`/`h` | Open help popup |

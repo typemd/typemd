@@ -120,7 +120,7 @@ graph LR
 
 | File | Role |
 |------|------|
-| `display.go` | DisplayProperty struct (IsLocal for non-schema non-system properties) + FormatValue/Format rendering + Vault.BuildDisplayProperties facade |
+| `display.go` | DisplayProperty struct (IsLocal for non-schema non-system properties, DateFormat/DatetimeFormat for configurable display) + FormatValue/Format rendering + DefaultDateFormat/DefaultDatetimeFormat constants + Vault.BuildDisplayProperties facade (injects format config) |
 | `doctor.go` | Doctor health check: RunDoctor orchestrator, DoctorReport, issue categories |
 | `doctor_orphan.go` | OrphanDir scanning for objects/ and templates/ without type schemas |
 | `domain_event.go` | Domain event types + EventDispatcher |
@@ -132,7 +132,7 @@ graph LR
 | `local_object_repository_schema.go` | Type schema CRUD and migration |
 | `local_object_repository_template.go` | Template CRUD |
 | `migrate.go` | MigrateObjects (add/remove/rename properties) + MigrateSchemas (enum→select conversion) |
-| `name_template.go` | EvaluateNameTemplate for `{{ date:FORMAT }}` placeholder expansion in name templates |
+| `name_template.go` | EvaluateNameTemplate for `{{ date:FORMAT }}` placeholder expansion in name templates + ConvertDateFormat (YYYY/MM/DD/HH/mm/ss → Go reference time) |
 | `object.go` | Object entity (aggregate root) + IsLocked() + Vault facade methods + GlobObjectIDs (filesystem-only prefix search) |
 | `object_id.go` | ObjectID value object |
 | `name_resolve.go` | buildNameIndex + resolveByName + resolveRelationValue + isFullObjectID for name-to-ID resolution during sync |
@@ -158,7 +158,7 @@ graph LR
 | `ulid.go` | GenerateULID + StripULID + ulidSuffixPattern for ULID generation and stripping |
 | `validate.go` | Vault-wide validators: ValidateAllObjects, ValidateRelations, ValidateRelationReferences, ValidateWikiLinks, ValidateNameUniqueness, ValidateAllSchemas |
 | `vault.go` | Vault facade + lifecycle (Open/Close/Init) |
-| `config.go` | VaultConfig struct (CLIConfig + TUIConfig + AIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
+| `config.go` | VaultConfig struct (DateFormat + DatetimeFormat + CLIConfig + TUIConfig + AIConfig) + YAML loading + WriteConfig + DefaultType() + Config() + GetConfigValue/SetConfigValue/ConfigKeys (key registry) |
 | `ai/provider.go` | Provider interface + CompletionRequest/CompletionResponse types |
 | `ai/claude_cli.go` | ClaudeCLI provider implementation (subprocess invocation via `claude -p`) + LookupBinary |
 | `ai/openai_compatible.go` | OpenAICompatible provider implementation (HTTP POST to `/v1/chat/completions`) for Ollama, LM Studio, vLLM, etc. |
@@ -175,7 +175,7 @@ graph LR
 
 ### TUI Architecture
 
-The TUI uses a three-panel layout (sidebar, body, properties) with a **right panel mode** system:
+The TUI uses a three-panel layout (sidebar, body, properties) with a **focus mode** (`.` key) that hides sidebar and properties for a single full-width body panel. The layout also has a **right panel mode** system:
 
 - `panelEmpty` — no content selected
 - `panelObject` — object detail view (body + properties)
@@ -207,7 +207,7 @@ The TUI uses a **toast notification system** (`widget.ToastModel` in `tui/widget
 - Wiki-links: `[[type/name-ulid]]`, `[[type/name]]`, or `[[name]]` syntax in markdown body, with backlink tracking. Shorthand forms are resolved during sync and written back as full IDs.
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch; stores `selected_object_id` or `selected_type_name`, expanded groups, scroll offset, panel widths, props visibility, and optionally view mode state — `view_type_name`, `view_name`, `view_cursor`, `view_scroll`, `view_expanded_groups` — when the TUI was in view mode on exit)
-- Vault config: `.typemd/config.yaml` (interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`; `tui.toast.*` configures toast notifications — `position`, `duration_ms`, `dismiss_key`, `show_warnings`, `show_success`; `ai.enabled` enables AI features, `ai.default` selects active provider, `ai.providers` maps named provider configs with `type` (`cli`/`openai-compatible`), `base_url`, `model`, `api_key`; `ai.prompts.*` customizes system prompts, `ai.explore.sample_count`/`ai.explore.body_truncate` configures schema explore sampling)
+- Vault config: `.typemd/config.yaml` (top-level `date_format`/`datetime_format` control date display formatting with tokens `YYYY`/`MM`/`DD`/`HH`/`mm`/`ss`, defaults `YYYY-MM-DD` and `YYYY-MM-DD HH:mm:ss`; interface-layer namespacing; `cli.default_type` sets the default type for `tmd object create`; `tmd init` always creates this with `default_type: page`; `tui.toast.*` configures toast notifications — `position`, `duration_ms`, `dismiss_key`, `show_warnings`, `show_success`; `ai.enabled` enables AI features, `ai.default` selects active provider, `ai.providers` maps named provider configs with `type` (`cli`/`openai-compatible`), `base_url`, `model`, `api_key`; `ai.prompts.*` customizes system prompts, `ai.explore.sample_count`/`ai.explore.body_truncate` configures schema explore sampling)
 - Embedded skills: `core/skills/*/SKILL.md` (embedded in binary via `//go:embed`; available via `tmd instructions` — explore, importer)
 - Skill overrides: `.typemd/instructions/<skill>.md` (optional, vault-level overrides for embedded skills; follows same SKILL.md frontmatter format with `name` and `description` fields)
 - Starter type templates: `core/starters/*.yaml` (embedded in binary via `//go:embed`; offered during `tmd init` as opt-in type schemas — idea, note, book)

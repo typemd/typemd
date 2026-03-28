@@ -329,6 +329,12 @@ func (m model) View() tea.View {
 	}
 	bdr := 2 // left+right or top+bottom border size
 
+	// Focus mode: body takes full width, sidebar and props hidden
+	if m.focusMode {
+		leftW = 0
+		bodyW = m.width - bdr
+	}
+
 	// When an object is selected, the title panel takes vertical space from body/props
 	hasTitlePanel := m.hasTitlePanel()
 	bodyPropsContentH := contentH
@@ -398,7 +404,11 @@ func (m model) View() tea.View {
 	if m.rightPanel == panelTemplate && m.tmplEditor != nil {
 		// Template detail view — uses full right-side width like type editor
 		te := m.tmplEditor
-		editorW := m.width - m.leftWidth() - 4
+		leftBorders := bdr
+		if m.focusMode {
+			leftBorders = 0
+		}
+		editorW := m.width - leftW - leftBorders - bdr
 		if editorW < 10 {
 			editorW = 10
 		}
@@ -425,7 +435,11 @@ func (m model) View() tea.View {
 		)
 	} else if m.rightPanel == panelTypeEditor && m.typeEditor != nil && m.createType == nil {
 		// Type editor uses full right-side width (no props panel)
-		editorW := m.width - m.leftWidth() - 4 // left border + body border
+		leftBorders := bdr
+		if m.focusMode {
+			leftBorders = 0
+		}
+		editorW := m.width - leftW - leftBorders - bdr
 		if editorW < 10 {
 			editorW = 10
 		}
@@ -471,8 +485,8 @@ func (m model) View() tea.View {
 
 		rightSide = bodyStyle.Render(bodyPanelContent)
 
-		// Properties panel (optional)
-		if m.propsVisible {
+		// Properties panel (optional, hidden in focus mode)
+		if m.propsVisible && !m.focusMode {
 			propsStyle := lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).
 				Width(m.propsWidth + bdr).
@@ -519,10 +533,15 @@ func (m model) View() tea.View {
 	}
 
 	// Compose left + right
-	panels := lipgloss.JoinHorizontal(lipgloss.Top,
-		leftStyle.Render(leftContent),
-		rightSide,
-	)
+	var panels string
+	if m.focusMode {
+		panels = rightSide
+	} else {
+		panels = lipgloss.JoinHorizontal(lipgloss.Top,
+			leftStyle.Render(leftContent),
+			rightSide,
+		)
+	}
 
 	// Help bar
 	var helpBar string

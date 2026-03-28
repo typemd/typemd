@@ -11,6 +11,7 @@ type keyMap struct {
 	Quit          key.Binding
 	GrowPanel     key.Binding
 	ShrinkPanel   key.Binding
+	FocusMode     key.Binding
 	ToggleProps   key.Binding
 	ToggleWrap    key.Binding
 	Help          key.Binding
@@ -31,8 +32,9 @@ var keys = keyMap{
 	Tab:         key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "switch panel")),
 	Search:      key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
 	Quit:        key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
-	GrowPanel:   key.NewBinding(key.WithKeys("]"), key.WithHelp("]", "grow panel")),
-	ShrinkPanel: key.NewBinding(key.WithKeys("["), key.WithHelp("[", "shrink panel")),
+	GrowPanel:   key.NewBinding(key.WithKeys("="), key.WithHelp("=", "grow panel")),
+	ShrinkPanel: key.NewBinding(key.WithKeys("-"), key.WithHelp("-", "shrink panel")),
+	FocusMode:   key.NewBinding(key.WithKeys("."), key.WithHelp(".", "focus mode")),
 	ToggleProps: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "toggle properties")),
 	ToggleWrap:  key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "toggle wrap")),
 	Help:        key.NewBinding(key.WithKeys("?", "h"), key.WithHelp("?/h", "help")),

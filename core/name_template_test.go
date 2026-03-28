@@ -19,9 +19,9 @@ func TestConvertDateFormat(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			got := convertDateFormat(tt.input)
+			got := ConvertDateFormat(tt.input)
 			if got != tt.expected {
-				t.Errorf("convertDateFormat(%q) = %q, want %q", tt.input, got, tt.expected)
+				t.Errorf("ConvertDateFormat(%q) = %q, want %q", tt.input, got, tt.expected)
 			}
 		})
 	}

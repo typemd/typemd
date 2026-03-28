@@ -402,18 +402,13 @@ func (pe *propEditor) Render(focused bool) string {
 		}
 
 		// Normal display
-		prefix := " "
-		if isCursor {
-			prefix = "▸"
-		}
-
 		formatted := item.dp.Format()
 		if isCursor {
-			formatted = highlightStyle.Render(prefix + " " + formatted)
+			formatted = highlightStyle.Render("▸" + formatted)
 		} else if !item.editable {
-			formatted = dimStyle.Render(prefix + " " + formatted)
+			formatted = dimStyle.Render(" " + formatted)
 		} else {
-			formatted = prefix + " " + formatted
+			formatted = " " + formatted
 		}
 
 		b.WriteString(formatted + "\n")
@@ -427,11 +422,11 @@ func (pe *propEditor) renderPickerItem(item propItem, isCursor bool) string {
 	var b strings.Builder
 
 	// Property label
-	prefix := " "
 	if isCursor {
-		prefix = "▸"
+		b.WriteString(fmt.Sprintf("▸%s:\n", item.dp.Key))
+	} else {
+		b.WriteString(fmt.Sprintf(" %s:\n", item.dp.Key))
 	}
-	b.WriteString(fmt.Sprintf("%s %s:\n", prefix, item.dp.Key))
 
 	// Options list
 	for i, opt := range pe.pickerOptions {
@@ -446,15 +441,15 @@ func (pe *propEditor) renderPickerItem(item propItem, isCursor bool) string {
 				check = "☑"
 			}
 			if i == pe.pickerCursor {
-				b.WriteString(highlightStyle.Render(fmt.Sprintf("   %s %s", check, label)) + "\n")
+				b.WriteString(highlightStyle.Render(fmt.Sprintf("  %s %s", check, label)) + "\n")
 			} else {
-				b.WriteString(fmt.Sprintf("   %s %s\n", check, label))
+				b.WriteString(fmt.Sprintf("  %s %s\n", check, label))
 			}
 		} else {
 			if i == pe.pickerCursor {
-				b.WriteString(highlightStyle.Render(fmt.Sprintf("   ▸ %s", label)) + "\n")
+				b.WriteString(highlightStyle.Render(fmt.Sprintf("  ▸ %s", label)) + "\n")
 			} else {
-				b.WriteString(fmt.Sprintf("     %s\n", label))
+				b.WriteString(fmt.Sprintf("    %s\n", label))
 			}
 		}
 	}
