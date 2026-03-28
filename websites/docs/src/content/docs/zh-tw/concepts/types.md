@@ -42,6 +42,8 @@ properties:
 
 可選的 `version` 欄位是 semver 風格的 `"major.minor"` 字串，用於追蹤 schema 演進（例如 `version: "1.0"`）。未設定時預設為 `"0.0"`（未版本化）。Major 數字用於不相容的變更，minor 數字用於向後相容的變更，為未來的遷移工具奠定基礎。
 
+可選的 `unique` 欄位設為 `true` 時，會強制同一類型中不能有兩個物件使用相同的名稱。詳情請參閱下方的[唯一性約束](#唯一性約束)。
+
 ## 為什麼需要 Type
 
 Type 為你的知識庫帶來**一致性**和**可查詢性**：
@@ -64,6 +66,27 @@ TypeMD 有兩個內建 Type：
 關於標籤的詳細說明，請參閱[標籤](/zh-tw/basics/tags)。
 
 關於 object template 的詳細說明，請參閱[模板](/zh-tw/basics/templates)。
+
+## 唯一性約束
+
+在 type schema 中設定 `unique: true`，可以強制該類型內的名稱必須唯一。啟用後，如果同類型中已經有同名的物件存在，TypeMD 會在建立時拒絕重複的名稱。
+
+```yaml
+# .typemd/types/person/schema.yaml
+name: person
+emoji: 👤
+unique: true
+properties:
+  - name: role
+    type: string
+```
+
+主要行為：
+
+- **以類型為範圍** — 約束僅在單一類型內生效。不同類型的物件可以使用相同名稱（例如，一個名為「john-doe」的 `person` 和一個名為「john-doe」的 `character` 可以同時存在）。
+- **區分大小寫** — 名稱以完全比對的方式判斷。「Go」和「go」被視為不同的名稱，即使在具有唯一性約束的類型中也可以同時存在。
+- **內建 `tag` 類型** — `tag` 類型預設啟用 `unique: true`，確保標籤名稱始終唯一。
+- **驗證** — 執行 `tmd doctor` 或全域驗證時，會檢查具有唯一性約束的類型中是否有重複名稱，並回報違規項目。
 
 ## 屬性型別
 

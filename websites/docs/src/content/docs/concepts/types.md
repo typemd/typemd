@@ -42,6 +42,8 @@ The optional `description` field provides free-text documentation of the type's 
 
 The optional `version` field is a semver-style `"major.minor"` string for tracking schema evolution (e.g., `version: "1.0"`). When omitted, it defaults to `"0.0"` (unversioned). Increment the major number for breaking changes, and the minor number for backward-compatible changes, providing a foundation for future migration tooling.
 
+The optional `unique` field, when set to `true`, enforces that no two objects of the same type can share the same name. See [Unique constraint](#unique-constraint) below for details.
+
 ## Why Types matter
 
 Types give your knowledge base **consistency** and **queryability**:
@@ -64,6 +66,27 @@ Built-in types exist in every vault automatically and cannot be deleted. You can
 For details on tags, see [Tags](/basics/tags).
 
 For details on object templates, see [Templates](/basics/templates).
+
+## Unique constraint
+
+Setting `unique: true` on a type schema enforces name uniqueness within that type. When enabled, TypeMD rejects the creation of a new object if another object of the same type already has the same name.
+
+```yaml
+# .typemd/types/person/schema.yaml
+name: person
+emoji: 👤
+unique: true
+properties:
+  - name: role
+    type: string
+```
+
+Key behaviors:
+
+- **Scoped to type** — The constraint applies within a single type. Two objects of *different* types can share the same name (e.g., a `person` named "john-doe" and a `character` named "john-doe" can coexist).
+- **Case-sensitive** — Names are compared exactly. "Go" and "go" are treated as distinct names, so both are allowed even on a unique type.
+- **Built-in `tag` type** — The `tag` type has `unique: true` by default, ensuring tag names are always unique.
+- **Validation** — Running `tmd doctor` or vault-wide validation checks for duplicate names on unique types and reports any violations.
 
 ## Property types
 

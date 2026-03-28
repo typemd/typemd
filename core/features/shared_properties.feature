@@ -71,6 +71,12 @@ Feature: Shared Properties
     When I validate all schemas
     Then schema "project" should have no errors
 
+  Scenario: Use with description override is accepted
+    Given a shared properties file with "due_date" date and "priority" select properties
+    And a type schema "project" with use "due_date" and description "Project deadline"
+    When I validate all schemas
+    Then schema "project" should have no errors
+
   Scenario: Use with disallowed type field is rejected
     Given a shared properties file with "due_date" date and "priority" select properties
     And a type schema "project" with use "due_date" and disallowed type override
@@ -122,6 +128,12 @@ Feature: Shared Properties
     And a type schema "project" with use "due_date" and emoji "🗓️"
     When I load type "project"
     Then the loaded property "due_date" should have emoji "🗓️"
+
+  Scenario: LoadType resolves use entry with description override
+    Given a shared properties file with described properties
+    And a type schema "project" with use "due_date" and description "Project deadline"
+    When I load type "project"
+    Then the loaded property "due_date" description should be "Project deadline"
 
   Scenario: LoadType resolves mixed use and name properties in order
     Given a shared properties file with "due_date" date and "priority" select properties
