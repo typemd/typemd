@@ -80,27 +80,37 @@ type RelationStats struct {
 }
 
 // VaultStats returns aggregate statistics for all types in the vault.
+// Uses a single query for all objects then groups by type in memory,
+// avoiding N separate queries (which would cause N filesystem walks in fallback mode).
 func (s *QueryService) VaultStats() (*VaultStats, error) {
 	typeNames, err := s.repo.ListSchemas()
 	if err != nil {
 		return nil, fmt.Errorf("list types: %w", err)
 	}
 
+	// Single query for all objects, then group by type
+	allObjects, err := s.Query(nil)
+	if err != nil {
+		return nil, fmt.Errorf("query all: %w", err)
+	}
+
+	byType := make(map[string][]*Object, len(typeNames))
+	for _, obj := range allObjects {
+		byType[obj.Type] = append(byType[obj.Type], obj)
+	}
+
 	stats := &VaultStats{}
 
 	for _, name := range typeNames {
-		results, err := s.index.Query(TypeFilter(name))
-		if err != nil {
-			return nil, fmt.Errorf("query type %s: %w", name, err)
-		}
-		if len(results) == 0 {
+		objects := byType[name]
+		if len(objects) == 0 {
 			continue
 		}
 
 		schema, _ := s.repo.GetSchema(name)
 		summary := TypeSummary{
 			Name:  name,
-			Count: len(results),
+			Count: len(objects),
 		}
 		if schema != nil {
 			summary.Emoji = schema.Emoji
@@ -108,8 +118,8 @@ func (s *QueryService) VaultStats() (*VaultStats, error) {
 		}
 
 		// Find latest updated_at
-		for _, r := range results {
-			if ua, ok := r.Properties[UpdatedAtProperty]; ok {
+		for _, obj := range objects {
+			if ua, ok := obj.Properties[UpdatedAtProperty]; ok {
 				if uaStr, ok := ua.(string); ok {
 					if t, err := time.Parse(time.RFC3339, uaStr); err == nil {
 						if t.After(summary.LastUpdated) {
@@ -121,7 +131,7 @@ func (s *QueryService) VaultStats() (*VaultStats, error) {
 		}
 
 		stats.Types = append(stats.Types, summary)
-		stats.Total += len(results)
+		stats.Total += len(objects)
 	}
 
 	sort.Slice(stats.Types, func(i, j int) bool {
@@ -138,12 +148,11 @@ func (s *QueryService) TypeStats(typeName string) (*TypeStats, error) {
 		return nil, fmt.Errorf("load type %q: %w", typeName, err)
 	}
 
-	results, err := s.index.Query(TypeFilter(typeName))
+	objects, err := s.Query(TypeFilter(typeName))
 	if err != nil {
 		return nil, fmt.Errorf("query type %s: %w", typeName, err)
 	}
 
-	objects := objectResultsToObjects(results)
 	ts := &TypeStats{
 		TypeName: typeName,
 		Emoji:    schema.Emoji,

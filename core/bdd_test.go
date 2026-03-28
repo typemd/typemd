@@ -167,6 +167,8 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initViewCrudSteps(ctx, dc, vcCtx)
 	initQuerySortSteps(ctx, dc)
 	initFilterOperatorSteps(ctx, dc)
+	initFilterMatchSteps(ctx, dc)
+	initSortObjectsSteps(ctx, dc)
 	initStatsSteps(ctx, dc)
 	initSchemaCacheSteps(ctx, dc)
 	initIncrementalSyncSteps(ctx, dc)
@@ -179,6 +181,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initLockSteps(ctx, dc)
 	initLocalPropertySteps(ctx, dc)
 	initDateDisplayFormatSteps(ctx, dc)
+	initQueryFallbackSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

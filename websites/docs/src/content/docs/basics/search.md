@@ -5,7 +5,7 @@ sidebar:
   order: 4
 ---
 
-Search lets you find Objects by matching text across filenames, properties, and body content. It is powered by SQLite FTS5, so results are fast even in large vaults.
+Search lets you find Objects by matching text across filenames, properties, and body content. It is powered by SQLite FTS5, so results are fast even in large vaults. If the SQLite index is unavailable (missing or corrupt), search automatically falls back to case-insensitive substring matching against object names, descriptions, and body text.
 
 ## How it works
 

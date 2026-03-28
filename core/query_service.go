@@ -3,6 +3,7 @@ package core
 import (
 	"fmt"
 	"log/slog"
+	"strings"
 )
 
 // QueryService orchestrates read-side operations.
@@ -53,23 +54,69 @@ func (s *QueryService) Resolve(prefix string) (string, error) {
 }
 
 // Query queries objects using structured filter rules with optional sort.
+// Falls back to filesystem scanning if the index is unavailable.
 func (s *QueryService) Query(filter []FilterRule, sort ...SortRule) ([]*Object, error) {
 	slog.Debug("query", "filters", len(filter))
 	results, err := s.index.Query(filter, sort...)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		return objectResultsToObjects(results), nil
 	}
-	return objectResultsToObjects(results), nil
+
+	// Fallback: scan filesystem and filter in memory
+	slog.Warn("index unavailable, using filesystem fallback", "op", "query", "error", err)
+	objects, walkErr := s.repo.Walk()
+	if walkErr != nil {
+		return nil, fmt.Errorf("fallback walk: %w", walkErr)
+	}
+
+	var filtered []*Object
+	for _, obj := range objects {
+		if MatchFilters(obj, filter) {
+			filtered = append(filtered, obj)
+		}
+	}
+
+	SortObjects(filtered, sort)
+	return filtered, nil
 }
 
 // Search performs full-text search.
+// Falls back to case-insensitive substring matching if the index is unavailable.
 func (s *QueryService) Search(keyword string) ([]*Object, error) {
 	results, err := s.index.Search(keyword)
-	if err != nil {
-		return nil, err
+	if err == nil {
+		slog.Debug("search", "keyword", keyword, "results", len(results))
+		return objectResultsToObjects(results), nil
 	}
-	slog.Debug("search", "keyword", keyword, "results", len(results))
-	return objectResultsToObjects(results), nil
+
+	// Fallback: scan filesystem and substring match
+	slog.Warn("index unavailable, using filesystem fallback", "op", "search", "error", err)
+	keyword = strings.TrimSpace(keyword)
+	if keyword == "" {
+		return nil, nil
+	}
+
+	objects, walkErr := s.repo.Walk()
+	if walkErr != nil {
+		return nil, fmt.Errorf("fallback walk: %w", walkErr)
+	}
+
+	var matched []*Object
+	for _, obj := range objects {
+		if matchesSearch(obj, keyword) {
+			matched = append(matched, obj)
+		}
+	}
+	return matched, nil
+}
+
+// matchesSearch checks if an object matches a search keyword via case-insensitive
+// substring matching against name, description, and body.
+// Note: narrower scope than FTS5 index search, which matches all property values.
+func matchesSearch(obj *Object, keyword string) bool {
+	return containsCI(obj.Properties["name"], keyword) ||
+		containsCI(obj.Properties["description"], keyword) ||
+		containsCI(obj.Body, keyword)
 }
 
 // ListRelations returns all relations for an object.
