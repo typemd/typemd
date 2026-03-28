@@ -504,17 +504,6 @@ func (vm *viewMode) viewColumns() []string {
 	return cols
 }
 
-// truncate shortens a string to fit within maxLen cells, adding ellipsis if needed.
-func truncate(s string, maxLen int) string {
-	return runewidth.Truncate(s, maxLen, "…")
-}
-
-// padRight pads a string with spaces to fill exactly width display cells.
-// Delegates to runewidth.FillRight for CJK/emoji-aware padding.
-func padRight(s string, width int) string {
-	return runewidth.FillRight(s, width)
-}
-
 // displayPropValue formats a property value for table display using the
 // unified DisplayProperty.FormatValue() pipeline.
 func (vm *viewMode) displayPropValue(obj *core.Object, propName string) string {

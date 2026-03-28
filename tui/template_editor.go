@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	"github.com/mattn/go-runewidth"
 	"github.com/typemd/typemd/core"
 	"charm.land/bubbles/v2/textarea"
 	"charm.land/bubbles/v2/textinput"
@@ -494,5 +493,5 @@ func (te *templateEditor) SetSize(width, height, propsW int, propsVisible bool) 
 // titleContent returns the title string for the parent to render in the title panel.
 func (te *templateEditor) titleContent(width int) string {
 	title := fmt.Sprintf(" 📝 %s · %s", te.typeName, te.templateName)
-	return runewidth.Truncate(title, width, "…")
+	return truncate(title, width)
 }

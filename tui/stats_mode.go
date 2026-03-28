@@ -372,7 +372,7 @@ func (sm *statsMode) renderDistribution(dist map[string]int, barMaxW int) []stri
 		bar := renderBar(e.count, maxCount, barMaxW)
 		name := e.name
 		if runewidth.StringWidth(name) > maxLabelW {
-			name = runewidth.Truncate(name, maxLabelW, "…")
+			name = truncate(name, maxLabelW)
 		}
 		lines = append(lines, fmt.Sprintf("    %-*s %s %d", maxLabelW, name, bar, e.count))
 	}

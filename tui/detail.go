@@ -31,14 +31,14 @@ func renderTitleContent(obj *core.Object, typeName, emoji string, width int) str
 	title := titlePrefix(emoji, typeName) + " · " + obj.GetName()
 	if !obj.IsLocked() {
 		if width > 0 {
-			title = runewidth.Truncate(title, width, "…")
+			title = truncate(title, width)
 		}
 		return title
 	}
 	badge := " 🔒"
 	badgeW := runewidth.StringWidth(badge)
 	if width > 0 {
-		title = runewidth.Truncate(title, width-badgeW, "…")
+		title = truncate(title, width-badgeW)
 		pad := width - runewidth.StringWidth(title) - badgeW
 		if pad > 0 {
 			title += strings.Repeat(" ", pad)
