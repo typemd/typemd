@@ -4,6 +4,35 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v0.7.0] - 2026-03-28
+
+### Breaking Changes
+
+- Remove `--reindex` Flag — the global `--reindex` flag has been removed; the index now syncs automatically on every vault open, so manual reindexing is no longer needed (#325)
+- Remove Legacy Single-File Type Schema — the old `.typemd/types/<name>.yaml` format is no longer supported; only directory format `.typemd/types/<name>/schema.yaml` is accepted. Run `tmd migrate` on v0.6.0 first if you still have single-file schemas (#273)
+- Panel Resize Keys — remapped from `[`/`]` to `-`/`=`
+
+### Added
+
+- Inline Property Editing — press Enter on any property in the TUI to edit it in-place; supports all property types including string, number, date, select, checkbox, url, and text (#87)
+- Relation Picker — relation properties open a fuzzy-search picker for selecting target objects; supports both single and multiple relations (#88)
+- Table Cell Editing — press Enter on a cell in table view to edit the property value inline, same editing widgets as the properties panel (#316)
+- Date Picker — date and datetime properties use a segmented input with an inline calendar popup for precise date selection (#324)
+- Object Locking — set `locked: true` in frontmatter to prevent accidental edits; the TUI shows a lock indicator and blocks editing on locked objects (#157)
+- Configurable Date Format — set `date_format` and `datetime_format` in `.typemd/config.yaml` to customize how dates are displayed throughout the TUI (#323)
+- Local Properties Section — properties not defined in the type schema are displayed in a visually separated "Local Properties" section in the TUI and preserved during sync (#285)
+- Local LLM Support — configure OpenAI-compatible providers (Ollama, LM Studio, vLLM) via `ai.providers` map in config; multi-provider switching with `ai.default` selector; existing `ai.enabled`/`ai.model` configs auto-migrate (#319)
+- `tmd serve` — new command that starts an HTTP server with a REST API and Vue 3 frontend for browser-based vault access; includes three-theme system (warm/dark/light) (#125)
+- Structured Logging — all packages use `slog` for structured JSON logging; TUI writes to `.typemd/logs/`, CLI uses `--debug` for stderr output (#326)
+- Focus Mode — press `.` in TUI to toggle single full-width body panel
+
+### Fixed
+
+- Template Deletion — the `d` key now correctly deletes templates in the type editor (#317)
+- Property Indentation — property values now align with panel header in the TUI
+
+[v0.7.0]: https://github.com/typemd/typemd/releases/tag/v0.7.0
+
 ## [v0.6.0] - 2026-03-22
 
 ### Added

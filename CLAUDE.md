@@ -12,9 +12,9 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
 - **tui/** — Terminal UI (Bubble Tea)
   - **tui/widget/** — Shared UI primitives (CenteredPopup, OverlayPopup, ToastModel via Layer/Compositor, scroll) used across TUI components
 - **mcp/** — MCP server
-- **web/** — Web UI: Go HTTP server (`tmd serve`) + React frontend (Vite + Tailwind CSS)
-  - **web/frontend/** — React SPA with vault adapter pattern for API abstraction
-- **app/** — Desktop app via Wails + shared React frontend (future)
+- **web/** — Web UI: Go HTTP server (`tmd serve`) + Vue 3 frontend (Vite + Tailwind CSS)
+  - **web/frontend/** — Vue 3 SPA with vault adapter pattern for API abstraction
+- **app/** — Desktop app via Wails + shared Vue 3 frontend (future)
 - **websites/** — Non-Go websites (site, docs, blog)
 - **marketplace/** — Claude Code marketplace plugins (typemd plugin with vault-guide, instructions-guide, explore, and importer skills)
 
@@ -129,9 +129,9 @@ Key sub-models: `typeEditor` (schema editing + wizard + templates), `viewMode` (
 
 ## Web UI Architecture
 
-- **`tmd serve`** starts a Go HTTP server with REST API + embedded React SPA
+- **`tmd serve`** starts a Go HTTP server with REST API + embedded Vue 3 SPA
 - **REST API** (`web/server.go`): endpoints under `/api/` for types, objects, properties, templates (read-write)
-- **React frontend** (`web/frontend/`): Vite + Tailwind CSS, three-panel layout mirroring the TUI (sidebar, body, properties)
+- **Vue 3 frontend** (`web/frontend/`): Vite + Tailwind CSS, three-panel layout mirroring the TUI (sidebar, body, properties), three-theme system (warm/dark/light) with CSS custom properties
 - **Vault adapter** (`web/frontend/src/lib/vault.js`): all API calls go through this single module; swap implementation for different backends
 - **Embedded frontend** (`web/frontend.go`): `//go:embed frontend/dist` bakes the built SPA into the Go binary; `tmd serve` serves it for non-API routes with SPA fallback
 - **Dev mode**: run `tmd serve` (port 3000) + `cd web/frontend && npm run dev` (port 5173, Vite proxies `/api` to 3000)

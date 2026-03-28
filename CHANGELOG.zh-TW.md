@@ -4,6 +4,35 @@
 
 格式依循 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [v0.7.0] - 2026-03-28
+
+### 破壞性變更
+
+- 移除 `--reindex` 旗標 — 全域 `--reindex` 旗標已移除；索引現在在每次開啟 vault 時自動同步，不再需要手動重建索引 (#325)
+- 移除舊版單檔型別 Schema — 不再支援 `.typemd/types/<name>.yaml` 格式；僅接受目錄格式 `.typemd/types/<name>/schema.yaml`。若仍有單檔 schema，請先在 v0.6.0 執行 `tmd migrate` (#273)
+- 面板調整快捷鍵 — 從 `[`/`]` 改為 `-`/`=`
+
+### 新增
+
+- 行內屬性編輯 — 在 TUI 的屬性上按 Enter 即可原地編輯；支援所有屬性型別，包含 string、number、date、select、checkbox、url、text (#87)
+- 關聯選取器 — 關聯屬性開啟模糊搜尋選取器，瀏覽並選取目標物件；支援單值與多值關聯 (#88)
+- 表格儲存格編輯 — 在表格視圖中按 Enter 即可行內編輯儲存格的屬性值，使用與屬性面板相同的編輯元件 (#316)
+- 日期選取器 — date 和 datetime 屬性使用分段輸入搭配行內日曆彈出視窗，精確選取日期 (#324)
+- 物件鎖定 — 在 frontmatter 設定 `locked: true` 防止意外編輯；TUI 顯示鎖定指示並阻擋對已鎖定物件的編輯 (#157)
+- 可設定的日期格式 — 在 `.typemd/config.yaml` 設定 `date_format` 和 `datetime_format`，自訂 TUI 中的日期顯示格式 (#323)
+- 本地屬性區段 — 未在型別 schema 中定義的屬性，在 TUI 中以視覺區隔的「Local Properties」區段顯示，同步時予以保留 (#285)
+- 本地 LLM 支援 — 透過 `ai.providers` 設定 OpenAI 相容的 provider（Ollama、LM Studio、vLLM）；用 `ai.default` 切換 provider；既有的 `ai.enabled`/`ai.model` 設定自動遷移 (#319)
+- `tmd serve` — 新指令，啟動 HTTP 伺服器，提供 REST API 與 Vue 3 Web 前端，透過瀏覽器存取 vault；內建三色主題系統（warm/dark/light）(#125)
+- 結構化日誌 — 所有套件使用 `slog` 進行結構化 JSON 記錄；TUI 寫入 `.typemd/logs/`，CLI 使用 `--debug` 輸出至 stderr (#326)
+- 專注模式 — 在 TUI 中按 `.` 切換單欄全寬的 body 面板
+
+### 修正
+
+- 範本刪除 — 在型別編輯器中按 `d` 鍵現在能正確刪除範本 (#317)
+- 屬性縮排 — 屬性值現在與 TUI 面板標題正確對齊
+
+[v0.7.0]: https://github.com/typemd/typemd/releases/tag/v0.7.0
+
 ## [v0.6.0] - 2026-03-22
 
 ### 新增
