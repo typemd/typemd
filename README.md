@@ -30,6 +30,7 @@ TypeMD lets you think in **Objects** — books, people, ideas, meetings — conn
 - **Full-text search** — find anything across your vault
 - **Structured queries** — filter objects by type, property, or relation
 - **TUI** — Three-panel interface powered by [Bubble Tea](https://github.com/charmbracelet/bubbletea), with inline property editing and auto-refresh on file changes
+- **Web UI** — Browser-based interface via `tmd serve`, with three-panel layout, property editing, and object creation
 - **AI Assist** — generate descriptions, suggest tags, and explore schemas with Claude AI in the TUI
 - **MCP Server** — integrate with AI assistants via Model Context Protocol
 - **Local-first** — everything lives on your machine as plain Markdown files
@@ -100,6 +101,10 @@ tmd relation link book/golang-in-action author person/alan-donovan
 tmd format                                # normalize frontmatter & schema formatting
 tmd doctor                                # vault health check
 tmd stats                                 # vault-wide statistics
+
+# Web UI
+tmd serve                                 # starts web UI at http://localhost:3000
+tmd serve -p 8080                         # custom port
 
 # MCP server for AI integration
 tmd mcp
@@ -173,7 +178,7 @@ typemd/
 ├── cmd/        # CLI commands (Cobra)
 ├── tui/        # Terminal UI (Bubble Tea)
 ├── mcp/        # MCP server for AI integration
-├── web/        # Web UI API (planned)
+├── web/        # Web UI — Go HTTP server + React frontend
 ├── site/       # Official website (Astro) → typemd.io
 ├── docs/       # Documentation (Starlight) → docs.typemd.io
 └── app/        # Desktop app (planned)
@@ -185,6 +190,7 @@ All interfaces share the same `core` library.
 
 - **Language**: Go
 - **TUI**: [Bubble Tea](https://github.com/charmbracelet/bubbletea) + [Lip Gloss](https://github.com/charmbracelet/lipgloss)
+- **Web UI**: React + [Tailwind CSS](https://tailwindcss.com) + [Vite](https://vite.dev) (embedded in Go binary)
 - **MCP**: [mcp-go](https://github.com/mark3labs/mcp-go) — Model Context Protocol server
 - **Index**: SQLite with FTS5 full-text search
 - **Storage**: Markdown + YAML frontmatter

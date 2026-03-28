@@ -45,12 +45,20 @@ Common types: `feat`, `fix`, `refactor`, `test`, `docs`, `chore`
 ## Prerequisites
 
 - Go 1.25+
+- Node.js 22+ (for web frontend)
 - SQLite (system built-in is fine)
 
 ## Build
 
+The web frontend must be built before `go build` because it is embedded into the Go binary via `//go:embed`.
+
 ```bash
-go build ./...
+# Build everything (frontend + Go)
+make test
+
+# Or step by step:
+cd web/frontend && npm ci && npm run build   # build frontend
+go build ./...                                # build Go (embeds frontend/dist)
 ```
 
 ## Testing

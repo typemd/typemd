@@ -17,6 +17,7 @@ graph TB
         CMD["cmd/ — CLI (Cobra)"]
         TUI["tui/ — Terminal UI (Bubble Tea)"]
         MCP["mcp/ — MCP Server"]
+        WEB["web/ — Web UI (React)"]
     end
 
     subgraph Facade
@@ -47,6 +48,7 @@ graph TB
     CMD --> V
     TUI --> V
     MCP --> V
+    WEB --> V
     V --> OS
     V --> QS
     V --> PJ
@@ -152,7 +154,7 @@ The interface-based design enables multiple storage backends:
 
 | Platform | ObjectRepository | ObjectIndex |
 |----------|-----------------|-------------|
-| CLI / TUI | `LocalObjectRepository` (local files) | `SQLiteObjectIndex` (SQLite) |
+| CLI / TUI / Web UI | `LocalObjectRepository` (local files) | `SQLiteObjectIndex` (SQLite) |
 | try.typemd.io | `GitHubObjectRepository` (GitHub API) | `InMemoryObjectIndex` |
 | Desktop (Wails) | `LocalObjectRepository` | `SQLiteObjectIndex` |
 

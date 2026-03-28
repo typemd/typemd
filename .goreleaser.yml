@@ -1,5 +1,9 @@
 version: 2
 
+before:
+  hooks:
+    - cmd: bash -c "cd web/frontend && npm ci && npm run build"
+
 builds:
   - main: ./cmd/tmd
     binary: tmd
