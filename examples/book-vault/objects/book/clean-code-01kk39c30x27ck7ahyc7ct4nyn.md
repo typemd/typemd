@@ -1,11 +1,12 @@
 ---
 name: 'Clean Code: A Handbook of Agile Software Craftsmanship'
+updated_at: "2026-03-28T12:16:12+08:00"
 tags:
     - programming
     - refactoring
 status: reading
 rating: 4
-published: "2008-08-01"
+published: "2026-03-24"
 favorite: false
 author: person/robert-martin-01kk39c30y47xb1dvbs8ywqv50
 ---
