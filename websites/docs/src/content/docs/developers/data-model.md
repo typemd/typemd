@@ -45,13 +45,13 @@ TypeMD provides two query paths:
 
 ### Structured queries
 
-The query pipeline uses structured `FilterRule` conditions to filter Objects. Each rule specifies a property, an operator, and a value. Queries run against the SQLite index for performance, returning lightweight `ObjectResult` projections rather than full Object entities.
+The query pipeline uses structured `FilterRule` conditions to filter Objects. Each rule specifies a property, an operator, and a value. Queries run against the SQLite index for performance, returning lightweight `ObjectResult` projections rather than full Object entities. If the SQLite index is unavailable, queries automatically fall back to filesystem scanning with in-memory filter matching using the same operators.
 
 Filter rules are used programmatically through `Vault.QueryObjects()` and in view configurations (`.typemd/types/<name>/views/<view>.yaml`).
 
 ### Full-text search
 
-Use `tmd search` to search across filenames, properties, and body content. Powered by SQLite FTS5:
+Use `tmd search` to search across filenames, properties, and body content. Powered by SQLite FTS5, with automatic fallback to case-insensitive substring matching when the index is unavailable:
 
 ```bash
 tmd search "concurrency"

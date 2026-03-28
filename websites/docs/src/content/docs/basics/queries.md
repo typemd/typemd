@@ -53,6 +53,10 @@ filter:
 
 Multiple filters are combined with AND logic.
 
+## Fallback mode
+
+If the SQLite index is unavailable (missing or corrupt), queries automatically fall back to filesystem scanning with in-memory filter matching. The fallback path supports all the same operators listed above, ensuring consistent results. Performance is degraded (O(n) file reads instead of indexed queries), but operations complete successfully. A warning is logged when fallback is triggered.
+
 ## Sorting
 
 Queries support sorting by property values. When used via the TUI [view mode](/tui/tui#view-mode--table-display), sort rules are defined in the view configuration:
