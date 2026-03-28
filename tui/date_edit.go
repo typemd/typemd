@@ -32,6 +32,12 @@ var (
 	dateCalTodayStyle     = lipgloss.NewStyle().Bold(true).Underline(true)
 )
 
+// Calendar overlay dimensions: header(1) + weekday header(1) + 6 week rows = 8 lines content.
+const (
+	calGridWidth  = 20 // "Mo Tu We Th Fr Sa Su"
+	calGridHeight = 8  // header + weekday header + 6 week rows
+)
+
 // dateEdit is a shared date editing widget used by both propEditor and cellEdit.
 type dateEdit struct {
 	mode     dateEditMode
@@ -370,19 +376,17 @@ func (de *dateEdit) viewCalendar() string {
 	y, m := de.date.Year(), de.date.Month()
 	today := localToday()
 
-	// Grid width: "Mo Tu We Th Fr Sa Su" = 20 chars
-	const gridWidth = 20
+	// Build rows: header, weekday header, then 6 week rows (fixed).
+	var rows []string
 
-	var b strings.Builder
-
-	// Month header — centered over the grid
+	// Month header — centered
 	header := fmt.Sprintf("%s %d", m.String()[:3], y)
-	pad := (gridWidth - len(header)) / 2
+	pad := (calGridWidth - len(header)) / 2
 	if pad < 0 {
 		pad = 0
 	}
-	b.WriteString(strings.Repeat(" ", pad) + header + "\n")
-	b.WriteString("Mo Tu We Th Fr Sa Su\n")
+	rows = append(rows, strings.Repeat(" ", pad)+header)
+	rows = append(rows, "Mo Tu We Th Fr Sa Su")
 
 	first := time.Date(y, m, 1, 0, 0, 0, 0, time.Local)
 	offset := int(first.Weekday())
@@ -392,11 +396,15 @@ func (de *dateEdit) viewCalendar() string {
 	offset--
 
 	lastDay := daysInMonth(y, m)
-	const maxWeeks = 6
 
-	weekCount := 0
+	// Build week rows
+	var row strings.Builder
+	col := 0
+
+	// Leading blanks
 	for i := 0; i < offset; i++ {
-		b.WriteString("   ")
+		row.WriteString("   ")
+		col++
 	}
 
 	for day := 1; day <= lastDay; day++ {
@@ -407,36 +415,35 @@ func (de *dateEdit) viewCalendar() string {
 		isToday := dayDate.Equal(today)
 
 		if isCursor {
-			b.WriteString(dateCalCursorStyle.Render(dayStr))
+			row.WriteString(dateCalCursorStyle.Render(dayStr))
 		} else if isToday {
-			b.WriteString(dateCalTodayStyle.Render(dayStr))
+			row.WriteString(dateCalTodayStyle.Render(dayStr))
 		} else {
-			b.WriteString(dayStr)
+			row.WriteString(dayStr)
 		}
+		col++
 
-		weekday := int(dayDate.Weekday())
-		if weekday == 0 {
-			weekday = 7
-		}
-		if weekday == 7 {
-			weekCount++
-			if day < lastDay {
-				b.WriteString("\n")
-			}
+		if col == 7 {
+			rows = append(rows, row.String())
+			row.Reset()
+			col = 0
 		} else if day < lastDay {
-			b.WriteString(" ")
+			row.WriteString(" ")
 		}
 	}
-	// Count the last (possibly partial) week
-	weekCount++
-
-	// Pad to fixed 6 weeks so popup height is stable
-	for weekCount < maxWeeks {
-		b.WriteString("\n")
-		weekCount++
+	// Flush last partial row
+	if col > 0 {
+		rows = append(rows, row.String())
 	}
 
-	return b.String()
+	// Pad to fixed calGridHeight (header + weekday + 6 weeks)
+	for len(rows) < calGridHeight {
+		rows = append(rows, "")
+	}
+
+	return lipgloss.NewStyle().Width(calGridWidth).Height(calGridHeight).Render(
+		strings.Join(rows, "\n"),
+	)
 }
 
 func daysInMonth(year int, month time.Month) int {
