@@ -20,6 +20,8 @@ const (
 	propModeMultiPick                              // multi_select option picker open
 	propModeRelationPick                           // single-value relation picker open
 	propModeRelationMultiPick                      // multi-value relation picker open
+	propModeDateSegment                            // date picker segmented input mode
+	propModeDateCalendar                           // date picker calendar mode
 )
 
 // propEditor manages cursor navigation and inline editing in the properties panel.
@@ -44,6 +46,9 @@ type propEditor struct {
 	relSearch         string              // current search text
 	relChecked        []bool              // for multi-value: which candidates are checked
 	relInitialChecked []bool              // snapshot at picker open for diff calculation
+
+	// Date picker state
+	datePicker *datePicker
 }
 
 // propItem represents a single property row in the editor.
@@ -193,6 +198,8 @@ func (pe *propEditor) activateEdit(vault *core.Vault) tea.Cmd {
 		return pe.activateSelectPicker(item)
 	case "multi_select":
 		return pe.activateMultiPicker(item)
+	case "date":
+		return pe.activateDatePicker(item)
 	default:
 		return pe.activateTextInput(item)
 	}
@@ -262,6 +269,13 @@ func (pe *propEditor) activateMultiPicker(item *propItem) tea.Cmd {
 	return nil
 }
 
+func (pe *propEditor) activateDatePicker(item *propItem) tea.Cmd {
+	pe.mode = propModeDateSegment
+	pe.editIndex = pe.cursor
+	pe.datePicker = newDatePicker(parseDatePickerValue(item.dp.Value))
+	return nil
+}
+
 // cancelEdit cancels the current edit and returns to navigation mode.
 func (pe *propEditor) cancelEdit() {
 	pe.mode = propModeNavigate
@@ -271,6 +285,7 @@ func (pe *propEditor) cancelEdit() {
 	pe.relSearch = ""
 	pe.relChecked = nil
 	pe.relInitialChecked = nil
+	pe.datePicker = nil
 }
 
 // isEditing returns true if the editor is in any editing state.
@@ -354,6 +369,12 @@ func (pe *propEditor) Render(focused bool) string {
 		// If this item is being edited with a textinput
 		if pe.mode == propModeTextInput && i == pe.editIndex {
 			b.WriteString(fmt.Sprintf(" %s: %s\n", item.dp.Key, pe.textInput.View()))
+			continue
+		}
+
+		// If this item has a date picker open
+		if (pe.mode == propModeDateSegment || pe.mode == propModeDateCalendar) && i == pe.editIndex && pe.datePicker != nil {
+			b.WriteString(fmt.Sprintf(" %s: %s\n", item.dp.Key, pe.datePicker.View()))
 			continue
 		}
 

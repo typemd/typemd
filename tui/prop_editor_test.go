@@ -1,8 +1,10 @@
 package tui
 
 import (
+	"fmt"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/typemd/typemd/core"
 	tea "charm.land/bubbletea/v2"
@@ -407,6 +409,143 @@ func TestModel_PropEscReturnsToSidebar(t *testing.T) {
 
 	if updated.focus != focusLeft {
 		t.Errorf("focus should be focusLeft after Esc, got %d", updated.focus)
+	}
+}
+
+// --- Date picker integration tests ---
+
+func testDateDisplayProps() []core.DisplayProperty {
+	return []core.DisplayProperty{
+		{Key: "name", Value: "Test Object", Type: "string"},
+		{Key: "published_date", Value: time.Date(2025, 6, 15, 0, 0, 0, 0, time.Local), Type: "date"},
+		{Key: "title", Value: "Hello", Type: "string"},
+	}
+}
+
+func testDatePropSchema() *core.TypeSchema {
+	return &core.TypeSchema{
+		Name: "event",
+		Properties: []core.Property{
+			{Name: "published_date", Type: "date"},
+			{Name: "title", Type: "string"},
+		},
+	}
+}
+
+func TestPropEditor_ActivateDatePicker(t *testing.T) {
+	pe := newPropEditor(testDateDisplayProps(), testDatePropSchema())
+
+	// Navigate to the date property
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "published_date" {
+		pe.moveDown()
+	}
+	if pe.currentItem() == nil || pe.currentItem().dp.Key != "published_date" {
+		t.Fatal("could not navigate to published_date property")
+	}
+
+	pe.activateEdit(nil)
+
+	if pe.mode != propModeDateSegment {
+		t.Errorf("expected propModeDateSegment, got %d", pe.mode)
+	}
+	if pe.datePicker == nil {
+		t.Fatal("datePicker should not be nil")
+	}
+	if pe.datePicker.Value() != "2025-06-15" {
+		t.Errorf("expected pre-fill 2025-06-15, got %s", pe.datePicker.Value())
+	}
+}
+
+func TestPropEditor_DatePickerCancelRestores(t *testing.T) {
+	pe := newPropEditor(testDateDisplayProps(), testDatePropSchema())
+
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "published_date" {
+		pe.moveDown()
+	}
+	pe.activateEdit(nil)
+
+	// Modify the date
+	pe.datePicker.incrementSegment(1) // year + 1
+
+	// Cancel
+	pe.cancelEdit()
+
+	if pe.mode != propModeNavigate {
+		t.Error("mode should be propModeNavigate after cancel")
+	}
+	if pe.datePicker != nil {
+		t.Error("datePicker should be nil after cancel")
+	}
+}
+
+func TestPropEditor_DatePickerEmptyPreFillsToday(t *testing.T) {
+	props := []core.DisplayProperty{
+		{Key: "name", Value: "Test", Type: "string"},
+		{Key: "due_date", Value: nil, Type: "date"},
+	}
+	schema := &core.TypeSchema{
+		Name: "task",
+		Properties: []core.Property{
+			{Name: "due_date", Type: "date"},
+		},
+	}
+	pe := newPropEditor(props, schema)
+
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "due_date" {
+		pe.moveDown()
+	}
+	pe.activateEdit(nil)
+
+	if pe.datePicker == nil {
+		t.Fatal("datePicker should not be nil")
+	}
+
+	today := time.Now()
+	val := pe.datePicker.Value()
+	expected := fmt.Sprintf("%04d-%02d-%02d", today.Year(), today.Month(), today.Day())
+	if val != expected {
+		t.Errorf("expected today's date %s for empty value, got %s", expected, val)
+	}
+}
+
+func TestPropEditor_DatePickerModeToggle(t *testing.T) {
+	pe := newPropEditor(testDateDisplayProps(), testDatePropSchema())
+
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "published_date" {
+		pe.moveDown()
+	}
+	pe.activateEdit(nil)
+
+	if pe.mode != propModeDateSegment {
+		t.Error("expected segment mode initially")
+	}
+
+	// Toggle to calendar
+	pe.datePicker.Update(tea.KeyPressMsg{Code: 'c', Text: "c"})
+	// Sync mode
+	if pe.datePicker.Mode() == datePickerCalendar {
+		pe.mode = propModeDateCalendar
+	}
+	if pe.mode != propModeDateCalendar {
+		t.Error("expected calendar mode after toggle")
+	}
+}
+
+func TestPropEditor_DatePickerRender(t *testing.T) {
+	pe := newPropEditor(testDateDisplayProps(), testDatePropSchema())
+
+	for pe.currentItem() != nil && pe.currentItem().dp.Key != "published_date" {
+		pe.moveDown()
+	}
+	pe.activateEdit(nil)
+
+	output := pe.Render(true)
+	if !strings.Contains(output, "published_date") {
+		t.Error("output should contain the property name")
+	}
+	// Should contain day of week
+	if !strings.Contains(output, "Sun") {
+		t.Errorf("output should contain day of week, got: %s", output)
 	}
 }
 

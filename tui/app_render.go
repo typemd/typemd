@@ -191,7 +191,16 @@ func (m model) View() tea.View {
 		)
 
 		helpBar := "  " + vm.HelpBar()
-		screen := m.toast.Overlay(panels+"\n"+helpBar, m.width, m.height)
+		screen := panels + "\n" + helpBar
+
+		// Date calendar overlay (table view cell edit)
+		if vm.cellEdit != nil && vm.cellEdit.mode == cellModeDateCalendar && vm.cellEdit.datePicker != nil {
+			if cal := vm.cellEdit.datePicker.PickerOverlay(); cal != "" {
+				screen = renderDatePickerPopup(screen, cal, m.width, m.height)
+			}
+		}
+
+		screen = m.toast.Overlay(screen, m.width, m.height)
 		v := tea.NewView(screen)
 		v.AltScreen = true
 		return v
@@ -543,6 +552,10 @@ func (m model) View() tea.View {
 		helpBar = "  [AI TAGS]  ↑↓: navigate  |  space: toggle  |  enter: apply  |  esc: cancel"
 	} else if m.propEdit != nil && m.propEdit.isPicking() {
 		helpBar = "  [PICK]  ↑↓: navigate  |  enter: select  |  esc: cancel"
+	} else if m.propEdit != nil && m.propEdit.mode == propModeDateSegment {
+		helpBar = "  [DATE]  ←→: segment  |  ↑↓: adjust  |  c: calendar  |  enter: confirm  |  esc: cancel"
+	} else if m.propEdit != nil && m.propEdit.mode == propModeDateCalendar {
+		helpBar = "  [CAL]  ←→↑↓: navigate  |  H/L: month  |  t: today  |  c: segments  |  enter: confirm  |  esc: cancel"
 	} else if m.propEdit != nil && m.propEdit.isEditing() {
 		helpBar = "  [EDIT]  enter: confirm  |  esc: cancel"
 	} else if m.focus == focusProps && m.propEdit != nil {
@@ -572,6 +585,13 @@ func (m model) View() tea.View {
 	if m.rightPanel == panelTypeEditor && m.typeEditor != nil {
 		if overlay := m.typeEditor.Overlay(m.width, m.height); overlay != "" {
 			screen = overlay
+		}
+	}
+
+	// Date calendar overlay (properties panel)
+	if m.propEdit != nil && m.propEdit.mode == propModeDateCalendar && m.propEdit.datePicker != nil {
+		if cal := m.propEdit.datePicker.PickerOverlay(); cal != "" {
+			screen = renderDatePickerPopup(screen, cal, m.width, m.height)
 		}
 	}
 

@@ -13,9 +13,11 @@ import (
 type cellEditMode int
 
 const (
-	cellModeTextInput  cellEditMode = iota // textinput for string, number, date, datetime, url
-	cellModeSelectPick                     // single-select option picker
-	cellModeMultiPick                      // multi-select option picker
+	cellModeTextInput    cellEditMode = iota // textinput for string, number, datetime, url
+	cellModeSelectPick                       // single-select option picker
+	cellModeMultiPick                        // multi-select option picker
+	cellModeDateSegment                      // date picker segmented input mode
+	cellModeDateCalendar                     // date picker calendar mode
 )
 
 // cellEdit tracks the state of an inline cell edit in the table view.
@@ -32,6 +34,8 @@ type cellEdit struct {
 	pickerOptions []core.Option
 	pickerCursor  int
 	pickerChecked []bool // for multi_select: which options are checked
+
+	datePicker *datePicker
 }
 
 type viewCellToastMsg struct {
@@ -143,6 +147,12 @@ func (vm *viewMode) activateCellEdit(row viewRow, colIdx int, cols []string) tea
 	}
 
 	switch propType {
+	case "date":
+		ce.mode = cellModeDateSegment
+		ce.datePicker = newDatePicker(parseDatePickerValue(obj.Properties[propName]))
+		vm.cellEdit = ce
+		return nil
+
 	case "select":
 		if len(options) == 0 {
 			return nil
@@ -245,6 +255,11 @@ func (vm *viewMode) applyCellValue() tea.Cmd {
 
 		obj.Properties[ce.propName] = parseEditedValue(ce.propType, input)
 
+	case cellModeDateSegment, cellModeDateCalendar:
+		if ce.datePicker != nil {
+			obj.Properties[ce.propName] = ce.datePicker.Value()
+		}
+
 	case cellModeSelectPick:
 		if ce.pickerCursor >= 0 && ce.pickerCursor < len(ce.pickerOptions) {
 			obj.Properties[ce.propName] = ce.pickerOptions[ce.pickerCursor].Value
@@ -300,6 +315,27 @@ func (vm *viewMode) updateCellEdit(msg tea.KeyPressMsg) (*viewMode, tea.Cmd) {
 			ce.textInput, cmd = ce.textInput.Update(msg)
 			return vm, cmd
 		}
+
+	case cellModeDateSegment, cellModeDateCalendar:
+		if ce.datePicker != nil {
+			consumed, done, confirmed := ce.datePicker.Update(msg)
+			if consumed {
+				if done {
+					if confirmed {
+						cmd := vm.applyCellValue()
+						return vm, cmd
+					}
+					vm.cancelCellEdit()
+					return vm, nil
+				}
+				if ce.datePicker.Mode() == datePickerCalendar {
+					ce.mode = cellModeDateCalendar
+				} else {
+					ce.mode = cellModeDateSegment
+				}
+			}
+		}
+		return vm, nil
 
 	case cellModeSelectPick:
 		switch msg.String() {
