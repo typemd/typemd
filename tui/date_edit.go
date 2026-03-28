@@ -392,7 +392,9 @@ func (de *dateEdit) viewCalendar() string {
 	offset--
 
 	lastDay := daysInMonth(y, m)
+	const maxWeeks = 6
 
+	weekCount := 0
 	for i := 0; i < offset; i++ {
 		b.WriteString("   ")
 	}
@@ -416,11 +418,22 @@ func (de *dateEdit) viewCalendar() string {
 		if weekday == 0 {
 			weekday = 7
 		}
-		if weekday == 7 && day < lastDay {
-			b.WriteString("\n")
+		if weekday == 7 {
+			weekCount++
+			if day < lastDay {
+				b.WriteString("\n")
+			}
 		} else if day < lastDay {
 			b.WriteString(" ")
 		}
+	}
+	// Count the last (possibly partial) week
+	weekCount++
+
+	// Pad to fixed 6 weeks so popup height is stable
+	for weekCount < maxWeeks {
+		b.WriteString("\n")
+		weekCount++
 	}
 
 	return b.String()
