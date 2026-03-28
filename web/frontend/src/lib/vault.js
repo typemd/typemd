@@ -48,6 +48,8 @@ const vault = {
     }),
 
   listTemplates: (type) => request(`/templates/${type}`),
+
+  getConfig: () => request("/config"),
 };
 
 export default vault;

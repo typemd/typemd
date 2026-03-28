@@ -44,6 +44,7 @@ func (s *Server) routes() {
 	s.mux.HandleFunc("GET /api/properties/{type}/{slug}", s.handleGetDisplayProperties)
 	s.mux.HandleFunc("PUT /api/properties/{type}/{slug}/{key}", s.handleUpdateProperty)
 	s.mux.HandleFunc("GET /api/templates/{type}", s.handleListTemplates)
+	s.mux.HandleFunc("GET /api/config", s.handleGetConfig)
 
 	if s.frontend != nil {
 		fileServer := http.FileServerFS(s.frontend)
@@ -416,6 +417,19 @@ func (s *Server) handleListTemplates(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, templates)
+}
+
+type webConfigResponse struct {
+	Theme string `json:"theme"`
+}
+
+func (s *Server) handleGetConfig(w http.ResponseWriter, r *http.Request) {
+	cfg := s.vault.Config()
+	theme := cfg.Web.Theme
+	if theme == "" {
+		theme = "warm"
+	}
+	writeJSON(w, http.StatusOK, webConfigResponse{Theme: theme})
 }
 
 func writeJSON(w http.ResponseWriter, status int, v any) {

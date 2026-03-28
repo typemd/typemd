@@ -21,6 +21,12 @@ type VaultConfig struct {
 	CLI            CLIConfig `yaml:"cli"`
 	TUI            TUIConfig `yaml:"tui,omitempty"`
 	AI             AIConfig  `yaml:"ai,omitempty"`
+	Web            WebConfig `yaml:"web,omitempty"`
+}
+
+// WebConfig holds web UI configuration.
+type WebConfig struct {
+	Theme string `yaml:"theme,omitempty"` // "warm" (default), "dark", or "light"
 }
 
 // AIConfig holds AI-specific configuration.
@@ -234,6 +240,11 @@ var configKeyRegistry = map[string]configKeyEntry{
 			cfg.AI.Explore.BodyTruncate = n
 		},
 		Default: "500",
+	},
+	"web.theme": {
+		Get:     func(cfg *VaultConfig) string { return cfg.Web.Theme },
+		Set:     func(cfg *VaultConfig, value string) { cfg.Web.Theme = value },
+		Default: "warm",
 	},
 }
 
