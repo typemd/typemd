@@ -2,7 +2,6 @@ package tui
 
 import (
 	"fmt"
-	"time"
 
 	"github.com/typemd/typemd/core"
 	"github.com/typemd/typemd/tui/widget"
@@ -150,11 +149,7 @@ func (vm *viewMode) activateCellEdit(row viewRow, colIdx int, cols []string) tea
 	switch propType {
 	case "date":
 		ce.mode = cellModeDateSegment
-		var value time.Time
-		if t, ok := obj.Properties[propName].(time.Time); ok {
-			value = t
-		}
-		ce.dateEdit = newDateEdit(value)
+		ce.dateEdit = newDateEdit(parseDateValue(obj.Properties[propName]))
 		vm.cellEdit = ce
 		return nil
 

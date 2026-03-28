@@ -50,6 +50,20 @@ func localToday() time.Time {
 	return time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, time.Local)
 }
 
+// parseDateValue extracts a time.Time from a property value that may be
+// time.Time, string ("2006-01-02"), or nil.
+func parseDateValue(v any) time.Time {
+	switch val := v.(type) {
+	case time.Time:
+		return val
+	case string:
+		if t, err := time.Parse("2006-01-02", val); err == nil {
+			return t
+		}
+	}
+	return time.Time{}
+}
+
 // newDateEdit creates a date picker initialized with the given value.
 // If value is zero, today's date is used.
 func newDateEdit(value time.Time) *dateEdit {

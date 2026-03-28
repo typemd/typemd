@@ -29,6 +29,33 @@ func TestNewDateEdit_PreFillToday(t *testing.T) {
 	}
 }
 
+func TestParseDateValue(t *testing.T) {
+	// time.Time
+	tv := time.Date(2025, 3, 15, 0, 0, 0, 0, time.Local)
+	got := parseDateValue(tv)
+	if got.Year() != 2025 || got.Month() != 3 || got.Day() != 15 {
+		t.Errorf("time.Time: expected 2025-03-15, got %v", got)
+	}
+
+	// string
+	got = parseDateValue("2024-12-25")
+	if got.Year() != 2024 || got.Month() != 12 || got.Day() != 25 {
+		t.Errorf("string: expected 2024-12-25, got %v", got)
+	}
+
+	// nil → zero
+	got = parseDateValue(nil)
+	if !got.IsZero() {
+		t.Errorf("nil: expected zero time, got %v", got)
+	}
+
+	// invalid string → zero
+	got = parseDateValue("not-a-date")
+	if !got.IsZero() {
+		t.Errorf("invalid string: expected zero time, got %v", got)
+	}
+}
+
 func TestNewDateEdit_PreFillExisting(t *testing.T) {
 	v := time.Date(2025, 3, 15, 0, 0, 0, 0, time.Local)
 	de := newDateEdit(v)

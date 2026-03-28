@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
-	"time"
 
 	"github.com/typemd/typemd/core"
 	"charm.land/bubbles/v2/textinput"
@@ -275,11 +274,7 @@ func (pe *propEditor) activateDateEdit(item *propItem) tea.Cmd {
 	pe.mode = propModeDateSegment
 	pe.editIndex = pe.cursor
 
-	var value time.Time
-	if t, ok := item.dp.Value.(time.Time); ok {
-		value = t
-	}
-	pe.dateEdit = newDateEdit(value)
+	pe.dateEdit = newDateEdit(parseDateValue(item.dp.Value))
 	return nil
 }
 
