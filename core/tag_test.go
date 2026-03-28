@@ -77,9 +77,12 @@ func TestSyncIndex_TagRelationsWritten(t *testing.T) {
 	v.SaveObject(book)
 
 	// Sync
-	_, err := v.SyncIndex()
+	events, _, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex error = %v", err)
+		t.Fatalf("Reconcile error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project error = %v", err)
 	}
 
 	// Check relations table
@@ -108,9 +111,12 @@ func TestSyncIndex_AutoCreateTag(t *testing.T) {
 	book.Properties[TagsProperty] = []any{"tag/auto-created"}
 	v.SaveObject(book)
 
-	_, err := v.SyncIndex()
+	events, _, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex error = %v", err)
+		t.Fatalf("Reconcile error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project error = %v", err)
 	}
 
 	// Check that the auto-created tag exists
@@ -149,9 +155,12 @@ func TestSyncIndex_TagPreservedInFiltering(t *testing.T) {
 	content := "---\nname: test-book\ntags:\n  - " + tag.ID + "\ntitle: Test\n---\n"
 	os.WriteFile(objPath, []byte(content), 0644)
 
-	_, err := v.SyncIndex()
+	events, _, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex error = %v", err)
+		t.Fatalf("Reconcile error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project error = %v", err)
 	}
 
 	// Read back from DB

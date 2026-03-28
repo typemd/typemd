@@ -26,8 +26,12 @@ func TestVault_SyncIndex_WikiLinks(t *testing.T) {
 	os.WriteFile(bookPath, []byte(body), 0644)
 
 	// Sync
-	if _, err := v.SyncIndex(); err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+	events, _, err := v.Reconcile()
+	if err != nil {
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
 	// Verify wikilinks table has the link
@@ -70,8 +74,12 @@ func TestVault_SyncIndex_WikiLinks_BrokenLink(t *testing.T) {
 	bookPath := v.ObjectPath(book.Type, book.Filename)
 	os.WriteFile(bookPath, []byte("---\ntitle: Clean Code\n---\n\nSee [[person/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj]].\n"), 0644)
 
-	if _, err := v.SyncIndex(); err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+	events, _, err := v.Reconcile()
+	if err != nil {
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
 	links, err := v.ListWikiLinks(book.ID)
@@ -104,11 +112,13 @@ func TestVault_SyncIndex_WikiLinks_Updated(t *testing.T) {
 	// First sync: link to alice
 	bookPath := v.ObjectPath(book.Type, book.Filename)
 	os.WriteFile(bookPath, []byte(fmt.Sprintf("---\ntitle: Clean Code\n---\n\nBy [[%s]].\n", personA.ID)), 0644)
-	v.SyncIndex()
+	ev1, _, _ := v.Reconcile()
+	v.Project(ev1)
 
 	// Second sync: change link to bob
 	os.WriteFile(bookPath, []byte(fmt.Sprintf("---\ntitle: Clean Code\n---\n\nBy [[%s]].\n", personB.ID)), 0644)
-	v.SyncIndex()
+	ev2, _, _ := v.Reconcile()
+	v.Project(ev2)
 
 	links, err := v.ListWikiLinks(book.ID)
 	if err != nil {
@@ -146,7 +156,8 @@ func TestVault_SyncIndex_WikiLinks_DisplayText(t *testing.T) {
 	body := fmt.Sprintf("---\ntitle: Clean Code\n---\n\nBy [[%s|Uncle Bob]].\n", person.ID)
 	os.WriteFile(bookPath, []byte(body), 0644)
 
-	v.SyncIndex()
+	ev, _, _ := v.Reconcile()
+	v.Project(ev)
 
 	links, err := v.ListWikiLinks(book.ID)
 	if err != nil {
@@ -174,11 +185,13 @@ func TestVault_SyncIndex_WikiLinks_CleanedOnObjectDeletion(t *testing.T) {
 	bookPath := v.ObjectPath(book.Type, book.Filename)
 	body := fmt.Sprintf("---\ntitle: Clean Code\n---\n\nBy [[%s]].\n", person.ID)
 	os.WriteFile(bookPath, []byte(body), 0644)
-	v.SyncIndex()
+	ev1, _, _ := v.Reconcile()
+	v.Project(ev1)
 
 	// Delete the book
 	os.Remove(bookPath)
-	v.SyncIndex()
+	ev2, _, _ := v.Reconcile()
+	v.Project(ev2)
 
 	// Person should have no backlinks
 	backlinks, err := v.ListBacklinks(person.ID)
@@ -235,7 +248,8 @@ func TestVault_ListBacklinks_MultipleSourcesSorted(t *testing.T) {
 	os.WriteFile(v.ObjectPath(noteB.Type, noteB.Filename),
 		[]byte(fmt.Sprintf("---\ntitle: Beta\n---\n\nSee [[%s]].\n", target.ID)), 0644)
 
-	v.SyncIndex()
+	ev, _, _ := v.Reconcile()
+	v.Project(ev)
 
 	backlinks, err := v.ListBacklinks(target.ID)
 	if err != nil {

@@ -10,7 +10,7 @@ import (
 
 type relationSyncContext struct {
 	dc         *domainContext
-	syncResult *SyncResult
+	syncResult *ReconcileResult
 }
 
 func newRelationSyncContext(dc *domainContext) *relationSyncContext {
@@ -153,7 +153,10 @@ func (rsc *relationSyncContext) aPersonExistsWithBooksReferencesToBothBooks(pers
 // ── Action steps ────────────────────────────────────────────────────
 
 func (rsc *relationSyncContext) iSyncTheIndex() {
-	result, err := rsc.dc.vault.SyncIndex()
+	events, result, err := rsc.dc.vault.Reconcile()
+	if err == nil {
+		err = rsc.dc.vault.Project(events)
+	}
 	rsc.syncResult = result
 	rsc.dc.lastErr = err
 }

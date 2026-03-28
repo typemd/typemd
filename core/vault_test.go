@@ -253,7 +253,7 @@ func TestVault_Open_SkipSyncWhenIndexPopulated(t *testing.T) {
 	}
 	v.Close()
 
-	// Create a second object on disk that would be picked up by SyncIndex
+	// Create a second object on disk that would be picked up by Reconcile
 	bookDir := filepath.Join(dir, "objects", "book")
 	if err := os.MkdirAll(bookDir, 0755); err != nil {
 		t.Fatalf("MkdirAll() error = %v", err)

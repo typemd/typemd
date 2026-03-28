@@ -53,7 +53,11 @@ properties:
 		return err
 	}
 	cc.vault.InvalidateSchemaCache()
-	if _, err := cc.vault.SyncIndex(); err != nil {
+	events, _, err := cc.vault.Reconcile()
+	if err != nil {
+		return err
+	}
+	if err := cc.vault.Project(events); err != nil {
 		return err
 	}
 

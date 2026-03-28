@@ -497,9 +497,12 @@ func TestSyncIndex_DoesNotAddTimestampsToExistingObjects(t *testing.T) {
 	os.WriteFile(objPath, []byte(content), 0644)
 
 	// Sync
-	_, err := v.SyncIndex()
+	events, _, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
 	// Read file back — should not have timestamps

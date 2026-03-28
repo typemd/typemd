@@ -85,7 +85,8 @@ func (dc *domainContext) aObjectNamedExistsWithRawProperty(typeName, name, prop,
 		panic(fmt.Sprintf("saveObjectFile failed: %v", err))
 	}
 	// Re-sync to update DB
-	dc.vault.SyncIndex()
+	events, _, _ := dc.vault.Reconcile()
+	dc.vault.Project(events)
 }
 
 func (dc *domainContext) iValidateTheObjectAgainstItsSchema() {

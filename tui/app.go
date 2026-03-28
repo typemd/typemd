@@ -570,16 +570,19 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 	}
 
 	// Sync filesystem to DB — incremental when paths available, full otherwise
-	var result *core.SyncResult
+	var result *core.ReconcileResult
 	if len(paths) > 0 {
-		var err error
-		result, err = m.vault.SyncFiles(paths)
+		events, r, err := m.vault.ReconcileFiles(paths)
 		if err != nil {
 			// Fallback to full sync on error
-			result, _ = m.vault.SyncIndex()
+			events, r, _ = m.vault.Reconcile()
 		}
+		result = r
+		m.vault.Project(events)
 	} else {
-		result, _ = m.vault.SyncIndex()
+		events, r, _ := m.vault.Reconcile()
+		result = r
+		m.vault.Project(events)
 	}
 
 	m.rebuildGroups()

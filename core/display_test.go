@@ -142,7 +142,8 @@ func TestBuildDisplayPropertiesWithBacklinks(t *testing.T) {
 	// noteA links to noteB via wiki-link
 	bodyA := fmt.Sprintf("---\ntitle: Alpha\n---\n\nSee [[%s]].\n", noteB.ID)
 	os.WriteFile(v.ObjectPath(noteA.Type, noteA.Filename), []byte(bodyA), 0644)
-	v.SyncIndex()
+	ev, _, _ := v.Reconcile()
+	v.Project(ev)
 
 	// noteB should have a backlink from noteA
 	noteB, _ = v.GetObject(noteB.ID)

@@ -18,8 +18,12 @@ func TestVault_SyncIndex_NewFile(t *testing.T) {
 	// Also need type schema for the type directory to be valid
 	mustWriteTypeSchema(v, "book", []byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
 
-	if _, err := v.SyncIndex(); err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+	events, _, err := v.Reconcile()
+	if err != nil {
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
 	// Verify object is now in DB
@@ -47,8 +51,12 @@ func TestVault_SyncIndex_UpdatedFile(t *testing.T) {
 	objPath := v.ObjectPath(obj.Type, obj.Filename)
 	os.WriteFile(objPath, []byte("---\ntitle: Updated\n---\n\nNew body content.\n"), 0644)
 
-	if _, err := v.SyncIndex(); err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+	events, _, err := v.Reconcile()
+	if err != nil {
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
 	objs, err := v.QueryObjects(TypeFilter("book"))
@@ -74,9 +82,12 @@ func TestVault_SyncIndex_DeletedFile(t *testing.T) {
 	// Delete the file
 	os.Remove(v.ObjectPath(obj.Type, obj.Filename))
 
-	result, err := v.SyncIndex()
+	events, result, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 	if result.Deleted != 1 {
 		t.Errorf("Deleted = %d, want 1", result.Deleted)
@@ -96,7 +107,7 @@ func TestVault_SyncIndex_DBNotOpen(t *testing.T) {
 	v := NewVault(dir)
 	v.Init()
 
-	_, err := v.SyncIndex()
+	_, _, err := v.Reconcile()
 	if err == nil {
 		t.Fatal("expected error when DB not opened, got nil")
 	}
@@ -120,28 +131,20 @@ func TestVault_SyncIndex_OrphanedRelations(t *testing.T) {
 	// Delete the person file from disk (simulating user deletion)
 	os.Remove(v.ObjectPath(person.Type, person.Filename))
 
-	// SyncIndex should detect and clean orphaned relations
-	result, err := v.SyncIndex()
+	// Reconcile + Project should detect deleted object and clean up its relations
+	events, result, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
-	if len(result.Orphaned) == 0 {
-		t.Fatal("expected orphaned relations, got none")
+	if result.Deleted != 1 {
+		t.Errorf("Deleted = %d, want 1", result.Deleted)
 	}
 
-	// Verify orphaned relations contain the right data
-	found := false
-	for _, o := range result.Orphaned {
-		if o.ToID == person.ID || o.FromID == person.ID {
-			found = true
-		}
-	}
-	if !found {
-		t.Errorf("expected orphan referencing %s, got %+v", person.ID, result.Orphaned)
-	}
-
-	// Verify relations table is now clean
+	// Verify relations table is now clean (ObjectDeleted event cleans up relations)
 	v.db.QueryRow("SELECT COUNT(*) FROM relations").Scan(&count)
 	if count != 0 {
 		t.Errorf("relations count after cleanup = %d, want 0", count)
@@ -155,16 +158,15 @@ func TestVault_SyncIndex_NoOrphansWhenAllExist(t *testing.T) {
 	alan, _ := v.NewObject("person", "alan", "")
 	v.LinkObjects(book.ID, "author", alan.ID)
 
-	result, err := v.SyncIndex()
+	events, _, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
-	if len(result.Orphaned) != 0 {
-		t.Errorf("expected no orphans, got %+v", result.Orphaned)
-	}
-
-	// Relations should still exist
+	// Relations should still exist when no objects deleted
 	var count int
 	v.db.QueryRow("SELECT COUNT(*) FROM relations").Scan(&count)
 	if count == 0 {
@@ -182,16 +184,19 @@ func TestVault_SyncIndex_OrphanFromSourceDeletion(t *testing.T) {
 	// Delete the source (book) instead of the target
 	os.Remove(v.ObjectPath(book.Type, book.Filename))
 
-	result, err := v.SyncIndex()
+	events, result, err := v.Reconcile()
 	if err != nil {
-		t.Fatalf("SyncIndex() error = %v", err)
+		t.Fatalf("Reconcile() error = %v", err)
+	}
+	if err := v.Project(events); err != nil {
+		t.Fatalf("Project() error = %v", err)
 	}
 
-	if len(result.Orphaned) == 0 {
-		t.Fatal("expected orphaned relations when source is deleted")
+	if result.Deleted != 1 {
+		t.Errorf("Deleted = %d, want 1", result.Deleted)
 	}
 
-	// Verify relations table is clean
+	// Verify relations table is clean (ObjectDeleted event cleans up relations)
 	var count int
 	v.db.QueryRow("SELECT COUNT(*) FROM relations").Scan(&count)
 	if count != 0 {

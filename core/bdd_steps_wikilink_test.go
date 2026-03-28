@@ -45,7 +45,10 @@ func (dc *domainContext) bodyContainsAWikiLinkToWithDisplayText(sourceName, targ
 }
 
 func (dc *domainContext) iSyncTheIndex() {
-	_, err := dc.vault.SyncIndex()
+	events, _, err := dc.vault.Reconcile()
+	if err == nil {
+		err = dc.vault.Project(events)
+	}
 	dc.lastErr = err
 }
 
@@ -324,7 +327,10 @@ func (dc *domainContext) bodyOnDiskShouldContain(sourceName, expected string) er
 }
 
 func (dc *domainContext) iSyncTheIndexAndCaptureTheResult() {
-	result, err := dc.vault.SyncIndex()
+	events, result, err := dc.vault.Reconcile()
+	if err == nil {
+		err = dc.vault.Project(events)
+	}
 	dc.lastErr = err
 	dc.syncResult = result
 }

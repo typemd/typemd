@@ -35,21 +35,21 @@ The TUI file watcher supports incremental sync to avoid full index rebuilds on e
 
 The watcher collects changed file paths during a configurable debounce window (default: 200ms, configurable via `tui.debounce_ms` in `.typemd/config.yaml`). Duplicate paths within the same window are deduplicated.
 
-### SyncFiles flow
+### ReconcileFiles flow
 
-`Projector.SyncFiles(paths []string)` synchronizes only the specified files:
+`Reconciler.ReconcileFiles(paths []string)` incrementally reconciles specific files:
 
-1. For each path that still exists on disk: read the object via `ObjectRepository.Get()`, filter properties against the type schema, and upsert into the index.
-2. For each path that no longer exists: remove the object's entry from the index.
-3. After incremental object sync: perform full wikilink sync, full tag relation sync, and relation sync for changed objects.
-4. Upsert/Remove operations update the corresponding FTS entry atomically — no full `Rebuild()` needed.
+1. For each path that still exists on disk: read the object via `ObjectRepository.Get()`, normalize properties, and emit an `ObjectUpserted` event.
+2. For each path that no longer exists: emit an `ObjectDeleted` event.
+3. After incremental object sync: perform full wikilink reconciliation, full tag relation reconciliation, and relation reconciliation for changed objects — all emitted as domain events.
+4. The caller passes the returned events to `Projector.Apply()`, which writes them to the SQLite index.
 
-### Fallback to full sync
+### Fallback to full reconciliation
 
-The TUI falls back to full `Projector.Sync()` when:
+The TUI falls back to full `Reconciler.Reconcile()` when:
 
 - `fileChangedMsg` has an empty paths list
-- `Projector.SyncFiles()` returns an error
+- `Reconciler.ReconcileFiles()` returns an error
 - Initial startup (first data load)
 
 ### Schema file monitoring
@@ -58,19 +58,19 @@ The watcher also monitors `.typemd/types/`. Schema file changes produce a distin
 
 ## Relation sync
 
-During sync, the Projector reads each object's frontmatter, identifies relation properties defined in the type schema, and inserts corresponding records into the SQLite `relations` table.
+During reconciliation, the Reconciler reads each object's frontmatter, identifies relation properties defined in the type schema, and emits `RelationIndexed` events for each resolved relation. The Projector then inserts the corresponding records into the SQLite `relations` table.
 
 ### Sync behavior by relation type
 
-- **Single-value relation**: One record per relation (e.g., `author: person/john-doe-01abc...` → one `relations` row).
-- **Multi-value relation**: One record per value (e.g., `books: [book/a-01abc..., book/b-01xyz...]` → two rows).
-- **Non-existent targets**: Skipped — if the referenced object doesn't exist on disk, no relation record is inserted.
+- **Single-value relation**: One `RelationIndexed` event per relation (e.g., `author: person/john-doe-01abc...` → one event).
+- **Multi-value relation**: One event per value (e.g., `books: [book/a-01abc..., book/b-01xyz...]` → two events).
+- **Non-existent targets**: Skipped — if the referenced object doesn't exist on disk, no event is emitted.
 - **Non-relation properties**: Ignored — only properties with `type: relation` in the schema are processed.
 
 ### Full sync vs. incremental sync
 
-- **Full sync** (`Projector.Sync()`): Deletes all non-tag relation records and rebuilds from frontmatter. Tag relations are managed separately by `syncTagRelations`.
-- **Incremental sync** (`Projector.SyncFiles()`): Deletes relation records only for changed objects and rebuilds them from updated frontmatter. Relations for unchanged objects remain intact.
+- **Full reconciliation** (`Reconciler.Reconcile()`): Emits a `RelationsCleared{NonTagOnly: true}` event followed by `RelationIndexed` events for all relations. Tag relations are managed separately via `RelationsCleared{TagsOnly: true}`.
+- **Incremental reconciliation** (`Reconciler.ReconcileFiles()`): Emits `RelationsCleared{ObjectID: id}` events for changed objects, then `RelationIndexed` events for their rebuilt relations. Unchanged objects are not affected.
 
 ## Name resolution (relation prefix resolution)
 
@@ -82,24 +82,24 @@ During sync, relation values without a ULID suffix are treated as `type/name` re
 |-------|----------|
 | `person/john-doe-01abc...` (has ULID) | Treated as full ID, no resolution needed |
 | `person/john-doe` (no ULID, unique match) | Resolved to full ID, file is updated |
-| `person/nobody` (no match) | Left unchanged, reported as unresolved in `SyncResult` |
-| `person/john` (multiple matches) | Left unchanged, reported as ambiguous in `SyncResult` |
+| `person/nobody` (no match) | Left unchanged, reported as unresolved in `ReconcileResult` |
+| `person/john` (multiple matches) | Left unchanged, reported as ambiguous in `ReconcileResult` |
 
 ### Name index
 
-The Projector builds a per-type name index from walked objects. Each object's slug and original name are indexed. Duplicate names within the same type produce ambiguous entries.
+The Reconciler builds a per-type name index from walked objects. Each object's slug and original name are indexed. Duplicate names within the same type produce ambiguous entries.
 
 ### Auto-expansion write-back
 
-When a prefix is successfully resolved, the Projector writes the expanded full ID back to the object's frontmatter file. Multiple properties can be expanded in a single file write. Unresolvable prefixes are left unchanged.
+When a prefix is successfully resolved, the Reconciler writes the expanded full ID back to the object's frontmatter file. Multiple properties can be expanded in a single file write. Unresolvable prefixes are left unchanged.
 
 ### Multi-value resolution
 
 For `multiple: true` relations, each value in the array is resolved independently. A mix of full IDs and prefixes is handled correctly — full IDs are kept as-is, prefixes are resolved individually.
 
-### SyncResult reporting
+### ReconcileResult reporting
 
-`SyncResult` includes:
+`ReconcileResult` includes:
 
 - `Expanded` — count of successfully resolved prefixes
 - `Unresolved` — list of unresolved references with prefix and reason
@@ -155,3 +155,30 @@ Composes output as `key + ": " + FormatValue()`. Used for the property detail pa
 ### Usage in view mode
 
 View mode table rows use `FormatValue()` for property columns and preview panels, ensuring consistent formatting across all display contexts.
+
+## Domain events
+
+The Reconciler and Projector communicate through domain events. The Reconciler emits events describing what changed; the Projector consumes them to update the SQLite index.
+
+### Reconciler → Projector events
+
+| Event | Purpose | Payload |
+|-------|---------|---------|
+| `ObjectUpserted` | Object needs to be written to index | `ID`, `Type`, `Filename`, `PropsJSON`, `Body` |
+| `ObjectDeleted` | Object removed from disk (stale cleanup) | `ID` |
+| `RelationsCleared` | Clear relations before rebuilding | `ObjectID` (per-object), `NonTagOnly` (full sync), or `TagsOnly` (tag sync) |
+| `RelationIndexed` | A single relation needs to be indexed | `Name`, `FromID`, `ToID` |
+| `WikiLinksSynced` | Wiki-links resolved for an object | `ObjectID`, `Links []WikiLinkEntry` |
+
+### ObjectService events
+
+These events are emitted by `ObjectService` during user-initiated operations:
+
+| Event | Purpose | Payload |
+|-------|---------|---------|
+| `ObjectCreated` | New object created | `Object` |
+| `ObjectSaved` | Existing object saved | `Object` |
+| `PropertyChanged` | Single property value changed | `ObjectID`, `Key`, `Old`, `New` |
+| `ObjectLinked` | Relation created between objects | `FromID`, `ToID`, `RelName` |
+| `ObjectUnlinked` | Relation removed between objects | `FromID`, `ToID`, `RelName` |
+| `TagAutoCreated` | Tag object auto-created during sync | `Tag`, `ReferencedBy` |
