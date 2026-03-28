@@ -17,9 +17,11 @@ my-vault/
 
 ## 結構
 
-設定檔使用 YAML 格式，有三個頂層命名空間：
+設定檔使用 YAML 格式，有頂層顯示設定和三個命名空間：
 
 ```yaml
+date_format: "YYYY-MM-DD"
+datetime_format: "YYYY-MM-DD HH:mm:ss"
 cli:
   default_type: page
 tui:
@@ -41,6 +43,26 @@ ai:
   explore:
     sample_count: 20
     body_truncate: 1000
+```
+
+## 日期顯示格式
+
+| Key | 型別 | 預設值 | 說明 |
+|-----|------|--------|------|
+| `date_format` | string | `YYYY-MM-DD` | `date` 屬性的顯示格式 |
+| `datetime_format` | string | `YYYY-MM-DD HH:mm:ss` | `datetime` 屬性及系統時間戳（`created_at`、`updated_at`）的顯示格式 |
+
+這些設定控制日期在 TUI 和 CLI 中的顯示方式。儲存格式不變（ISO 8601 / RFC 3339）。
+
+**支援的 token：** `YYYY`（年）、`MM`（月）、`DD`（日）、`HH`（24 小時制）、`mm`（分）、`ss`（秒）。無法辨識的字元會原樣保留。
+
+```yaml
+# 歐式格式
+date_format: "DD/MM/YYYY"
+datetime_format: "DD/MM/YYYY HH:mm:ss"
+
+# 中文日期
+date_format: "YYYY年MM月DD日"
 ```
 
 ## CLI 設定

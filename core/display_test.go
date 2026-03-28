@@ -224,7 +224,7 @@ func TestFormatValue(t *testing.T) {
 		{
 			name:     "datetime",
 			prop:     DisplayProperty{Key: "created", Value: time.Date(2024, 1, 15, 10, 30, 0, 0, time.UTC), Type: "datetime"},
-			expected: "2024-01-15T10:30:00",
+			expected: "2024-01-15 10:30:00",
 		},
 		{
 			name:     "multi_select",
@@ -255,6 +255,74 @@ func TestFormatValue(t *testing.T) {
 			name:     "integer value",
 			prop:     DisplayProperty{Key: "count", Value: 42, Type: "number"},
 			expected: "42",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got := tt.prop.FormatValue()
+			if got != tt.expected {
+				t.Errorf("FormatValue() = %q, want %q", got, tt.expected)
+			}
+		})
+	}
+}
+
+func TestFormatValueWithCustomDateFormat(t *testing.T) {
+	tests := []struct {
+		name     string
+		prop     DisplayProperty
+		expected string
+	}{
+		{
+			name:     "custom date format DD/MM/YYYY",
+			prop:     DisplayProperty{Key: "d", Value: time.Date(2026, 3, 28, 0, 0, 0, 0, time.UTC), Type: "date", DateFormat: "DD/MM/YYYY"},
+			expected: "28/03/2026",
+		},
+		{
+			name:     "custom datetime format with space",
+			prop:     DisplayProperty{Key: "dt", Value: time.Date(2026, 3, 28, 14, 30, 0, 0, time.UTC), Type: "datetime", DatetimeFormat: "DD/MM/YYYY HH:mm:ss"},
+			expected: "28/03/2026 14:30:00",
+		},
+		{
+			name:     "empty date format uses default",
+			prop:     DisplayProperty{Key: "d", Value: time.Date(2026, 3, 28, 0, 0, 0, 0, time.UTC), Type: "date", DateFormat: ""},
+			expected: "2026-03-28",
+		},
+		{
+			name:     "empty datetime format uses default with space separator",
+			prop:     DisplayProperty{Key: "dt", Value: time.Date(2026, 3, 28, 14, 30, 0, 0, time.UTC), Type: "datetime", DatetimeFormat: ""},
+			expected: "2026-03-28 14:30:00",
+		},
+		{
+			name:     "unrecognized tokens pass through",
+			prop:     DisplayProperty{Key: "d", Value: time.Date(2026, 3, 28, 0, 0, 0, 0, time.UTC), Type: "date", DateFormat: "YYYY年MM月DD日"},
+			expected: "2026年03月28日",
+		},
+		{
+			name:     "date value as string",
+			prop:     DisplayProperty{Key: "d", Value: "2026-03-28", Type: "date", DateFormat: "MM/DD/YYYY"},
+			expected: "03/28/2026",
+		},
+		{
+			name:     "datetime value as string",
+			prop:     DisplayProperty{Key: "dt", Value: "2026-03-28T14:30:00", Type: "datetime", DatetimeFormat: "YYYY/MM/DD HH:mm"},
+			expected: "2026/03/28 14:30",
+		},
+		{
+			name:     "datetime value as RFC3339 string",
+			prop:     DisplayProperty{Key: "dt", Value: "2026-03-28T14:30:00+08:00", Type: "datetime", DatetimeFormat: "YYYY/MM/DD HH:mm"},
+			expected: "2026/03/28 14:30",
+		},
+		{
+			name:     "nil date value returns empty",
+			prop:     DisplayProperty{Key: "d", Value: nil, Type: "date", DateFormat: "MM/DD/YYYY"},
+			expected: "",
+		},
+		{
+			name:     "custom datetime format omitting seconds",
+			prop:     DisplayProperty{Key: "dt", Value: time.Date(2026, 3, 28, 14, 30, 45, 0, time.UTC), Type: "datetime", DatetimeFormat: "YYYY-MM-DD HH:mm"},
+			expected: "2026-03-28 14:30",
 		},
 	}
 

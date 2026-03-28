@@ -174,6 +174,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initAIAvailabilitySteps(ctx, dc)
 	initAIMultiProviderSteps(ctx, dc)
 	initLockSteps(ctx, dc)
+	initDateDisplayFormatSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {
