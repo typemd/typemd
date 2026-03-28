@@ -2,8 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cucumber/godog"
 )
@@ -39,7 +37,7 @@ properties:
     type: relation
     target: person
 `
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "complete.yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, "complete", []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithAnEnumProperty(typeName string) {
@@ -52,17 +50,17 @@ properties:
       - reading
       - done
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithADateProperty(typeName string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: date\n    type: date\n", typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithAURLProperty(typeName string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: link\n    type: url\n", typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithASelectStatusProperty(typeName string) {
@@ -75,7 +73,7 @@ properties:
       - value: reading
       - value: done
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 // aObjectNamedExistsWithRawProperty creates an object and writes a property directly

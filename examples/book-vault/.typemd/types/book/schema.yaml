@@ -19,9 +19,7 @@ properties:
     - name: published
       type: date
       emoji: "📅"
-    - name: favorite
-      type: checkbox
-      emoji: ❤️
+    - use: favorite
     - name: author
       type: relation
       emoji: ✍️

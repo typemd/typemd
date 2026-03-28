@@ -16,7 +16,7 @@ func TestVault_SyncIndex_NewFile(t *testing.T) {
 	os.WriteFile(filepath.Join(typeDir, "test-book.md"), []byte("---\ntitle: Test Book\n---\n\nHello world.\n"), 0644)
 
 	// Also need type schema for the type directory to be valid
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book", []byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
 
 	if _, err := v.SyncIndex(); err != nil {
 		t.Fatalf("SyncIndex() error = %v", err)
@@ -38,7 +38,7 @@ func TestVault_SyncIndex_NewFile(t *testing.T) {
 func TestVault_SyncIndex_UpdatedFile(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book", []byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
 
 	// Create via API (body is empty in DB)
 	obj, _ := v.NewObject("book", "test-book", "")
@@ -66,7 +66,7 @@ func TestVault_SyncIndex_UpdatedFile(t *testing.T) {
 func TestVault_SyncIndex_DeletedFile(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte("name: book\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "book", []byte("name: book\nproperties:\n  - name: title\n    type: string\n"))
 
 	// Create via API
 	obj, _ := v.NewObject("book", "test-book", "")

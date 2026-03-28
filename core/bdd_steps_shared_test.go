@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 
 	"github.com/cucumber/godog"
 )
@@ -107,7 +106,7 @@ func (dc *domainContext) aTypeSchemaWithUse(typeName, useName string) {
 properties:
   - use: %s
 `, typeName, useName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aTypeSchemaWithUseAndPin(typeName, useName string, pin int) {
@@ -116,7 +115,7 @@ properties:
   - use: %s
     pin: %d
 `, typeName, useName, pin)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aTypeSchemaWithUseAndEmoji(typeName, useName, emoji string) {
@@ -125,7 +124,7 @@ properties:
   - use: %s
     emoji: %s
 `, typeName, useName, emoji)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aTypeSchemaWithUseAndDisallowedTypeOverride(typeName, useName string) {
@@ -134,7 +133,7 @@ properties:
   - use: %s
     type: string
 `, typeName, useName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aTypeSchemaWithLocalProperty(typeName, propName string) {
@@ -143,7 +142,7 @@ properties:
   - name: %s
     type: string
 `, typeName, propName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aTypeSchemaWithDuplicateUse(typeName, useName string) {
@@ -152,7 +151,7 @@ properties:
   - use: %s
   - use: %s
 `, typeName, useName, useName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aTypeSchemaWithBothUseAndNameOnSameEntry(typeName string) {
@@ -161,7 +160,7 @@ properties:
   - use: due_date
     name: my_date
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) iLoadType(typeName string) {
@@ -230,7 +229,7 @@ properties:
   - use: %s
     description: %q
 `, typeName, useName, description)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) aSharedPropertiesFileWithDescribedProperties() {
@@ -259,7 +258,7 @@ properties:
   - name: budget
     type: number
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(content), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
 func (dc *domainContext) theLoadedSchemaShouldHaveEmoji(expected string) error {

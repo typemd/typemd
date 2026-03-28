@@ -2,20 +2,18 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cucumber/godog"
 )
 
 func (dc *domainContext) aTypeSchemaWithDescription(typeName, description string) {
 	schema := fmt.Sprintf("name: %s\ndescription: %q\nproperties:\n  - name: title\n    type: string\n", typeName, description)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithPropertyHavingDescription(typeName, propName, description string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: %s\n    type: string\n    description: %q\n", typeName, propName, description)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) theLoadedSchemaDescriptionShouldBe(expected string) error {

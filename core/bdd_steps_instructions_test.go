@@ -144,12 +144,12 @@ func (ic *instructionsContext) theRawContentShouldContain(substr string) error {
 
 func (ic *instructionsContext) aTypeExistsWithEmojiAndDescription(typeName, emoji, description string) {
 	schema := fmt.Sprintf("name: %s\nemoji: %q\ndescription: %q\nproperties: []\n", typeName, emoji, description)
-	os.WriteFile(filepath.Join(ic.dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(ic.dc.vault, typeName, []byte(schema))
 }
 
 func (ic *instructionsContext) theTypeHasAPropertyOfType(typeName, propName, propType string) {
 	// Read existing schema file and add property
-	schemaPath := filepath.Join(ic.dc.vault.TypesDir(), typeName+".yaml")
+	schemaPath := filepath.Join(ic.dc.vault.TypesDir(), typeName, "schema.yaml")
 	data, _ := os.ReadFile(schemaPath)
 	content := string(data)
 	content = strings.Replace(content, "properties: []", fmt.Sprintf("properties:\n  - name: %s\n    type: %s", propName, propType), 1)

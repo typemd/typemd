@@ -123,13 +123,14 @@ func TestDeleteSchema_RemovesFile(t *testing.T) {
 	repo := NewLocalObjectRepository(dir)
 	typesDir := filepath.Join(dir, ".typemd", "types")
 	os.MkdirAll(typesDir, 0755)
-	os.WriteFile(filepath.Join(typesDir, "test.yaml"), []byte("name: test\n"), 0644)
+	os.MkdirAll(filepath.Join(typesDir, "test"), 0755)
+	os.WriteFile(filepath.Join(typesDir, "test", "schema.yaml"), []byte("name: test\n"), 0644)
 
 	if err := repo.DeleteSchema("test"); err != nil {
 		t.Fatalf("unexpected error: %v", err)
 	}
-	if _, err := os.Stat(filepath.Join(typesDir, "test.yaml")); !os.IsNotExist(err) {
-		t.Error("expected file to be deleted")
+	if _, err := os.Stat(filepath.Join(typesDir, "test")); !os.IsNotExist(err) {
+		t.Error("expected directory to be deleted")
 	}
 }
 

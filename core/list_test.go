@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 )
 
@@ -40,9 +38,7 @@ properties:
   - name: title
     type: string
 `
-	if err := os.WriteFile(filepath.Join(v.TypesDir(), "project.yaml"), []byte(customType), 0644); err != nil {
-		t.Fatalf("write custom type: %v", err)
-	}
+	mustWriteTypeSchema(v, "project", []byte(customType))
 
 	types := v.ListTypes()
 	found := false
@@ -79,9 +75,7 @@ properties:
   - name: priority
     type: number
 `
-	if err := os.WriteFile(filepath.Join(v.TypesDir(), "tag.yaml"), []byte(customTag), 0644); err != nil {
-		t.Fatalf("write custom type: %v", err)
-	}
+	mustWriteTypeSchema(v, "tag", []byte(customTag))
 
 	types := v.ListTypes()
 	// Should not have duplicates — custom tag overrides built-in tag

@@ -1,8 +1,6 @@
 package core
 
 import (
-	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 	"time"
@@ -148,9 +146,7 @@ properties:
   - name: isbn
     type: string
 `)
-	if err := os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), yamlContent, 0644); err != nil {
-		t.Fatalf("WriteFile error = %v", err)
-	}
+	mustWriteTypeSchema(v, "book", yamlContent)
 
 	schema, err := v.LoadType("book")
 	if err != nil {
@@ -600,9 +596,7 @@ properties:
   - name: title
     type: string
 `)
-	if err := os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), yamlContent, 0644); err != nil {
-		t.Fatalf("WriteFile error = %v", err)
-	}
+	mustWriteTypeSchema(v, "book", yamlContent)
 
 	schema, err := v.LoadType("book")
 	if err != nil {

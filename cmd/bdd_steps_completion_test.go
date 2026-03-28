@@ -13,8 +13,6 @@ func initCompletionSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
 
 	ctx.Step(`^the book type has a relation "([^"]*)" to "([^"]*)"$`, func(relName, target string) error {
 		// Overwrite the book schema to include a relation property.
-		// After vault.Open() the schema auto-migrates to directory format,
-		// so we write to book/schema.yaml (not book.yaml).
 		schemaYAML := fmt.Sprintf(`name: book
 emoji: "\U0001F4DA"
 plural: books

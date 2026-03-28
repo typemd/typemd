@@ -2,8 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strings"
 
 	"github.com/cucumber/godog"
@@ -24,7 +22,7 @@ properties:
     bidirectional: true
     inverse: books
 `)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "book.yaml"), bookSchema, 0644)
+	mustWriteTypeSchema(dc.vault, "book", bookSchema)
 
 	personSchema := []byte(`name: person
 properties:
@@ -37,7 +35,7 @@ properties:
     bidirectional: true
     inverse: author
 `)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), "person.yaml"), personSchema, 0644)
+	mustWriteTypeSchema(dc.vault, "person", personSchema)
 }
 
 func (dc *domainContext) iLinkToVia(sourceName, targetName, relation string) {
@@ -147,7 +145,7 @@ func (dc *domainContext) listingRelationsForShouldReturnNEntries(name string, ex
 
 func (dc *domainContext) aTypeSchemaWithARelationPropertyMissingTarget(typeName string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: ref\n    type: relation\n", typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) iLinkToANonExistentObjectVia(sourceName, relation string) {
@@ -187,7 +185,7 @@ properties:
     bidirectional: true
     inverse: reviewed_articles
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) iBuildDisplayPropertiesFor(name string) {

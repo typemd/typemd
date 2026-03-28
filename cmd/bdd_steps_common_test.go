@@ -48,8 +48,11 @@ func (cc *cmdContext) setupVault() error {
 		return err
 	}
 
-	// Write a book type schema for testing.
-	if err := os.WriteFile(v.TypesDir()+"/book.yaml", []byte(`name: book
+	// Write a book type schema for testing (directory format).
+	if err := os.MkdirAll(v.TypesDir()+"/book", 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(v.TypesDir()+"/book/schema.yaml", []byte(`name: book
 emoji: "\U0001F4DA"
 plural: books
 properties:

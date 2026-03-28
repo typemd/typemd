@@ -1,7 +1,5 @@
 Feature: Type directory structure
-  Type schemas support directory format (.typemd/types/<name>/schema.yaml)
-  in addition to single-file format (.typemd/types/<name>.yaml).
-  Auto-migration upgrades single files to directory format on load.
+  Type schemas use directory format (.typemd/types/<name>/schema.yaml).
 
   # ── Load from directory format ──────────────────────────────
 
@@ -20,30 +18,7 @@ Feature: Type directory structure
     And the loaded schema should have emoji "🎬"
     And the loaded schema should have 1 property
 
-  Scenario: Directory format takes precedence over single file
-    Given a vault is ready
-    And a type schema file "movie" exists on disk
-    And a type schema directory "movie" with schema content:
-      """
-      name: movie
-      emoji: "\U0001F3AC"
-      properties: []
-      """
-    When I load type "movie"
-    Then no error should occur
-    And the loaded schema should have emoji "🎬"
-
-  # ── Auto-migration ──────────────────────────────────────────
-
-  Scenario: Single file auto-migrated to directory on load
-    Given a vault is ready
-    And a type schema file "project" exists on disk
-    When I load type "project"
-    Then no error should occur
-    And the type schema directory "project" should exist
-    And the type schema single file "project" should not exist
-
-  # ── ListTypes with mixed formats ────────────────────────────
+  # ── ListTypes with directory format ───────────────────────
 
   Scenario: ListTypes discovers directory format
     Given a vault is ready
@@ -64,15 +39,6 @@ Feature: Type directory structure
     When I save the type schema
     Then no error should occur
     And the type schema directory "article" should exist
-
-  Scenario: SaveType removes old single file
-    Given a vault is ready
-    And a type schema file "draft" exists on disk
-    And a type schema "draft" with no extra fields
-    When I save the type schema
-    Then no error should occur
-    And the type schema directory "draft" should exist
-    And the type schema single file "draft" should not exist
 
   # ── DeleteType removes directory ────────────────────────────
 

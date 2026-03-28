@@ -201,8 +201,9 @@ func TestLocalObjectRepository_EnsureDir(t *testing.T) {
 func TestLocalObjectRepository_GetSchema(t *testing.T) {
 	repo := setupTestRepo(t)
 
+	os.MkdirAll(filepath.Join(repo.root, ".typemd", "types", "book"), 0755)
 	os.WriteFile(
-		filepath.Join(repo.root, ".typemd", "types", "book.yaml"),
+		filepath.Join(repo.root, ".typemd", "types", "book", "schema.yaml"),
 		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n  - name: rating\n    type: number\n"),
 		0644,
 	)
@@ -243,8 +244,10 @@ func TestLocalObjectRepository_GetSchemaUnknown(t *testing.T) {
 func TestLocalObjectRepository_ListSchemas(t *testing.T) {
 	repo := setupTestRepo(t)
 
-	os.WriteFile(filepath.Join(repo.root, ".typemd", "types", "book.yaml"), []byte("name: book\n"), 0644)
-	os.WriteFile(filepath.Join(repo.root, ".typemd", "types", "note.yaml"), []byte("name: note\n"), 0644)
+	os.MkdirAll(filepath.Join(repo.root, ".typemd", "types", "book"), 0755)
+	os.WriteFile(filepath.Join(repo.root, ".typemd", "types", "book", "schema.yaml"), []byte("name: book\n"), 0644)
+	os.MkdirAll(filepath.Join(repo.root, ".typemd", "types", "note"), 0755)
+	os.WriteFile(filepath.Join(repo.root, ".typemd", "types", "note", "schema.yaml"), []byte("name: note\n"), 0644)
 
 	names, err := repo.ListSchemas()
 	if err != nil {

@@ -27,10 +27,13 @@ func setupTestVault(t *testing.T) (*core.Vault, string) {
 	}
 	t.Cleanup(func() { v.Close() })
 
-	// Create type schema
+	// Create type schema (directory format)
 	typesDir := filepath.Join(dir, ".typemd", "types")
 	schema := "name: book\nproperties:\n  - name: status\n    type: string\n"
-	if err := os.WriteFile(filepath.Join(typesDir, "book.yaml"), []byte(schema), 0644); err != nil {
+	if err := os.MkdirAll(filepath.Join(typesDir, "book"), 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	if err := os.WriteFile(filepath.Join(typesDir, "book", "schema.yaml"), []byte(schema), 0644); err != nil {
 		t.Fatalf("write schema: %v", err)
 	}
 

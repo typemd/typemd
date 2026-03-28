@@ -2,8 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 
 	"github.com/cucumber/godog"
 )
@@ -12,7 +10,7 @@ import (
 
 func (dc *domainContext) aTypeSchemaWithPropertyHavingPin(typeName, propName string, pin int) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: %s\n    type: string\n    pin: %d\n", typeName, propName, pin)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithPropertiesHavingUniquePins(typeName string) {
@@ -25,7 +23,7 @@ properties:
     type: number
     pin: 2
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithPropertiesHavingDuplicatePins(typeName string) {
@@ -38,7 +36,7 @@ properties:
     type: number
     pin: 1
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) aTypeSchemaWithSomePropertiesUnpinned(typeName string) {
@@ -52,7 +50,7 @@ properties:
     type: string
     pin: 1
 `, typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func initPinnedSteps(ctx *godog.ScenarioContext, dc *domainContext) {

@@ -20,7 +20,10 @@ properties:
   - name: title
     type: string
 `
-	if err := os.WriteFile(cc.vault.TypesDir()+"/note.yaml", []byte(noteSchema), 0644); err != nil {
+	if err := os.MkdirAll(cc.vault.TypesDir()+"/note", 0755); err != nil {
+		return err
+	}
+	if err := os.WriteFile(cc.vault.TypesDir()+"/note/schema.yaml", []byte(noteSchema), 0644); err != nil {
 		return err
 	}
 
@@ -60,7 +63,8 @@ properties:
   - name: title
     type: string
 `
-	os.WriteFile(cc.vault.TypesDir()+"/note.yaml", []byte(noteSchema), 0644)
+	os.MkdirAll(cc.vault.TypesDir()+"/note", 0755)
+	os.WriteFile(cc.vault.TypesDir()+"/note/schema.yaml", []byte(noteSchema), 0644)
 
 	source, err := cc.vault.NewObject("note", "my-note", "")
 	if err != nil {

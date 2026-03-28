@@ -42,12 +42,8 @@ func (dc *domainContext) noDisplayPropertyShouldBeLocal() error {
 }
 
 func (dc *domainContext) theTypeSchemaIsRemoved(typeName string) {
-	// Remove both directory and single-file formats
 	dirPath := filepath.Join(dc.vault.TypesDir(), typeName)
 	os.RemoveAll(dirPath)
-	filePath := filepath.Join(dc.vault.TypesDir(), typeName+".yaml")
-	os.Remove(filePath)
-	// Invalidate schema cache so BuildDisplayProperties sees no schema
 	dc.vault.InvalidateSchemaCache()
 }
 

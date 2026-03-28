@@ -70,9 +70,7 @@ properties:
     type: relation
     target: person
 `
-	if err := os.WriteFile(filepath.Join(v.TypesDir(), "article.yaml"), []byte(schemaYAML), 0644); err != nil {
-		t.Fatal(err)
-	}
+	mustWriteTypeSchema(v, "article", []byte(schemaYAML))
 	writeCommonTestTypeSchemas(v)
 
 	if err := v.Open(); err != nil {
@@ -135,8 +133,8 @@ properties:
 func TestBuildDisplayPropertiesWithBacklinks(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 
 	noteA, _ := v.NewObject("note", "alpha", "")
 	noteB, _ := v.NewObject("note", "beta", "")
@@ -173,8 +171,8 @@ func TestBuildDisplayPropertiesWithBacklinks(t *testing.T) {
 func TestBuildDisplayPropertiesNoBacklinks(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 
 	note, _ := v.NewObject("note", "lonely", "")
 
@@ -514,7 +512,6 @@ func TestBuildDisplayProperties_IsLocal(t *testing.T) {
 		}
 		// Remove the book schema so all non-system properties become local
 		os.RemoveAll(filepath.Join(v.TypesDir(), "book"))
-		os.Remove(filepath.Join(v.TypesDir(), "book.yaml"))
 		v.InvalidateSchemaCache()
 
 		book, _ = v.GetObject(book.ID)

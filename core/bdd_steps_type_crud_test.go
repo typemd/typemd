@@ -83,8 +83,9 @@ func (tc *typeCrudContext) theSchemaHasANameTemplate(tmpl string) {
 
 func (tc *typeCrudContext) aTypeSchemaFileExistsOnDisk(name string) {
 	data := fmt.Sprintf("name: %s\nproperties: []\n", name)
-	path := filepath.Join(tc.dc.vault.TypesDir(), name+".yaml")
-	os.WriteFile(path, []byte(data), 0644)
+	dirPath := filepath.Join(tc.dc.vault.TypesDir(), name)
+	os.MkdirAll(dirPath, 0755)
+	os.WriteFile(filepath.Join(dirPath, "schema.yaml"), []byte(data), 0644)
 }
 
 func (tc *typeCrudContext) iAddANumberPropertyToTheSchema(propName string) {
@@ -96,14 +97,12 @@ func (tc *typeCrudContext) iAddANumberPropertyToTheSchema(propName string) {
 
 func (tc *typeCrudContext) aCustomTypeSchemaWithEmoji(typeName, emoji string) {
 	data := fmt.Sprintf("name: %s\nemoji: %s\nproperties: []\n", typeName, emoji)
-	path := filepath.Join(tc.dc.vault.TypesDir(), typeName+".yaml")
-	os.WriteFile(path, []byte(data), 0644)
+	mustWriteTypeSchema(tc.dc.vault, typeName, []byte(data))
 }
 
 func (tc *typeCrudContext) aCustomTagTypeSchemaWithoutUniqueField() {
 	data := "name: tag\nemoji: \"🏷️\"\nproperties:\n  - name: color\n    type: string\n  - name: icon\n    type: string\n"
-	path := filepath.Join(tc.dc.vault.TypesDir(), "tag.yaml")
-	os.WriteFile(path, []byte(data), 0644)
+	mustWriteTypeSchema(tc.dc.vault, "tag", []byte(data))
 }
 
 // ── When steps ──────────────────────────────────────────────────────────────
@@ -214,30 +213,19 @@ func (tc *typeCrudContext) theRoundTripSchemaPropertyShouldHavePin(propName stri
 }
 
 func (tc *typeCrudContext) theTypeSchemaFileShouldNotExistOnDisk(name string) error {
-	// Check both formats don't exist
 	dirPath := filepath.Join(tc.dc.vault.TypesDir(), name, "schema.yaml")
 	if _, err := os.Stat(dirPath); err == nil {
-		return fmt.Errorf("expected type schema directory %s to not exist", dirPath)
-	}
-	path := filepath.Join(tc.dc.vault.TypesDir(), name+".yaml")
-	if _, err := os.Stat(path); err == nil {
-		return fmt.Errorf("expected type schema file %s to not exist", path)
+		return fmt.Errorf("expected type schema %s/schema.yaml to not exist", name)
 	}
 	return nil
 }
 
 func (tc *typeCrudContext) theTypeSchemaFileShouldExistOnDisk(name string) error {
-	// Check directory format first
 	dirPath := filepath.Join(tc.dc.vault.TypesDir(), name, "schema.yaml")
 	if _, err := os.Stat(dirPath); err == nil {
 		return nil
 	}
-	// Fall back to single file
-	path := filepath.Join(tc.dc.vault.TypesDir(), name+".yaml")
-	if _, err := os.Stat(path); os.IsNotExist(err) {
-		return fmt.Errorf("expected type schema %s to exist (checked %s and %s)", name, dirPath, path)
-	}
-	return nil
+	return fmt.Errorf("expected type schema %s/schema.yaml to exist", name)
 }
 
 func (tc *typeCrudContext) loadingTypeShouldReturnASchemaWithNProperties(name string, n int) error {

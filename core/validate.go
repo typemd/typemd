@@ -215,7 +215,7 @@ func collectUniqueTypes(v *Vault) []string {
 	return uniqueTypes
 }
 
-// ValidateAllSchemas scans .typemd/types/*.yaml and validates each schema.
+// ValidateAllSchemas scans .typemd/types/<name>/schema.yaml and validates each schema.
 // Also validates shared properties if .typemd/properties.yaml exists.
 // Returns a map of type name to validation errors.
 func ValidateAllSchemas(v *Vault) map[string][]error {
@@ -238,12 +238,16 @@ func ValidateAllSchemas(v *Vault) map[string][]error {
 		return result
 	}
 	for _, entry := range entries {
-		if entry.IsDir() || !strings.HasSuffix(entry.Name(), ".yaml") {
+		if !entry.IsDir() {
 			continue
 		}
-		typeName := strings.TrimSuffix(entry.Name(), ".yaml")
-		data, err := os.ReadFile(filepath.Join(v.TypesDir(), entry.Name()))
+		typeName := entry.Name()
+		schemaPath := filepath.Join(v.TypesDir(), typeName, "schema.yaml")
+		data, err := os.ReadFile(schemaPath)
 		if err != nil {
+			if os.IsNotExist(err) {
+				continue // directory without schema.yaml — skip
+			}
 			result[typeName] = []error{fmt.Errorf("read file: %w", err)}
 			continue
 		}

@@ -15,9 +15,7 @@ func TestScanOrphanDirs_NoOrphans(t *testing.T) {
 
 	// Create a custom type schema.
 	schema := "name: book\nproperties:\n  - name: title\n    type: string\n"
-	if err := os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), []byte(schema), 0644); err != nil {
-		t.Fatalf("write type schema: %v", err)
-	}
+	mustWriteTypeSchema(v, "book", []byte(schema))
 
 	// Create matching directories.
 	os.MkdirAll(filepath.Join(v.ObjectsDir(), "book"), 0755)

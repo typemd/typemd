@@ -145,17 +145,10 @@ func (v *Vault) FormatSchemas(typeName string, dryRun bool) (*FormatResult, erro
 // schemaFilePath returns the path to the schema file for a type, or empty
 // string if the type is built-in without a custom file.
 func (v *Vault) schemaFilePath(name string) string {
-	// Check directory format first
 	dirPath := filepath.Join(v.TypesDir(), name, "schema.yaml")
 	if _, err := os.Stat(dirPath); err == nil {
 		return dirPath
 	}
-	// Check single-file format
-	singlePath := filepath.Join(v.TypesDir(), name+".yaml")
-	if _, err := os.Stat(singlePath); err == nil {
-		return singlePath
-	}
-	// Built-in type without custom file
 	return ""
 }
 

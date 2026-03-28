@@ -12,7 +12,7 @@ import (
 
 func (dc *domainContext) aTypeSchemaWithUniqueConstraint(typeName string) {
 	schema := fmt.Sprintf("name: %s\nunique: true\nproperties:\n  - name: role\n    type: string\n", typeName)
-	os.WriteFile(filepath.Join(dc.vault.TypesDir(), typeName+".yaml"), []byte(schema), 0644)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
 func (dc *domainContext) iLoadTheTypeSchema(typeName string) {

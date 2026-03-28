@@ -2,8 +2,6 @@ package core
 
 import (
 	"fmt"
-	"os"
-	"path/filepath"
 	"strconv"
 
 	"github.com/cucumber/godog"
@@ -24,26 +22,17 @@ func newStatsContext() *statsContext {
 
 func (sc *statsContext) aTypeWithACheckboxPropertyExists(dc *domainContext, typeName, propName string) {
 	yaml := fmt.Sprintf("name: %s\nproperties:\n  - name: %s\n    type: checkbox\n", typeName, propName)
-	path := filepath.Join(dc.vault.TypesDir(), typeName+".yaml")
-	if err := os.WriteFile(path, []byte(yaml), 0644); err != nil {
-		panic(fmt.Sprintf("write type schema: %v", err))
-	}
+	mustWriteTypeSchema(dc.vault, typeName, []byte(yaml))
 }
 
 func (sc *statsContext) aTypeWithADatePropertyExists(dc *domainContext, typeName, propName string) {
 	yaml := fmt.Sprintf("name: %s\nproperties:\n  - name: %s\n    type: date\n", typeName, propName)
-	path := filepath.Join(dc.vault.TypesDir(), typeName+".yaml")
-	if err := os.WriteFile(path, []byte(yaml), 0644); err != nil {
-		panic(fmt.Sprintf("write type schema: %v", err))
-	}
+	mustWriteTypeSchema(dc.vault, typeName, []byte(yaml))
 }
 
 func (sc *statsContext) aTypeWithARelationPropertyExists(dc *domainContext, typeName, propName, target string) {
 	yaml := fmt.Sprintf("name: %s\nproperties:\n  - name: %s\n    type: relation\n    target: %s\n", typeName, propName, target)
-	path := filepath.Join(dc.vault.TypesDir(), typeName+".yaml")
-	if err := os.WriteFile(path, []byte(yaml), 0644); err != nil {
-		panic(fmt.Sprintf("write type schema: %v", err))
-	}
+	mustWriteTypeSchema(dc.vault, typeName, []byte(yaml))
 }
 
 func (sc *statsContext) aObjectNamedExistsWithTypedProperty(dc *domainContext, typeName, name, prop, value string) {

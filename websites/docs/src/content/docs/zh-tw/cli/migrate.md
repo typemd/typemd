@@ -24,7 +24,7 @@ tmd migrate book --rename old_field:new_field
 
 ## Schema 遷移（無 type 參數）
 
-不帶參數執行時，`tmd migrate` 會掃描所有 type schemas — 包括單檔格式（`.typemd/types/<name>.yaml`）和目錄格式（`.typemd/types/<name>/schema.yaml`）— 將舊版 `enum` 屬性類型（含 `values`）轉換為當前的 `select` 類型（含 `options`）。
+不帶參數執行時，`tmd migrate` 會掃描所有 type schemas（`.typemd/types/<name>/schema.yaml`），將舊版 `enum` 屬性類型（含 `values`）轉換為當前的 `select` 類型（含 `options`）。
 
 ```bash
 tmd migrate

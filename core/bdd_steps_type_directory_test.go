@@ -46,14 +46,6 @@ func (td *typeDirectoryContext) theTypeSchemaDirectoryShouldNotExist(name string
 	return nil
 }
 
-func (td *typeDirectoryContext) theTypeSchemaSingleFileShouldNotExist(name string) error {
-	path := filepath.Join(td.dc.vault.TypesDir(), name+".yaml")
-	if _, err := os.Stat(path); !os.IsNotExist(err) {
-		return fmt.Errorf("expected single file %s.yaml to not exist", name)
-	}
-	return nil
-}
-
 func (td *typeDirectoryContext) theLoadedSchemaShouldHaveNProperties(n int) error {
 	if td.dc.loadedSchema == nil {
 		return fmt.Errorf("no schema loaded")
@@ -75,6 +67,5 @@ func initTypeDirectorySteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	// Then
 	ctx.Step(`^the type schema directory "([^"]*)" should exist$`, td.theTypeSchemaDirectoryShouldExist)
 	ctx.Step(`^the type schema directory "([^"]*)" should not exist$`, td.theTypeSchemaDirectoryShouldNotExist)
-	ctx.Step(`^the type schema single file "([^"]*)" should not exist$`, td.theTypeSchemaSingleFileShouldNotExist)
 	ctx.Step(`^the loaded schema should have (\d+) propert(?:y|ies)$`, td.theLoadedSchemaShouldHaveNProperties)
 }

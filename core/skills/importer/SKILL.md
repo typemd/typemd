@@ -13,7 +13,7 @@ If the `typemd` plugin is installed, load it first — it provides the complete 
 
 ## Before You Start
 
-1. **Read the vault's type schemas** from `.typemd/types/*/schema.yaml` (or legacy `.typemd/types/*.yaml`) to understand available types and their properties
+1. **Read the vault's type schemas** from `.typemd/types/*/schema.yaml` to understand available types and their properties
 2. **Check `.typemd/properties.yaml`** for shared property definitions (referenced via `use:` in type schemas)
 3. **List existing objects** with `tmd object list` to understand what's already in the vault (for relation discovery)
 4. **Analyze existing objects to learn vault conventions** (see below)

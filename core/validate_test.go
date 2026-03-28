@@ -3,7 +3,6 @@ package core
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -11,7 +10,7 @@ import (
 func TestValidateAllSchemas_Valid(t *testing.T) {
 	v := setupTestVault(t)
 	schema := []byte("name: book\nproperties:\n  - name: title\n    type: string\n")
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), schema, 0644)
+	mustWriteTypeSchema(v, "book", schema)
 
 	result := ValidateAllSchemas(v)
 	if errs, ok := result["book"]; ok && len(errs) > 0 {
@@ -22,7 +21,7 @@ func TestValidateAllSchemas_Valid(t *testing.T) {
 func TestValidateAllSchemas_Invalid(t *testing.T) {
 	v := setupTestVault(t)
 	schema := []byte("name: bad\nproperties:\n  - name: status\n    type: enum\n")
-	os.WriteFile(filepath.Join(v.TypesDir(), "bad.yaml"), schema, 0644)
+	mustWriteTypeSchema(v, "bad", schema)
 
 	result := ValidateAllSchemas(v)
 	if errs, ok := result["bad"]; !ok || len(errs) == 0 {
@@ -32,7 +31,7 @@ func TestValidateAllSchemas_Invalid(t *testing.T) {
 
 func TestValidateAllSchemas_MalformedYAML(t *testing.T) {
 	v := setupTestVault(t)
-	os.WriteFile(filepath.Join(v.TypesDir(), "broken.yaml"), []byte(":\ninvalid yaml["), 0644)
+	mustWriteTypeSchema(v, "broken", []byte(":\ninvalid yaml["))
 
 	result := ValidateAllSchemas(v)
 	if errs, ok := result["broken"]; !ok || len(errs) == 0 {
@@ -51,7 +50,7 @@ func TestValidateAllSchemas_NoSchemas(t *testing.T) {
 func TestValidateAllObjects_Valid(t *testing.T) {
 	v := setupTestVault(t)
 	schema := []byte("name: book\nproperties:\n  - name: title\n    type: string\n")
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), schema, 0644)
+	mustWriteTypeSchema(v, "book", schema)
 
 	obj, err := v.NewObject("book", "test-book", "")
 	if err != nil {
@@ -68,7 +67,7 @@ func TestValidateAllObjects_Valid(t *testing.T) {
 func TestValidateAllObjects_Invalid(t *testing.T) {
 	v := setupTestVault(t)
 	schema := []byte("name: book\nproperties:\n  - name: rating\n    type: number\n")
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), schema, 0644)
+	mustWriteTypeSchema(v, "book", schema)
 
 	obj, err := v.NewObject("book", "bad-book", "")
 	if err != nil {
@@ -94,9 +93,9 @@ func TestValidateAllObjects_NoObjects(t *testing.T) {
 func TestValidateRelations_Valid(t *testing.T) {
 	v := setupTestVault(t)
 	schema := []byte("name: book\nproperties:\n  - name: author\n    type: relation\n    target: person\n")
-	os.WriteFile(filepath.Join(v.TypesDir(), "book.yaml"), schema, 0644)
+	mustWriteTypeSchema(v, "book", schema)
 	personSchema := []byte("name: person\nproperties:\n  - name: name\n    type: string\n")
-	os.WriteFile(filepath.Join(v.TypesDir(), "person.yaml"), personSchema, 0644)
+	mustWriteTypeSchema(v, "person", personSchema)
 
 	book, _ := v.NewObject("book", "test-book", "")
 	alice, _ := v.NewObject("person", "alice", "")
@@ -156,8 +155,8 @@ func TestValidateRelations_NoRelations(t *testing.T) {
 func TestValidateWikiLinks_NoBrokenLinks(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 
 	noteA, _ := v.NewObject("note", "alpha", "")
 	noteB, _ := v.NewObject("note", "beta", "")
@@ -175,8 +174,8 @@ func TestValidateWikiLinks_NoBrokenLinks(t *testing.T) {
 func TestValidateWikiLinks_BrokenLink(t *testing.T) {
 	v := setupTestVault(t)
 
-	os.WriteFile(filepath.Join(v.TypesDir(), "note.yaml"),
-		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"), 0644)
+	mustWriteTypeSchema(v, "note",
+		[]byte("name: note\nproperties:\n  - name: title\n    type: string\n"))
 
 	note, _ := v.NewObject("note", "alpha", "")
 

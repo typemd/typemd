@@ -302,8 +302,11 @@ func (v *Vault) WriteStarterTypes(names []string) error {
 		if !ok {
 			continue
 		}
-		path := filepath.Join(v.TypesDir(), name+".yaml")
-		if err := os.WriteFile(path, st.YAML, 0644); err != nil {
+		dir := filepath.Join(v.TypesDir(), name)
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return fmt.Errorf("create starter type dir %s: %w", name, err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, "schema.yaml"), st.YAML, 0644); err != nil {
 			return fmt.Errorf("write starter type %s: %w", name, err)
 		}
 	}

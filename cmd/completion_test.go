@@ -16,8 +16,9 @@ func setupTestVault(t *testing.T) string {
 	if err := v.Init(); err != nil {
 		t.Fatalf("init vault: %v", err)
 	}
-	// Write a book type schema
-	os.WriteFile(v.TypesDir()+"/book.yaml", []byte(`name: book
+	// Write a book type schema (directory format)
+	os.MkdirAll(v.TypesDir()+"/book", 0755)
+	os.WriteFile(v.TypesDir()+"/book/schema.yaml", []byte(`name: book
 emoji: "\U0001F4DA"
 plural: books
 properties:
