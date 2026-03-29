@@ -1,18 +1,18 @@
 package tui
 
 import (
-	"os"
-	"path/filepath"
 	"testing"
 
 	"charm.land/lipgloss/v2"
+
+	"github.com/typemd/typemd/core"
 )
 
 func TestLoadTheme_Defaults(t *testing.T) {
 	resetThemeDefaults()
 	t.Cleanup(resetThemeDefaults)
 
-	loadTheme(t.TempDir())
+	loadTheme(nil)
 
 	if colorFocusBorder != lipgloss.Color(defaultColorFocusBorder) {
 		t.Errorf("colorFocusBorder = %v, want %s", colorFocusBorder, defaultColorFocusBorder)
@@ -26,17 +26,11 @@ func TestLoadTheme_Override(t *testing.T) {
 	resetThemeDefaults()
 	t.Cleanup(resetThemeDefaults)
 
-	root := t.TempDir()
-	dir := filepath.Join(root, ".typemd")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
+	cfg := &core.ThemeConfig{
+		FocusBorder: "196",
+		WikiLink:    "82",
 	}
-	yaml := []byte("theme:\n  focus_border: \"196\"\n  wiki_link: \"82\"\n")
-	if err := os.WriteFile(filepath.Join(dir, "tui.yaml"), yaml, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	loadTheme(root)
+	loadTheme(cfg)
 
 	if colorFocusBorder != lipgloss.Color("196") {
 		t.Errorf("colorFocusBorder = %v, want 196", colorFocusBorder)
@@ -50,17 +44,10 @@ func TestLoadTheme_PartialOverride(t *testing.T) {
 	resetThemeDefaults()
 	t.Cleanup(resetThemeDefaults)
 
-	root := t.TempDir()
-	dir := filepath.Join(root, ".typemd")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
+	cfg := &core.ThemeConfig{
+		WikiLink: "214",
 	}
-	yaml := []byte("theme:\n  wiki_link: \"214\"\n")
-	if err := os.WriteFile(filepath.Join(dir, "tui.yaml"), yaml, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	loadTheme(root)
+	loadTheme(cfg)
 
 	if colorFocusBorder != lipgloss.Color(defaultColorFocusBorder) {
 		t.Errorf("colorFocusBorder = %v, want %s (unchanged)", colorFocusBorder, defaultColorFocusBorder)
@@ -74,7 +61,7 @@ func TestLoadTheme_MarkdownDefaults(t *testing.T) {
 	resetThemeDefaults()
 	t.Cleanup(resetThemeDefaults)
 
-	loadTheme(t.TempDir())
+	loadTheme(nil)
 
 	// Verify markdown styles use defaults when no config is present.
 	got := mdHeadingStyle.GetForeground()
@@ -103,17 +90,15 @@ func TestLoadTheme_MarkdownOverride(t *testing.T) {
 	resetThemeDefaults()
 	t.Cleanup(resetThemeDefaults)
 
-	root := t.TempDir()
-	dir := filepath.Join(root, ".typemd")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
-		t.Fatal(err)
+	cfg := &core.ThemeConfig{
+		Heading:    "196",
+		InlineCode: "82",
+		CodeBlock:  "120",
+		Link:       "45",
+		Blockquote: "241",
+		HRule:      "240",
 	}
-	yamlData := []byte("theme:\n  heading: \"196\"\n  inline_code: \"82\"\n  code_block: \"120\"\n  link: \"45\"\n  blockquote: \"241\"\n  hrule: \"240\"\n")
-	if err := os.WriteFile(filepath.Join(dir, "tui.yaml"), yamlData, 0o644); err != nil {
-		t.Fatal(err)
-	}
-
-	loadTheme(root)
+	loadTheme(cfg)
 
 	tests := []struct {
 		name string

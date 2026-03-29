@@ -2,31 +2,11 @@ package tui
 
 import (
 	"image/color"
-	"os"
-	"path/filepath"
 
 	"charm.land/lipgloss/v2"
-	"gopkg.in/yaml.v3"
+
+	"github.com/typemd/typemd/core"
 )
-
-// themeConfig represents the theme section in .typemd/tui.yaml.
-type themeConfig struct {
-	FocusBorder string `yaml:"focus_border"`
-	WikiLink    string `yaml:"wiki_link"`
-	Heading     string `yaml:"heading"`
-	Bold        string `yaml:"bold"`
-	Italic      string `yaml:"italic"`
-	InlineCode  string `yaml:"inline_code"`
-	CodeBlock   string `yaml:"code_block"`
-	Link        string `yaml:"link"`
-	Blockquote  string `yaml:"blockquote"`
-	HRule       string `yaml:"hrule"`
-}
-
-// tuiConfig represents the top-level structure of .typemd/tui.yaml.
-type tuiConfig struct {
-	Theme themeConfig `yaml:"theme"`
-}
 
 // Default color values.
 const (
@@ -63,51 +43,44 @@ var (
 	mdHRuleStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorHRule))
 )
 
-// loadTheme reads .typemd/tui.yaml from the vault root and overrides default
-// colors if values are present. Missing file or missing fields are silently
-// ignored, keeping the defaults.
-func loadTheme(vaultRoot string) {
-	data, err := os.ReadFile(filepath.Join(vaultRoot, ".typemd", "tui.yaml"))
-	if err != nil {
+// loadTheme applies theme overrides from VaultConfig. Missing fields are
+// silently ignored, keeping the defaults.
+func loadTheme(cfg *core.ThemeConfig) {
+	if cfg == nil {
 		return
 	}
 
-	var cfg tuiConfig
-	if err := yaml.Unmarshal(data, &cfg); err != nil {
-		return
+	if cfg.FocusBorder != "" {
+		colorFocusBorder = lipgloss.Color(cfg.FocusBorder)
 	}
-
-	if cfg.Theme.FocusBorder != "" {
-		colorFocusBorder = lipgloss.Color(cfg.Theme.FocusBorder)
-	}
-	if cfg.Theme.WikiLink != "" {
-		colorWikiLink = lipgloss.Color(cfg.Theme.WikiLink)
+	if cfg.WikiLink != "" {
+		colorWikiLink = lipgloss.Color(cfg.WikiLink)
 	}
 	wikiLinkStyleBase = lipgloss.NewStyle().Foreground(colorWikiLink)
 
-	if cfg.Theme.Heading != "" {
-		mdHeadingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Heading)).Bold(true)
+	if cfg.Heading != "" {
+		mdHeadingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Heading)).Bold(true)
 	}
-	if cfg.Theme.Bold != "" {
-		mdBoldStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Bold)).Bold(true)
+	if cfg.Bold != "" {
+		mdBoldStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Bold)).Bold(true)
 	}
-	if cfg.Theme.Italic != "" {
-		mdItalicStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Italic)).Italic(true)
+	if cfg.Italic != "" {
+		mdItalicStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Italic)).Italic(true)
 	}
-	if cfg.Theme.InlineCode != "" {
-		mdInlineCodeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.InlineCode))
+	if cfg.InlineCode != "" {
+		mdInlineCodeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.InlineCode))
 	}
-	if cfg.Theme.CodeBlock != "" {
-		mdCodeBlockStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.CodeBlock))
+	if cfg.CodeBlock != "" {
+		mdCodeBlockStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.CodeBlock))
 	}
-	if cfg.Theme.Link != "" {
-		mdLinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Link))
+	if cfg.Link != "" {
+		mdLinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Link))
 	}
-	if cfg.Theme.Blockquote != "" {
-		mdBlockquoteStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Blockquote))
+	if cfg.Blockquote != "" {
+		mdBlockquoteStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Blockquote))
 	}
-	if cfg.Theme.HRule != "" {
-		mdHRuleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.HRule))
+	if cfg.HRule != "" {
+		mdHRuleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.HRule))
 	}
 }
 

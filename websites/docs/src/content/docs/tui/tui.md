@@ -392,23 +392,24 @@ If the state file is missing or corrupt, the TUI silently falls back to default 
 
 ## Theme
 
-The TUI supports configurable colors via `.typemd/tui.yaml`. Missing file or missing fields are silently ignored, keeping the defaults.
+The TUI supports configurable colors via the `tui.theme` section in `.typemd/config.yaml`. Missing fields are silently ignored, keeping the defaults.
 
 ```yaml
-theme:
-  focus_border: "63"    # focused panel border
-  wiki_link: "33"       # wiki-link display text
-  heading: "3"          # markdown headings (# through ######)
-  bold: ""              # bold text (**text**), default: bold weight only
-  italic: ""            # italic text (*text* / _text_), default: italic only
-  inline_code: "245"    # inline code (`code`)
-  code_block: "245"     # fenced code blocks (```)
-  link: "33"            # markdown links ([text](url))
-  blockquote: "8"       # blockquote lines (> text)
-  hrule: "8"            # horizontal rules (---, ***, ___)
+tui:
+  theme:
+    focus_border: "63"    # focused panel border
+    wiki_link: "33"       # wiki-link display text
+    heading: "3"          # markdown headings (# through ######)
+    bold: ""              # bold text (**text**), default: bold weight only
+    italic: ""            # italic text (*text* / _text_), default: italic only
+    inline_code: "245"    # inline code (`code`)
+    code_block: "245"     # fenced code blocks (```)
+    link: "33"            # markdown links ([text](url))
+    blockquote: "8"       # blockquote lines (> text)
+    hrule: "8"            # horizontal rules (---, ***, ___)
 ```
 
-Values are ANSI color codes (0–255) or hex colors (`#RGB`, `#RRGGBB`). An empty string means no foreground color — only the text attribute (bold/italic) is applied.
+Values are ANSI color codes (0–255) or hex colors (`#RGB`, `#RRGGBB`). An empty string means no foreground color — only the text attribute (bold/italic) is applied. You can also use `tmd config set tui.theme.heading 196` to change individual colors.
 
 ### Markdown highlighting
 

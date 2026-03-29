@@ -70,6 +70,21 @@ type TUIConfig struct {
 	DebounceMs      int         `yaml:"debounce_ms,omitempty"`
 	StatsTypeLayout string      `yaml:"stats_type_layout,omitempty"`
 	Toast           ToastConfig `yaml:"toast,omitempty"`
+	Theme           ThemeConfig `yaml:"theme,omitempty"`
+}
+
+// ThemeConfig holds TUI color theme configuration.
+type ThemeConfig struct {
+	FocusBorder string `yaml:"focus_border,omitempty"`
+	WikiLink    string `yaml:"wiki_link,omitempty"`
+	Heading     string `yaml:"heading,omitempty"`
+	Bold        string `yaml:"bold,omitempty"`
+	Italic      string `yaml:"italic,omitempty"`
+	InlineCode  string `yaml:"inline_code,omitempty"`
+	CodeBlock   string `yaml:"code_block,omitempty"`
+	Link        string `yaml:"link,omitempty"`
+	Blockquote  string `yaml:"blockquote,omitempty"`
+	HRule       string `yaml:"hrule,omitempty"`
 }
 
 // ToastConfig holds toast notification configuration.
@@ -177,6 +192,56 @@ var configKeyRegistry = map[string]configKeyEntry{
 			cfg.TUI.Toast.ShowSuccess = &b
 		},
 		Default: "false",
+	},
+	"tui.theme.focus_border": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.FocusBorder },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.FocusBorder = value },
+		Default: "63",
+	},
+	"tui.theme.wiki_link": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.WikiLink },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.WikiLink = value },
+		Default: "33",
+	},
+	"tui.theme.heading": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Heading },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Heading = value },
+		Default: "3",
+	},
+	"tui.theme.bold": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Bold },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Bold = value },
+		Default: "",
+	},
+	"tui.theme.italic": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Italic },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Italic = value },
+		Default: "",
+	},
+	"tui.theme.inline_code": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.InlineCode },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.InlineCode = value },
+		Default: "245",
+	},
+	"tui.theme.code_block": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.CodeBlock },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.CodeBlock = value },
+		Default: "245",
+	},
+	"tui.theme.link": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Link },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Link = value },
+		Default: "33",
+	},
+	"tui.theme.blockquote": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Blockquote },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Blockquote = value },
+		Default: "8",
+	},
+	"tui.theme.hrule": {
+		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.HRule },
+		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.HRule = value },
+		Default: "8",
 	},
 	"ai.default": {
 		Get:     func(cfg *VaultConfig) string { return cfg.AI.Default },
