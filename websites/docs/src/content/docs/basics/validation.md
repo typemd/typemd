@@ -11,6 +11,12 @@ Validation checks the consistency of your vault — from type schemas to object 
 tmd type validate
 ```
 
+For continuous validation during development, add `--watch` to monitor file changes and re-validate automatically:
+
+```bash
+tmd type validate --watch
+```
+
 ## Validation phases
 
 Validation runs five phases in order. Each phase checks a different aspect of your vault.

@@ -136,6 +136,7 @@ func resetAllFlags() {
 	instructionsSkill = false
 	statsTypeName = ""
 	statsJSON = false
+	watchFlag = false
 
 	// Reset Cobra local flags that use cmd.Flags().GetBool() instead of
 	// package-level vars. Without this, flags set in one scenario leak
@@ -171,6 +172,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initLockSteps(sc, cc)
 	initStatsSteps(sc, cc)
 	initTemplateSteps(sc, cc)
+	initWatchValidateSteps(sc, cc)
 }
 
 func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
