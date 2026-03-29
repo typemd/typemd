@@ -13,6 +13,14 @@ import (
 type themeConfig struct {
 	FocusBorder string `yaml:"focus_border"`
 	WikiLink    string `yaml:"wiki_link"`
+	Heading     string `yaml:"heading"`
+	Bold        string `yaml:"bold"`
+	Italic      string `yaml:"italic"`
+	InlineCode  string `yaml:"inline_code"`
+	CodeBlock   string `yaml:"code_block"`
+	Link        string `yaml:"link"`
+	Blockquote  string `yaml:"blockquote"`
+	HRule       string `yaml:"hrule"`
 }
 
 // tuiConfig represents the top-level structure of .typemd/tui.yaml.
@@ -25,6 +33,12 @@ const (
 	defaultColorFocusBorder = "63"
 	defaultColorEditBorder  = "214"
 	defaultColorWikiLink    = "33"
+	defaultColorHeading     = "3"
+	defaultColorInlineCode  = "245"
+	defaultColorCodeBlock   = "245"
+	defaultColorLink        = "33"
+	defaultColorBlockquote  = "8"
+	defaultColorHRule       = "8"
 )
 
 // Theme colors and styles.
@@ -37,6 +51,16 @@ var (
 	dimStyle                      = lipgloss.NewStyle().Foreground(lipgloss.Color("8"))
 	activeStyle                   = lipgloss.NewStyle().Foreground(lipgloss.Color("0")).Background(lipgloss.Color("6"))
 	boldStyle                     = lipgloss.NewStyle().Bold(true)
+
+	// Markdown element styles.
+	mdHeadingStyle    = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorHeading)).Bold(true)
+	mdBoldStyle       = lipgloss.NewStyle().Bold(true)
+	mdItalicStyle     = lipgloss.NewStyle().Italic(true)
+	mdInlineCodeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorInlineCode))
+	mdCodeBlockStyle  = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorCodeBlock))
+	mdLinkStyle       = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorLink))
+	mdBlockquoteStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorBlockquote))
+	mdHRuleStyle      = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorHRule))
 )
 
 // loadTheme reads .typemd/tui.yaml from the vault root and overrides default
@@ -59,8 +83,32 @@ func loadTheme(vaultRoot string) {
 	if cfg.Theme.WikiLink != "" {
 		colorWikiLink = lipgloss.Color(cfg.Theme.WikiLink)
 	}
-
 	wikiLinkStyleBase = lipgloss.NewStyle().Foreground(colorWikiLink)
+
+	if cfg.Theme.Heading != "" {
+		mdHeadingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Heading)).Bold(true)
+	}
+	if cfg.Theme.Bold != "" {
+		mdBoldStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Bold)).Bold(true)
+	}
+	if cfg.Theme.Italic != "" {
+		mdItalicStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Italic)).Italic(true)
+	}
+	if cfg.Theme.InlineCode != "" {
+		mdInlineCodeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.InlineCode))
+	}
+	if cfg.Theme.CodeBlock != "" {
+		mdCodeBlockStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.CodeBlock))
+	}
+	if cfg.Theme.Link != "" {
+		mdLinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Link))
+	}
+	if cfg.Theme.Blockquote != "" {
+		mdBlockquoteStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.Blockquote))
+	}
+	if cfg.Theme.HRule != "" {
+		mdHRuleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(cfg.Theme.HRule))
+	}
 }
 
 // resetThemeDefaults restores all theme state to defaults. Used by tests.
@@ -69,4 +117,13 @@ func resetThemeDefaults() {
 	colorEditBorder = lipgloss.Color(defaultColorEditBorder)
 	colorWikiLink = lipgloss.Color(defaultColorWikiLink)
 	wikiLinkStyleBase = lipgloss.NewStyle().Foreground(colorWikiLink)
+
+	mdHeadingStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorHeading)).Bold(true)
+	mdBoldStyle = lipgloss.NewStyle().Bold(true)
+	mdItalicStyle = lipgloss.NewStyle().Italic(true)
+	mdInlineCodeStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorInlineCode))
+	mdCodeBlockStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorCodeBlock))
+	mdLinkStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorLink))
+	mdBlockquoteStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorBlockquote))
+	mdHRuleStyle = lipgloss.NewStyle().Foreground(lipgloss.Color(defaultColorHRule))
 }

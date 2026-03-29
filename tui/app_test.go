@@ -153,7 +153,7 @@ func TestRenderBody_WithContent(t *testing.T) {
 	if strings.Contains(result, "book/test") {
 		t.Error("renderBody should NOT contain object ID (title moved to title panel)")
 	}
-	if !strings.Contains(result, "# Hello") {
+	if !strings.Contains(stripANSI(result), "# Hello") {
 		t.Error("renderBody should contain body content")
 	}
 	if strings.Contains(result, "title:") {
@@ -174,6 +174,32 @@ func TestRenderBody_EmptyBody(t *testing.T) {
 	if !strings.Contains(result, "(empty)") {
 		t.Error("renderBody with empty body should show (empty)")
 	}
+}
+
+func TestRenderBody_PinnedPropertyNotStyled(t *testing.T) {
+	resetThemeDefaults()
+	t.Cleanup(resetThemeDefaults)
+	obj := &core.Object{
+		ID:   "book/test",
+		Body: "Some text",
+	}
+	props := []core.DisplayProperty{
+		{Key: "status", Value: "**bold value**", Pin: 1},
+	}
+	result := renderBody(obj, 80, props)
+	// The pinned property line should not have markdown styling applied.
+	// Find the line with "**bold value**".
+	for _, line := range strings.Split(result, "\n") {
+		plainLine := stripANSI(line)
+		if strings.Contains(plainLine, "**bold value**") {
+			// The line should NOT contain ANSI escapes (markdown styling).
+			if hasANSI(line) {
+				t.Error("pinned property should not have markdown styling applied")
+			}
+			return
+		}
+	}
+	t.Error("pinned property line not found in output")
 }
 
 func TestRenderProperties_WithSchema(t *testing.T) {

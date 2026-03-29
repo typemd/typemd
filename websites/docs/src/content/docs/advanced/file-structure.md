@@ -27,6 +27,7 @@ vault/
 │   ├── instructions/       # skill overrides (optional)
 │   │   └── explore.md      # override for explore skill
 │   ├── index.db            # SQLite index (auto-updated)
+│   ├── tui.yaml            # TUI theme colors (optional)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
 ├── templates/              # object templates by type (optional)
 │   └── book/

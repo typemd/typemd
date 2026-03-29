@@ -21,7 +21,7 @@ The TUI uses a multi-panel layout:
 |-------|-------------|
 | **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). All defined types appear even if they have no objects. A `+ New Type` row appears at the bottom. |
 | **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). When a type header is selected, shows the type name instead. Hidden when nothing is selected. |
-| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content. When a type header is selected, replaced by the **type editor**. |
+| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content with syntax highlighting. When a type header is selected, replaced by the **type editor**. |
 | **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor or template editor is active. |
 
 The title panel spans the full width of the right side (body + properties area).
@@ -389,6 +389,41 @@ If the saved view's type or view has been deleted, the TUI falls back to the def
 Search state is not persisted — each session starts with a fresh view.
 
 If the state file is missing or corrupt, the TUI silently falls back to default startup behavior.
+
+## Theme
+
+The TUI supports configurable colors via `.typemd/tui.yaml`. Missing file or missing fields are silently ignored, keeping the defaults.
+
+```yaml
+theme:
+  focus_border: "63"    # focused panel border
+  wiki_link: "33"       # wiki-link display text
+  heading: "3"          # markdown headings (# through ######)
+  bold: ""              # bold text (**text**), default: bold weight only
+  italic: ""            # italic text (*text* / _text_), default: italic only
+  inline_code: "245"    # inline code (`code`)
+  code_block: "245"     # fenced code blocks (```)
+  link: "33"            # markdown links ([text](url))
+  blockquote: "8"       # blockquote lines (> text)
+  hrule: "8"            # horizontal rules (---, ***, ___)
+```
+
+Values are ANSI color codes (0–255) or hex colors (`#RGB`, `#RRGGBB`). An empty string means no foreground color — only the text attribute (bold/italic) is applied.
+
+### Markdown highlighting
+
+The body panel applies syntax highlighting to markdown content:
+
+- **Headings** (`#` through `######`) — styled with heading color and bold
+- **Bold** (`**text**`) — bold weight
+- **Italic** (`*text*`, `_text_`) — italic style
+- **Inline code** (`` `code` ``) — distinct foreground color
+- **Fenced code blocks** (` ``` `) — content styled with code block color, inline markdown not processed inside
+- **Links** (`[text](url)`) — distinct foreground color
+- **Blockquotes** (`> text`) — full line in blockquote color
+- **Horizontal rules** (`---`, `***`, `___`) — dim separator color
+
+Wiki-links (`[[target]]`) are styled separately using the `wiki_link` color and are not affected by markdown highlighting.
 
 ## Index sync
 
