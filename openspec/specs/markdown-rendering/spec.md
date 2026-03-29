@@ -114,21 +114,21 @@ The TUI body panel SHALL render horizontal rules (`---`, `***`, or `___` on a li
 
 ### Requirement: Theme colors are configurable
 
-All markdown element colors SHALL be configurable via `.typemd/tui.yaml` under the `theme` section. When a color is not configured, the default SHALL be used. Existing theme fields (`focus_border`, `wiki_link`) SHALL continue to work unchanged.
+All markdown element colors SHALL be configurable via `.typemd/config.yaml` under the `tui.theme` section. When a color is not configured, the default SHALL be used. Existing theme fields (`focus_border`, `wiki_link`) SHALL continue to work unchanged.
 
 #### Scenario: Custom heading color
 
-- **WHEN** `.typemd/tui.yaml` contains `theme.heading: "196"`
+- **WHEN** `.typemd/config.yaml` contains `tui.theme.heading: "196"`
 - **THEN** headings are rendered using ANSI color 196
 
 #### Scenario: Missing config uses defaults
 
-- **WHEN** `.typemd/tui.yaml` does not contain a `theme.heading` entry
+- **WHEN** `.typemd/config.yaml` does not contain a `tui.theme.heading` entry
 - **THEN** headings are rendered using the default heading color
 
 #### Scenario: Existing wiki_link config still works
 
-- **WHEN** `.typemd/tui.yaml` contains `theme.wiki_link: "42"`
+- **WHEN** `.typemd/config.yaml` contains `tui.theme.wiki_link: "42"`
 - **THEN** wiki-links are rendered using ANSI color 42
 
 ### Requirement: Wiki-link styling is preserved
