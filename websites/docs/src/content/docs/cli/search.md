@@ -12,8 +12,15 @@ tmd search "concurrency"
 tmd search "golang" --json
 ```
 
-## Options
+## Flags
 
-| Option | Description |
-|--------|-------------|
-| `--json` | Output results in JSON format |
+| Flag | Description |
+|------|-------------|
+| `--json` | Output results as JSON |
+
+## Example output
+
+```
+book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+note/concurrency-patterns-01jqr4a2bcdef0123456789xyz
+```

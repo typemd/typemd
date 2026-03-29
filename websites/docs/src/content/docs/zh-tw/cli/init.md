@@ -22,7 +22,7 @@ sidebar:
 tmd init
 ```
 
-### Flags
+## Flags
 
 | Flag | 說明 |
 |------|------|
@@ -33,7 +33,7 @@ tmd init
 tmd init --no-starters
 ```
 
-### Vault 設定
+## Vault 設定
 
 `tmd init` 會自動建立 `.typemd/config.yaml` 並設定 `cli.default_type: page`。內建的 `page` type 作為快速建立 object 的預設 type。
 

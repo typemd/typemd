@@ -12,8 +12,15 @@ tmd search "concurrency"
 tmd search "golang" --json
 ```
 
-## 選項
+## Flags
 
-| 選項 | 說明 |
+| Flag | 說明 |
 |------|------|
 | `--json` | 以 JSON 格式輸出結果 |
+
+## 輸出範例
+
+```
+book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
+note/concurrency-patterns-01jqr4a2bcdef0123456789xyz
+```

@@ -22,7 +22,7 @@ Selected starter types are written as `.typemd/types/<name>/schema.yaml` files, 
 tmd init
 ```
 
-### Flags
+## Flags
 
 | Flag | Description |
 |------|-------------|
@@ -33,7 +33,7 @@ tmd init
 tmd init --no-starters
 ```
 
-### Vault configuration
+## Vault configuration
 
 `tmd init` always creates `.typemd/config.yaml` with `cli.default_type: page`. The built-in `page` type serves as the default for quick object creation.
 

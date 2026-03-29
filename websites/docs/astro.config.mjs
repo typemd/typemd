@@ -89,7 +89,14 @@ export default defineConfig({
 				{
 					label: 'CLI',
 					translations: { 'zh-TW': 'CLI' },
-					autogenerate: { directory: 'cli' },
+					items: [
+						{ slug: 'cli/object' },
+						{ slug: 'cli/relation' },
+						{ slug: 'cli/type' },
+						{ slug: 'cli/template' },
+						{ slug: 'cli/maintenance' },
+						{ slug: 'cli/utility' },
+					],
 				},
 				{
 					label: 'MCP',

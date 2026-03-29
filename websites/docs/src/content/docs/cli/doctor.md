@@ -5,7 +5,7 @@ sidebar:
   order: 11
 ---
 
-Performs a comprehensive vault health check across 8 categories. A superset of [`tmd type validate`](/reference/validate/) with additional structural integrity checks.
+Performs a comprehensive vault health check across 8 categories. A superset of [`tmd type validate`](/cli/validate/) with additional structural integrity checks.
 
 ```bash
 tmd doctor

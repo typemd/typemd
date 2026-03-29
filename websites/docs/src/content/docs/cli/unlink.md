@@ -19,8 +19,8 @@ tmd relation unlink book/golang-in-action author person/alan-donovan
 tmd relation unlink book/golang-in-action author person/alan-donovan --both
 ```
 
-## Options
+## Flags
 
-| Option | Description |
-|--------|-------------|
+| Flag | Description |
+|------|-------------|
 | `--both` | Also remove the inverse relation on the target object (requires a bidirectional relation with an `inverse` field) |

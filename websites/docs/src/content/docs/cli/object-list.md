@@ -20,8 +20,8 @@ person/alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz
 person/robert-martin-01jqr4b3cdefg1234567890abc
 ```
 
-## Options
+## Flags
 
-| Option | Description |
-|--------|-------------|
+| Flag | Description |
+|------|-------------|
 | `--json` | Output the list in JSON format |

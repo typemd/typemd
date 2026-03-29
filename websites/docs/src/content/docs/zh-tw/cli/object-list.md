@@ -19,8 +19,8 @@ book/clean-code-01jqr4b7npcwq9f3h8k2m5vxya
 person/robert-martin-01jqr4c8mqdzr0g4j9l3n6wyab
 ```
 
-## 選項
+## Flags
 
-| 選項 | 說明 |
+| Flag | 說明 |
 |------|------|
 | `--json` | 以 JSON 格式輸出結果 |

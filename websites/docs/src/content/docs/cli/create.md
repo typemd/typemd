@@ -28,10 +28,10 @@ Each object is assigned a unique ULID suffix, so multiple objects of the same ty
 
 ## Flags
 
-| Flag | Description |
-|------|-------------|
-| `--type` | Object type (overrides config default, no short form) |
-| `-t`, `--template` | Template name to use (from `templates/<type>/`) |
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--type` | | Object type (overrides config default) |
+| `--template` | `-t` | Template name to use (from `templates/<type>/`) |
 
 ## Default type
 

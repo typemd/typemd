@@ -13,9 +13,9 @@ tmd format --type book        # 只格式化 book 的 objects 和 schema
 tmd format --dry-run          # 列出需要格式化的檔案（CI 模式）
 ```
 
-## 旗標
+## Flags
 
-| 旗標 | 說明 |
+| Flag | 說明 |
 |------|------|
 | `--type <name>` | 只格式化指定 type 的 objects 和 schema |
 | `--dry-run` | 列出需要格式化的檔案，不實際修改 |

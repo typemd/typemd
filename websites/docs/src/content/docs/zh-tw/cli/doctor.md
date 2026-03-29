@@ -5,7 +5,7 @@ sidebar:
   order: 11
 ---
 
-對 vault 進行全面的健康檢查，涵蓋 8 個類別。是 [`tmd type validate`](/zh-tw/reference/validate/) 的超集，額外包含結構完整性檢查。
+對 vault 進行全面的健康檢查，涵蓋 8 個類別。是 [`tmd type validate`](/zh-tw/cli/validate/) 的超集，額外包含結構完整性檢查。
 
 ```bash
 tmd doctor

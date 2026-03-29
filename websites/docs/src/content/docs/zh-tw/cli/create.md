@@ -28,10 +28,10 @@ tmd object create book
 
 ## Flags
 
-| Flag | 說明 |
-|------|------|
-| `--type` | Object type（覆蓋 config 預設值，無短旗標） |
-| `-t`, `--template` | 要使用的 template 名稱（來自 `templates/<type>/`） |
+| Flag | 縮寫 | 說明 |
+|------|------|------|
+| `--type` | | Object type（覆蓋 config 預設值） |
+| `--template` | `-t` | 要使用的 template 名稱（來自 `templates/<type>/`） |
 
 ## 預設 Type
 

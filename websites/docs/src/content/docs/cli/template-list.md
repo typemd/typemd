@@ -21,7 +21,7 @@ book/summary
 note/meeting
 ```
 
-### Flags
+## Flags
 
 | Flag | Description |
 |------|-------------|

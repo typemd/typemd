@@ -19,8 +19,8 @@ tmd relation unlink book/golang-in-action author person/alan-donovan
 tmd relation unlink book/golang-in-action author person/alan-donovan --both
 ```
 
-## 選項
+## Flags
 
-| 選項 | 說明 |
+| Flag | 說明 |
 |------|------|
 | `--both` | 同時移除目標 Object 上的反向 Relation（需要 schema 中設定 `bidirectional` 和 `inverse` 欄位） |

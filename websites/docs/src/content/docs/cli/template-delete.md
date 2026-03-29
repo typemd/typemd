@@ -12,10 +12,10 @@ tmd template delete book/review
 tmd template delete book/review --force
 ```
 
-### Flags
+## Flags
 
-| Flag | Description |
-|------|-------------|
-| `-f`, `--force` | Skip confirmation prompt |
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--force` | `-f` | Skip confirmation prompt |
 
 In interactive terminals, the command prompts for confirmation before deleting. Use `--force` to skip the prompt (useful for scripting). The argument must be in `type/name` format.
