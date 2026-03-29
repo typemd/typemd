@@ -1,116 +1,121 @@
 ## ADDED Requirements
 
-### Requirement: Headings are styled
+### Requirement: Headings are rendered
 
-The TUI body panel SHALL render markdown headings (`#` through `####`) with a distinct foreground color. The heading marker (`#` characters) and heading text SHALL both be styled. Lines that do not start with `#` followed by a space SHALL NOT be treated as headings.
+The TUI body panel SHALL render markdown headings (`#` through `######`) by hiding the `#` markers and displaying the heading text with a distinct foreground color and bold weight. Lines that do not start with `#` followed by a space SHALL NOT be treated as headings.
 
-#### Scenario: H1 heading is styled
+#### Scenario: H1 heading is rendered
 
 - **WHEN** the body contains a line `# Introduction`
-- **THEN** the entire line is rendered in the heading color
+- **THEN** `Introduction` is displayed in the heading color with bold (the `#` marker is hidden)
 
-#### Scenario: H4 heading is styled
+#### Scenario: H4 heading is rendered
 
 - **WHEN** the body contains a line `#### Details`
-- **THEN** the entire line is rendered in the heading color
+- **THEN** `Details` is displayed in the heading color with bold (the `####` markers are hidden)
 
 #### Scenario: Hash in non-heading context is not styled
 
 - **WHEN** the body contains a line `Use #hashtag for tagging`
 - **THEN** the line is rendered without heading styling
 
-### Requirement: Bold text is styled
+### Requirement: Bold text is rendered
 
-The TUI body panel SHALL render bold markdown syntax (`**text**`) with bold weight. The surrounding `**` markers SHALL be included in the styled output.
+The TUI body panel SHALL render bold markdown syntax (`**text**`) by hiding the `**` markers and displaying the content with bold weight.
 
 #### Scenario: Bold word in a line
 
 - **WHEN** the body contains `This is **important** text`
-- **THEN** `**important**` is rendered with bold styling
+- **THEN** `important` is displayed with bold styling (the `**` markers are hidden)
 
 #### Scenario: Multiple bold spans in one line
 
 - **WHEN** the body contains `**first** and **second**`
-- **THEN** both `**first**` and `**second**` are rendered with bold styling
+- **THEN** both `first` and `second` are displayed with bold styling
 
-### Requirement: Italic text is styled
+### Requirement: Italic text is rendered
 
-The TUI body panel SHALL render italic markdown syntax (`*text*` and `_text_`) with italic styling. The surrounding markers SHALL be included in the styled output. The italic pattern SHALL NOT match bold markers (`**`).
+The TUI body panel SHALL render italic markdown syntax (`*text*` and `_text_`) by hiding the markers and displaying the content with italic styling. The italic pattern SHALL NOT match bold markers (`**`). Intra-word underscores (e.g. `snake_case`) SHALL NOT be treated as italic.
 
 #### Scenario: Italic with asterisks
 
 - **WHEN** the body contains `This is *emphasized* text`
-- **THEN** `*emphasized*` is rendered with italic styling
+- **THEN** `emphasized` is displayed with italic styling (the `*` markers are hidden)
 
 #### Scenario: Italic with underscores
 
 - **WHEN** the body contains `This is _emphasized_ text`
-- **THEN** `_emphasized_` is rendered with italic styling
+- **THEN** `emphasized` is displayed with italic styling (the `_` markers are hidden)
 
 #### Scenario: Bold markers are not treated as italic
 
 - **WHEN** the body contains `This is **bold** text`
-- **THEN** `**bold**` is rendered with bold styling, not italic
+- **THEN** `bold` is displayed with bold styling, not italic
 
-### Requirement: Inline code is styled
+#### Scenario: Snake_case identifiers are not italicized
 
-The TUI body panel SHALL render inline code (`` `code` ``) with a distinct foreground color. The surrounding backtick markers SHALL be included in the styled output.
+- **WHEN** the body contains `use my_function_name here`
+- **THEN** the line is rendered without italic styling
+
+### Requirement: Inline code is rendered
+
+The TUI body panel SHALL render inline code (`` `code` ``) by hiding the backtick markers and displaying the content with a distinct foreground color.
 
 #### Scenario: Inline code in text
 
 - **WHEN** the body contains ``Use `fmt.Println` for output``
-- **THEN** `` `fmt.Println` `` is rendered in the inline code color
+- **THEN** `fmt.Println` is displayed in the inline code color (backticks are hidden)
 
 #### Scenario: Multiple inline code spans
 
 - **WHEN** the body contains ``Both `foo` and `bar` are valid``
-- **THEN** both `` `foo` `` and `` `bar` `` are rendered in the inline code color
+- **THEN** both `foo` and `bar` are displayed in the inline code color
 
-### Requirement: Fenced code blocks are styled
+### Requirement: Fenced code blocks are rendered
 
-The TUI body panel SHALL render fenced code blocks (lines between ` ``` ` delimiters) with a distinct foreground color. Both the delimiter lines and the content lines SHALL be styled. Inline markdown syntax (bold, italic, etc.) SHALL NOT be applied inside code blocks.
+The TUI body panel SHALL render fenced code blocks (lines between ` ``` ` delimiters) by hiding the fence lines and styling the content lines with a distinct foreground color. Inline markdown syntax (bold, italic, etc.) SHALL NOT be applied inside code blocks.
 
 #### Scenario: Code block content is styled
 
 - **WHEN** the body contains a fenced code block with content `x := 1`
-- **THEN** the content line is rendered in the code block color
+- **THEN** the content line is rendered in the code block color and the fence lines are hidden
 
 #### Scenario: Markdown syntax inside code block is not processed
 
 - **WHEN** the body contains a fenced code block with content `**not bold**`
 - **THEN** `**not bold**` is rendered in the code block color without bold styling
 
-### Requirement: Links are styled
+### Requirement: Links are rendered
 
-The TUI body panel SHALL render markdown links (`[text](url)`) with a distinct foreground color applied to the entire link syntax.
+The TUI body panel SHALL render markdown links (`[text](url)`) by hiding the URL and bracket syntax, displaying only the link text with a distinct foreground color.
 
-#### Scenario: Link is styled
+#### Scenario: Link is rendered
 
 - **WHEN** the body contains `See [documentation](https://example.com) for details`
-- **THEN** `[documentation](https://example.com)` is rendered in the link color
+- **THEN** `documentation` is displayed in the link color (the URL and brackets are hidden)
 
-### Requirement: Blockquotes are styled
+### Requirement: Blockquotes are rendered
 
-The TUI body panel SHALL render blockquote lines (starting with `>`) with a distinct foreground color applied to the entire line.
+The TUI body panel SHALL render blockquote lines (starting with `>`) by hiding the `>` marker, adding a `│` prefix, and applying a distinct foreground color.
 
-#### Scenario: Blockquote line is styled
+#### Scenario: Blockquote line is rendered
 
 - **WHEN** the body contains `> This is a quote`
-- **THEN** the entire line is rendered in the blockquote color
+- **THEN** `│ This is a quote` is displayed in the blockquote color
 
-### Requirement: Horizontal rules are styled
+### Requirement: Horizontal rules are rendered
 
-The TUI body panel SHALL render horizontal rules (`---`, `***`, or `___` on a line by themselves, with at least 3 characters) with a distinct foreground color.
+The TUI body panel SHALL render horizontal rules (`---`, `***`, or `___` on a line by themselves, with at least 3 characters) by replacing them with a styled `────────────────────` line.
 
-#### Scenario: Dash horizontal rule is styled
+#### Scenario: Dash horizontal rule is rendered
 
 - **WHEN** the body contains a line `---`
-- **THEN** the line is rendered in the horizontal rule color
+- **THEN** a styled horizontal line (`────────────────────`) is displayed
 
-#### Scenario: Asterisk horizontal rule is styled
+#### Scenario: Asterisk horizontal rule is rendered
 
 - **WHEN** the body contains a line `***`
-- **THEN** the line is rendered in the horizontal rule color
+- **THEN** a styled horizontal line is displayed
 
 ### Requirement: Theme colors are configurable
 
@@ -142,9 +147,18 @@ Markdown rendering SHALL NOT interfere with existing wiki-link styling. Wiki-lin
 
 ### Requirement: Markdown styling coexists with pinned properties
 
-Markdown styling SHALL only apply to the body section of the body panel. Pinned properties displayed above the separator SHALL NOT be affected by markdown rendering.
+Markdown rendering SHALL only apply to the body section of the body panel. Pinned properties displayed above the separator SHALL NOT be affected by markdown rendering.
 
 #### Scenario: Pinned property with markdown-like content
 
 - **WHEN** a pinned property value contains `**bold**`
 - **THEN** the property is rendered without markdown styling
+
+### Requirement: Edit mode shows raw markdown
+
+When the user enters edit mode (`e` key), the body panel SHALL display the raw markdown source with all syntax markers visible. Markdown rendering only applies in view mode.
+
+#### Scenario: Edit mode shows markers
+
+- **WHEN** the user presses `e` to enter edit mode on an object with `## Heading`
+- **THEN** the textarea displays `## Heading` with the `##` markers visible

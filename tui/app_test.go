@@ -8,6 +8,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/charmbracelet/x/ansi"
+
 	"github.com/typemd/typemd/core"
 	tea "charm.land/bubbletea/v2"
 )
@@ -153,8 +155,11 @@ func TestRenderBody_WithContent(t *testing.T) {
 	if strings.Contains(result, "book/test") {
 		t.Error("renderBody should NOT contain object ID (title moved to title panel)")
 	}
-	if !strings.Contains(stripANSI(result), "# Hello") {
-		t.Error("renderBody should contain body content")
+	if !strings.Contains(result, "Hello") {
+		t.Error("renderBody should contain heading text")
+	}
+	if strings.Contains(result, "# Hello") {
+		t.Error("renderBody should strip heading markers in view mode")
 	}
 	if strings.Contains(result, "title:") {
 		t.Error("renderBody should NOT contain properties")
@@ -190,10 +195,10 @@ func TestRenderBody_PinnedPropertyNotStyled(t *testing.T) {
 	// The pinned property line should not have markdown styling applied.
 	// Find the line with "**bold value**".
 	for _, line := range strings.Split(result, "\n") {
-		plainLine := stripANSI(line)
+		plainLine := ansi.Strip(line)
 		if strings.Contains(plainLine, "**bold value**") {
 			// The line should NOT contain ANSI escapes (markdown styling).
-			if hasANSI(line) {
+			if line != plainLine {
 				t.Error("pinned property should not have markdown styling applied")
 			}
 			return

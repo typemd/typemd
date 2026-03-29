@@ -21,7 +21,7 @@ The TUI uses a multi-panel layout:
 |-------|-------------|
 | **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). All defined types appear even if they have no objects. A `+ New Type` row appears at the bottom. |
 | **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). When a type header is selected, shows the type name instead. Hidden when nothing is selected. |
-| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content with syntax highlighting. When a type header is selected, replaced by the **type editor**. |
+| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content with markdown rendering (syntax markers hidden, styled text displayed). When a type header is selected, replaced by the **type editor**. |
 | **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor or template editor is active. |
 
 The title panel spans the full width of the right side (body + properties area).
@@ -411,20 +411,22 @@ tui:
 
 Values are ANSI color codes (0–255) or hex colors (`#RGB`, `#RRGGBB`). An empty string means no foreground color — only the text attribute (bold/italic) is applied. You can also use `tmd config set tui.theme.heading 196` to change individual colors.
 
-### Markdown highlighting
+### Markdown rendering
 
-The body panel applies syntax highlighting to markdown content:
+The body panel renders markdown content in view mode — syntax markers are hidden and styled text is displayed:
 
-- **Headings** (`#` through `######`) — styled with heading color and bold
-- **Bold** (`**text**`) — bold weight
-- **Italic** (`*text*`, `_text_`) — italic style
-- **Inline code** (`` `code` ``) — distinct foreground color
-- **Fenced code blocks** (` ``` `) — content styled with code block color, inline markdown not processed inside
-- **Links** (`[text](url)`) — distinct foreground color
-- **Blockquotes** (`> text`) — full line in blockquote color
-- **Horizontal rules** (`---`, `***`, `___`) — dim separator color
+- **Headings** (`#` through `######`) — `#` markers hidden, text shown in heading color with bold
+- **Bold** (`**text**`) — `**` markers hidden, text shown with bold weight
+- **Italic** (`*text*`, `_text_`) — markers hidden, text shown with italic style; intra-word underscores (e.g. `snake_case`) are not treated as italic
+- **Inline code** (`` `code` ``) — backticks hidden, text shown in distinct foreground color
+- **Fenced code blocks** (` ``` `) — fence lines hidden, content shown in code block color; inline markdown not processed inside
+- **Links** (`[text](url)`) — URL and brackets hidden, display text shown in link color
+- **Blockquotes** (`> text`) — `>` marker replaced with `│` prefix, text shown in blockquote color
+- **Horizontal rules** (`---`, `***`, `___`) — replaced with a styled `────────────────────` line
 
-Wiki-links (`[[target]]`) are styled separately using the `wiki_link` color and are not affected by markdown highlighting.
+In edit mode (`e`), the raw markdown source is shown without rendering.
+
+Wiki-links (`[[target]]`) are styled separately using the `wiki_link` color and are not affected by markdown rendering.
 
 ## Index sync
 
