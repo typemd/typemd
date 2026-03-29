@@ -11,6 +11,30 @@ sidebar:
 tmd type validate
 ```
 
+## Flags
+
+| Flag | 縮寫 | 說明 |
+|------|------|------|
+| `--watch` | `-w` | 持續監視檔案變更並重新驗證 |
+
+## Watch 模式
+
+使用 `--watch` 進入持續驗證模式。此指令會監視 `.typemd/types/`、`.typemd/properties.yaml` 和 `objects/` 的檔案變更。每次偵測到變更時，會清除終端機、重新同步索引，並重新執行所有五個驗證階段。
+
+```bash
+tmd type validate --watch
+```
+
+輸出會包含每次驗證的時間戳記：
+
+```
+[14:32:05] Validating...
+
+Validation passed.
+```
+
+按 `Ctrl+C` 退出 watch 模式。
+
 ## 驗證階段
 
 ### 階段 1：Schema 驗證

@@ -11,6 +11,30 @@ Validates the vault's type schemas, objects, relations, wiki-links, and name uni
 tmd type validate
 ```
 
+## Flags
+
+| Flag | Short | Description |
+|------|-------|-------------|
+| `--watch` | `-w` | Continuously watch for changes and re-validate |
+
+## Watch Mode
+
+Use `--watch` to enter continuous validation mode. The command monitors `.typemd/types/`, `.typemd/properties.yaml`, and `objects/` for file changes. On each change it clears the terminal, re-syncs the index, and re-runs all five validation phases. Rapid changes are debounced (200ms) into a single validation run.
+
+```bash
+tmd type validate --watch
+```
+
+Output includes a timestamp for each validation cycle:
+
+```
+[14:32:05] Validating...
+
+Validation passed.
+```
+
+Press `Ctrl+C` to exit watch mode.
+
 ## Validation Phases
 
 ### Phase 1: Schema Validation

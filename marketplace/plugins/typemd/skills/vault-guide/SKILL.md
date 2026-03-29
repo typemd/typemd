@@ -64,7 +64,7 @@ Object IDs support **prefix matching** — `tmd object show book/clean` works if
 |---------|-------------|
 | `tmd type list` | List all type schemas (with emoji) |
 | `tmd type show <type>` | Display schema definition with all properties |
-| `tmd type validate` | Validate schemas, objects, relations, and wiki-links |
+| `tmd type validate [-w]` | Validate schemas, objects, relations, and wiki-links (`-w` for continuous watch) |
 
 ### Templates
 
