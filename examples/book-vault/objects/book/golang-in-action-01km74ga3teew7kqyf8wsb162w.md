@@ -1,5 +1,6 @@
 ---
 name: The Go Programming Language
+updated_at: "2026-03-29T10:00:09+08:00"
 tags:
     - programming
     - go
@@ -10,4 +11,4 @@ favorite: true
 author: person/alan-donovan-01km74ga3tgkaeyy6cnp8ee4hy
 ---
 
-A comprehensive guide to Go covering fundamentals, concurrency patterns, and best practices. Essential reading for anyone serious about Go development.
+A comprehensive guide to Go covering fundamentals, **concurrency** patterns, and best practices. Essential *reading* for anyone serious about Go development.

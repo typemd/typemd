@@ -21,7 +21,7 @@ The TUI uses a multi-panel layout:
 |-------|-------------|
 | **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). All defined types appear even if they have no objects. A `+ New Type` row appears at the bottom. |
 | **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). When a type header is selected, shows the type name instead. Hidden when nothing is selected. |
-| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content. When a type header is selected, replaced by the **type editor**. |
+| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content with markdown rendering (syntax markers hidden, styled text displayed). When a type header is selected, replaced by the **type editor**. |
 | **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor or template editor is active. |
 
 The title panel spans the full width of the right side (body + properties area).
@@ -389,6 +389,44 @@ If the saved view's type or view has been deleted, the TUI falls back to the def
 Search state is not persisted — each session starts with a fresh view.
 
 If the state file is missing or corrupt, the TUI silently falls back to default startup behavior.
+
+## Theme
+
+The TUI supports configurable colors via the `tui.theme` section in `.typemd/config.yaml`. Missing fields are silently ignored, keeping the defaults.
+
+```yaml
+tui:
+  theme:
+    focus_border: "63"    # focused panel border
+    wiki_link: "33"       # wiki-link display text
+    heading: "3"          # markdown headings (# through ######)
+    bold: ""              # bold text (**text**), default: bold weight only
+    italic: ""            # italic text (*text* / _text_), default: italic only
+    inline_code: "245"    # inline code (`code`)
+    code_block: "245"     # fenced code blocks (```)
+    link: "33"            # markdown links ([text](url))
+    blockquote: "8"       # blockquote lines (> text)
+    hrule: "8"            # horizontal rules (---, ***, ___)
+```
+
+Values are ANSI color codes (0–255) or hex colors (`#RGB`, `#RRGGBB`). An empty string means no foreground color — only the text attribute (bold/italic) is applied. You can also use `tmd config set tui.theme.heading 196` to change individual colors.
+
+### Markdown rendering
+
+The body panel renders markdown content in view mode — syntax markers are hidden and styled text is displayed:
+
+- **Headings** (`#` through `######`) — `#` markers hidden, text shown in heading color with bold
+- **Bold** (`**text**`) — `**` markers hidden, text shown with bold weight
+- **Italic** (`*text*`, `_text_`) — markers hidden, text shown with italic style; intra-word underscores (e.g. `snake_case`) are not treated as italic
+- **Inline code** (`` `code` ``) — backticks hidden, text shown in distinct foreground color
+- **Fenced code blocks** (` ``` `) — fence lines hidden, content shown in code block color; inline markdown not processed inside
+- **Links** (`[text](url)`) — URL and brackets hidden, display text shown in link color
+- **Blockquotes** (`> text`) — `>` marker replaced with `│` prefix, text shown in blockquote color
+- **Horizontal rules** (`---`, `***`, `___`) — replaced with a styled `────────────────────` line
+
+In edit mode (`e`), the raw markdown source is shown without rendering.
+
+Wiki-links (`[[target]]`) are styled separately using the `wiki_link` color and are not affected by markdown rendering.
 
 ## Index sync
 

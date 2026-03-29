@@ -122,7 +122,7 @@ Key sub-models: `typeEditor` (schema editing + wizard + templates), `viewMode` (
 - Wiki-links: `[[type/name-ulid]]`, `[[type/name]]`, or `[[name]]` syntax in markdown body, with backlink tracking. Shorthand forms are resolved during sync and written back as full IDs.
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch)
-- Vault config: `.typemd/config.yaml` — sections: `date_format`/`datetime_format`, `cli.*`, `tui.*` (toast, debounce), `ai.*` (providers, prompts). See `config.go` for full key registry.
+- Vault config: `.typemd/config.yaml` — sections: `date_format`/`datetime_format`, `cli.*`, `tui.*` (toast, debounce, theme), `ai.*` (providers, prompts). See `config.go` for full key registry.
 - Embedded skills: `core/skills/*/SKILL.md` (via `//go:embed`); vault overrides in `.typemd/instructions/<skill>.md`
 - Starter types: `core/starters/*.yaml` (offered during `tmd init`)
 - Object templates: `templates/<type>/<name>.md` (applied during `tmd object create`)

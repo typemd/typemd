@@ -849,11 +849,11 @@ func Start(vaultPath string, readOnly bool) error {
 	defer closeLog()
 
 	v := core.NewVault(vaultPath)
-	loadTheme(vaultPath)
 	if err := v.Open(); err != nil {
 		return fmt.Errorf("open vault: %w", err)
 	}
 	defer v.Close()
+	loadTheme(&v.Config().TUI.Theme)
 
 	objects, err := v.QueryObjects(nil)
 	if err != nil {
