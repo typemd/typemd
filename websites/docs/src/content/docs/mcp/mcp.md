@@ -18,3 +18,5 @@ tmd mcp --vault /path/to/vault
 |------|-------------|
 | `search` | Full-text search objects; returns `id`, `type`, and `filename` |
 | `get_object` | Get full object detail by ID; returns `id`, `type`, `filename`, `properties`, and `body` |
+| `list_templates` | List available templates; optional `type` filter; returns `type` and `name` |
+| `get_template` | Get a template's content by `type` and `name`; returns `type`, `name`, `properties`, and `body` |

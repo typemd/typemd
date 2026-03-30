@@ -18,3 +18,5 @@ tmd mcp --vault /path/to/vault
 |------|------|
 | `search` | 全文搜尋 Object；回傳 `id`、`type` 和 `filename` |
 | `get_object` | 依 ID 取得完整 Object 詳情；回傳 `id`、`type`、`filename`、`properties` 和 `body` |
+| `list_templates` | 列出可用 Template；可選 `type` 篩選；回傳 `type` 和 `name` |
+| `get_template` | 依 `type` 和 `name` 取得 Template 內容；回傳 `type`、`name`、`properties` 和 `body` |
