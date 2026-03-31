@@ -81,6 +81,7 @@ Object IDs support **prefix matching** — `tmd object show book/clean` works if
 |---------|-------------|
 | `tmd doctor` | Comprehensive vault health check (superset of validate) with auto-fix |
 | `tmd stats [--type <type>] [--json]` | Vault-wide summary or per-type property aggregate statistics |
+| `tmd graph [--type <type>] [--no-relations] [--no-wikilinks]` | Export object relation graph in DOT format |
 
 ### Relations
 
