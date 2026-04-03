@@ -11,4 +11,5 @@ Initialize vaults, view statistics, manage configuration, and start the web serv
 | [`tmd stats`](/cli/stats/) | Vault-wide summary and per-type property aggregate statistics |
 | [`tmd config`](/cli/config/) | Manage vault configuration from the CLI |
 | [`tmd instructions`](/cli/instructions/) | Output embedded skill instructions enriched with vault context |
+| [`tmd log`](/cli/log/) | Show git commit history for a specific object |
 | [`tmd serve`](/cli/serve/) | Start the web UI server for browser-based vault access |
