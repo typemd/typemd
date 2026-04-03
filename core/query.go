@@ -2,6 +2,36 @@ package core
 
 import "fmt"
 
+// QueryOption configures query behavior.
+type QueryOption func(*queryConfig)
+
+type queryConfig struct {
+	sort            []SortRule
+	includeArchived bool
+}
+
+func buildQueryConfig(opts []QueryOption) queryConfig {
+	var cfg queryConfig
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return cfg
+}
+
+// QuerySort adds sort rules to a query.
+func QuerySort(rules ...SortRule) QueryOption {
+	return func(cfg *queryConfig) {
+		cfg.sort = append(cfg.sort, rules...)
+	}
+}
+
+// QueryIncludeArchived includes archived objects in query results.
+func QueryIncludeArchived() QueryOption {
+	return func(cfg *queryConfig) {
+		cfg.includeArchived = true
+	}
+}
+
 // objectResultToObject converts an ObjectResult to an Object.
 func objectResultToObject(r *ObjectResult) *Object {
 	return &Object{
@@ -25,12 +55,12 @@ func objectResultsToObjects(results []*ObjectResult) []*Object {
 	return objects
 }
 
-// QueryObjects queries objects with optional sort. Delegates to QueryService.
-func (v *Vault) QueryObjects(filter []FilterRule, sort ...SortRule) ([]*Object, error) {
+// QueryObjects queries objects with optional sort and options. Delegates to QueryService.
+func (v *Vault) QueryObjects(filter []FilterRule, opts ...QueryOption) ([]*Object, error) {
 	if v.Queries == nil {
 		return nil, fmt.Errorf("vault not opened")
 	}
-	return v.Queries.Query(filter, sort...)
+	return v.Queries.Query(filter, opts...)
 }
 
 // SearchObjects performs full-text search. Delegates to QueryService.

@@ -25,3 +25,4 @@ person/robert-martin-01jqr4b3cdefg1234567890abc
 | Flag | Description |
 |------|-------------|
 | `--json` | Output the list in JSON format |
+| `--include-archived` | Include archived objects in results |

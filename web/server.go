@@ -216,7 +216,7 @@ func (s *Server) handleListObjects(w http.ResponseWriter, r *http.Request) {
 	}
 	sort := core.SortRule{Property: core.NameProperty, Direction: "asc"}
 
-	objects, err := s.vault.QueryObjects(filter, sort)
+	objects, err := s.vault.QueryObjects(filter, core.QuerySort(sort))
 	if err != nil {
 		writeError(w, http.StatusInternalServerError, "query failed")
 		return

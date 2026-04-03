@@ -339,6 +339,20 @@ func (s *ObjectService) SetLocked(id string, locked bool) error {
 	return s.saveInternal(obj)
 }
 
+// SetArchived toggles the archived state of an object, bypassing the lock guard.
+func (s *ObjectService) SetArchived(id string, archived bool) error {
+	obj, err := s.repo.Get(id)
+	if err != nil {
+		return fmt.Errorf("get object: %w", err)
+	}
+	if archived {
+		obj.Properties[ArchivedProperty] = true
+	} else {
+		delete(obj.Properties, ArchivedProperty)
+	}
+	return s.saveInternal(obj)
+}
+
 // checkNameUnique returns an error if an object with the given name already exists.
 func (s *ObjectService) checkNameUnique(typeName, name string) error {
 	results, err := s.index.Query([]FilterRule{

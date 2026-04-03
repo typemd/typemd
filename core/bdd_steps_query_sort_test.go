@@ -21,10 +21,10 @@ func newQuerySortContext(dc *domainContext) *querySortContext {
 // ── When steps ──────────────────────────────────────────────────────────────
 
 func (qs *querySortContext) iQueryWithFilterSortedBy(filter, property, direction string) {
-	results, err := qs.dc.vault.Queries.Query(parseTestFilter(filter), SortRule{
+	results, err := qs.dc.vault.Queries.Query(parseTestFilter(filter), QuerySort(SortRule{
 		Property:  property,
 		Direction: direction,
-	})
+	}))
 	qs.sortedResults = results
 	qs.dc.lastErr = err
 }

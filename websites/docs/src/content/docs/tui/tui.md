@@ -240,6 +240,10 @@ When an object is locked:
 - Press **`L`** (uppercase) to toggle the lock state of the selected object.
 - Alternatively, use the CLI: `tmd object lock <id>` / `tmd object unlock <id>`.
 
+### Archived Objects
+
+Objects with `archived: true` are hidden from the sidebar and all default queries. They act as soft-deleted — the file remains on disk but the object does not appear in the TUI. To restore an archived object, use the CLI: `tmd object unarchive <id>`.
+
 ### `[EDIT]` — Body Editing
 
 Active when editing the object body text. Press `e` in VIEW mode while the body panel is focused.

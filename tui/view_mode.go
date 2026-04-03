@@ -83,7 +83,7 @@ func (vm *viewMode) load() {
 // queryAndGroup re-queries objects using the current view config and rebuilds groups.
 func (vm *viewMode) queryAndGroup() {
 	filter := append(core.TypeFilter(vm.typeName), vm.view.Filter...)
-	objects, err := vm.vault.QueryObjects(filter, vm.view.Sort...)
+	objects, err := vm.vault.QueryObjects(filter, core.QuerySort(vm.view.Sort...))
 	if err != nil {
 		vm.objects = nil
 	} else {

@@ -177,6 +177,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initAIAvailabilitySteps(ctx, dc)
 	initAIMultiProviderSteps(ctx, dc)
 	initLockSteps(ctx, dc)
+	initArchiveSteps(ctx, dc)
 	initLocalPropertySteps(ctx, dc)
 	initDateDisplayFormatSteps(ctx, dc)
 	initQueryFallbackSteps(ctx, dc)

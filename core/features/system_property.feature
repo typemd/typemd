@@ -3,7 +3,7 @@ Feature: System property registry
   automatically present on all objects regardless of type schema.
 
   Scenario: Registry contains all system properties in order
-    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked"
+    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked, archived"
 
   Scenario: IsSystemProperty recognizes system properties
     Then "name" should be a system property

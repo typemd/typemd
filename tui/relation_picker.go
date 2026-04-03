@@ -63,7 +63,7 @@ func (pe *propEditor) activateRelationPicker(item *propItem, vault *core.Vault) 
 		})
 	}
 
-	results, err := vault.QueryObjects(filters, core.SortRule{Property: "name", Direction: "asc"})
+	results, err := vault.QueryObjects(filters, core.QuerySort(core.SortRule{Property: "name", Direction: "asc"}))
 	if err != nil {
 		return nil
 	}

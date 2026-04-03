@@ -24,3 +24,4 @@ person/robert-martin-01jqr4c8mqdzr0g4j9l3n6wyab
 | Flag | 說明 |
 |------|------|
 | `--json` | 以 JSON 格式輸出結果 |
+| `--include-archived` | 在結果中包含已封存的 object |
