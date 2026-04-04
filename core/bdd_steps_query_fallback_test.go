@@ -127,7 +127,7 @@ Article about Go programming.
 func (fc *fallbackContext) iQueryWithFallbackFilterSortedBy(filter, prop, dir string) {
 	rules := parseTestFilter(filter)
 	sort := []SortRule{{Property: prop, Direction: dir}}
-	results, err := fc.qs.Query(rules, sort...)
+	results, err := fc.qs.Query(rules, QuerySort(sort...))
 	fc.lastErr = err
 	fc.queryResults = results
 }

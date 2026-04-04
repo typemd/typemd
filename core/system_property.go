@@ -7,6 +7,7 @@ const (
 	UpdatedAtProperty   = "updated_at"
 	TagsProperty        = "tags"
 	LockedProperty      = "locked"
+	ArchivedProperty    = "archived"
 )
 
 // Built-in type name constants.
@@ -34,6 +35,7 @@ var systemProperties = []SystemProperty{
 	{Name: UpdatedAtProperty, Type: "datetime", Immutable: true},
 	{Name: TagsProperty, Type: "relation", Target: TagTypeName, Multiple: true},
 	{Name: LockedProperty, Type: "checkbox"},
+	{Name: ArchivedProperty, Type: "checkbox"},
 }
 
 // IsSystemProperty returns true if the given name is a system property.

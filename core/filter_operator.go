@@ -94,11 +94,13 @@ func FilterRuleToSQL(rule FilterRule) (clause string, args []any, err error) {
 	prop := fmt.Sprintf("json_extract(properties, '$.%s')", rule.Property)
 
 	switch rule.Operator {
-	// String / select equality
+	// String / select equality.
+	// sqlBooleanValue converts "true"/"false" to 1/0 for SQLite JSON compatibility,
+	// since json_extract returns integers for JSON booleans.
 	case "is":
-		return prop + " = ?", []any{rule.Value}, nil
+		return prop + " = ?", []any{sqlBooleanValue(rule.Value)}, nil
 	case "is_not":
-		return "(" + prop + " IS NULL OR " + prop + " != ?)", []any{rule.Value}, nil
+		return "(" + prop + " IS NULL OR " + prop + " != ?)", []any{sqlBooleanValue(rule.Value)}, nil
 
 	// String containment
 	case "contains":
@@ -142,5 +144,19 @@ func FilterRuleToSQL(rule FilterRule) (clause string, args []any, err error) {
 
 	default:
 		return "", nil, fmt.Errorf("unknown filter operator %q", rule.Operator)
+	}
+}
+
+// sqlBooleanValue converts "true"/"false" string values to SQLite JSON boolean
+// integers (1/0). json_extract returns integers for JSON booleans, so string
+// comparisons like `1 = 'true'` fail. Other values pass through unchanged.
+func sqlBooleanValue(v string) any {
+	switch v {
+	case "true":
+		return 1
+	case "false":
+		return 0
+	default:
+		return v
 	}
 }

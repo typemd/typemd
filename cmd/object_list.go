@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"github.com/spf13/cobra"
+	"github.com/typemd/typemd/core"
 )
 
 var objectListCmd = &cobra.Command{
@@ -11,7 +12,8 @@ var objectListCmd = &cobra.Command{
 
 Examples:
   tmd object list
-  tmd object list --json`,
+  tmd object list --json
+  tmd object list --include-archived`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		vault, err := openVault(vaultPath)
 		if err != nil {
@@ -19,7 +21,13 @@ Examples:
 		}
 		defer vault.Close()
 
-		results, err := vault.QueryObjects(nil)
+		var opts []core.QueryOption
+		includeArchived, _ := cmd.Flags().GetBool("include-archived")
+		if includeArchived {
+			opts = append(opts, core.QueryIncludeArchived())
+		}
+
+		results, err := vault.QueryObjects(nil, opts...)
 		if err != nil {
 			return err
 		}
@@ -31,5 +39,6 @@ Examples:
 
 func init() {
 	objectListCmd.Flags().Bool("json", false, "Output results as JSON")
+	objectListCmd.Flags().Bool("include-archived", false, "Include archived objects in results")
 	objectCmd.AddCommand(objectListCmd)
 }

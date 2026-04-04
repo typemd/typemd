@@ -9,7 +9,7 @@ sidebar:
 
 ## 系統屬性
 
-每個 Object 都支援五個由 TypeMD 管理的系統屬性。這些屬性提供每個知識管理工具都需要的基礎中繼資料——身份識別、描述、時間追蹤和分類——使用者不需要在每個 type schema 中自行定義。並非所有系統屬性都會出現在每個 Object 的 frontmatter 中：`name` 會在建立時自動填入，`created_at` 和 `updated_at` 在使用 CLI 時設定，而 `description` 和 `tags` 只在使用者明確設定後才會出現。
+每個 Object 都支援七個由 TypeMD 管理的系統屬性。這些屬性提供每個知識管理工具都需要的基礎中繼資料——身份識別、描述、時間追蹤和分類——使用者不需要在每個 type schema 中自行定義。並非所有系統屬性都會出現在每個 Object 的 frontmatter 中：`name` 會在建立時自動填入，`created_at` 和 `updated_at` 在使用 CLI 時設定，而 `description`、`tags`、`locked` 和 `archived` 只在使用者明確設定後才會出現。
 
 | 屬性 | 說明 | 可變性 | 為什麼需要 |
 |------|------|--------|-----------|
@@ -18,8 +18,10 @@ sidebar:
 | `created_at` | 建立時間戳記，RFC 3339 格式（僅設定一次，不會修改） | 自動管理 | 支援依建立日期排序，理解 vault 的時間軸 |
 | `updated_at` | 最後修改時間戳記，RFC 3339 格式（每次儲存時更新） | 自動管理 | 支援依最近修改排序，追蹤 Object 的演變 |
 | `tags` | 標籤參照的陣列（關聯到內建 `tag` 型別，支援多值） | 使用者撰寫 | 跨 type 的橫切分類 |
+| `locked` | 鎖定物件，防止編輯 | 使用者撰寫 | 保護重要 Object 不被意外修改 |
+| `archived` | 軟刪除標記——從預設查詢中隱藏物件 | 使用者撰寫 | 讓不再活躍的 Object 退場而不永久刪除 |
 
-**使用者撰寫**的屬性（`name`、`description`、`tags`）可以被 [object template](/zh-tw/basics/templates) 覆蓋。**自動管理**的屬性（`created_at`、`updated_at`）無法被覆蓋——它們永遠反映實際的建立和修改時間。
+**使用者撰寫**的屬性（`name`、`description`、`tags`、`locked`、`archived`）可以被 [object template](/zh-tw/basics/templates) 覆蓋。**自動管理**的屬性（`created_at`、`updated_at`）無法被覆蓋——它們永遠反映實際的建立和修改時間。
 
 這些名稱是保留的，不能在 type schema 或[共用屬性](#共用屬性)中使用。唯一的例外是 `name`，可以出現在 `properties` 中並搭配 `template` 欄位來設定 [name template](/zh-tw/basics/templates#name-template)。
 

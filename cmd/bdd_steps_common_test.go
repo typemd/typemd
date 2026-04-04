@@ -143,6 +143,7 @@ func resetAllFlags() {
 	// package-level vars. Without this, flags set in one scenario leak
 	// into subsequent scenarios.
 	objectListCmd.Flags().Set("json", "false")
+	objectListCmd.Flags().Set("include-archived", "false")
 	templateListCmd.Flags().Set("json", "false")
 	templateDeleteCmd.Flags().Set("force", "false")
 }
@@ -171,6 +172,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initFixSteps(sc, cc)
 	initInstructionsSteps(sc, cc)
 	initLockSteps(sc, cc)
+	initArchiveSteps(sc, cc)
 	initStatsSteps(sc, cc)
 	initTemplateSteps(sc, cc)
 	initWatchValidateSteps(sc, cc)
