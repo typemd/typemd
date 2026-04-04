@@ -9,6 +9,58 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
+// migrateDirectoryLayout detects the pre-v0.8 vault layout where types/ and
+// properties.yaml lived inside .typemd/, and moves them to vault root so that
+// user-editable schema files are visible alongside objects/.
+func (v *Vault) migrateDirectoryLayout() error {
+	oldTypesDir := filepath.Join(v.Dir(), "types")
+	newTypesDir := filepath.Join(v.Root, "types")
+	oldPropsFile := filepath.Join(v.Dir(), "properties.yaml")
+	newPropsFile := filepath.Join(v.Root, "properties", "properties.yaml")
+
+	// Fast path: nothing to migrate if old paths don't exist.
+	if !dirExists(oldTypesDir) && !fileExists(oldPropsFile) {
+		return nil
+	}
+
+	// Pre-check: detect conflicts before moving anything
+	if dirExists(oldTypesDir) && dirExists(newTypesDir) {
+		return fmt.Errorf("directory layout conflict: both %s and %s exist; resolve manually by removing one", oldTypesDir, newTypesDir)
+	}
+	if fileExists(oldPropsFile) && fileExists(newPropsFile) {
+		return fmt.Errorf("directory layout conflict: both %s and %s exist; resolve manually by removing one", oldPropsFile, newPropsFile)
+	}
+
+	// Migrate types directory
+	if dirExists(oldTypesDir) {
+		if err := os.Rename(oldTypesDir, newTypesDir); err != nil {
+			return fmt.Errorf("migrate types directory: %w", err)
+		}
+	}
+
+	// Migrate properties file
+	if fileExists(oldPropsFile) {
+		if err := os.MkdirAll(filepath.Dir(newPropsFile), 0755); err != nil {
+			return fmt.Errorf("create properties directory: %w", err)
+		}
+		if err := os.Rename(oldPropsFile, newPropsFile); err != nil {
+			return fmt.Errorf("migrate properties file: %w", err)
+		}
+	}
+
+	return nil
+}
+
+func dirExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && info.IsDir()
+}
+
+func fileExists(path string) bool {
+	info, err := os.Stat(path)
+	return err == nil && !info.IsDir()
+}
+
 // MigrateOptions configures a migration operation.
 type MigrateOptions struct {
 	DryRun  bool
@@ -132,7 +184,7 @@ type SchemaMigrateResult struct {
 }
 
 // MigrateSchemas scans type schemas and converts enum+values to select+options.
-// Only scans directory-format schemas (.typemd/types/<name>/schema.yaml).
+// Only scans directory-format schemas (types/<name>/schema.yaml).
 // When dryRun is true, it reports what would change without modifying files.
 func (v *Vault) MigrateSchemas(dryRun bool) (*SchemaMigrateResult, error) {
 	result := &SchemaMigrateResult{}

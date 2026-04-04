@@ -106,7 +106,7 @@ tmd object create "My Idea"
 | `tui.theme.blockquote` | string | `8` | Blockquote line color |
 | `tui.theme.hrule` | string | `8` | Horizontal rule color |
 
-The file watcher monitors `objects/` and `.typemd/types/` for changes. The debounce interval controls how quickly the TUI reacts to file modifications — lower values make updates feel more instant, higher values reduce redundant refreshes.
+The file watcher monitors `objects/` and `types/` for changes. The debounce interval controls how quickly the TUI reacts to file modifications — lower values make updates feel more instant, higher values reduce redundant refreshes.
 
 Toast notifications appear in the bottom-right corner of the TUI for transient messages such as sync warnings (unresolved references) and AI operation errors. They auto-dismiss after `duration_ms` and can be manually dismissed by pressing the `dismiss_key`. Error-level toasts always show regardless of configuration.
 

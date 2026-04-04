@@ -120,16 +120,16 @@ Properties 作為 JSON blob 儲存在 `objects.properties` 中。曾考慮 typed
 
 ## Shared properties：單層 `use` 參照
 
-**決策**：Shared properties 放在 `.typemd/properties.yaml`。Type schema 透過 `use: <name>` 參照它們，僅允許 `pin` 和 `emoji` 作為覆寫。
+**決策**：Shared properties 放在 `properties/properties.yaml`。Type schema 透過 `use: <name>` 參照它們，僅允許 `pin` 和 `emoji` 作為覆寫。
 
 ```yaml
-# .typemd/properties.yaml
+# properties/properties.yaml
 properties:
   - name: due_date
     type: date
     emoji: 📅
 
-# .typemd/types/task/schema.yaml
+# types/task/schema.yaml
 properties:
   - use: due_date
     pin: 1

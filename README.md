@@ -40,14 +40,15 @@ TypeMD lets you think in **Objects** — books, people, ideas, meetings — conn
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # user-defined type schemas (directory format)
-│   │   ├── book/
-│   │   │   └── schema.yaml # you create these
-│   │   └── person/
-│   │       └── schema.yaml
-│   ├── properties.yaml     # shared property definitions (optional)
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
+├── types/                  # user-defined type schemas (directory format)
+│   ├── book/
+│   │   └── schema.yaml     # you create these
+│   └── person/
+│       └── schema.yaml
+├── properties/
+│   └── properties.yaml     # shared property definitions (optional)
 ├── templates/              # object templates by type (optional)
 │   └── book/
 │       └── review.md       # template with default frontmatter + body
@@ -137,10 +138,10 @@ Press `?` in the TUI for the full keybinding reference.
 
 ## Type Schema
 
-Define your types in `.typemd/types/` (`tag` and `page` are built-in — all others are user-defined):
+Define your types in `types/` (`tag` and `page` are built-in — all others are user-defined):
 
 ```yaml
-# .typemd/types/book/schema.yaml
+# types/book/schema.yaml
 name: book
 plural: books
 emoji: 📚

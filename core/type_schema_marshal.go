@@ -24,7 +24,7 @@ type marshalSchema struct {
 }
 
 // MarshalTypeSchema serializes a TypeSchema to YAML bytes suitable for
-// writing to .typemd/types/<name>.yaml. It handles the NameTemplate →
+// writing to types/<name>/schema.yaml. It handles the NameTemplate →
 // name property entry conversion that yaml:"-" would otherwise drop.
 func MarshalTypeSchema(schema *TypeSchema) ([]byte, error) {
 	version := schema.Version

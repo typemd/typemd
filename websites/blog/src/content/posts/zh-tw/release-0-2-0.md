@@ -54,7 +54,7 @@ properties:
 
 如果你有多個型別需要相同的屬性——例如每種資源都有 `tags` 和 `favorite`——以往只能在每個型別 schema 裡各寫一遍。現在不用了。
 
-在 `.typemd/properties.yaml` 集中定義一次：
+在 `properties/properties.yaml` 集中定義一次：
 
 ```yaml
 properties:

@@ -120,16 +120,16 @@ Properties are stored as a JSON blob in `objects.properties`. A typed `object_pr
 
 ## Shared properties: single-level `use` references
 
-**Decision**: Shared properties live in `.typemd/properties.yaml`. Type schemas reference them with `use: <name>`, allowing only `pin` and `emoji` as overrides.
+**Decision**: Shared properties live in `properties/properties.yaml`. Type schemas reference them with `use: <name>`, allowing only `pin` and `emoji` as overrides.
 
 ```yaml
-# .typemd/properties.yaml
+# properties/properties.yaml
 properties:
   - name: due_date
     type: date
     emoji: 📅
 
-# .typemd/types/task/schema.yaml
+# types/task/schema.yaml
 properties:
   - use: due_date
     pin: 1

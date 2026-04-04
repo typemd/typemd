@@ -12,7 +12,7 @@ func setupTestRepo(t *testing.T) *LocalObjectRepository {
 	dir := t.TempDir()
 
 	// Create vault structure
-	os.MkdirAll(filepath.Join(dir, ".typemd", "types"), 0755)
+	os.MkdirAll(filepath.Join(dir, "types"), 0755)
 	os.MkdirAll(filepath.Join(dir, "objects"), 0755)
 
 	return NewLocalObjectRepository(dir)
@@ -201,9 +201,9 @@ func TestLocalObjectRepository_EnsureDir(t *testing.T) {
 func TestLocalObjectRepository_GetSchema(t *testing.T) {
 	repo := setupTestRepo(t)
 
-	os.MkdirAll(filepath.Join(repo.root, ".typemd", "types", "book"), 0755)
+	os.MkdirAll(filepath.Join(repo.root, "types", "book"), 0755)
 	os.WriteFile(
-		filepath.Join(repo.root, ".typemd", "types", "book", "schema.yaml"),
+		filepath.Join(repo.root, "types", "book", "schema.yaml"),
 		[]byte("name: book\nproperties:\n  - name: title\n    type: string\n  - name: rating\n    type: number\n"),
 		0644,
 	)
@@ -244,10 +244,10 @@ func TestLocalObjectRepository_GetSchemaUnknown(t *testing.T) {
 func TestLocalObjectRepository_ListSchemas(t *testing.T) {
 	repo := setupTestRepo(t)
 
-	os.MkdirAll(filepath.Join(repo.root, ".typemd", "types", "book"), 0755)
-	os.WriteFile(filepath.Join(repo.root, ".typemd", "types", "book", "schema.yaml"), []byte("name: book\n"), 0644)
-	os.MkdirAll(filepath.Join(repo.root, ".typemd", "types", "note"), 0755)
-	os.WriteFile(filepath.Join(repo.root, ".typemd", "types", "note", "schema.yaml"), []byte("name: note\n"), 0644)
+	os.MkdirAll(filepath.Join(repo.root, "types", "book"), 0755)
+	os.WriteFile(filepath.Join(repo.root, "types", "book", "schema.yaml"), []byte("name: book\n"), 0644)
+	os.MkdirAll(filepath.Join(repo.root, "types", "note"), 0755)
+	os.WriteFile(filepath.Join(repo.root, "types", "note", "schema.yaml"), []byte("name: note\n"), 0644)
 
 	names, err := repo.ListSchemas()
 	if err != nil {
@@ -315,8 +315,9 @@ func TestLocalObjectRepository_ListTemplatesNoDir(t *testing.T) {
 func TestLocalObjectRepository_GetSharedProperties(t *testing.T) {
 	repo := setupTestRepo(t)
 
+	os.MkdirAll(filepath.Join(repo.root, "properties"), 0755)
 	os.WriteFile(
-		filepath.Join(repo.root, ".typemd", "properties.yaml"),
+		filepath.Join(repo.root, "properties", "properties.yaml"),
 		[]byte("properties:\n  - name: status\n    type: select\n    options:\n      - value: active\n"),
 		0644,
 	)

@@ -489,7 +489,7 @@ func TestRelationPicker_VaultSetup(t *testing.T) {
 	}
 
 	// Verify vault directory structure
-	typesDir := filepath.Join(v.Root, ".typemd", "types")
+	typesDir := filepath.Join(v.Root, "types")
 	for _, name := range []string{"book", "person"} {
 		schemaPath := filepath.Join(typesDir, name, "schema.yaml")
 		if _, err := os.Stat(schemaPath); os.IsNotExist(err) {

@@ -33,19 +33,19 @@ During `tmd init`, the system SHALL present a Bubble Tea interactive checkbox se
 #### Scenario: User confirms default selection
 
 - **WHEN** user presses Enter without changing any selection
-- **THEN** all 3 starter types SHALL be written to `.typemd/types/`
+- **THEN** all 3 starter types SHALL be written to `types/`
 
 #### Scenario: User deselects some types
 
 - **WHEN** user deselects `note` and confirms
-- **THEN** only `idea` and `book` SHALL be written to `.typemd/types/`
-- **AND** `note.yaml` SHALL NOT exist in `.typemd/types/`
+- **THEN** only `idea` and `book` SHALL be written to `types/`
+- **AND** `note.yaml` SHALL NOT exist in `types/`
 
 #### Scenario: User selects none
 
 - **WHEN** user deselects all items and confirms (or presses q/Esc)
 - **THEN** no starter type files SHALL be written
-- **AND** the vault SHALL be initialized with an empty `.typemd/types/` directory
+- **AND** the vault SHALL be initialized with an empty `types/` directory
 
 #### Scenario: Select all shortcut
 
@@ -74,12 +74,12 @@ The `tmd init` command SHALL accept a `--no-starters` flag that skips the starte
 
 ### Requirement: Starter types written as regular type schema files
 
-Selected starter types SHALL be written as `.typemd/types/<name>/schema.yaml` files, identical in format to user-created type schemas. They are fully owned and editable by the user after creation.
+Selected starter types SHALL be written as `types/<name>/schema.yaml` files, identical in format to user-created type schemas. They are fully owned and editable by the user after creation.
 
 #### Scenario: Written files are standard type schemas
 
 - **WHEN** starter type `book` is selected and written
-- **THEN** `.typemd/types/book.yaml` SHALL exist
+- **THEN** `types/book.yaml` SHALL exist
 - **AND** its content SHALL be a valid type schema YAML parseable by `LoadType("book")`
 
 #### Scenario: Init output lists created types

@@ -15,14 +15,16 @@ project-root/
 │   ├── config.yaml          # Vault config (cli.default_type, tui.debounce_ms)
 │   ├── index.db             # SQLite index (auto-managed, gitignored)
 │   ├── tui-state.yaml       # TUI session state (persisted on quit)
-│   ├── properties.yaml      # Shared property definitions (optional)
-│   └── types/               # Type schema definitions (directory format)
-│       ├── book/
-│       │   ├── schema.yaml
-│       │   └── views/       # View definitions (optional)
-│       │       └── default.yaml
-│       └── person/
-│           └── schema.yaml
+│   └── ...
+├── types/                   # Type schema definitions (directory format)
+│   ├── book/
+│   │   ├── schema.yaml
+│   │   └── views/           # View definitions (optional)
+│   │       └── default.yaml
+│   └── person/
+│       └── schema.yaml
+├── properties/
+│   └── properties.yaml      # Shared property definitions (optional)
 ├── templates/               # Object templates (optional)
 │   └── book/
 │       └── review.md        # Template with frontmatter overrides + body
@@ -167,7 +169,7 @@ These are **reserved** — type schemas cannot define properties named `name`, `
 
 ## Type Schema Format
 
-Type schemas live in `.typemd/types/<type>/schema.yaml`:
+Type schemas live in `types/<type>/schema.yaml`:
 
 ```yaml
 name: book
@@ -250,7 +252,7 @@ properties:
 
 ## Shared Properties
 
-Define reusable properties in `.typemd/properties.yaml`:
+Define reusable properties in `properties/properties.yaml`:
 
 ```yaml
 properties:
@@ -273,7 +275,7 @@ properties:
 
 ## Views
 
-Views define how objects of a type are presented. They live at `.typemd/types/<type>/views/<view>.yaml`.
+Views define how objects of a type are presented. They live at `types/<type>/views/<view>.yaml`.
 
 ```yaml
 layout: table          # "list" or "table"
@@ -312,7 +314,7 @@ Object templates live at `templates/<type>/<name>.md`. They are Markdown files w
 
 ## Built-in Types
 
-typemd has two built-in types that exist without YAML files, cannot be deleted, but can be overridden by custom `.typemd/types/<name>/schema.yaml`:
+typemd has two built-in types that exist without YAML files, cannot be deleted, but can be overridden by custom `types/<name>/schema.yaml`:
 
 ### Tag (🏷️)
 
@@ -376,7 +378,7 @@ The right panel follows the sidebar cursor:
 
 ## Tips for Working with typemd
 
-- **Always read type schemas first** before creating or modifying objects — check `.typemd/types/*/schema.yaml`
+- **Always read type schemas first** before creating or modifying objects — check `types/*/schema.yaml`
 - **Use `tmd doctor`** for a comprehensive health check, or `tmd type validate` for quick schema validation
 - **Object IDs include ULIDs** — don't guess them, use `tmd object list` to find exact IDs
 - **Relations are properties** — set them in frontmatter, not as wiki-links (wiki-links are for body text references)

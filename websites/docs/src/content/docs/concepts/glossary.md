@@ -19,7 +19,7 @@ The basic unit of knowledge in TypeMD. Instead of thinking in "files" or "notes"
 
 ## Type
 
-Defines what kind of Object you're creating. Every Object belongs to exactly one Type (e.g. `book`, `person`, `note`). Types are defined by YAML schema files in `.typemd/types/`.
+Defines what kind of Object you're creating. Every Object belongs to exactly one Type (e.g. `book`, `person`, `note`). Types are defined by YAML schema files in `types/`.
 
 [Learn more →](/concepts/types)
 
@@ -61,7 +61,7 @@ Provides default frontmatter and body content when creating new Objects. Object 
 
 ## View
 
-A saved configuration that controls how Objects of a Type are displayed — including sort order, filter rules, grouping, and layout. Views are stored as YAML files in `.typemd/types/<name>/views/`. Every Type has an implicit default View (list layout, sorted by name).
+A saved configuration that controls how Objects of a Type are displayed — including sort order, filter rules, grouping, and layout. Views are stored as YAML files in `types/<name>/views/`. Every Type has an implicit default View (list layout, sorted by name).
 
 [Learn more →](/advanced/file-structure#views)
 

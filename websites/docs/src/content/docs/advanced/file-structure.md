@@ -14,20 +14,21 @@ A Vault is a regular directory with a specific structure:
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # user-defined type schemas (directory format)
-│   │   ├── book/
-│   │   │   ├── schema.yaml # type schema definition
-│   │   │   └── views/      # saved views for this type (optional)
-│   │   │       ├── default.yaml
-│   │   │       └── by-rating.yaml
-│   │   └── person/
-│   │       └── schema.yaml
 │   ├── config.yaml         # vault configuration (optional)
-│   ├── properties.yaml     # shared property definitions (optional)
 │   ├── instructions/       # skill overrides (optional)
 │   │   └── explore.md      # override for explore skill
 │   ├── index.db            # SQLite index (auto-updated)
 │   └── tui-state.yaml      # TUI session state (auto-saved)
+├── types/                  # user-defined type schemas (directory format)
+│   ├── book/
+│   │   ├── schema.yaml     # type schema definition
+│   │   └── views/          # saved views for this type (optional)
+│   │       ├── default.yaml
+│   │       └── by-rating.yaml
+│   └── person/
+│       └── schema.yaml
+├── properties/
+│   └── properties.yaml     # shared property definitions (optional)
 ├── templates/              # object templates by type (optional)
 │   └── book/
 │       └── review.md       # default frontmatter + body for new objects
@@ -38,7 +39,7 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-- `.typemd/` — configuration and internal state (vault config, type schemas, shared properties, skill overrides, index, TUI state)
+- `.typemd/` — configuration and internal state (vault config, skill overrides, index, TUI state)
 - `templates/` — optional object templates organized by type
 - `objects/` — all Object files organized by type
 
@@ -84,10 +85,10 @@ For details on the frontmatter format and how to edit it manually, see [Frontmat
 
 ## Type schema files
 
-Each type is stored as a directory under `.typemd/types/<name>/` containing a `schema.yaml` file:
+Each type is stored as a directory under `types/<name>/` containing a `schema.yaml` file:
 
 ```yaml
-# .typemd/types/book/schema.yaml
+# types/book/schema.yaml
 name: book
 plural: books
 color: blue
@@ -109,10 +110,10 @@ Two types are built-in: `tag` (backs the `tags` system property, plural "tags", 
 
 ## Views
 
-Each type can have saved views that define how objects are filtered, sorted, and displayed. Views are stored as YAML files under `.typemd/types/<name>/views/`:
+Each type can have saved views that define how objects are filtered, sorted, and displayed. Views are stored as YAML files under `types/<name>/views/`:
 
 ```yaml
-# .typemd/types/book/views/by-rating.yaml
+# types/book/views/by-rating.yaml
 name: by-rating
 layout: list
 columns: [status, rating]
@@ -140,10 +141,10 @@ For the full type schema format, see [Types](/concepts/types).
 
 ## Shared properties file
 
-The optional file `.typemd/properties.yaml` defines reusable property definitions that can be referenced from type schemas via `use`:
+The optional file `properties/properties.yaml` defines reusable property definitions that can be referenced from type schemas via `use`:
 
 ```yaml
-# .typemd/properties.yaml
+# properties/properties.yaml
 properties:
   - name: status
     type: select

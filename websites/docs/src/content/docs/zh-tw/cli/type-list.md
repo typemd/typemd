@@ -19,4 +19,4 @@ tmd type list
 📝 note
 ```
 
-Type schema 定義於 `.typemd/types/<name>/schema.yaml`，每個目錄對應一個 Type。
+Type schema 定義於 `types/<name>/schema.yaml`，每個目錄對應一個 Type。

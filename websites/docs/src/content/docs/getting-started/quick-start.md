@@ -27,7 +27,7 @@ This launches the interactive TUI for browsing your vault — objects are groupe
 Create a type schema to define the structure of your objects:
 
 ```yaml
-# .typemd/types/book/schema.yaml
+# types/book/schema.yaml
 name: book
 emoji: 📚
 properties:

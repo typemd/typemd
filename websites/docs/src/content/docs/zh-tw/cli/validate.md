@@ -19,7 +19,7 @@ tmd type validate
 
 ## Watch 模式
 
-使用 `--watch` 進入持續驗證模式。此指令會監視 `.typemd/types/`、`.typemd/properties.yaml` 和 `objects/` 的檔案變更。每次偵測到變更時，會清除終端機、重新同步索引，並重新執行所有五個驗證階段。
+使用 `--watch` 進入持續驗證模式。此指令會監視 `types/`、`properties/properties.yaml` 和 `objects/` 的檔案變更。每次偵測到變更時，會清除終端機、重新同步索引，並重新執行所有五個驗證階段。
 
 ```bash
 tmd type validate --watch
@@ -39,7 +39,7 @@ Validation passed.
 
 ### 階段 1：Schema 驗證
 
-掃描所有 `.typemd/types/<name>/schema.yaml` 檔案並檢查：
+掃描所有 `types/<name>/schema.yaml` 檔案並檢查：
 
 - `name` 欄位為必填
 - 每個屬性必須有 `name` 和 `type`

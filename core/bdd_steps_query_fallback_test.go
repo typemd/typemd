@@ -63,7 +63,7 @@ func (fc *fallbackContext) aVaultWithObjectsAndBrokenIndex() {
 	os.MkdirAll(fc.rootDir, 0755)
 
 	// Create type schema for "book"
-	typesDir := filepath.Join(fc.rootDir, ".typemd", "types", "book")
+	typesDir := filepath.Join(fc.rootDir, "types", "book")
 	os.MkdirAll(typesDir, 0755)
 	schemaContent := `emoji: "📚"
 plural: books
@@ -76,7 +76,7 @@ properties:
 	os.WriteFile(filepath.Join(typesDir, "schema.yaml"), []byte(schemaContent), 0644)
 
 	// Create type schema for "article"
-	articleDir := filepath.Join(fc.rootDir, ".typemd", "types", "article")
+	articleDir := filepath.Join(fc.rootDir, "types", "article")
 	os.MkdirAll(articleDir, 0755)
 	articleSchema := `emoji: "📰"
 plural: articles

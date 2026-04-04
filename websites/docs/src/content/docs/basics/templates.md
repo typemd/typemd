@@ -74,7 +74,7 @@ Object names are normally provided manually at creation time. For types with pre
 Add a `name` entry in the type schema's `properties` array with a `template` field:
 
 ```yaml
-# .typemd/types/journal/schema.yaml
+# types/journal/schema.yaml
 name: journal
 emoji: 📓
 properties:

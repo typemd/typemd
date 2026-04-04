@@ -48,12 +48,12 @@ func (v *Vault) Dir() string {
 
 // TypesDir returns the types directory path.
 func (v *Vault) TypesDir() string {
-	return filepath.Join(v.Dir(), "types")
+	return filepath.Join(v.Root, "types")
 }
 
 // SharedPropertiesPath returns the path to the shared properties file.
 func (v *Vault) SharedPropertiesPath() string {
-	return filepath.Join(v.Dir(), "properties.yaml")
+	return filepath.Join(v.Root, "properties", "properties.yaml")
 }
 
 // DBPath returns the SQLite database path.
@@ -112,6 +112,12 @@ func (v *Vault) Open() error {
 	}
 	if !v.IsInitialized() {
 		return fmt.Errorf("vault not initialized at %s", v.Dir())
+	}
+
+	// Migrate old directory layout (.typemd/types/ and .typemd/properties.yaml)
+	// to new root-level layout (types/ and properties/) before any path accessors are used.
+	if err := v.migrateDirectoryLayout(); err != nil {
+		return fmt.Errorf("migrate directory layout: %w", err)
 	}
 
 	db, err := sql.Open("sqlite", v.DBPath())
@@ -265,8 +271,8 @@ func (v *Vault) Init() error {
 		return fmt.Errorf("vault already initialized at %s", v.Dir())
 	}
 
-	// Create directories
-	for _, dir := range []string{v.TypesDir(), v.ObjectsDir()} {
+	// Create directories: .typemd/ (internal), types/, properties/, objects/
+	for _, dir := range []string{v.Dir(), v.TypesDir(), filepath.Dir(v.SharedPropertiesPath()), v.ObjectsDir()} {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("create directory %s: %w", dir, err)
 		}

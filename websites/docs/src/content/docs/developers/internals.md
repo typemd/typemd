@@ -23,7 +23,7 @@ The Vault maintains an in-memory cache of type schemas to avoid repeated disk re
 | `SaveType()` | Invalidates the specific type's cache entry |
 | `DeleteType()` | Invalidates the specific type's cache entry |
 | `MigrateSchemas()` | Invalidates the entire cache |
-| External file change in `.typemd/types/` | Invalidates the entire cache |
+| External file change in `types/` | Invalidates the entire cache |
 
 External file changes are detected by the TUI's file watcher. When a schema file is modified outside the Vault API, the watcher emits a schema change message that triggers full cache invalidation and data refresh.
 
@@ -54,7 +54,7 @@ The TUI falls back to full `Reconciler.Reconcile()` when:
 
 ### Schema file monitoring
 
-The watcher also monitors `.typemd/types/`. Schema file changes produce a distinct message that triggers schema cache invalidation and full data refresh — incremental sync does not apply to schema changes.
+The watcher also monitors `types/`. Schema file changes produce a distinct message that triggers schema cache invalidation and full data refresh — incremental sync does not apply to schema changes.
 
 ## Relation sync
 

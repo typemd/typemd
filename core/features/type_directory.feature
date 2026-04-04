@@ -1,5 +1,5 @@
 Feature: Type directory structure
-  Type schemas use directory format (.typemd/types/<name>/schema.yaml).
+  Type schemas use directory format (types/<name>/schema.yaml).
 
   # ── Load from directory format ──────────────────────────────
 

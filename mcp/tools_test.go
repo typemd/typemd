@@ -28,7 +28,7 @@ func setupTestVault(t *testing.T) (*core.Vault, string) {
 	t.Cleanup(func() { v.Close() })
 
 	// Create type schema (directory format)
-	typesDir := filepath.Join(dir, ".typemd", "types")
+	typesDir := filepath.Join(dir, "types")
 	schema := "name: book\nproperties:\n  - name: status\n    type: string\n"
 	if err := os.MkdirAll(filepath.Join(typesDir, "book"), 0755); err != nil {
 		t.Fatalf("mkdir: %v", err)

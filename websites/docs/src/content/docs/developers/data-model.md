@@ -47,7 +47,7 @@ TypeMD provides two query paths:
 
 The query pipeline uses structured `FilterRule` conditions to filter Objects. Each rule specifies a property, an operator, and a value. Queries run against the SQLite index for performance, returning lightweight `ObjectResult` projections rather than full Object entities. If the SQLite index is unavailable, queries automatically fall back to filesystem scanning with in-memory filter matching using the same operators.
 
-Filter rules are used programmatically through `Vault.QueryObjects()` and in view configurations (`.typemd/types/<name>/views/<view>.yaml`).
+Filter rules are used programmatically through `Vault.QueryObjects()` and in view configurations (`types/<name>/views/<view>.yaml`).
 
 ### Full-text search
 
@@ -89,7 +89,7 @@ The config file is loaded during vault open. If the file is missing or empty, al
 Type schemas can opt into name uniqueness by setting `unique: true`. When enabled, TypeMD prevents creating multiple Objects of the same type with identical `name` values.
 
 ```yaml
-# .typemd/types/person/schema.yaml
+# types/person/schema.yaml
 name: person
 unique: true  # only one person per name
 properties:

@@ -18,7 +18,7 @@ func setupStatsVault(t *testing.T) (*core.Vault, string) {
 		t.Fatalf("Init() error = %v", err)
 	}
 	// Write book type schema (directory format)
-	typesDir := filepath.Join(dir, ".typemd", "types")
+	typesDir := filepath.Join(dir, "types")
 	os.MkdirAll(filepath.Join(typesDir, "book"), 0755)
 	os.WriteFile(filepath.Join(typesDir, "book", "schema.yaml"), []byte(`name: book
 emoji: "📚"
