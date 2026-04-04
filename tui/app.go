@@ -31,6 +31,7 @@ const (
 	panelView                               // full-width view mode
 	panelStats                              // stats dashboard mode
 	panelSchemaExplore                      // AI schema explore mode
+	panelConfig                             // config settings page
 )
 
 type typeGroup struct {
@@ -52,6 +53,7 @@ type model struct {
 	viewMode    *viewMode            // non-nil when rightPanel == panelView
 	statsMode       *statsMode       // non-nil when rightPanel == panelStats
 	schemaExplorer  *schemaExplorer  // non-nil when rightPanel == panelSchemaExplore
+	configEditor    *configEditor    // non-nil when rightPanel == panelConfig
 	viewPicker  *viewPicker          // non-nil when view selection popup is active
 	createType   *createTypeState    // non-nil when type creation flow is active
 	create       *createState        // non-nil when object creation flow is active
@@ -408,6 +410,30 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 			stm, cmd := m.statsMode.Update(msg)
 			m.statsMode = stm
+			return m, cmd
+		case m.rightPanel == panelConfig && m.configEditor != nil:
+			// q/ctrl+c quits globally
+			if msg.String() == "q" || msg.String() == "ctrl+c" {
+				if m.vault != nil {
+					saveSessionState(m.vault.Root, m.captureState())
+				}
+				return m, tea.Quit
+			}
+			// Help toggle
+			if msg.String() == "?" || msg.String() == "h" {
+				m.showHelp = true
+				return m, nil
+			}
+			ce, cmd := m.configEditor.Update(msg)
+			if ce == nil {
+				// Editor returned nil — exit config mode
+				m.configEditor = nil
+				m.rightPanel = panelEmpty
+				m.focus = focusLeft
+				m.selectCurrentRow()
+				return m, nil
+			}
+			m.configEditor = ce
 			return m, cmd
 		case m.rightPanel == panelSchemaExplore && m.schemaExplorer != nil:
 			if msg.String() == "q" || msg.String() == "ctrl+c" {

@@ -98,27 +98,31 @@ type ToastConfig struct {
 
 // configKeyEntry maps a dot-notation key to getter/setter on VaultConfig.
 type configKeyEntry struct {
-	Get     func(cfg *VaultConfig) string
-	Set     func(cfg *VaultConfig, value string)
-	Default string // human-readable default value for display
+	Get         func(cfg *VaultConfig) string
+	Set         func(cfg *VaultConfig, value string)
+	Default     string // human-readable default value for display
+	Description string // human-readable description for display
 }
 
 // configKeyRegistry maps dot-notation config keys to VaultConfig struct fields.
 var configKeyRegistry = map[string]configKeyEntry{
 	"date_format": {
-		Get:     func(cfg *VaultConfig) string { return cfg.DateFormat },
-		Set:     func(cfg *VaultConfig, value string) { cfg.DateFormat = value },
-		Default: DefaultDateFormat,
+		Get:         func(cfg *VaultConfig) string { return cfg.DateFormat },
+		Set:         func(cfg *VaultConfig, value string) { cfg.DateFormat = value },
+		Default:     DefaultDateFormat,
+		Description: "Date display format for properties (Go time layout)",
 	},
 	"datetime_format": {
-		Get:     func(cfg *VaultConfig) string { return cfg.DatetimeFormat },
-		Set:     func(cfg *VaultConfig, value string) { cfg.DatetimeFormat = value },
-		Default: DefaultDatetimeFormat,
+		Get:         func(cfg *VaultConfig) string { return cfg.DatetimeFormat },
+		Set:         func(cfg *VaultConfig, value string) { cfg.DatetimeFormat = value },
+		Default:     DefaultDatetimeFormat,
+		Description: "Date-time display format for properties (Go time layout)",
 	},
 	"cli.default_type": {
-		Get:     func(cfg *VaultConfig) string { return cfg.CLI.DefaultType },
-		Set:     func(cfg *VaultConfig, value string) { cfg.CLI.DefaultType = value },
-		Default: "",
+		Get:         func(cfg *VaultConfig) string { return cfg.CLI.DefaultType },
+		Set:         func(cfg *VaultConfig, value string) { cfg.CLI.DefaultType = value },
+		Default:     "",
+		Description: "Default type for CLI commands when --type is omitted",
 	},
 	"tui.debounce_ms": {
 		Get: func(cfg *VaultConfig) string {
@@ -131,17 +135,20 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.TUI.DebounceMs = n
 		},
-		Default: "200",
+		Default:     "200",
+		Description: "File watcher debounce delay in milliseconds",
 	},
 	"tui.stats_type_layout": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.StatsTypeLayout },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.StatsTypeLayout = value },
-		Default: "fullscreen",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.StatsTypeLayout },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.StatsTypeLayout = value },
+		Default:     "fullscreen",
+		Description: "Stats type detail layout: fullscreen or popup",
 	},
 	"tui.toast.position": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Toast.Position },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Toast.Position = value },
-		Default: "bottom-right",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Toast.Position },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Toast.Position = value },
+		Default:     "bottom-right",
+		Description: "Toast notification position (e.g., bottom-right)",
 	},
 	"tui.toast.duration_ms": {
 		Get: func(cfg *VaultConfig) string {
@@ -154,12 +161,14 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.TUI.Toast.DurationMs = n
 		},
-		Default: "3000",
+		Default:     "3000",
+		Description: "Toast display duration in milliseconds",
 	},
 	"tui.toast.dismiss_key": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Toast.DismissKey },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Toast.DismissKey = value },
-		Default: "esc",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Toast.DismissKey },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Toast.DismissKey = value },
+		Default:     "esc",
+		Description: "Key to dismiss toast notifications",
 	},
 	"tui.toast.show_warnings": {
 		Get: func(cfg *VaultConfig) string {
@@ -175,7 +184,8 @@ var configKeyRegistry = map[string]configKeyEntry{
 			b := value == "true"
 			cfg.TUI.Toast.ShowWarnings = &b
 		},
-		Default: "true",
+		Default:     "true",
+		Description: "Show warning toasts (true/false/unset)",
 	},
 	"tui.toast.show_success": {
 		Get: func(cfg *VaultConfig) string {
@@ -191,67 +201,80 @@ var configKeyRegistry = map[string]configKeyEntry{
 			b := value == "true"
 			cfg.TUI.Toast.ShowSuccess = &b
 		},
-		Default: "false",
+		Default:     "false",
+		Description: "Show success toasts (true/false/unset)",
 	},
 	"tui.theme.focus_border": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.FocusBorder },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.FocusBorder = value },
-		Default: "63",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.FocusBorder },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.FocusBorder = value },
+		Default:     "63",
+		Description: "Focused panel border color (ANSI code or hex)",
 	},
 	"tui.theme.wiki_link": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.WikiLink },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.WikiLink = value },
-		Default: "33",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.WikiLink },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.WikiLink = value },
+		Default:     "33",
+		Description: "Wiki-link display text color",
 	},
 	"tui.theme.heading": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Heading },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Heading = value },
-		Default: "3",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.Heading },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Heading = value },
+		Default:     "3",
+		Description: "Markdown heading color",
 	},
 	"tui.theme.bold": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Bold },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Bold = value },
-		Default: "",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.Bold },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Bold = value },
+		Default:     "",
+		Description: "Bold text color (empty = bold weight only)",
 	},
 	"tui.theme.italic": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Italic },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Italic = value },
-		Default: "",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.Italic },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Italic = value },
+		Default:     "",
+		Description: "Italic text color (empty = italic style only)",
 	},
 	"tui.theme.inline_code": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.InlineCode },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.InlineCode = value },
-		Default: "245",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.InlineCode },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.InlineCode = value },
+		Default:     "245",
+		Description: "Inline code color",
 	},
 	"tui.theme.code_block": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.CodeBlock },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.CodeBlock = value },
-		Default: "245",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.CodeBlock },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.CodeBlock = value },
+		Default:     "245",
+		Description: "Fenced code block color",
 	},
 	"tui.theme.link": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Link },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Link = value },
-		Default: "33",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.Link },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Link = value },
+		Default:     "33",
+		Description: "Markdown link color",
 	},
 	"tui.theme.blockquote": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.Blockquote },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Blockquote = value },
-		Default: "8",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.Blockquote },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.Blockquote = value },
+		Default:     "8",
+		Description: "Blockquote line color",
 	},
 	"tui.theme.hrule": {
-		Get:     func(cfg *VaultConfig) string { return cfg.TUI.Theme.HRule },
-		Set:     func(cfg *VaultConfig, value string) { cfg.TUI.Theme.HRule = value },
-		Default: "8",
+		Get:         func(cfg *VaultConfig) string { return cfg.TUI.Theme.HRule },
+		Set:         func(cfg *VaultConfig, value string) { cfg.TUI.Theme.HRule = value },
+		Default:     "8",
+		Description: "Horizontal rule color",
 	},
 	"ai.default": {
-		Get:     func(cfg *VaultConfig) string { return cfg.AI.Default },
-		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Default = value },
-		Default: "",
+		Get:         func(cfg *VaultConfig) string { return cfg.AI.Default },
+		Set:         func(cfg *VaultConfig, value string) { cfg.AI.Default = value },
+		Default:     "",
+		Description: "Default AI provider name",
 	},
 	"ai.language": {
-		Get:     func(cfg *VaultConfig) string { return cfg.AI.Language },
-		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Language = value },
-		Default: "",
+		Get:         func(cfg *VaultConfig) string { return cfg.AI.Language },
+		Set:         func(cfg *VaultConfig, value string) { cfg.AI.Language = value },
+		Default:     "",
+		Description: "Language for AI-generated content",
 	},
 	"ai.enabled": {
 		Get: func(cfg *VaultConfig) string {
@@ -263,22 +286,26 @@ var configKeyRegistry = map[string]configKeyEntry{
 		Set: func(cfg *VaultConfig, value string) {
 			cfg.AI.Enabled = value == "true"
 		},
-		Default: "false",
+		Default:     "false",
+		Description: "Enable AI features (true/false)",
 	},
 	"ai.prompts.describe": {
-		Get:     func(cfg *VaultConfig) string { return cfg.AI.Prompts.Describe },
-		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Describe = value },
-		Default: "(built-in)",
+		Get:         func(cfg *VaultConfig) string { return cfg.AI.Prompts.Describe },
+		Set:         func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Describe = value },
+		Default:     "(built-in)",
+		Description: "Custom prompt for AI describe action",
 	},
 	"ai.prompts.tag": {
-		Get:     func(cfg *VaultConfig) string { return cfg.AI.Prompts.Tag },
-		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Tag = value },
-		Default: "(built-in)",
+		Get:         func(cfg *VaultConfig) string { return cfg.AI.Prompts.Tag },
+		Set:         func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Tag = value },
+		Default:     "(built-in)",
+		Description: "Custom prompt for AI tag action",
 	},
 	"ai.prompts.explore": {
-		Get:     func(cfg *VaultConfig) string { return cfg.AI.Prompts.Explore },
-		Set:     func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Explore = value },
-		Default: "(built-in)",
+		Get:         func(cfg *VaultConfig) string { return cfg.AI.Prompts.Explore },
+		Set:         func(cfg *VaultConfig, value string) { cfg.AI.Prompts.Explore = value },
+		Default:     "(built-in)",
+		Description: "Custom prompt for AI explore action",
 	},
 	"ai.explore.sample_count": {
 		Get: func(cfg *VaultConfig) string {
@@ -291,7 +318,8 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.AI.Explore.SampleCount = n
 		},
-		Default: "10",
+		Default:     "10",
+		Description: "Number of sample objects for AI schema explore",
 	},
 	"ai.explore.body_truncate": {
 		Get: func(cfg *VaultConfig) string {
@@ -304,13 +332,40 @@ var configKeyRegistry = map[string]configKeyEntry{
 			n, _ := strconv.Atoi(value)
 			cfg.AI.Explore.BodyTruncate = n
 		},
-		Default: "500",
+		Default:     "500",
+		Description: "Max body characters for AI schema explore samples",
 	},
 	"web.theme": {
-		Get:     func(cfg *VaultConfig) string { return cfg.Web.Theme },
-		Set:     func(cfg *VaultConfig, value string) { cfg.Web.Theme = value },
-		Default: "warm",
+		Get:         func(cfg *VaultConfig) string { return cfg.Web.Theme },
+		Set:         func(cfg *VaultConfig, value string) { cfg.Web.Theme = value },
+		Default:     "warm",
+		Description: "Web UI theme (warm, dark, or light)",
 	},
+}
+
+// ConfigKeyInfo holds metadata about a config key for display purposes.
+type ConfigKeyInfo struct {
+	Key         string
+	Description string
+	Default     string
+	Value       string
+}
+
+// ConfigKeysInfo returns metadata for all registered config keys,
+// including their current values from the vault config.
+func (v *Vault) ConfigKeysInfo() []ConfigKeyInfo {
+	keys := ConfigKeys()
+	infos := make([]ConfigKeyInfo, 0, len(keys))
+	for _, key := range keys {
+		entry := configKeyRegistry[key]
+		infos = append(infos, ConfigKeyInfo{
+			Key:         key,
+			Description: entry.Description,
+			Default:     entry.Default,
+			Value:       entry.Get(v.config),
+		})
+	}
+	return infos
 }
 
 // Config returns the current in-memory VaultConfig.

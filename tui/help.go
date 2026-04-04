@@ -37,6 +37,7 @@ func helpEntries(readOnly bool) []helpEntry {
 	entries = append(entries,
 		helpEntry{keys.Search.Help().Key, keys.Search.Help().Desc},
 		helpEntry{keys.Stats.Help().Key, keys.Stats.Help().Desc},
+		helpEntry{keys.Settings.Help().Key, keys.Settings.Help().Desc},
 		helpEntry{keys.GrowPanel.Help().Key, keys.GrowPanel.Help().Desc},
 		helpEntry{keys.ShrinkPanel.Help().Key, keys.ShrinkPanel.Help().Desc},
 		helpEntry{keys.FocusMode.Help().Key, keys.FocusMode.Help().Desc},
@@ -114,5 +115,24 @@ func renderHelp(background string, width, height int, readOnly bool) string {
 // renderStatsHelp builds the help overlay for stats mode.
 func renderStatsHelp(background string, width, height int, screen statsScreen) string {
 	content, popupW := buildHelpPopup("Stats Keybindings", statsHelpEntries(screen), width)
+	return renderOverlayPopup(background, content, width, height, popupW)
+}
+
+// configHelpEntries returns keybindings specific to config settings mode.
+func configHelpEntries() []helpEntry {
+	return []helpEntry{
+		{keys.Up.Help().Key, "up"},
+		{keys.Down.Help().Key, "down"},
+		{"tab", "switch column"},
+		{"enter", "edit setting"},
+		{"esc", "exit settings"},
+		{keys.Help.Help().Key, keys.Help.Help().Desc},
+		{keys.Quit.Help().Key, keys.Quit.Help().Desc},
+	}
+}
+
+// renderConfigHelp builds the help overlay for config settings mode.
+func renderConfigHelp(background string, width, height int) string {
+	content, popupW := buildHelpPopup("Settings Keybindings", configHelpEntries(), width)
 	return renderOverlayPopup(background, content, width, height, popupW)
 }

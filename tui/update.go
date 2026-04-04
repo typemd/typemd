@@ -105,6 +105,16 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		}
 		return m, nil
 
+	case ",":
+		if m.vault != nil {
+			ce := newConfigEditor(m.vault)
+			ce.SetSize(m.width-2, m.height-3)
+			m.configEditor = ce
+			m.rightPanel = panelConfig
+			m.focus = focusBody
+		}
+		return m, nil
+
 	case "e":
 		if m.readOnly {
 			return m, nil

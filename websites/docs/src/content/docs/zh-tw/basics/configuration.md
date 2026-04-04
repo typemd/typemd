@@ -165,7 +165,7 @@ ai:
 
 ## 讀取與寫入設定
 
-你可以直接編輯 `.typemd/config.yaml`，或使用 CLI：
+你可以直接編輯 `.typemd/config.yaml`、使用 CLI，或使用 TUI 設定頁面（在 TUI 中按 `,` 開啟可瀏覽的設定編輯器）：
 
 ```bash
 # 設定一個值

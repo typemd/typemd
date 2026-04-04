@@ -97,6 +97,7 @@ The default mode. Browse objects and types in the sidebar.
 | `.` | Toggle focus mode (full-width body) |
 | `g` | AI generate (describe / tag suggestions) |
 | `Ctrl+E` | AI schema explore |
+| `,` | Open config settings page |
 | `?`/`h` | Open help popup |
 | `q`/`Ctrl+C` | Quit |
 
@@ -374,6 +375,33 @@ A success flash (e.g. `✓ Created: my-book`) appears briefly in the title panel
 ### `[READONLY]` — Read-Only Mode
 
 Active when launched with `--readonly`. The `e`, `n`, and `N` keys are disabled, no write operations are performed, and the help popup hides edit-related keybindings.
+
+### `[SETTINGS]` — Configuration Settings
+
+Press `,` in VIEW mode to open a full-width config settings page. This lets you browse and edit `.typemd/config.yaml` values without leaving the TUI.
+
+The page has a two-column layout:
+
+| Column | Description |
+|--------|-------------|
+| **Categories** (left) | General, CLI, TUI, AI, Web — grouped by config key prefix |
+| **Settings** (right) | Keys in the selected category with current values (or defaults if unset) |
+
+| Key | Action |
+|-----|--------|
+| `↑`/`k`, `↓`/`j` | Navigate categories or settings |
+| `Tab` | Switch focus between category and settings columns |
+| `Enter` | Edit the selected setting (opens popup) |
+| `Esc` | Exit config page (return to sidebar) |
+| `?`/`h` | Show help |
+| `q`/`Ctrl+C` | Quit |
+
+**Editing settings:**
+
+- **String/number settings** — A text input popup pre-filled with the current value. Press `Enter` to save, `Esc` to cancel. Saving an empty string removes the key (restores default).
+- **Boolean settings** (e.g. `tui.toast.show_warnings`) — Cycles through `true` → `false` → `unset` with `Enter`/`↑`/`↓`. Press `Esc` to save and close.
+
+Changes are saved immediately to `.typemd/config.yaml`. AI provider map settings (`ai.providers.*`) are not available in this page — use `tmd config` CLI or edit YAML directly.
 
 ## Session State
 

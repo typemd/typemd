@@ -294,6 +294,55 @@ func (m model) View() tea.View {
 		return v
 	}
 
+	// Full-width config settings page
+	if m.rightPanel == panelConfig && m.configEditor != nil {
+		contentH := m.height - 3
+		if contentH < 0 {
+			contentH = 0
+		}
+		bdr := 2
+		ce := m.configEditor
+
+		titleStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(m.width - bdr).
+			Height(titlePanelHeight)
+		titleText := ce.titleContent()
+
+		bodyH := contentH - titlePanelHeight
+
+		bodyStyle := lipgloss.NewStyle().
+			Border(lipgloss.RoundedBorder()).
+			Width(m.width - bdr).
+			Height(bodyH).
+			MaxHeight(bodyH)
+
+		ce.SetSize(m.width-bdr-2, bodyH-bdr)
+		bodyContent := bodyStyle.Render(ce.View())
+
+		panels := lipgloss.JoinVertical(lipgloss.Left,
+			titleStyle.Render(titleText),
+			bodyContent,
+		)
+
+		helpBar := "  " + ce.HelpBar()
+		screen := panels + "\n" + helpBar
+
+		// Edit popup overlay
+		if overlay := ce.EditPopup(screen, m.width, m.height); overlay != "" {
+			screen = overlay
+		}
+
+		if m.showHelp {
+			screen = renderConfigHelp(screen, m.width, m.height)
+		}
+
+		screen = m.toast.Overlay(screen, m.width, m.height)
+		v := tea.NewView(screen)
+		v.AltScreen = true
+		return v
+	}
+
 	leftW := m.leftWidth()
 	bodyW := m.bodyWidth()
 	// In lipgloss v2, Width()/Height() set the TOTAL size including border.
