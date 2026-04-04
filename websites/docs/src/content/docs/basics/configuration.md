@@ -95,6 +95,16 @@ tmd object create "My Idea"
 | `tui.toast.dismiss_key` | string | `esc` | Key to manually dismiss a toast notification |
 | `tui.toast.show_warnings` | bool | `true` | Show warning-level toast notifications |
 | `tui.toast.show_success` | bool | `false` | Show info/success-level toast notifications |
+| `tui.theme.focus_border` | string | `63` | Focused panel border color (ANSI code or hex) |
+| `tui.theme.wiki_link` | string | `33` | Wiki-link display text color |
+| `tui.theme.heading` | string | `3` | Markdown heading color |
+| `tui.theme.bold` | string | *(empty)* | Bold text color (empty = bold weight only) |
+| `tui.theme.italic` | string | *(empty)* | Italic text color (empty = italic style only) |
+| `tui.theme.inline_code` | string | `245` | Inline code color |
+| `tui.theme.code_block` | string | `245` | Fenced code block color |
+| `tui.theme.link` | string | `33` | Markdown link color |
+| `tui.theme.blockquote` | string | `8` | Blockquote line color |
+| `tui.theme.hrule` | string | `8` | Horizontal rule color |
 
 The file watcher monitors `objects/` and `.typemd/types/` for changes. The debounce interval controls how quickly the TUI reacts to file modifications — lower values make updates feel more instant, higher values reduce redundant refreshes.
 

@@ -113,7 +113,7 @@ Key sub-models: `typeEditor` (schema editing + wizard + templates), `viewMode` (
 ## Data Model
 
 - Objects identified by `type/<slug>-<ulid>` (e.g. `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`)
-- All objects have system properties managed by typemd: `name` (preserves original input on creation; auto-populated from slug for pre-slugified names, or from name template if defined), `description` (optional, user-authored), `created_at` (set on creation, immutable), `updated_at` (updated on save, immutable), `tags` (relation to built-in `tag` type, multiple), `locked` (boolean, user-authored, prevents editing when true). These appear first in frontmatter in that order. System properties are either **user-authored** (`name`, `description`, `tags`, `locked` — can be overridden by templates) or **auto-managed** (`created_at`, `updated_at` — cannot be overridden).
+- All objects have system properties managed by typemd: `name` (preserves original input on creation; auto-populated from slug for pre-slugified names, or from name template if defined), `description` (optional, user-authored), `created_at` (set on creation, immutable), `updated_at` (updated on save, immutable), `tags` (relation to built-in `tag` type, multiple), `locked` (boolean, user-authored, prevents editing when true), `archived` (boolean, user-authored, hides object from default queries when true). These appear first in frontmatter in that order. System properties are either **user-authored** (`name`, `description`, `tags`, `locked`, `archived` — can be overridden by templates) or **auto-managed** (`created_at`, `updated_at` — cannot be overridden).
 - Type schemas: `.typemd/types/<name>/schema.yaml`. Reserved system properties (`description`, `created_at`, `updated_at`, `tags`) cannot be redefined; `name` can appear with only a `template` field. Optional schema fields: `plural`, `unique`, `version`, `color`, `description`.
 - Views: `.typemd/types/<name>/views/<view>.yaml` (optional). Two layouts: `list` and `table`. Supports `columns`, `filter`, `sort`, `group_by`. Each type has an implicit default view (list, sort by name asc).
 - Built-in types: `tag` (🏷️, plural "tags", unique, backs `tags` system property, has `color` and `icon` string properties) and `page` (📄, plural "pages", general-purpose content container). Built-in types exist without YAML files, cannot be deleted, but can be overridden by custom `.typemd/types/<name>/schema.yaml`.
@@ -122,7 +122,7 @@ Key sub-models: `typeEditor` (schema editing + wizard + templates), `viewMode` (
 - Wiki-links: `[[type/name-ulid]]`, `[[type/name]]`, or `[[name]]` syntax in markdown body, with backlink tracking. Shorthand forms are resolved during sync and written back as full IDs.
 - SQLite index: `.typemd/index.db`
 - TUI session state: `.typemd/tui-state.yaml` (persisted on quit, restored on launch)
-- Vault config: `.typemd/config.yaml` — sections: `date_format`/`datetime_format`, `cli.*`, `tui.*` (toast, debounce), `ai.*` (providers, prompts). See `config.go` for full key registry.
+- Vault config: `.typemd/config.yaml` — sections: `date_format`/`datetime_format`, `cli.*`, `tui.*` (toast, debounce, theme), `ai.*` (providers, prompts). See `config.go` for full key registry.
 - Embedded skills: `core/skills/*/SKILL.md` (via `//go:embed`); vault overrides in `.typemd/instructions/<skill>.md`
 - Starter types: `core/starters/*.yaml` (offered during `tmd init`)
 - Object templates: `templates/<type>/<name>.md` (applied during `tmd object create`)

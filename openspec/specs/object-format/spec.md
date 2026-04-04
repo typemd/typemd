@@ -8,7 +8,7 @@ The system SHALL provide a `tmd format` command that rewrites all object Markdow
 
 #### Scenario: Format objects with out-of-order properties
 - **WHEN** an object file has properties in non-canonical order (e.g., `created_at` before `name`)
-- **THEN** the formatter SHALL rewrite the file with properties in canonical order: system properties first (name, description, created_at, updated_at, tags), then schema-defined properties in schema order, then extra properties alphabetically
+- **THEN** the formatter SHALL rewrite the file with properties in canonical order: system properties first (name, description, created_at, updated_at, tags, locked, archived), then schema-defined properties in schema order, then extra properties alphabetically
 
 #### Scenario: Format objects with non-canonical YAML style
 - **WHEN** an object file has valid but non-canonical YAML formatting (e.g., different quoting style or indentation)

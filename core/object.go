@@ -71,6 +71,16 @@ func (o *Object) IsLocked() bool {
 	return ok && b
 }
 
+// IsArchived returns true if the object has the archived property set to true.
+func (o *Object) IsArchived() bool {
+	v, ok := o.Properties[ArchivedProperty]
+	if !ok {
+		return false
+	}
+	b, ok := v.(bool)
+	return ok && b
+}
+
 // MarkUpdated sets the updated_at timestamp to now.
 func (o *Object) MarkUpdated() {
 	o.Properties[UpdatedAtProperty] = time.Now().Format(time.RFC3339)
@@ -234,5 +244,13 @@ func (v *Vault) SetLocked(id string, locked bool) error {
 		return fmt.Errorf("vault not opened")
 	}
 	return v.Objects.SetLocked(id, locked)
+}
+
+// SetArchived toggles the archived state of an object. Delegates to ObjectService.
+func (v *Vault) SetArchived(id string, archived bool) error {
+	if v.Objects == nil {
+		return fmt.Errorf("vault not opened")
+	}
+	return v.Objects.SetArchived(id, archived)
 }
 

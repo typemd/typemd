@@ -54,7 +54,9 @@ project-root/
 | `tmd object show <id>` | Display object properties, relations, and body |
 | `tmd object lock <id>` | Lock an object (prevents editing) |
 | `tmd object unlock <id>` | Unlock a locked object |
-| `tmd object list [--json]` | List all objects |
+| `tmd object archive <id>` | Archive an object (hidden from default queries) |
+| `tmd object unarchive <id>` | Unarchive an object (restores to default queries) |
+| `tmd object list [--json] [--include-archived]` | List all objects (`--include-archived` to include archived objects) |
 
 Object IDs support **prefix matching** — `tmd object show book/clean` works if unambiguous.
 
@@ -82,6 +84,7 @@ Object IDs support **prefix matching** — `tmd object show book/clean` works if
 | `tmd doctor` | Comprehensive vault health check (superset of validate) with auto-fix |
 | `tmd stats [--type <type>] [--json]` | Vault-wide summary or per-type property aggregate statistics |
 | `tmd graph [--type <type>] [--no-relations] [--no-wikilinks]` | Export object relation graph in DOT format |
+| `tmd log [--oneline] <object-id>` | Show git commit history for a specific object |
 
 ### Relations
 
@@ -152,8 +155,9 @@ Always appear first in frontmatter, in this order:
 | `updated_at` | ISO 8601 datetime, updated on save | Yes |
 | `tags` | Relation to built-in tag type, multiple | No |
 | `locked` | Boolean, prevents editing when true | No |
+| `archived` | Boolean, hides object from default queries when true | No |
 
-These are **reserved** — type schemas cannot define properties named `name`, `description`, `created_at`, `updated_at`, `tags`, or `locked`.
+These are **reserved** — type schemas cannot define properties named `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, or `archived`.
 
 ### Object ID Format
 
@@ -376,4 +380,5 @@ The right panel follows the sidebar cursor:
 - **Object IDs include ULIDs** — don't guess them, use `tmd object list` to find exact IDs
 - **Relations are properties** — set them in frontmatter, not as wiki-links (wiki-links are for body text references)
 - **System properties are managed** — you can set `name`, `description`, and `locked`, but `created_at` is immutable and `updated_at` auto-updates on save. When `locked: true`, the object cannot be edited until unlocked
+- **Archived objects are hidden** — when `archived: true`, the object is excluded from default queries and `tmd object list`. Use `--include-archived` to include them, or `tmd object unarchive <id>` to restore
 - **Prefix matching works** in CLI — `tmd object show book/clean` resolves if unambiguous

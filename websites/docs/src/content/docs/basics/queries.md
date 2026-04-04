@@ -26,6 +26,14 @@ tmd object list --json
 tmd search "concurrency"
 ```
 
+## Archived objects
+
+Archived objects are excluded from queries and list results by default. This keeps your default views free of soft-deleted content without permanently removing it from the vault. To include archived objects, use the `--include-archived` flag:
+
+```bash
+tmd object list --include-archived
+```
+
 ## Filter operators
 
 Views support type-aware filter operators. Each property type has a defined set of valid operators:

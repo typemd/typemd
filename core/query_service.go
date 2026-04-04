@@ -53,11 +53,24 @@ func (s *QueryService) Resolve(prefix string) (string, error) {
 	}
 }
 
-// Query queries objects using structured filter rules with optional sort.
+// Query queries objects using structured filter rules with optional options.
+// Archived objects are excluded by default unless QueryIncludeArchived() is passed.
 // Falls back to filesystem scanning if the index is unavailable.
-func (s *QueryService) Query(filter []FilterRule, sort ...SortRule) ([]*Object, error) {
+func (s *QueryService) Query(filter []FilterRule, opts ...QueryOption) ([]*Object, error) {
+	cfg := buildQueryConfig(opts)
+
+	// Exclude archived objects by default.
+	// Defensive copy to avoid mutating the caller's backing array.
+	if !cfg.includeArchived {
+		filter = append(append([]FilterRule(nil), filter...), FilterRule{
+			Property: ArchivedProperty,
+			Operator: "is_not",
+			Value:    "true",
+		})
+	}
+
 	slog.Debug("query", "filters", len(filter))
-	results, err := s.index.Query(filter, sort...)
+	results, err := s.index.Query(filter, cfg.sort...)
 	if err == nil {
 		return objectResultsToObjects(results), nil
 	}
@@ -76,7 +89,7 @@ func (s *QueryService) Query(filter []FilterRule, sort ...SortRule) ([]*Object, 
 		}
 	}
 
-	SortObjects(filtered, sort)
+	SortObjects(filtered, cfg.sort)
 	return filtered, nil
 }
 

@@ -76,6 +76,7 @@ func renderBody(obj *core.Object, width int, displayProps []core.DisplayProperty
 	if body == "" && len(pinned) == 0 {
 		b.WriteString(" (empty)\n")
 	} else if body != "" {
+		body = renderMarkdown(body)
 		body = core.RenderWikiLinksStyled(body, wikiLinkStyle)
 		for _, line := range strings.Split(body, "\n") {
 			b.WriteString(fmt.Sprintf(" %s\n", line))
