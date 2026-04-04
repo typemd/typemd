@@ -80,6 +80,19 @@ Feature: Object templates
     When I create a "book" object named "my-book" with template "review"
     Then the object "created_at" should be recent
 
+  Scenario: Template with immutable system property updated_at is ignored
+    Given a vault is ready
+    And a template "review" for type "book" with frontmatter "updated_at: 2020-01-01T00:00:00Z" and body ""
+    When I create a "book" object named "my-book" with template "review"
+    Then the object "updated_at" should be recent
+
+  Scenario: Template provides name when no name argument given
+    Given a vault is ready
+    And a template "default" for type "book" with frontmatter "name: Template Book" and body ""
+    When I create a "book" object with no name and template "default"
+    Then no error should occur
+    And the object property "name" should be "Template Book"
+
   Scenario: Template with unknown property is ignored
     Given a vault is ready
     And a template "review" for type "book" with frontmatter "unknown_prop: value" and body ""

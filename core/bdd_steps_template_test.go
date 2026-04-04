@@ -118,6 +118,14 @@ func (dc *domainContext) iCreateAObjectNamedWithTemplate(typeName, name, templat
 	}
 }
 
+func (dc *domainContext) iCreateAObjectWithNoNameAndTemplate(typeName, templateName string) {
+	obj, err := dc.vault.NewObject(typeName, "", templateName)
+	dc.lastErr = err
+	if err == nil {
+		dc.currentObject = obj
+	}
+}
+
 func (dc *domainContext) theObjectBodyShouldBe(expected string) error {
 	got, err := dc.vault.GetObject(dc.currentObject.ID)
 	if err != nil {
@@ -185,6 +193,7 @@ func initTemplateSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the template body should be "([^"]*)"$`, dc.theTemplateBodyShouldBe)
 	ctx.Step(`^the template load should fail$`, dc.theTemplateLoadShouldFail)
 	ctx.Step(`^I create a "([^"]*)" object named "([^"]*)" with template "([^"]*)"$`, dc.iCreateAObjectNamedWithTemplate)
+	ctx.Step(`^I create a "([^"]*)" object with no name and template "([^"]*)"$`, dc.iCreateAObjectWithNoNameAndTemplate)
 	ctx.Step(`^the object body should be "([^"]*)"$`, dc.theObjectBodyShouldBe)
 	ctx.Step(`^the object creation should fail$`, dc.theObjectCreationShouldFail)
 	ctx.Step(`^I save template "([^"]*)" for type "([^"]*)" with properties "([^"]*)" and body "([^"]*)"$`, dc.iSaveTemplateForTypeWithPropertiesAndBody)

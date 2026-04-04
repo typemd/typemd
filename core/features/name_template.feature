@@ -26,6 +26,20 @@ Feature: Name template
     When I validate all schemas
     Then schema "journal" should have no errors
 
+  Scenario: Name template with year-month format
+    Given a vault is ready
+    And a type schema "journal" with name template "月記 {{ date:YYYY-MM }}"
+    When I create a "journal" object with no name
+    Then no error should occur
+    And the object property "name" should contain "月記"
+
+  Scenario: Name template with no placeholders used as literal
+    Given a vault is ready
+    And a type schema "journal" with name template "固定名稱"
+    When I create a "journal" object with no name
+    Then no error should occur
+    And the object property "name" should be "固定名稱"
+
   Scenario: Schema with name entry but no template fails validation
     Given a vault is ready
     And a type schema "bad" with name property and type "string"

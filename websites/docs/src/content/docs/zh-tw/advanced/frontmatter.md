@@ -19,6 +19,7 @@ created_at: 2025-03-10T14:30:00+08:00
 updated_at: 2025-03-12T09:15:00+08:00
 tags:
   - tag/programming-01jqr3k5mpbvn8e0f2g7h9txyz
+locked: true
 status: reading
 author: person/robert-martin-01jqr3k5mpbvn8e0f2g7h9txyz
 ---

@@ -1,5 +1,5 @@
 ---
-title: Relation
+title: Relations
 description: Object 之間如何透過帶型別的連結互相連接。
 sidebar:
   order: 4

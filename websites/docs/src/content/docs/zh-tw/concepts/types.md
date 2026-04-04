@@ -106,7 +106,7 @@ Type schema 中每個屬性都有一個資料型別：
 
 Relation 屬性的 `target`、`bidirectional`、`inverse` 和 `multiple` 欄位，請參閱 [Relation](/zh-tw/concepts/relations) 頁面。
 
-如果某個屬性出現在多個 type 中，你可以定義一次然後重複使用。詳情請參閱 [Shared Properties](/zh-tw/basics/properties#shared-properties)。
+如果某個屬性出現在多個 type 中，你可以定義一次然後重複使用。詳情請參閱[共用屬性](/zh-tw/basics/properties#共用屬性)。
 
 ## 驗證
 
@@ -120,7 +120,7 @@ TypeMD 採用寬鬆驗證：
 - `date` 必須是 YYYY-MM-DD 格式
 - `url` 必須以 http:// 或 https:// 開頭
 - `relation` 的目標會檢查 Type 是否正確
-- 屬性名稱 `description`、`created_at`、`updated_at` 和 `tags` 為[系統屬性](/zh-tw/advanced/file-structure#系統屬性)保留，不能在 type schema 中使用。`name` 可以出現在 `properties` 中，但只允許搭配 `template` 欄位（用於 [name template](/zh-tw/basics/templates#name-template)）。
+- 屬性名稱 `name`、`description`、`created_at`、`updated_at`、`tags`、`locked` 和 `archived` 為[系統屬性](/zh-tw/advanced/file-structure#系統屬性)保留，不能在 type schema 中使用。唯一的例外是 `name`，可以出現在 `properties` 中並搭配 `template` 欄位（用於 [name template](/zh-tw/basics/templates#name-template)）。
 
 ## View
 

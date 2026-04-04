@@ -11,6 +11,12 @@ sidebar:
 tmd type validate
 ```
 
+若要在開發過程中持續驗證，加上 `--watch` 來監控檔案變更並自動重新驗證：
+
+```bash
+tmd type validate --watch
+```
+
 ## 驗證階段
 
 驗證依序執行五個階段，每個階段檢查 vault 的不同面向。
@@ -23,7 +29,7 @@ tmd type validate
 - 每個屬性必須有 `name` 和 `type`
 - `select`/`multi_select` 屬性必須定義 `options`
 - `relation` 屬性必須定義 `target`
-- 屬性名稱 `description`、`created_at`、`updated_at` 和 `tags` 為[系統屬性](/zh-tw/basics/properties#系統屬性)保留
+- 屬性名稱 `name`、`description`、`created_at`、`updated_at`、`tags`、`locked` 和 `archived` 為[系統屬性](/zh-tw/basics/properties#系統屬性)保留
 - `properties` 中的 `name` 只允許 `template` 欄位（用於 [name template](/zh-tw/basics/templates#name-template)）
 
 ### 階段 2：Object 驗證

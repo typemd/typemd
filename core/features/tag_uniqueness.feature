@@ -25,3 +25,8 @@ Feature: Tag name uniqueness
     When I create a "tag" object named "go"
     Then an error should occur
     And the error message should contain "already exists"
+
+  Scenario: Different case tag names are not duplicates
+    Given a "tag" object named "Golang" exists
+    When I create a "tag" object named "golang"
+    Then no error should occur

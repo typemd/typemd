@@ -120,7 +120,7 @@ TypeMD uses lenient validation:
 - `date` must be in YYYY-MM-DD format
 - `url` must start with http:// or https://
 - `relation` targets are checked for correct type
-- Property names `description`, `created_at`, `updated_at`, and `tags` are reserved for [system properties](/advanced/file-structure#system-properties) and cannot be used in type schemas. `name` can appear in `properties` only with a `template` field (for [name templates](/basics/templates#name-templates)).
+- Property names `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, and `archived` are reserved for [system properties](/advanced/file-structure#system-properties) and cannot be used in type schemas. The only exception is `name`, which can appear in `properties` with a `template` field (for [name templates](/basics/templates#name-templates)).
 
 ## Views
 

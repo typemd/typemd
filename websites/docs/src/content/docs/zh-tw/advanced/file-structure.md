@@ -24,6 +24,8 @@ vault/
 │   │       └── schema.yaml
 │   ├── config.yaml         # vault 設定（選填）
 │   ├── properties.yaml     # 共用屬性定義（選填）
+│   ├── instructions/       # skill 覆蓋設定（選填）
+│   │   └── explore.md      # 覆蓋 explore skill
 │   ├── index.db            # SQLite 索引（自動更新）
 │   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
 ├── templates/              # 依 type 分類的 object template（選填）
@@ -36,7 +38,7 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-- `.typemd/` — 設定與內部狀態（vault 設定、type schema、共用屬性、索引、TUI 狀態）
+- `.typemd/` — 設定與內部狀態（vault 設定、type schema、共用屬性、skill 覆蓋設定、索引、TUI 狀態）
 - `templates/` — 選填的 object template，依 type 分類
 - `objects/` — 所有 Object 檔案，依 type 分類
 
@@ -88,6 +90,8 @@ book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 # .typemd/types/book/schema.yaml
 name: book
 plural: books
+color: blue
+description: "Books I've read or want to read"
 unique: false
 properties:
   - name: status

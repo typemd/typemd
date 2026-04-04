@@ -27,6 +27,9 @@ cli:
 tui:
   debounce_ms: 200
   stats_type_layout: fullscreen
+  toast:
+    duration_ms: 3000
+    dismiss_key: esc
 ai:
   enabled: true
   default: claude
@@ -87,8 +90,25 @@ tmd object create "My Idea"
 |-----|------|--------|------|
 | `tui.debounce_ms` | int | `200` | 檔案監聽的 debounce 間隔（毫秒） |
 | `tui.stats_type_layout` | string | `fullscreen` | 統計詳情佈局：`fullscreen` 或 `popup` |
+| `tui.toast.position` | string | `bottom-right` | Toast 顯示位置：`bottom-right` 或 `help-bar` |
+| `tui.toast.duration_ms` | int | `3000` | 自動消失的時間（毫秒） |
+| `tui.toast.dismiss_key` | string | `esc` | 手動關閉 toast 通知的按鍵 |
+| `tui.toast.show_warnings` | bool | `true` | 顯示警告等級的 toast 通知 |
+| `tui.toast.show_success` | bool | `false` | 顯示資訊/成功等級的 toast 通知 |
+| `tui.theme.focus_border` | string | `63` | 聚焦面板的邊框顏色（ANSI 色碼或 hex） |
+| `tui.theme.wiki_link` | string | `33` | Wiki-link 顯示文字顏色 |
+| `tui.theme.heading` | string | `3` | Markdown 標題顏色 |
+| `tui.theme.bold` | string | *(空)* | 粗體文字顏色（空值 = 僅粗體樣式） |
+| `tui.theme.italic` | string | *(空)* | 斜體文字顏色（空值 = 僅斜體樣式） |
+| `tui.theme.inline_code` | string | `245` | 行內程式碼顏色 |
+| `tui.theme.code_block` | string | `245` | 程式碼區塊顏色 |
+| `tui.theme.link` | string | `33` | Markdown 連結顏色 |
+| `tui.theme.blockquote` | string | `8` | 引用區塊顏色 |
+| `tui.theme.hrule` | string | `8` | 水平分隔線顏色 |
 
 檔案監聽器會監控 `objects/` 和 `.typemd/types/` 的變更。debounce 間隔決定 TUI 對檔案修改的反應速度——較低的值讓更新感覺更即時，較高的值減少多餘的刷新。
+
+Toast 通知顯示在 TUI 的右下角，用於暫時性訊息，例如同步警告（未解析的參照）和 AI 操作錯誤。通知會在 `duration_ms` 後自動消失，也可以按 `dismiss_key` 手動關閉。錯誤等級的 toast 通知無論設定如何都會顯示。
 
 ## AI 設定
 
@@ -170,6 +190,7 @@ tmd config list --all
 - 沒有預設 type — `tmd object create` 必須指定 type
 - 檔案監聽 debounce 為 200ms
 - 統計佈局使用全螢幕模式
+- Toast 通知：右下角、3 秒自動消失、Esc 關閉、顯示警告、隱藏成功訊息
 - AI 功能預設關閉
 - 所有 AI 操作使用內建提示
 - Schema 探索取樣 10 個 object，正文上限 500 字元
