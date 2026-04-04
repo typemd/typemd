@@ -144,7 +144,7 @@ Before writing any code or YAML examples, read the actual implementation to veri
 ```bash
 # Check example vault for correct schema format
 cat examples/book-vault/types/*/schema.yaml
-cat examples/book-vault/properties/properties.yaml
+cat examples/book-vault/properties/*.yaml
 
 # Check feature files for supported types and behaviors
 cat core/features/*.feature

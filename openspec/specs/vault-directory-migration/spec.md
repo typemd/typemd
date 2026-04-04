@@ -8,11 +8,11 @@ The system SHALL resolve the types directory as `<vault_root>/types/` instead of
 - **THEN** `Vault.TypesDir()` SHALL return `<vault_root>/types/`
 
 ### Requirement: Vault uses root-level properties directory
-The system SHALL resolve the shared properties file as `<vault_root>/properties/properties.yaml` instead of `<vault_root>/.typemd/properties.yaml`.
+The system SHALL resolve the shared properties directory as `<vault_root>/properties/` instead of `<vault_root>/.typemd/properties.yaml`. Each shared property is stored as an individual file `properties/<name>.yaml`.
 
-#### Scenario: SharedPropertiesPath returns root-level path
+#### Scenario: SharedPropertiesDir returns root-level path
 - **WHEN** a vault is initialized or opened
-- **THEN** `Vault.SharedPropertiesPath()` SHALL return `<vault_root>/properties/properties.yaml`
+- **THEN** `Vault.SharedPropertiesDir()` SHALL return `<vault_root>/properties/`
 
 ### Requirement: Init creates directories at vault root
 The system SHALL create `types/` and `properties/` directories at vault root during initialization.
@@ -44,22 +44,22 @@ The system SHALL automatically move `.typemd/types/` to `types/` at vault root w
 - **AND** the system SHALL NOT return an error
 
 ### Requirement: Auto-migration of properties file
-The system SHALL automatically move `.typemd/properties.yaml` to `properties/properties.yaml` at vault root when opening a vault that has the old layout.
+The system SHALL automatically migrate `.typemd/properties.yaml` to per-property files under `properties/` at vault root when opening a vault that has the old layout. The old single-file format (with a `properties:` wrapper key) is split into individual `properties/<name>.yaml` files by `migrateSharedProperties()`.
 
 #### Scenario: Migrate properties from old to new location
 - **WHEN** `.typemd/properties.yaml` exists
-- **AND** `properties/properties.yaml` does NOT exist at vault root
+- **AND** `properties/` directory does NOT exist or is empty at vault root
 - **THEN** the system SHALL create `<vault_root>/properties/` directory if needed
-- **AND** the system SHALL move `.typemd/properties.yaml` to `<vault_root>/properties/properties.yaml`
+- **AND** the system SHALL split `.typemd/properties.yaml` into per-property files `<vault_root>/properties/<name>.yaml`
 
 #### Scenario: No migration when already at new location
-- **WHEN** `properties/properties.yaml` exists at vault root
+- **WHEN** `properties/` directory exists at vault root with per-property files
 - **AND** `.typemd/properties.yaml` does NOT exist
 - **THEN** the system SHALL NOT perform any migration for properties
 
 #### Scenario: Skip migration when old properties file does not exist
 - **WHEN** `.typemd/properties.yaml` does NOT exist
-- **AND** `properties/properties.yaml` does NOT exist at vault root
+- **AND** `properties/` directory does NOT exist at vault root
 - **THEN** the system SHALL NOT perform any migration for properties
 - **AND** the system SHALL NOT return an error
 
@@ -77,7 +77,7 @@ The system SHALL return an error if both old and new properties paths exist simu
 
 #### Scenario: Both properties paths exist
 - **WHEN** `.typemd/properties.yaml` exists
-- **AND** `properties/properties.yaml` exists at vault root
+- **AND** `properties/` directory exists at vault root with per-property files
 - **THEN** the system SHALL return an error indicating a conflict
 - **AND** the error message SHALL instruct the user to resolve the conflict manually
 
@@ -88,7 +88,7 @@ The system SHALL check all paths for conflicts before moving anything, to avoid 
 - **WHEN** `.typemd/types/` exists and `types/` also exists (conflict)
 - **AND** `.typemd/properties.yaml` exists and needs migration
 - **THEN** the system SHALL return a conflict error
-- **AND** the system SHALL NOT move the properties file
+- **AND** the system SHALL NOT migrate the properties file
 
 ### Requirement: Migration removes empty old directories
 After successful migration, the system SHALL clean up empty parent directories left behind.

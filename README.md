@@ -48,7 +48,8 @@ vault/
 │   └── person/
 │       └── schema.yaml
 ├── properties/
-│   └── properties.yaml     # shared property definitions (optional)
+│   ├── <name>.yaml         # shared property definitions (optional, one per property)
+│   └── ...
 ├── templates/              # object templates by type (optional)
 │   └── book/
 │       └── review.md       # template with default frontmatter + body

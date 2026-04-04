@@ -2,6 +2,7 @@ package core
 
 import (
 	"os"
+	"path/filepath"
 	"strings"
 	"testing"
 )
@@ -16,19 +17,19 @@ func setupSharedPropsTestVault(t *testing.T) *Vault {
 	return v
 }
 
+func writeSharedProperty(t *testing.T, v *Vault, name, content string) {
+	t.Helper()
+	dir := v.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	if err := os.WriteFile(filepath.Join(dir, name+".yaml"), []byte(content), 0644); err != nil {
+		t.Fatalf("write shared property %q: %v", name, err)
+	}
+}
+
 func TestLoadSharedProperties_FileExists(t *testing.T) {
 	v := setupSharedPropsTestVault(t)
-	content := `properties:
-  - name: due_date
-    type: date
-    emoji: 📅
-  - name: priority
-    type: select
-    options:
-      - value: high
-      - value: low
-`
-	os.WriteFile(v.SharedPropertiesPath(), []byte(content), 0644)
+	writeSharedProperty(t, v, "due_date", "type: date\nemoji: 📅\n")
+	writeSharedProperty(t, v, "priority", "type: select\noptions:\n  - value: high\n  - value: low\n")
 
 	props, err := v.LoadSharedProperties()
 	if err != nil {
@@ -37,16 +38,23 @@ func TestLoadSharedProperties_FileExists(t *testing.T) {
 	if len(props) != 2 {
 		t.Fatalf("len(props) = %d, want 2", len(props))
 	}
-	if props[0].Name != "due_date" || props[0].Type != "date" {
-		t.Errorf("props[0] = %+v", props[0])
+	// Properties are sorted by filename
+	byName := make(map[string]Property)
+	for _, p := range props {
+		byName[p.Name] = p
 	}
-	if props[1].Name != "priority" || props[1].Type != "select" {
-		t.Errorf("props[1] = %+v", props[1])
+	if p, ok := byName["due_date"]; !ok || p.Type != "date" {
+		t.Errorf("due_date = %+v", byName["due_date"])
+	}
+	if p, ok := byName["priority"]; !ok || p.Type != "select" {
+		t.Errorf("priority = %+v", byName["priority"])
 	}
 }
 
 func TestLoadSharedProperties_FileNotExist(t *testing.T) {
 	v := setupSharedPropsTestVault(t)
+	// Remove the properties directory that Init creates
+	os.RemoveAll(v.SharedPropertiesDir())
 
 	props, err := v.LoadSharedProperties()
 	if err != nil {
@@ -57,22 +65,22 @@ func TestLoadSharedProperties_FileNotExist(t *testing.T) {
 	}
 }
 
-func TestLoadSharedProperties_EmptyFile(t *testing.T) {
+func TestLoadSharedProperties_EmptyDir(t *testing.T) {
 	v := setupSharedPropsTestVault(t)
-	os.WriteFile(v.SharedPropertiesPath(), []byte(""), 0644)
+	// Dir exists (from Init) but no yaml files
 
 	props, err := v.LoadSharedProperties()
 	if err != nil {
 		t.Fatalf("LoadSharedProperties error = %v", err)
 	}
-	if len(props) != 0 {
-		t.Errorf("expected 0, got %d", len(props))
+	if props != nil {
+		t.Errorf("expected nil for empty dir, got %v", props)
 	}
 }
 
 func TestLoadSharedProperties_MalformedYAML(t *testing.T) {
 	v := setupSharedPropsTestVault(t)
-	os.WriteFile(v.SharedPropertiesPath(), []byte("not: [valid: yaml: {"), 0644)
+	writeSharedProperty(t, v, "bad", "not: [valid: yaml: {")
 
 	_, err := v.LoadSharedProperties()
 	if err == nil {
@@ -82,18 +90,11 @@ func TestLoadSharedProperties_MalformedYAML(t *testing.T) {
 
 func TestLoadSharedProperties_Caching(t *testing.T) {
 	v := setupSharedPropsTestVault(t)
-	content := `properties:
-  - name: due_date
-    type: date
-`
-	os.WriteFile(v.SharedPropertiesPath(), []byte(content), 0644)
+	writeSharedProperty(t, v, "due_date", "type: date\n")
 
 	props1, _ := v.LoadSharedProperties()
 	// Modify file after first load
-	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
-  - name: other
-    type: string
-`), 0644)
+	writeSharedProperty(t, v, "due_date", "type: string\n")
 
 	props2, _ := v.LoadSharedProperties()
 	// Should return cached result
@@ -102,6 +103,46 @@ func TestLoadSharedProperties_Caching(t *testing.T) {
 	}
 	if props2[0].Name != "due_date" {
 		t.Errorf("expected cached due_date, got %q", props2[0].Name)
+	}
+	if props2[0].Type != "date" {
+		t.Errorf("expected cached type date, got %q", props2[0].Type)
+	}
+}
+
+func TestLoadSharedProperties_NameDerivedFromFilename(t *testing.T) {
+	v := setupSharedPropsTestVault(t)
+	// File contains a name field that should be ignored
+	writeSharedProperty(t, v, "due_date", "name: something_else\ntype: date\n")
+
+	props, err := v.LoadSharedProperties()
+	if err != nil {
+		t.Fatalf("LoadSharedProperties error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("len(props) = %d, want 1", len(props))
+	}
+	if props[0].Name != "due_date" {
+		t.Errorf("name = %q, want %q (should come from filename)", props[0].Name, "due_date")
+	}
+}
+
+func TestLoadSharedProperties_NonYAMLFilesIgnored(t *testing.T) {
+	v := setupSharedPropsTestVault(t)
+	writeSharedProperty(t, v, "rating", "type: number\n")
+	// Write non-YAML files
+	dir := v.SharedPropertiesDir()
+	os.WriteFile(filepath.Join(dir, "README.md"), []byte("not a property"), 0644)
+	os.WriteFile(filepath.Join(dir, ".DS_Store"), []byte(""), 0644)
+
+	props, err := v.LoadSharedProperties()
+	if err != nil {
+		t.Fatalf("LoadSharedProperties error = %v", err)
+	}
+	if len(props) != 1 {
+		t.Fatalf("len(props) = %d, want 1", len(props))
+	}
+	if props[0].Name != "rating" {
+		t.Errorf("name = %q, want %q", props[0].Name, "rating")
 	}
 }
 
@@ -266,9 +307,6 @@ func TestValidateSchema_LocalPropertyConflictsWithShared(t *testing.T) {
 }
 
 func TestValidateSchema_UseWithNoSharedProps(t *testing.T) {
-	// When no shared props are provided, use entries pass override validation
-	// but can't be fully validated (no shared map to check against).
-	// This is fine — ValidateAllSchemas always provides shared props.
 	schema := &TypeSchema{
 		Name: "test",
 		Properties: []Property{
@@ -397,14 +435,8 @@ func TestLoadType_WithUseResolution(t *testing.T) {
 	}
 	defer v.Close()
 
-	// Create shared properties
-	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
-  - name: due_date
-    type: date
-    emoji: 📅
-`), 0644)
+	writeSharedProperty(t, v, "due_date", "type: date\nemoji: 📅\n")
 
-	// Create type schema with use
 	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
   - name: title
@@ -429,13 +461,8 @@ properties:
 func TestValidateAllSchemas_WithSharedProperties(t *testing.T) {
 	v := setupSharedPropsTestVault(t)
 
-	// Create valid shared properties
-	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
-  - name: due_date
-    type: date
-`), 0644)
+	writeSharedProperty(t, v, "due_date", "type: date\n")
 
-	// Create valid type schema using shared property
 	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
   - use: due_date
@@ -450,13 +477,8 @@ properties:
 func TestValidateAllSchemas_SharedPropertiesErrors(t *testing.T) {
 	v := setupSharedPropsTestVault(t)
 
-	// Create invalid shared properties (duplicate names)
-	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
-  - name: due_date
-    type: date
-  - name: due_date
-    type: string
-`), 0644)
+	// Create property with reserved name
+	writeSharedProperty(t, v, "name", "type: string\n")
 
 	result := ValidateAllSchemas(v)
 	if _, ok := result["_shared_properties"]; !ok {
@@ -471,12 +493,7 @@ func TestLoadType_UseDescriptionOverride(t *testing.T) {
 	}
 	defer v.Close()
 
-	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
-  - name: due_date
-    type: date
-    emoji: 📅
-    description: "A date something is due"
-`), 0644)
+	writeSharedProperty(t, v, "due_date", "type: date\nemoji: 📅\ndescription: \"A date something is due\"\n")
 
 	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
@@ -501,11 +518,7 @@ func TestLoadType_UseDescriptionPreservedWhenNoOverride(t *testing.T) {
 	}
 	defer v.Close()
 
-	os.WriteFile(v.SharedPropertiesPath(), []byte(`properties:
-  - name: due_date
-    type: date
-    description: "A date something is due"
-`), 0644)
+	writeSharedProperty(t, v, "due_date", "type: date\ndescription: \"A date something is due\"\n")
 
 	mustWriteTypeSchema(v, "project", []byte(`name: project
 properties:
@@ -535,4 +548,3 @@ func TestValidateUseOverrides_AllAllowedOverrides(t *testing.T) {
 		t.Errorf("validateUseOverrides() = %v, want nil", err)
 	}
 }
-

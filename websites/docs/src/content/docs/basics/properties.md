@@ -114,27 +114,30 @@ Pin values must be positive integers and unique within a type schema. Properties
 
 When the same property appears in multiple types, defining it independently in each schema leads to duplication and inconsistency — a `due_date` in `project` might use `date` while `task` uses `datetime`. Shared properties let you define once and reference everywhere, ensuring consistent definitions across types.
 
-If the same property appears in multiple types (e.g., `due_date` in both `project` and `task`), you can define it once in `properties/properties.yaml` and reference it with the `use` keyword.
+If the same property appears in multiple types (e.g., `due_date` in both `project` and `task`), you can define it once in the `properties/` directory and reference it with the `use` keyword.
 
 ### Defining shared properties
 
+Each shared property is its own file under `properties/<name>.yaml`, where `<name>` is the property name. No wrapper key is needed — the file contains the property definition directly.
+
 ```yaml
-# properties/properties.yaml
-properties:
-  - name: due_date
-    type: date
-    emoji: "\U0001F4C5"
-  - name: priority
-    type: select
-    options:
-      - value: high
-      - value: medium
-      - value: low
+# properties/due_date.yaml
+type: date
+emoji: "\U0001F4C5"
 ```
 
-Each entry supports all the same fields as a regular type schema property: `name`, `type`, `emoji`, `pin`, `options`, `target`, `default`, `multiple`, `bidirectional`, and `inverse`. When referenced via `use:` in a type schema, only `pin`, `emoji`, and `description` can be overridden — all other fields are inherited from the shared definition.
+```yaml
+# properties/priority.yaml
+type: select
+options:
+  - value: high
+  - value: medium
+  - value: low
+```
 
-The file is optional. If `properties/properties.yaml` does not exist or contains no `properties` array, TypeMD treats it as an empty set of shared properties.
+Each file supports all the same fields as a regular type schema property: `type`, `emoji`, `pin`, `options`, `target`, `default`, `multiple`, `bidirectional`, and `inverse`. When referenced via `use:` in a type schema, only `pin`, `emoji`, and `description` can be overridden — all other fields are inherited from the shared definition.
+
+The `properties/` directory is optional. If it does not exist or contains no `.yaml` files, TypeMD treats it as an empty set of shared properties.
 
 ### Referencing in type schemas
 
@@ -181,7 +184,7 @@ properties:
 
 | | Shared Property | Inline Property |
 |---|----------------|-----------------|
-| Defined in | `properties/properties.yaml` | `types/<type>/schema.yaml` |
+| Defined in | `properties/<name>.yaml` | `types/<type>/schema.yaml` |
 | Reusable | Yes — referenced via `use` | No — scoped to one type |
 | Customizable per type | `pin`, `emoji`, and `description` | Fully customizable |
 | Use case | Properties shared across multiple types | Properties unique to one type |

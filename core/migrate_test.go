@@ -331,6 +331,89 @@ func TestMigrateDirectoryLayout_PropertiesConflict(t *testing.T) {
 	}
 }
 
+func TestMigrateSharedProperties_SplitsLegacyFile(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	// Create legacy properties/properties.yaml
+	legacyContent := `properties:
+  - name: due_date
+    type: date
+    emoji: 📅
+  - name: priority
+    type: select
+    options:
+      - value: high
+      - value: low
+`
+	os.WriteFile(filepath.Join(dir, "properties", "properties.yaml"), []byte(legacyContent), 0644)
+
+	err := v.migrateSharedProperties()
+	if err != nil {
+		t.Fatalf("migrateSharedProperties() error = %v", err)
+	}
+
+	// Per-property files should exist
+	if _, err := os.Stat(filepath.Join(dir, "properties", "due_date.yaml")); os.IsNotExist(err) {
+		t.Error("expected properties/due_date.yaml to exist")
+	}
+	if _, err := os.Stat(filepath.Join(dir, "properties", "priority.yaml")); os.IsNotExist(err) {
+		t.Error("expected properties/priority.yaml to exist")
+	}
+	// Legacy file should be removed
+	if _, err := os.Stat(filepath.Join(dir, "properties", "properties.yaml")); !os.IsNotExist(err) {
+		t.Error("expected properties/properties.yaml to be removed")
+	}
+}
+
+func TestMigrateSharedProperties_EmptyLegacyFile(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	os.WriteFile(filepath.Join(dir, "properties", "properties.yaml"), []byte("properties:\n"), 0644)
+
+	err := v.migrateSharedProperties()
+	if err != nil {
+		t.Fatalf("migrateSharedProperties() error = %v", err)
+	}
+
+	// Legacy file should be removed
+	if _, err := os.Stat(filepath.Join(dir, "properties", "properties.yaml")); !os.IsNotExist(err) {
+		t.Error("expected properties/properties.yaml to be removed")
+	}
+}
+
+func TestMigrateSharedProperties_ConflictWithPerPropertyFiles(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	// Create both legacy and per-property files
+	os.WriteFile(filepath.Join(dir, "properties", "properties.yaml"), []byte("properties:\n  - name: old\n    type: string\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "properties", "existing.yaml"), []byte("type: number\n"), 0644)
+
+	err := v.migrateSharedProperties()
+	if err == nil {
+		t.Fatal("expected conflict error")
+	}
+	if !strings.Contains(err.Error(), "conflict") {
+		t.Errorf("expected error to mention 'conflict', got: %v", err)
+	}
+}
+
+func TestMigrateSharedProperties_NoLegacyFile(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	err := v.migrateSharedProperties()
+	if err != nil {
+		t.Fatalf("migrateSharedProperties() error = %v", err)
+	}
+}
+
 func TestInit_CreatesRootLevelDirs(t *testing.T) {
 	dir := t.TempDir()
 	v := NewVault(dir)

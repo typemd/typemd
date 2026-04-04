@@ -47,3 +47,24 @@ Feature: Vault directory migration
     When I open the vault
     Then an error should occur
     And a properties file should still exist at ".typemd/properties.yaml"
+
+  # ── Per-property file migration ──────────────────────────────────────────
+
+  Scenario: Migrate legacy properties.yaml to per-property files
+    Given a legacy properties file with "due_date" and "priority" properties
+    When I open the vault
+    Then per-property file "due_date.yaml" should exist in properties directory
+    And per-property file "priority.yaml" should exist in properties directory
+    And legacy "properties.yaml" should not exist in properties directory
+
+  Scenario: Migrate empty legacy properties.yaml
+    Given an empty legacy properties file
+    When I open the vault
+    Then legacy "properties.yaml" should not exist in properties directory
+
+  Scenario: Conflict when legacy file coexists with per-property files
+    Given a legacy properties file with "due_date" and "priority" properties
+    And a per-property file "rating.yaml" exists in properties directory
+    When I open the vault
+    Then an error should occur
+    And the last error should mention "conflict"

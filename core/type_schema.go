@@ -104,8 +104,9 @@ type Property struct {
 	Template      string   `yaml:"template,omitempty"`
 }
 
-// SharedPropertiesFile represents the properties/properties.yaml file.
-type SharedPropertiesFile struct {
+// LegacySharedPropertiesFile represents the old properties/properties.yaml format (pre-v0.9).
+// Used only for migration from single-file to per-property-file format.
+type LegacySharedPropertiesFile struct {
 	Properties []Property `yaml:"properties"`
 }
 

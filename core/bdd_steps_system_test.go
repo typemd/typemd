@@ -54,11 +54,10 @@ properties:
 }
 
 func (dc *domainContext) aSharedPropertiesFileWithASystemProperty(propName string) {
-	content := fmt.Sprintf(`properties:
-  - name: %s
-    type: datetime
-`, propName)
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
+	dir := dc.vault.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	content := "type: datetime\n"
+	os.WriteFile(filepath.Join(dir, propName+".yaml"), []byte(content), 0644)
 }
 
 func (dc *domainContext) theObjectShouldHaveATimestamp(propName string) error {

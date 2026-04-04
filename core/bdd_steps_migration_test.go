@@ -97,6 +97,52 @@ func (dc *domainContext) theLastErrorShouldMention(substr string) error {
 	return nil
 }
 
+// ── Per-property migration steps ──────────────────────────────────────────
+
+func (dc *domainContext) aLegacyPropertiesFileWithTwoProperties(prop1, prop2 string) {
+	dir := filepath.Join(dc.rootDir, "properties")
+	os.MkdirAll(dir, 0755)
+	content := fmt.Sprintf(`properties:
+  - name: %s
+    type: date
+    emoji: 📅
+  - name: %s
+    type: select
+    options:
+      - value: high
+      - value: low
+`, prop1, prop2)
+	os.WriteFile(filepath.Join(dir, "properties.yaml"), []byte(content), 0644)
+}
+
+func (dc *domainContext) anEmptyLegacyPropertiesFile() {
+	dir := filepath.Join(dc.rootDir, "properties")
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(filepath.Join(dir, "properties.yaml"), []byte("properties:\n"), 0644)
+}
+
+func (dc *domainContext) aPerPropertyFileExistsInPropertiesDirectory(filename string) {
+	dir := filepath.Join(dc.rootDir, "properties")
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(filepath.Join(dir, filename), []byte("type: number\n"), 0644)
+}
+
+func (dc *domainContext) perPropertyFileShouldExistInPropertiesDirectory(filename string) error {
+	path := filepath.Join(dc.rootDir, "properties", filename)
+	if _, err := os.Stat(path); os.IsNotExist(err) {
+		return fmt.Errorf("expected per-property file %q to exist", filename)
+	}
+	return nil
+}
+
+func (dc *domainContext) legacyFileShouldNotExistInPropertiesDirectory(filename string) error {
+	path := filepath.Join(dc.rootDir, "properties", filename)
+	if _, err := os.Stat(path); err == nil {
+		return fmt.Errorf("expected legacy file %q to NOT exist", filename)
+	}
+	return nil
+}
+
 func initMigrationSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^types exist at the old location "([^"]*)"$`, dc.typesExistAtOldLocation)
 	ctx.Step(`^types exist at the new location "([^"]*)"$`, dc.typesExistAtNewLocation)
@@ -108,4 +154,9 @@ func initMigrationSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a properties file should not exist at "([^"]*)"$`, dc.propertiesFileShouldNotExistAt)
 	ctx.Step(`^a properties file should still exist at "([^"]*)"$`, dc.propertiesFileShouldExistAt)
 	ctx.Step(`^the last error should mention "([^"]*)"$`, dc.theLastErrorShouldMention)
+	ctx.Step(`^a legacy properties file with "([^"]*)" and "([^"]*)" properties$`, dc.aLegacyPropertiesFileWithTwoProperties)
+	ctx.Step(`^an empty legacy properties file$`, dc.anEmptyLegacyPropertiesFile)
+	ctx.Step(`^a per-property file "([^"]*)" exists in properties directory$`, dc.aPerPropertyFileExistsInPropertiesDirectory)
+	ctx.Step(`^per-property file "([^"]*)" should exist in properties directory$`, dc.perPropertyFileShouldExistInPropertiesDirectory)
+	ctx.Step(`^legacy "([^"]*)" should not exist in properties directory$`, dc.legacyFileShouldNotExistInPropertiesDirectory)
 }

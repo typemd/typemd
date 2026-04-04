@@ -27,8 +27,9 @@ vault/
 │   │       └── by-rating.yaml
 │   └── person/
 │       └── schema.yaml
-├── properties/
-│   └── properties.yaml     # shared property definitions (optional)
+├── properties/             # shared property definitions (optional)
+│   ├── due_date.yaml
+│   └── priority.yaml
 ├── templates/              # object templates by type (optional)
 │   └── book/
 │       └── review.md       # default frontmatter + body for new objects
@@ -139,19 +140,19 @@ Every type has an implicit default view (list layout, sorted by name ascending).
 
 For the full type schema format, see [Types](/concepts/types).
 
-## Shared properties file
+## Shared property files
 
-The optional file `properties/properties.yaml` defines reusable property definitions that can be referenced from type schemas via `use`:
+The optional `properties/` directory contains per-property YAML files that define reusable property definitions. Each file is named `<property-name>.yaml` and can be referenced from type schemas via `use`:
 
 ```yaml
-# properties/properties.yaml
-properties:
-  - name: status
-    type: select
-    options:
-      - value: active
-      - value: archived
+# properties/status.yaml
+type: select
+options:
+  - value: active
+  - value: archived
 ```
+
+The property name is derived from the filename — no `name` field is needed inside the file.
 
 For details on shared properties, see [Shared Properties](/basics/properties#shared-properties).
 

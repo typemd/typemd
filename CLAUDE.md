@@ -117,7 +117,7 @@ Key sub-models: `typeEditor` (schema editing + wizard + templates), `viewMode` (
 - Type schemas: `types/<name>/schema.yaml`. Reserved system properties (`name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, `archived`) cannot be redefined; `name` can appear with only a `template` field. Optional schema fields: `plural`, `emoji`, `unique`, `version`, `color`, `description`.
 - Views: `types/<name>/views/<view>.yaml` (optional). Two layouts: `list` and `table`. Supports `columns`, `filter`, `sort`, `group_by`. Each type has an implicit default view (list, sort by name asc).
 - Built-in types: `tag` (🏷️, plural "tags", unique, backs `tags` system property, has `color` and `icon` string properties) and `page` (📄, plural "pages", general-purpose content container). Built-in types exist without YAML files, cannot be deleted, but can be overridden by custom `types/<name>/schema.yaml`.
-- Shared properties: `properties/properties.yaml` (optional, defines reusable property definitions referenced via `use` in type schemas; `use` entries can override `pin`, `emoji`, and `description`)
+- Shared properties: `properties/<name>.yaml` (optional per-property files, defines reusable property definitions referenced via `use` in type schemas; property name derived from filename; `use` entries can override `pin`, `emoji`, and `description`)
 - Relations defined as properties in type schemas
 - Wiki-links: `[[type/name-ulid]]`, `[[type/name]]`, or `[[name]]` syntax in markdown body, with backlink tracking. Shorthand forms are resolved during sync and written back as full IDs.
 - SQLite index: `.typemd/index.db`

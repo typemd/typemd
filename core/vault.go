@@ -51,9 +51,9 @@ func (v *Vault) TypesDir() string {
 	return filepath.Join(v.Root, "types")
 }
 
-// SharedPropertiesPath returns the path to the shared properties file.
-func (v *Vault) SharedPropertiesPath() string {
-	return filepath.Join(v.Root, "properties", "properties.yaml")
+// SharedPropertiesDir returns the shared properties directory path.
+func (v *Vault) SharedPropertiesDir() string {
+	return filepath.Join(v.Root, "properties")
 }
 
 // DBPath returns the SQLite database path.
@@ -118,6 +118,11 @@ func (v *Vault) Open() error {
 	// to new root-level layout (types/ and properties/) before any path accessors are used.
 	if err := v.migrateDirectoryLayout(); err != nil {
 		return fmt.Errorf("migrate directory layout: %w", err)
+	}
+
+	// Migrate legacy properties/properties.yaml to per-property files.
+	if err := v.migrateSharedProperties(); err != nil {
+		return fmt.Errorf("migrate shared properties: %w", err)
 	}
 
 	db, err := sql.Open("sqlite", v.DBPath())
@@ -272,7 +277,7 @@ func (v *Vault) Init() error {
 	}
 
 	// Create directories: .typemd/ (internal), types/, properties/, objects/
-	for _, dir := range []string{v.Dir(), v.TypesDir(), filepath.Dir(v.SharedPropertiesPath()), v.ObjectsDir()} {
+	for _, dir := range []string{v.Dir(), v.TypesDir(), v.SharedPropertiesDir(), v.ObjectsDir()} {
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return fmt.Errorf("create directory %s: %w", dir, err)
 		}

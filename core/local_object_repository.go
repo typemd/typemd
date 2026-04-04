@@ -33,8 +33,8 @@ func (r *LocalObjectRepository) typesDir() string {
 	return filepath.Join(r.root, "types")
 }
 
-func (r *LocalObjectRepository) sharedPropertiesPath() string {
-	return filepath.Join(r.root, "properties", "properties.yaml")
+func (r *LocalObjectRepository) sharedPropertiesDir() string {
+	return filepath.Join(r.root, "properties")
 }
 
 func (r *LocalObjectRepository) objectsDir() string {
@@ -252,29 +252,46 @@ func (r *LocalObjectRepository) EnsureDir(typeName string) error {
 
 // --- Shared property operations ---
 
-// GetSharedProperties loads shared property definitions, with caching.
+// GetSharedProperties loads shared property definitions from per-property files, with caching.
 func (r *LocalObjectRepository) GetSharedProperties() ([]Property, error) {
 	if r.sharedPropsLoaded {
 		return r.sharedProperties, nil
 	}
 
-	data, err := os.ReadFile(r.sharedPropertiesPath())
+	dir := r.sharedPropertiesDir()
+	entries, err := os.ReadDir(dir)
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			r.sharedProperties = nil
 			r.sharedPropsLoaded = true
 			return nil, nil
 		}
-		return nil, fmt.Errorf("read shared properties: %w", err)
+		return nil, fmt.Errorf("read shared properties dir: %w", err)
 	}
 
-	var file SharedPropertiesFile
-	if err := yaml.Unmarshal(data, &file); err != nil {
-		return nil, fmt.Errorf("parse shared properties: %w", err)
+	var props []Property
+	for _, entry := range entries {
+		name := entry.Name()
+		if entry.IsDir() || !strings.HasSuffix(name, ".yaml") {
+			continue
+		}
+		propName := strings.TrimSuffix(name, ".yaml")
+
+		data, err := os.ReadFile(filepath.Join(dir, name))
+		if err != nil {
+			return nil, fmt.Errorf("read shared property %q: %w", propName, err)
+		}
+
+		var prop Property
+		if err := yaml.Unmarshal(data, &prop); err != nil {
+			return nil, fmt.Errorf("parse shared property %q: %w", propName, err)
+		}
+		prop.Name = propName // Name derived from filename, not file content
+		props = append(props, prop)
 	}
 
-	r.sharedProperties = file.Properties
-	r.sharedPropsMap = SharedPropertiesMap(file.Properties)
+	r.sharedProperties = props
+	r.sharedPropsMap = SharedPropertiesMap(props)
 	r.sharedPropsLoaded = true
 	return r.sharedProperties, nil
 }
