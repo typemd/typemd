@@ -137,6 +137,9 @@ func resetAllFlags() {
 	statsTypeName = ""
 	statsJSON = false
 	watchFlag = false
+	graphTypes = nil
+	graphNoRelations = false
+	graphNoWikiLinks = false
 	logOneline = false
 
 	// Reset Cobra local flags that use cmd.Flags().GetBool() instead of
@@ -176,6 +179,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initStatsSteps(sc, cc)
 	initTemplateSteps(sc, cc)
 	initWatchValidateSteps(sc, cc)
+	initGraphSteps(sc, cc)
 	initLogSteps(sc, cc)
 }
 

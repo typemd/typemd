@@ -181,6 +181,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initLocalPropertySteps(ctx, dc)
 	initDateDisplayFormatSteps(ctx, dc)
 	initQueryFallbackSteps(ctx, dc)
+	initGraphSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {
