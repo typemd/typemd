@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"sort"
 
 	"github.com/typemd/typemd/core"
 	mcplib "github.com/mark3labs/mcp-go/mcp"
@@ -28,6 +29,27 @@ func registerTools(s *server.MCPServer, vault *core.Vault) {
 		),
 	)
 	s.AddTool(getObjectTool, getObjectHandler(vault))
+
+	listTemplatesTool := mcplib.NewTool("list_templates",
+		mcplib.WithDescription("List available object templates. Optionally filter by type name."),
+		mcplib.WithString("type",
+			mcplib.Description("Type name to filter templates (e.g. book). If omitted, lists templates across all types."),
+		),
+	)
+	s.AddTool(listTemplatesTool, listTemplatesHandler(vault))
+
+	getTemplateTool := mcplib.NewTool("get_template",
+		mcplib.WithDescription("Get a specific template's content including properties and body."),
+		mcplib.WithString("type",
+			mcplib.Required(),
+			mcplib.Description("Type name (e.g. book)"),
+		),
+		mcplib.WithString("name",
+			mcplib.Required(),
+			mcplib.Description("Template name (e.g. reading)"),
+		),
+	)
+	s.AddTool(getTemplateTool, getTemplateHandler(vault))
 }
 
 type objectSummary struct {
@@ -92,6 +114,82 @@ func getObjectHandler(vault *core.Vault) server.ToolHandlerFunc {
 			Filename:   obj.Filename,
 			Properties: obj.Properties,
 			Body:       obj.Body,
+		}
+
+		data, err := json.Marshal(detail)
+		if err != nil {
+			return mcplib.NewToolResultError(fmt.Sprintf("marshal result: %v", err)), nil
+		}
+
+		return mcplib.NewToolResultText(string(data)), nil
+	}
+}
+
+type templateSummary struct {
+	Type string `json:"type"`
+	Name string `json:"name"`
+}
+
+func listTemplatesHandler(vault *core.Vault) server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+		typeName, _ := request.RequireString("type")
+
+		var typeNames []string
+		if typeName != "" {
+			typeNames = []string{typeName}
+		} else {
+			typeNames = vault.ListTypes()
+			sort.Strings(typeNames)
+		}
+
+		summaries := []templateSummary{}
+		for _, tn := range typeNames {
+			names, err := vault.ListTemplates(tn)
+			if err != nil {
+				continue
+			}
+			for _, name := range names {
+				summaries = append(summaries, templateSummary{Type: tn, Name: name})
+			}
+		}
+
+		data, err := json.Marshal(summaries)
+		if err != nil {
+			return mcplib.NewToolResultError(fmt.Sprintf("marshal result: %v", err)), nil
+		}
+
+		return mcplib.NewToolResultText(string(data)), nil
+	}
+}
+
+type templateDetail struct {
+	Type       string         `json:"type"`
+	Name       string         `json:"name"`
+	Properties map[string]any `json:"properties"`
+	Body       string         `json:"body"`
+}
+
+func getTemplateHandler(vault *core.Vault) server.ToolHandlerFunc {
+	return func(ctx context.Context, request mcplib.CallToolRequest) (*mcplib.CallToolResult, error) {
+		typeName, err := request.RequireString("type")
+		if err != nil {
+			return mcplib.NewToolResultError(err.Error()), nil
+		}
+		name, err := request.RequireString("name")
+		if err != nil {
+			return mcplib.NewToolResultError(err.Error()), nil
+		}
+
+		tmpl, err := vault.LoadTemplate(typeName, name)
+		if err != nil {
+			return mcplib.NewToolResultError(fmt.Sprintf("get template failed: %v", err)), nil
+		}
+
+		detail := templateDetail{
+			Type:       typeName,
+			Name:       tmpl.Name,
+			Properties: tmpl.Properties,
+			Body:       tmpl.Body,
 		}
 
 		data, err := json.Marshal(detail)
