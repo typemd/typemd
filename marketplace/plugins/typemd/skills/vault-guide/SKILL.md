@@ -24,7 +24,8 @@ project-root/
 │   └── person/
 │       └── schema.yaml
 ├── properties/
-│   └── properties.yaml      # Shared property definitions (optional)
+│   ├── <name>.yaml          # Shared property definitions (optional, one per property)
+│   └── ...
 ├── templates/               # Object templates (optional)
 │   └── book/
 │       └── review.md        # Template with frontmatter overrides + body
@@ -238,7 +239,7 @@ properties:
 | `pin: <int>` | Display order in TUI body panel (1 = top) |
 | `default` | Default value for new objects |
 | `description` | Free-text property documentation |
-| `use: <name>` | Reference a shared property from `properties.yaml` |
+| `use: <name>` | Reference a shared property from `properties/<name>.yaml` |
 | `template` | Only valid on the `name` property — Go template for auto-generated names (e.g., `"{{.title}} by {{.author}}"`, also supports `{{ date:FORMAT }}` placeholders) |
 
 ### Relation Options
@@ -252,16 +253,18 @@ properties:
 
 ## Shared Properties
 
-Define reusable properties in `properties/properties.yaml`:
+Define reusable properties as individual files in `properties/`. Each file is named `<name>.yaml` and contains the property definition directly (property name is derived from the filename):
 
+`properties/source.yaml`:
 ```yaml
-properties:
-  - name: source
-    type: url
-    emoji: 🔗
-  - name: favorite
-    type: checkbox
-    emoji: ❤️
+type: url
+emoji: 🔗
+```
+
+`properties/favorite.yaml`:
+```yaml
+type: checkbox
+emoji: ❤️
 ```
 
 Reference in type schemas with `use:`. Only `pin`, `emoji`, and `description` can be overridden:

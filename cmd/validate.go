@@ -193,12 +193,7 @@ func runWatchValidation(ctx context.Context, vault *core.Vault) error {
 
 func addWatchPaths(watcher *fsnotify.Watcher, vault *core.Vault) {
 	watchDirRecursive(watcher, vault.TypesDir())
-
-	propsFile := vault.SharedPropertiesPath()
-	if _, err := os.Stat(propsFile); err == nil {
-		watcher.Add(propsFile)
-	}
-
+	watchDirRecursive(watcher, vault.SharedPropertiesDir())
 	watchDirRecursive(watcher, vault.ObjectsDir())
 }
 

@@ -23,7 +23,7 @@ Validation runs five phases in order. Each phase checks a different aspect of yo
 
 ### Phase 1: Schema Validation
 
-Scans all type schemas (`types/<name>/schema.yaml`) and `properties/properties.yaml` (shared properties) and checks:
+Scans all type schemas (`types/<name>/schema.yaml`) and shared property files (`properties/*.yaml`) and checks:
 
 - `name` field is required
 - Each property must have a `name` and `type`

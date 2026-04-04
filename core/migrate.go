@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"gopkg.in/yaml.v3"
 )
@@ -46,6 +47,63 @@ func (v *Vault) migrateDirectoryLayout() error {
 		if err := os.Rename(oldPropsFile, newPropsFile); err != nil {
 			return fmt.Errorf("migrate properties file: %w", err)
 		}
+	}
+
+	return nil
+}
+
+// migrateSharedProperties detects the legacy properties/properties.yaml single-file format
+// and splits it into per-property files (properties/<name>.yaml).
+func (v *Vault) migrateSharedProperties() error {
+	dir := v.SharedPropertiesDir()
+	legacyFile := filepath.Join(dir, "properties.yaml")
+	if !fileExists(legacyFile) {
+		return nil
+	}
+
+	// Check for conflict: legacy file + per-property files
+	entries, err := os.ReadDir(dir)
+	if err != nil {
+		return fmt.Errorf("read properties dir: %w", err)
+	}
+	for _, entry := range entries {
+		name := entry.Name()
+		if !entry.IsDir() && name != "properties.yaml" && strings.HasSuffix(name, ".yaml") {
+			return fmt.Errorf("shared properties conflict: both %s and per-property files exist in %s; resolve manually by removing one format", legacyFile, dir)
+		}
+	}
+
+	// Parse legacy file
+	data, err := os.ReadFile(legacyFile)
+	if err != nil {
+		return fmt.Errorf("read legacy properties file: %w", err)
+	}
+
+	var file LegacySharedPropertiesFile
+	if err := yaml.Unmarshal(data, &file); err != nil {
+		return fmt.Errorf("parse legacy properties file: %w", err)
+	}
+
+	// Write per-property files
+	for _, prop := range file.Properties {
+		if prop.Name == "" {
+			continue
+		}
+		// Create a copy without the Name field for serialization
+		propCopy := prop
+		propCopy.Name = ""
+		out, err := yaml.Marshal(&propCopy)
+		if err != nil {
+			return fmt.Errorf("marshal property %q: %w", prop.Name, err)
+		}
+		if err := os.WriteFile(filepath.Join(dir, prop.Name+".yaml"), out, 0644); err != nil {
+			return fmt.Errorf("write property %q: %w", prop.Name, err)
+		}
+	}
+
+	// Remove legacy file
+	if err := os.Remove(legacyFile); err != nil {
+		return fmt.Errorf("remove legacy properties file: %w", err)
 	}
 
 	return nil

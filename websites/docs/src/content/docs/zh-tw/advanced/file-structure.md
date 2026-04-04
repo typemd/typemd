@@ -27,8 +27,9 @@ vault/
 │   │       └── by-rating.yaml
 │   └── person/
 │       └── schema.yaml
-├── properties/
-│   └── properties.yaml     # 共用屬性定義（選填）
+├── properties/             # 共用屬性定義（選填）
+│   ├── due_date.yaml
+│   └── priority.yaml
 ├── templates/              # 依 type 分類的 object template（選填）
 │   └── book/
 │       └── review.md       # 新 object 的預設 frontmatter 和內文
@@ -141,17 +142,17 @@ group_by:
 
 ## 共用屬性檔案
 
-選填的 `properties/properties.yaml` 定義可重複使用的屬性定義，type schema 可透過 `use` 引用：
+選填的 `properties/` 目錄包含各屬性的 YAML 檔案，定義可重複使用的屬性定義。每個檔案命名為 `<property-name>.yaml`，type schema 可透過 `use` 引用：
 
 ```yaml
-# properties/properties.yaml
-properties:
-  - name: status
-    type: select
-    options:
-      - value: active
-      - value: archived
+# properties/status.yaml
+type: select
+options:
+  - value: active
+  - value: archived
 ```
+
+屬性名稱從檔名衍生——檔案內不需要 `name` 欄位。
 
 關於共用屬性的詳細說明，請參閱[共用屬性](/zh-tw/basics/properties#共用屬性)。
 

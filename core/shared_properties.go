@@ -2,8 +2,8 @@ package core
 
 import "fmt"
 
-// LoadSharedProperties loads shared property definitions from properties/properties.yaml.
-// Returns an empty slice if the file does not exist.
+// LoadSharedProperties loads shared property definitions from properties/<name>.yaml files.
+// Returns nil if the properties directory does not exist or is empty.
 func (v *Vault) LoadSharedProperties() ([]Property, error) {
 	return v.repo.GetSharedProperties()
 }

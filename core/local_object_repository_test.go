@@ -317,8 +317,8 @@ func TestLocalObjectRepository_GetSharedProperties(t *testing.T) {
 
 	os.MkdirAll(filepath.Join(repo.root, "properties"), 0755)
 	os.WriteFile(
-		filepath.Join(repo.root, "properties", "properties.yaml"),
-		[]byte("properties:\n  - name: status\n    type: select\n    options:\n      - value: active\n"),
+		filepath.Join(repo.root, "properties", "status.yaml"),
+		[]byte("type: select\noptions:\n  - value: active\n"),
 		0644,
 	)
 

@@ -3,29 +3,61 @@ package core
 import (
 	"fmt"
 	"os"
+	"path/filepath"
+	"strings"
 
 	"github.com/cucumber/godog"
 )
 
-// ── Shared properties steps ──────────────────────────────────────────────
+// ── Shared properties steps (per-property files) ────────────────────────
 
-func (dc *domainContext) aSharedPropertiesFileWithDateAndSelectProperties(prop1, prop2 string) {
-	content := fmt.Sprintf(`properties:
-  - name: %s
-    type: date
-    emoji: 📅
-  - name: %s
-    type: select
-    options:
-      - value: high
-      - value: medium
-      - value: low
-`, prop1, prop2)
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
+func (dc *domainContext) aSharedPropertyFileWithTypeAndEmoji(name, propType, emoji string) {
+	dir := dc.vault.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	content := fmt.Sprintf("type: %s\nemoji: %s\n", propType, emoji)
+	os.WriteFile(filepath.Join(dir, name+".yaml"), []byte(content), 0644)
 }
 
-func (dc *domainContext) anEmptySharedPropertiesFile() {
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(""), 0644)
+func (dc *domainContext) aSharedPropertyFileWithTypeAndOptions(name, propType, optionsCSV string) {
+	dir := dc.vault.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	var optLines string
+	for _, opt := range strings.Split(optionsCSV, ",") {
+		optLines += fmt.Sprintf("  - value: %s\n", strings.TrimSpace(opt))
+	}
+	content := fmt.Sprintf("type: %s\noptions:\n%s", propType, optLines)
+	os.WriteFile(filepath.Join(dir, name+".yaml"), []byte(content), 0644)
+}
+
+func (dc *domainContext) aSharedPropertyFileWithType(name, propType string) {
+	dir := dc.vault.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	content := fmt.Sprintf("type: %s\n", propType)
+	os.WriteFile(filepath.Join(dir, name+".yaml"), []byte(content), 0644)
+}
+
+func (dc *domainContext) anEmptySharedPropertiesDirectory() {
+	os.MkdirAll(dc.vault.SharedPropertiesDir(), 0755)
+}
+
+func (dc *domainContext) aNonYAMLFileInPropertiesDirectory(filename string) {
+	dir := dc.vault.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(filepath.Join(dir, filename), []byte("not a property"), 0644)
+}
+
+func (dc *domainContext) aSharedPropertyFileWithNameOverride(name, propType, nameOverride string) {
+	dir := dc.vault.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	content := fmt.Sprintf("name: %s\ntype: %s\n", nameOverride, propType)
+	os.WriteFile(filepath.Join(dir, name+".yaml"), []byte(content), 0644)
+}
+
+func (dc *domainContext) aSharedPropertiesFileWithDescribedProperties() {
+	dir := dc.vault.SharedPropertiesDir()
+	os.MkdirAll(dir, 0755)
+	os.WriteFile(filepath.Join(dir, "due_date.yaml"), []byte("type: date\nemoji: 📅\ndescription: \"A date something is due\"\n"), 0644)
+	os.WriteFile(filepath.Join(dir, "priority.yaml"), []byte("type: select\ndescription: \"How important this is\"\noptions:\n  - value: high\n  - value: medium\n  - value: low\n"), 0644)
 }
 
 func (dc *domainContext) iLoadSharedProperties() {
@@ -50,40 +82,6 @@ func (dc *domainContext) sharedPropertyShouldHaveType(name, expectedType string)
 		}
 	}
 	return fmt.Errorf("shared property %q not found", name)
-}
-
-func (dc *domainContext) aSharedPropertiesFileWithDuplicateProperties(name string) {
-	content := fmt.Sprintf(`properties:
-  - name: %s
-    type: date
-  - name: %s
-    type: string
-`, name, name)
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
-}
-
-func (dc *domainContext) aSharedPropertiesFileWithAnInvalidPropertyType() {
-	content := `properties:
-  - name: bad_prop
-    type: invalid
-`
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
-}
-
-func (dc *domainContext) aSharedPropertiesFileWithAPropertyNamedName() {
-	content := `properties:
-  - name: name
-    type: string
-`
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
-}
-
-func (dc *domainContext) aSharedPropertiesFileWithASelectPropertyMissingOptions() {
-	content := `properties:
-  - name: status
-    type: select
-`
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
 }
 
 func (dc *domainContext) sharedPropertiesShouldHaveNoErrors() error {
@@ -232,23 +230,6 @@ properties:
 	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
-func (dc *domainContext) aSharedPropertiesFileWithDescribedProperties() {
-	content := `properties:
-  - name: due_date
-    type: date
-    emoji: 📅
-    description: "A date something is due"
-  - name: priority
-    type: select
-    description: "How important this is"
-    options:
-      - value: high
-      - value: medium
-      - value: low
-`
-	os.WriteFile(dc.vault.SharedPropertiesPath(), []byte(content), 0644)
-}
-
 func (dc *domainContext) aTypeSchemaWithMixedUseAndNameProperties(typeName string) {
 	content := fmt.Sprintf(`name: %s
 properties:
@@ -286,15 +267,16 @@ func (dc *domainContext) theLoadedPropertyAtIndexShouldBe(index int, expectedNam
 }
 
 func initSharedSteps(ctx *godog.ScenarioContext, dc *domainContext) {
-	ctx.Step(`^a shared properties file with "([^"]*)" date and "([^"]*)" select properties$`, dc.aSharedPropertiesFileWithDateAndSelectProperties)
-	ctx.Step(`^an empty shared properties file$`, dc.anEmptySharedPropertiesFile)
+	ctx.Step(`^a shared property file "([^"]*)" with type "([^"]*)" and emoji "([^"]*)"$`, dc.aSharedPropertyFileWithTypeAndEmoji)
+	ctx.Step(`^a shared property file "([^"]*)" with type "([^"]*)" and options "([^"]*)"$`, dc.aSharedPropertyFileWithTypeAndOptions)
+	ctx.Step(`^a shared property file "([^"]*)" with type "([^"]*)"$`, dc.aSharedPropertyFileWithType)
+	ctx.Step(`^a shared property file "([^"]*)" with type "([^"]*)" and name override "([^"]*)"$`, dc.aSharedPropertyFileWithNameOverride)
+	ctx.Step(`^an empty shared properties directory$`, dc.anEmptySharedPropertiesDirectory)
+	ctx.Step(`^a non-YAML file "([^"]*)" in the properties directory$`, dc.aNonYAMLFileInPropertiesDirectory)
+	ctx.Step(`^a shared properties file with described properties$`, dc.aSharedPropertiesFileWithDescribedProperties)
 	ctx.Step(`^I load shared properties$`, dc.iLoadSharedProperties)
 	ctx.Step(`^shared properties should contain (\d+) entries?$`, dc.sharedPropertiesShouldContainNEntries)
 	ctx.Step(`^shared property "([^"]*)" should have type "([^"]*)"$`, dc.sharedPropertyShouldHaveType)
-	ctx.Step(`^a shared properties file with duplicate "([^"]*)" properties$`, dc.aSharedPropertiesFileWithDuplicateProperties)
-	ctx.Step(`^a shared properties file with an invalid property type$`, dc.aSharedPropertiesFileWithAnInvalidPropertyType)
-	ctx.Step(`^a shared properties file with a property named "([^"]*)"$`, dc.aSharedPropertiesFileWithAPropertyNamedName)
-	ctx.Step(`^a shared properties file with a select property missing options$`, dc.aSharedPropertiesFileWithASelectPropertyMissingOptions)
 	ctx.Step(`^shared properties should have no errors$`, dc.sharedPropertiesShouldHaveNoErrors)
 	ctx.Step(`^shared properties should have errors$`, dc.sharedPropertiesShouldHaveErrors)
 	ctx.Step(`^a type schema "([^"]*)" with use "([^"]*)"$`, dc.aTypeSchemaWithUse)
@@ -310,7 +292,6 @@ func initSharedSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the loaded property "([^"]*)" should have emoji "([^"]*)"$`, dc.theLoadedPropertyShouldHaveEmoji)
 	ctx.Step(`^the loaded property "([^"]*)" should have pin (\d+)$`, dc.theLoadedPropertyShouldHavePin)
 	ctx.Step(`^a type schema "([^"]*)" with use "([^"]*)" and description "([^"]*)"$`, dc.aTypeSchemaWithUseAndDescription)
-	ctx.Step(`^a shared properties file with described properties$`, dc.aSharedPropertiesFileWithDescribedProperties)
 	ctx.Step(`^a type schema "([^"]*)" with mixed use and name properties$`, dc.aTypeSchemaWithMixedUseAndNameProperties)
 	ctx.Step(`^the loaded schema should have emoji "([^"]*)"$`, dc.theLoadedSchemaShouldHaveEmoji)
 	ctx.Step(`^the loaded property at index (\d+) should be "([^"]*)"$`, dc.theLoadedPropertyAtIndexShouldBe)

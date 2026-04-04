@@ -1,108 +1,124 @@
 Feature: Shared Properties
-  Users can define shared property definitions in .typemd/properties.yaml.
-  Type schemas can reference these via `use` to reuse property definitions
-  across multiple types without duplication.
+  Users can define shared property definitions as individual YAML files
+  in the properties/ directory. Type schemas can reference these via
+  `use` to reuse property definitions across multiple types without duplication.
 
   Background:
     Given a vault is ready
 
-  # ── Loading shared properties ─────────────────────────────────────────────
+  # ── Loading per-property files ───────────────────────────────────────────
 
-  Scenario: Load shared properties file with multiple properties
-    Given a shared properties file with "due_date" date and "priority" select properties
+  Scenario: Load single per-property file
+    Given a shared property file "due_date" with type "date" and emoji "📅"
+    When I load shared properties
+    Then shared properties should contain 1 entry
+    And shared property "due_date" should have type "date"
+
+  Scenario: Load multiple per-property files
+    Given a shared property file "due_date" with type "date" and emoji "📅"
+    And a shared property file "priority" with type "select" and options "high,medium,low"
     When I load shared properties
     Then shared properties should contain 2 entries
     And shared property "due_date" should have type "date"
     And shared property "priority" should have type "select"
 
-  Scenario: Shared properties file does not exist
+  Scenario: Shared properties directory does not exist
     When I load shared properties
     Then shared properties should contain 0 entries
 
-  Scenario: Empty shared properties file
-    Given an empty shared properties file
+  Scenario: Empty shared properties directory
+    Given an empty shared properties directory
     When I load shared properties
     Then shared properties should contain 0 entries
+
+  Scenario: Non-YAML files in properties directory are ignored
+    Given a shared property file "rating" with type "number" and emoji "⭐"
+    And a non-YAML file "README.md" in the properties directory
+    When I load shared properties
+    Then shared properties should contain 1 entry
+    And shared property "rating" should have type "number"
+
+  Scenario: Name field in per-property file is ignored
+    Given a shared property file "due_date" with type "date" and name override "something_else"
+    When I load shared properties
+    Then shared property "due_date" should have type "date"
 
   # ── Shared properties validation ──────────────────────────────────────────
 
   Scenario: Valid shared properties pass validation
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
+    And a shared property file "priority" with type "select" and options "high,medium,low"
     When I validate all schemas
     Then shared properties should have no errors
 
-  Scenario: Duplicate shared property names are rejected
-    Given a shared properties file with duplicate "due_date" properties
-    When I validate all schemas
-    Then shared properties should have errors
-
   Scenario: Invalid property type in shared properties is rejected
-    Given a shared properties file with an invalid property type
+    Given a shared property file "bad_prop" with type "invalid"
     When I validate all schemas
     Then shared properties should have errors
 
   Scenario: Reserved name "name" in shared properties is rejected
-    Given a shared properties file with a property named "name"
+    Given a shared property file "name" with type "string"
     When I validate all schemas
     Then shared properties should have errors
 
   Scenario: Select without options in shared properties is rejected
-    Given a shared properties file with a select property missing options
+    Given a shared property file "status" with type "select"
     When I validate all schemas
     Then shared properties should have errors
 
   # ── Use keyword in type schemas ───────────────────────────────────────────
 
   Scenario: Type schema with use entry references shared property
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
+    And a shared property file "priority" with type "select" and options "high,medium,low"
     And a type schema "project" with use "due_date"
     When I validate all schemas
     Then schema "project" should have no errors
 
   Scenario: Use with pin override is accepted
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "due_date" and pin 1
     When I validate all schemas
     Then schema "project" should have no errors
 
   Scenario: Use with emoji override is accepted
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "due_date" and emoji "🗓️"
     When I validate all schemas
     Then schema "project" should have no errors
 
   Scenario: Use with description override is accepted
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "due_date" and description "Project deadline"
     When I validate all schemas
     Then schema "project" should have no errors
 
   Scenario: Use with disallowed type field is rejected
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "due_date" and disallowed type override
     When I validate all schemas
     Then schema "project" should have errors
 
   Scenario: Use referencing non-existent shared property is rejected
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "nonexistent"
     When I validate all schemas
     Then schema "project" should have errors
 
   Scenario: Local property name conflicting with shared property is rejected
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with local property "due_date"
     When I validate all schemas
     Then schema "project" should have errors
 
   Scenario: Duplicate use entries are rejected
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with duplicate use "due_date"
     When I validate all schemas
     Then schema "project" should have errors
 
   Scenario: Use and name on same entry are rejected
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with both use and name on same entry
     When I validate all schemas
     Then schema "project" should have errors
@@ -110,7 +126,7 @@ Feature: Shared Properties
   # ── LoadType resolution ───────────────────────────────────────────────────
 
   Scenario: LoadType resolves use entry with no overrides
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "due_date"
     When I load type "project"
     Then the loaded type should have 1 property
@@ -118,25 +134,25 @@ Feature: Shared Properties
     And the loaded property "due_date" should have emoji "📅"
 
   Scenario: LoadType resolves use entry with pin override
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "due_date" and pin 2
     When I load type "project"
     Then the loaded property "due_date" should have pin 2
 
   Scenario: LoadType resolves use entry with emoji override
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with use "due_date" and emoji "🗓️"
     When I load type "project"
     Then the loaded property "due_date" should have emoji "🗓️"
 
   Scenario: LoadType resolves use entry with description override
-    Given a shared properties file with described properties
+    Given a shared property file with described properties
     And a type schema "project" with use "due_date" and description "Project deadline"
     When I load type "project"
     Then the loaded property "due_date" description should be "Project deadline"
 
   Scenario: LoadType resolves mixed use and name properties in order
-    Given a shared properties file with "due_date" date and "priority" select properties
+    Given a shared property file "due_date" with type "date" and emoji "📅"
     And a type schema "project" with mixed use and name properties
     When I load type "project"
     Then the loaded type should have 3 properties
