@@ -106,7 +106,7 @@ tmd object create "My Idea"
 | `tui.theme.blockquote` | string | `8` | 引用區塊顏色 |
 | `tui.theme.hrule` | string | `8` | 水平分隔線顏色 |
 
-檔案監聽器會監控 `objects/` 和 `.typemd/types/` 的變更。debounce 間隔決定 TUI 對檔案修改的反應速度——較低的值讓更新感覺更即時，較高的值減少多餘的刷新。
+檔案監聽器會監控 `objects/` 和 `types/` 的變更。debounce 間隔決定 TUI 對檔案修改的反應速度——較低的值讓更新感覺更即時，較高的值減少多餘的刷新。
 
 Toast 通知顯示在 TUI 的右下角，用於暫時性訊息，例如同步警告（未解析的參照）和 AI 操作錯誤。通知會在 `duration_ms` 後自動消失，也可以按 `dismiss_key` 手動關閉。錯誤等級的 toast 通知無論設定如何都會顯示。
 

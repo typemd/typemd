@@ -47,7 +47,7 @@ TypeMD 提供兩種查詢路徑：
 
 查詢管線使用結構化 `FilterRule` 條件來篩選 Object。每條規則指定一個屬性、一個運算子和一個值。查詢針對 SQLite 索引執行以提升效能，回傳輕量的 `ObjectResult` 投影而非完整的 Object 實體。
 
-篩選規則透過 `Vault.QueryObjects()` 以程式化方式使用，也可在 view 設定（`.typemd/types/<name>/views/<view>.yaml`）中定義。
+篩選規則透過 `Vault.QueryObjects()` 以程式化方式使用，也可在 view 設定（`types/<name>/views/<view>.yaml`）中定義。
 
 ### 全文搜尋
 
@@ -67,7 +67,7 @@ tmd search "golang" --json
 Type schema 可透過設定 `unique: true` 來啟用 name 唯一性檢查。啟用後，TypeMD 會阻止建立同一 type 下擁有相同 `name` 值的多個 Object。
 
 ```yaml
-# .typemd/types/person/schema.yaml
+# types/person/schema.yaml
 name: person
 unique: true  # 同一個人名稱只能有一個
 properties:

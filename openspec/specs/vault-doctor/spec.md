@@ -74,7 +74,7 @@ The system SHALL check whether the SQLite index is in sync with files on disk, a
 - **THEN** doctor shows the "Index" category as passing
 
 ### Requirement: Doctor detects orphan object directories
-The system SHALL scan `objects/` for subdirectories that do not correspond to any known type schema (custom types from `.typemd/types/<name>/schema.yaml` or built-in types).
+The system SHALL scan `objects/` for subdirectories that do not correspond to any known type schema (custom types from `types/<name>/schema.yaml` or built-in types).
 
 #### Scenario: Directory for deleted type
 - **WHEN** `objects/note/` exists but there is no `note` type schema

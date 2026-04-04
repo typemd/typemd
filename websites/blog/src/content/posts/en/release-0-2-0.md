@@ -54,7 +54,7 @@ With explicit types, validation, migration, and display all get smarter.
 
 If multiple types share the same properties — say, every resource needs `tags` and `favorite` — you used to have to define them in each type schema separately. Not anymore.
 
-Define them once in `.typemd/properties.yaml`:
+Define them once in `properties/properties.yaml`:
 
 ```yaml
 properties:

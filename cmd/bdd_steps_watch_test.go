@@ -36,7 +36,7 @@ func initWatchValidateSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
 		return nil
 	})
 	ctx.Step(`^a broken schema exists$`, func() error {
-		dir := cc.vaultDir + "/.typemd/types/broken"
+		dir := cc.vaultDir + "/types/broken"
 		if err := os.MkdirAll(dir, 0755); err != nil {
 			return err
 		}

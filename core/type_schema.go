@@ -104,7 +104,7 @@ type Property struct {
 	Template      string   `yaml:"template,omitempty"`
 }
 
-// SharedPropertiesFile represents the .typemd/properties.yaml file.
+// SharedPropertiesFile represents the properties/properties.yaml file.
 type SharedPropertiesFile struct {
 	Properties []Property `yaml:"properties"`
 }
@@ -150,7 +150,7 @@ func (p Property) OptionValues() []string {
 
 // defaultTypes contains built-in type schemas.
 // "tag" backs the "tags" system property; "page" is a general-purpose content container.
-// All other types must be defined via .typemd/types/<name>/schema.yaml files.
+// All other types must be defined via types/<name>/schema.yaml files.
 var defaultTypes = map[string]TypeSchema{
 	TagTypeName: {
 		Name:   TagTypeName,
@@ -208,7 +208,7 @@ func (v *Vault) LoadType(name string) (*TypeSchema, error) {
 	return schema, nil
 }
 
-// SaveType validates and persists a TypeSchema to .typemd/types/<name>.yaml.
+// SaveType validates and persists a TypeSchema to types/<name>/schema.yaml.
 func (v *Vault) SaveType(schema *TypeSchema) error {
 	if errs := ValidateSchema(schema); len(errs) > 0 {
 		return fmt.Errorf("invalid schema: %v", errs[0])

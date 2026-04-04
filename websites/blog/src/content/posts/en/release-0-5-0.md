@@ -13,7 +13,7 @@ So 0.5.0 tackles that head-on with the View system: **see your data the way you 
 
 Every type can now have multiple Views. A View is a saved configuration for "how I want to see these objects" — which layout, what filters, how to sort, how to group.
 
-Views live at `.typemd/types/<name>/views/<view>.yaml`, plain text files just like type schemas — fully git-trackable.
+Views live at `types/<name>/views/<view>.yaml`, plain text files just like type schemas — fully git-trackable.
 
 Every type has an implicit default view (list layout, sorted by name). Want to customize it? Press `v` in the TUI to enter view mode.
 

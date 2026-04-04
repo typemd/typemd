@@ -23,7 +23,7 @@ Vault 維護一個 type schema 的記憶體快取，避免重複讀取磁碟。
 | `SaveType()` | 失效特定 type 的快取項目 |
 | `DeleteType()` | 失效特定 type 的快取項目 |
 | `MigrateSchemas()` | 失效整個快取 |
-| `.typemd/types/` 的外部檔案變更 | 失效整個快取 |
+| `types/` 的外部檔案變更 | 失效整個快取 |
 
 外部檔案變更由 TUI 的檔案監視器偵測。當 schema 檔案在 Vault API 外部被修改時，監視器會發送 schema 變更訊息，觸發完整快取失效和資料重新整理。
 
@@ -54,7 +54,7 @@ TUI 在以下情況回退到完整的 `Reconciler.Reconcile()`：
 
 ### Schema 檔案監控
 
-監視器也監控 `.typemd/types/`。Schema 檔案變更會產生獨立的訊息，觸發 schema 快取失效和完整資料重新整理 — 增量同步不適用於 schema 變更。
+監視器也監控 `types/`。Schema 檔案變更會產生獨立的訊息，觸發 schema 快取失效和完整資料重新整理 — 增量同步不適用於 schema 變更。
 
 ## Relation 同步
 

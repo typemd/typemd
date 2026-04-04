@@ -215,8 +215,8 @@ func collectUniqueTypes(v *Vault) []string {
 	return uniqueTypes
 }
 
-// ValidateAllSchemas scans .typemd/types/<name>/schema.yaml and validates each schema.
-// Also validates shared properties if .typemd/properties.yaml exists.
+// ValidateAllSchemas scans types/<name>/schema.yaml and validates each schema.
+// Also validates shared properties if properties/properties.yaml exists.
 // Returns a map of type name to validation errors.
 func ValidateAllSchemas(v *Vault) map[string][]error {
 	result := make(map[string][]error)

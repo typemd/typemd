@@ -227,6 +227,131 @@ func TestVault_MigrateObjects_DBNotOpen(t *testing.T) {
 	}
 }
 
+// ── Directory layout migration tests ────────────────────────────────────────
+
+func TestMigrateDirectoryLayout_EmptyOldTypesDir(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	// Create empty old types dir, remove new types dir
+	os.MkdirAll(filepath.Join(dir, ".typemd", "types"), 0755)
+	os.Remove(filepath.Join(dir, "types"))
+
+	err := v.migrateDirectoryLayout()
+	if err != nil {
+		t.Fatalf("migrateDirectoryLayout() error = %v", err)
+	}
+
+	// New types dir should exist (even if empty)
+	if _, err := os.Stat(filepath.Join(dir, "types")); os.IsNotExist(err) {
+		t.Error("expected types/ to exist at root")
+	}
+	// Old types dir should be gone
+	if _, err := os.Stat(filepath.Join(dir, ".typemd", "types")); !os.IsNotExist(err) {
+		t.Error("expected .typemd/types/ to be removed")
+	}
+}
+
+func TestMigrateDirectoryLayout_CreatesPropertiesDir(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	// Create old properties file, remove new properties dir
+	os.WriteFile(filepath.Join(dir, ".typemd", "properties.yaml"), []byte("- name: rating\n  type: number\n"), 0644)
+	os.Remove(filepath.Join(dir, "properties"))
+
+	err := v.migrateDirectoryLayout()
+	if err != nil {
+		t.Fatalf("migrateDirectoryLayout() error = %v", err)
+	}
+
+	// Properties dir should be created and file moved
+	data, err := os.ReadFile(filepath.Join(dir, "properties", "properties.yaml"))
+	if err != nil {
+		t.Fatalf("expected properties/properties.yaml to exist: %v", err)
+	}
+	if !strings.Contains(string(data), "rating") {
+		t.Error("expected properties content to be preserved")
+	}
+	// Old file should be gone
+	if _, err := os.Stat(filepath.Join(dir, ".typemd", "properties.yaml")); !os.IsNotExist(err) {
+		t.Error("expected .typemd/properties.yaml to be removed")
+	}
+}
+
+func TestMigrateDirectoryLayout_NothingToMigrate(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	err := v.migrateDirectoryLayout()
+	if err != nil {
+		t.Fatalf("migrateDirectoryLayout() error = %v", err)
+	}
+}
+
+func TestMigrateDirectoryLayout_TypesConflict(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	// Both old and new types dirs exist with content
+	os.MkdirAll(filepath.Join(dir, ".typemd", "types", "book"), 0755)
+	os.WriteFile(filepath.Join(dir, ".typemd", "types", "book", "schema.yaml"), []byte("name: book\n"), 0644)
+	os.MkdirAll(filepath.Join(dir, "types", "note"), 0755)
+	os.WriteFile(filepath.Join(dir, "types", "note", "schema.yaml"), []byte("name: note\n"), 0644)
+
+	err := v.migrateDirectoryLayout()
+	if err == nil {
+		t.Fatal("expected conflict error")
+	}
+	if !strings.Contains(err.Error(), "conflict") {
+		t.Errorf("expected error to mention 'conflict', got: %v", err)
+	}
+}
+
+func TestMigrateDirectoryLayout_PropertiesConflict(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	v.Init()
+
+	// Both old and new properties exist
+	os.WriteFile(filepath.Join(dir, ".typemd", "properties.yaml"), []byte("old\n"), 0644)
+	os.MkdirAll(filepath.Join(dir, "properties"), 0755)
+	os.WriteFile(filepath.Join(dir, "properties", "properties.yaml"), []byte("new\n"), 0644)
+
+	err := v.migrateDirectoryLayout()
+	if err == nil {
+		t.Fatal("expected conflict error")
+	}
+	if !strings.Contains(err.Error(), "conflict") {
+		t.Errorf("expected error to mention 'conflict', got: %v", err)
+	}
+}
+
+func TestInit_CreatesRootLevelDirs(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	// types/ should be at root, not .typemd/types/
+	if _, err := os.Stat(filepath.Join(dir, "types")); os.IsNotExist(err) {
+		t.Error("expected types/ at vault root")
+	}
+	if _, err := os.Stat(filepath.Join(dir, ".typemd", "types")); !os.IsNotExist(err) {
+		t.Error("expected .typemd/types/ to NOT exist")
+	}
+
+	// properties/ should be at root
+	if _, err := os.Stat(filepath.Join(dir, "properties")); os.IsNotExist(err) {
+		t.Error("expected properties/ at vault root")
+	}
+}
+
 // ── Schema migration tests (enum → select) ─────────────────────────────────
 
 func TestVault_MigrateSchemas_EnumToSelect(t *testing.T) {

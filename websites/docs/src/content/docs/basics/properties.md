@@ -114,12 +114,12 @@ Pin values must be positive integers and unique within a type schema. Properties
 
 When the same property appears in multiple types, defining it independently in each schema leads to duplication and inconsistency — a `due_date` in `project` might use `date` while `task` uses `datetime`. Shared properties let you define once and reference everywhere, ensuring consistent definitions across types.
 
-If the same property appears in multiple types (e.g., `due_date` in both `project` and `task`), you can define it once in `.typemd/properties.yaml` and reference it with the `use` keyword.
+If the same property appears in multiple types (e.g., `due_date` in both `project` and `task`), you can define it once in `properties/properties.yaml` and reference it with the `use` keyword.
 
 ### Defining shared properties
 
 ```yaml
-# .typemd/properties.yaml
+# properties/properties.yaml
 properties:
   - name: due_date
     type: date
@@ -134,14 +134,14 @@ properties:
 
 Each entry supports all the same fields as a regular type schema property: `name`, `type`, `emoji`, `pin`, `options`, `target`, `default`, `multiple`, `bidirectional`, and `inverse`. When referenced via `use:` in a type schema, only `pin`, `emoji`, and `description` can be overridden — all other fields are inherited from the shared definition.
 
-The file is optional. If `.typemd/properties.yaml` does not exist or contains no `properties` array, TypeMD treats it as an empty set of shared properties.
+The file is optional. If `properties/properties.yaml` does not exist or contains no `properties` array, TypeMD treats it as an empty set of shared properties.
 
 ### Referencing in type schemas
 
 Use the `use` keyword to reference a shared property by name:
 
 ```yaml
-# .typemd/types/project/schema.yaml
+# types/project/schema.yaml
 name: project
 emoji: "\U0001F4CB"
 properties:
@@ -168,7 +168,7 @@ When referencing a shared property via `use`, you can override these fields:
 All other fields cannot be overridden — they come from the shared definition.
 
 ```yaml
-# .typemd/types/task/schema.yaml
+# types/task/schema.yaml
 name: task
 properties:
   - use: due_date
@@ -181,7 +181,7 @@ properties:
 
 | | Shared Property | Inline Property |
 |---|----------------|-----------------|
-| Defined in | `.typemd/properties.yaml` | `.typemd/types/<type>/schema.yaml` |
+| Defined in | `properties/properties.yaml` | `types/<type>/schema.yaml` |
 | Reusable | Yes — referenced via `use` | No — scoped to one type |
 | Customizable per type | `pin`, `emoji`, and `description` | Fully customizable |
 | Use case | Properties shared across multiple types | Properties unique to one type |

@@ -29,16 +29,12 @@ func NewLocalObjectRepository(root string) *LocalObjectRepository {
 
 // --- Path conventions (private) ---
 
-func (r *LocalObjectRepository) vaultDir() string {
-	return filepath.Join(r.root, ".typemd")
-}
-
 func (r *LocalObjectRepository) typesDir() string {
-	return filepath.Join(r.vaultDir(), "types")
+	return filepath.Join(r.root, "types")
 }
 
 func (r *LocalObjectRepository) sharedPropertiesPath() string {
-	return filepath.Join(r.vaultDir(), "properties.yaml")
+	return filepath.Join(r.root, "properties", "properties.yaml")
 }
 
 func (r *LocalObjectRepository) objectsDir() string {

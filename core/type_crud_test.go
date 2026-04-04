@@ -121,7 +121,7 @@ func TestMarshalTypeSchema_NameTemplateRoundTrip(t *testing.T) {
 func TestDeleteSchema_RemovesFile(t *testing.T) {
 	dir := t.TempDir()
 	repo := NewLocalObjectRepository(dir)
-	typesDir := filepath.Join(dir, ".typemd", "types")
+	typesDir := filepath.Join(dir, "types")
 	os.MkdirAll(typesDir, 0755)
 	os.MkdirAll(filepath.Join(typesDir, "test"), 0755)
 	os.WriteFile(filepath.Join(typesDir, "test", "schema.yaml"), []byte("name: test\n"), 0644)
@@ -137,7 +137,7 @@ func TestDeleteSchema_RemovesFile(t *testing.T) {
 func TestDeleteSchema_NonExistent(t *testing.T) {
 	dir := t.TempDir()
 	repo := NewLocalObjectRepository(dir)
-	os.MkdirAll(filepath.Join(dir, ".typemd", "types"), 0755)
+	os.MkdirAll(filepath.Join(dir, "types"), 0755)
 
 	err := repo.DeleteSchema("nope")
 	if err == nil {

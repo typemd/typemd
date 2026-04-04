@@ -13,7 +13,7 @@ tags: [發布, 開發日誌]
 
 每個型別現在可以定義多個 View。一個 View 就是一組「我想怎麼看這些物件」的設定——用哪種佈局、篩選什麼、怎麼排序、怎麼分組。
 
-View 存在 `.typemd/types/<name>/views/<view>.yaml`，跟型別 schema 一樣是純文字檔，可以 git 追蹤。
+View 存在 `types/<name>/views/<view>.yaml`，跟型別 schema 一樣是純文字檔，可以 git 追蹤。
 
 每個型別都有一個隱含的 default view（列表佈局、按名稱排序）。想客製？在 TUI 裡按 `v` 就能進入視圖模式。
 

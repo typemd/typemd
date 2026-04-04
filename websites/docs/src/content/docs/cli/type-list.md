@@ -5,7 +5,7 @@ sidebar:
   order: 9.5
 ---
 
-Lists all available types defined in the vault's `.typemd/types/` directory.
+Lists all available types defined in the vault's `types/` directory.
 
 ```bash
 tmd type list

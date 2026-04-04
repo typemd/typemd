@@ -52,7 +52,7 @@ The system SHALL support a `--dry-run` flag that lists files needing formatting 
 - **THEN** the command SHALL print nothing (or a success message) and exit with code 0
 
 ### Requirement: Format type schemas
-The system SHALL also format type schema YAML files (`.typemd/types/<name>/schema.yaml`) by round-tripping through `MarshalTypeSchema`.
+The system SHALL also format type schema YAML files (`types/<name>/schema.yaml`) by round-tripping through `MarshalTypeSchema`.
 
 #### Scenario: Format schema with non-canonical YAML
 - **WHEN** a schema file has valid but non-canonical YAML formatting

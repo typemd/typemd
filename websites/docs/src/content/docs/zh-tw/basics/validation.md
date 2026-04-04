@@ -23,7 +23,7 @@ tmd type validate --watch
 
 ### 階段 1：Schema 驗證
 
-掃描所有 type schema（`.typemd/types/<name>/schema.yaml`）和 `.typemd/properties.yaml`（共用屬性）並檢查：
+掃描所有 type schema（`types/<name>/schema.yaml`）和 `properties/properties.yaml`（共用屬性）並檢查：
 
 - `name` 欄位為必填
 - 每個屬性必須有 `name` 和 `type`

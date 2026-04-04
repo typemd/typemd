@@ -36,7 +36,7 @@ YAML formatting is normalized to `yaml.v3` defaults — consistent quoting, inde
 
 ### Schema formatting
 
-Type schema files (`.typemd/types/<name>/schema.yaml`) are also reformatted by round-tripping through the canonical serializer.
+Type schema files (`types/<name>/schema.yaml`) are also reformatted by round-tripping through the canonical serializer.
 
 ### What is preserved
 

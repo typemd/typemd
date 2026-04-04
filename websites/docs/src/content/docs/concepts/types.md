@@ -11,10 +11,10 @@ A Type is a blueprint that defines what kind of Object you're working with and w
 
 Think of a Type as a category with structure. A `book` Type knows that books have a title, a reading status, and a rating. A `person` Type knows that people have a name and a role.
 
-Types are defined as YAML schema files in `.typemd/types/`:
+Types are defined as YAML schema files in `types/`:
 
 ```yaml
-# .typemd/types/book/schema.yaml
+# types/book/schema.yaml
 name: book
 plural: books
 emoji: 📚
@@ -61,7 +61,7 @@ TypeMD has two built-in Types:
 | 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property; has `unique: true` to enforce name uniqueness |
 | 📄 `page` | _(none)_ | General-purpose content container for free-form writing |
 
-Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `.typemd/types/<name>/schema.yaml` file with additional properties. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
+Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `types/<name>/schema.yaml` file with additional properties. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
 
 For details on tags, see [Tags](/basics/tags).
 
@@ -72,7 +72,7 @@ For details on object templates, see [Templates](/basics/templates).
 Setting `unique: true` on a type schema enforces name uniqueness within that type. When enabled, TypeMD rejects the creation of a new object if another object of the same type already has the same name.
 
 ```yaml
-# .typemd/types/person/schema.yaml
+# types/person/schema.yaml
 name: person
 emoji: 👤
 unique: true
@@ -124,7 +124,7 @@ TypeMD uses lenient validation:
 
 ## Views
 
-Each type can have one or more **views** — saved configurations that control how objects are displayed (sorted, filtered, grouped). Views are stored alongside the type schema in `.typemd/types/<name>/views/`.
+Each type can have one or more **views** — saved configurations that control how objects are displayed (sorted, filtered, grouped). Views are stored alongside the type schema in `types/<name>/views/`.
 
 Every type has an implicit default view (list layout, sorted by name). You can create custom views with different sort orders, filters, and grouping. In the TUI, press `v` on a type group to enter [view mode](/tui/tui#view-mode--table-display).
 

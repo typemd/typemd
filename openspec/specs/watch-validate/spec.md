@@ -16,11 +16,11 @@ The `tmd type validate` command SHALL accept a `--watch` / `-w` flag that enters
 - **THEN** the command runs validation once and exits, with no change in behavior
 
 ### Requirement: Watch monitors vault directories for changes
-The watch mode SHALL monitor `.typemd/types/` (recursive), `.typemd/properties.yaml`, and `objects/` (recursive) for file changes using fsnotify.
+The watch mode SHALL monitor `types/` (recursive), `properties/properties.yaml`, and `objects/` (recursive) for file changes using fsnotify.
 
 #### Scenario: Schema file change triggers re-validation
 - **WHEN** watch mode is active
-- **AND** a file in `.typemd/types/` is modified
+- **AND** a file in `types/` is modified
 - **THEN** the system re-runs full validation after a debounce period
 
 #### Scenario: Object file change triggers re-validation
@@ -30,7 +30,7 @@ The watch mode SHALL monitor `.typemd/types/` (recursive), `.typemd/properties.y
 
 #### Scenario: Properties file change triggers re-validation
 - **WHEN** watch mode is active
-- **AND** `.typemd/properties.yaml` is modified
+- **AND** `properties/properties.yaml` is modified
 - **THEN** the system re-runs full validation after a debounce period
 
 #### Scenario: Missing watched directory is skipped

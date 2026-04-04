@@ -48,7 +48,7 @@ If a `.typemd/` directory exists, read the current type schemas to understand:
 
 - What types already exist
 - What properties are defined
-- What shared properties are available in `.typemd/properties.yaml`
+- What shared properties are available in `properties/properties.yaml`
 - How the existing types relate to the files being explored
 
 ### 4. Classify Content into Type Groups
@@ -116,7 +116,7 @@ Present relations as property additions to the relevant type schemas.
 
 ### 7. Suggest Shared Properties
 
-If multiple types would share the same property definitions, suggest extracting them into `.typemd/properties.yaml`:
+If multiple types would share the same property definitions, suggest extracting them into `properties/properties.yaml`:
 
 ```yaml
 source:

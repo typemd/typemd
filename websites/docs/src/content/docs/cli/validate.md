@@ -19,7 +19,7 @@ tmd type validate
 
 ## Watch Mode
 
-Use `--watch` to enter continuous validation mode. The command monitors `.typemd/types/`, `.typemd/properties.yaml`, and `objects/` for file changes. On each change it clears the terminal, re-syncs the index, and re-runs all five validation phases. Rapid changes are debounced (200ms) into a single validation run.
+Use `--watch` to enter continuous validation mode. The command monitors `types/`, `properties/properties.yaml`, and `objects/` for file changes. On each change it clears the terminal, re-syncs the index, and re-runs all five validation phases. Rapid changes are debounced (200ms) into a single validation run.
 
 ```bash
 tmd type validate --watch
@@ -39,7 +39,7 @@ Press `Ctrl+C` to exit watch mode.
 
 ### Phase 1: Schema Validation
 
-Scans all `.typemd/types/<name>/schema.yaml` files and checks:
+Scans all `types/<name>/schema.yaml` files and checks:
 
 - `name` field is required
 - Each property must have a `name` and `type`

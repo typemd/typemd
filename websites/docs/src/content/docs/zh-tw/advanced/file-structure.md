@@ -14,20 +14,21 @@ Vault 是一個具有特定結構的一般目錄：
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # 使用者定義的 type schema（目錄格式）
-│   │   ├── book/
-│   │   │   ├── schema.yaml # type schema 定義
-│   │   │   └── views/      # 此 type 的已儲存 view（選填）
-│   │   │       ├── default.yaml
-│   │   │       └── by-rating.yaml
-│   │   └── person/
-│   │       └── schema.yaml
 │   ├── config.yaml         # vault 設定（選填）
-│   ├── properties.yaml     # 共用屬性定義（選填）
 │   ├── instructions/       # skill 覆蓋設定（選填）
 │   │   └── explore.md      # 覆蓋 explore skill
 │   ├── index.db            # SQLite 索引（自動更新）
 │   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
+├── types/                  # 使用者定義的 type schema（目錄格式）
+│   ├── book/
+│   │   ├── schema.yaml     # type schema 定義
+│   │   └── views/          # 此 type 的已儲存 view（選填）
+│   │       ├── default.yaml
+│   │       └── by-rating.yaml
+│   └── person/
+│       └── schema.yaml
+├── properties/
+│   └── properties.yaml     # 共用屬性定義（選填）
 ├── templates/              # 依 type 分類的 object template（選填）
 │   └── book/
 │       └── review.md       # 新 object 的預設 frontmatter 和內文
@@ -38,7 +39,7 @@ vault/
         └── alan-donovan-01jqr3k5mpbvn8e0f2g7h9txyz.md
 ```
 
-- `.typemd/` — 設定與內部狀態（vault 設定、type schema、共用屬性、skill 覆蓋設定、索引、TUI 狀態）
+- `.typemd/` — 設定與內部狀態（vault 設定、skill 覆蓋設定、索引、TUI 狀態）
 - `templates/` — 選填的 object template，依 type 分類
 - `objects/` — 所有 Object 檔案，依 type 分類
 
@@ -84,10 +85,10 @@ book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 
 ## Type schema 檔案
 
-每個 type 以目錄形式儲存在 `.typemd/types/<name>/` 下，包含 `schema.yaml` 檔案：
+每個 type 以目錄形式儲存在 `types/<name>/` 下，包含 `schema.yaml` 檔案：
 
 ```yaml
-# .typemd/types/book/schema.yaml
+# types/book/schema.yaml
 name: book
 plural: books
 color: blue
@@ -111,10 +112,10 @@ properties:
 
 ## Views
 
-每個 type 可以有多個已儲存的 view，定義物件的排序、篩選和顯示方式。View 以 YAML 檔案儲存在 `.typemd/types/<name>/views/`：
+每個 type 可以有多個已儲存的 view，定義物件的排序、篩選和顯示方式。View 以 YAML 檔案儲存在 `types/<name>/views/`：
 
 ```yaml
-# .typemd/types/book/views/by-rating.yaml
+# types/book/views/by-rating.yaml
 name: by-rating
 layout: list
 columns: [status, rating]
@@ -140,10 +141,10 @@ group_by:
 
 ## 共用屬性檔案
 
-選填的 `.typemd/properties.yaml` 定義可重複使用的屬性定義，type schema 可透過 `use` 引用：
+選填的 `properties/properties.yaml` 定義可重複使用的屬性定義，type schema 可透過 `use` 引用：
 
 ```yaml
-# .typemd/properties.yaml
+# properties/properties.yaml
 properties:
   - name: status
     type: select

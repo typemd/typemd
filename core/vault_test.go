@@ -113,7 +113,7 @@ func TestVault_Paths(t *testing.T) {
 	if got := v.Dir(); got != filepath.Join("/some/root", ".typemd") {
 		t.Errorf("Dir() = %q", got)
 	}
-	if got := v.TypesDir(); got != filepath.Join("/some/root", ".typemd", "types") {
+	if got := v.TypesDir(); got != filepath.Join("/some/root", "types") {
 		t.Errorf("TypesDir() = %q", got)
 	}
 	if got := v.DBPath(); got != filepath.Join("/some/root", ".typemd", "index.db") {

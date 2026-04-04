@@ -57,7 +57,7 @@ Type schemas can mark properties with a `pin` value (positive integer) to highli
 Pinned properties are **excluded** from the Properties panel to avoid duplication.
 
 ```yaml
-# .typemd/types/book/schema.yaml
+# types/book/schema.yaml
 properties:
   - name: status
     type: select
@@ -472,4 +472,4 @@ When an object is deleted from disk, any relations pointing to or from that obje
 
 The TUI watches the `objects/` directory via fsnotify. When files are created, modified, or deleted, it performs an incremental index sync for the changed files and refreshes the view (200ms debounce), preserving the current selection when possible. The debounce interval can be customized via `tui.debounce_ms` in `.typemd/config.yaml`.
 
-The TUI also watches the `.typemd/types/` directory for schema changes. When type schemas are modified externally, the schema cache is invalidated and a full refresh is triggered.
+The TUI also watches the `types/` directory for schema changes. When type schemas are modified externally, the schema cache is invalidated and a full refresh is triggered.

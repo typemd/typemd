@@ -39,14 +39,15 @@ TypeMD 讓你用 **Object** 來思考——書籍、人物、想法、會議—�
 ```
 vault/
 ├── .typemd/
-│   ├── types/              # 使用者自訂 Type schema（目錄格式）
-│   │   ├── book/
-│   │   │   └── schema.yaml # 自行建立
-│   │   └── person/
-│   │       └── schema.yaml
-│   ├── properties.yaml     # 共用屬性定義（選用）
 │   ├── index.db            # SQLite 索引（自動更新）
 │   └── tui-state.yaml      # TUI 會話狀態（自動儲存）
+├── types/                  # 使用者自訂 Type schema（目錄格式）
+│   ├── book/
+│   │   └── schema.yaml     # 自行建立
+│   └── person/
+│       └── schema.yaml
+├── properties/
+│   └── properties.yaml     # 共用屬性定義（選用）
 ├── templates/              # 物件範本，依 Type 分類（選用）
 │   └── book/
 │       └── review.md       # 預設 frontmatter 和 body 內容
@@ -130,10 +131,10 @@ tmd mcp
 
 ## Type Schema
 
-在 `.typemd/types/` 定義你的 Type（`tag` 和 `page` 是內建型別，其他皆由使用者自訂）：
+在 `types/` 定義你的 Type（`tag` 和 `page` 是內建型別，其他皆由使用者自訂）：
 
 ```yaml
-# .typemd/types/book/schema.yaml
+# types/book/schema.yaml
 name: book
 plural: books
 emoji: 📚
