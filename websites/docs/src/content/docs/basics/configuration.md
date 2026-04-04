@@ -165,7 +165,7 @@ When `ai.enabled` is `true`, the TUI adds two AI keybindings:
 
 ## Reading and writing config
 
-You can edit `.typemd/config.yaml` directly, or use the CLI:
+You can edit `.typemd/config.yaml` directly, use the CLI, or use the TUI settings page (press `,` in the TUI to open a browsable config editor):
 
 ```bash
 # Set a value

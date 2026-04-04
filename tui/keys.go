@@ -23,6 +23,7 @@ type keyMap struct {
 	Stats         key.Binding
 	AIGenerate    key.Binding
 	SchemaExplore key.Binding
+	Settings      key.Binding
 }
 
 var keys = keyMap{
@@ -46,4 +47,5 @@ var keys = keyMap{
 	Stats:         key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "stats")),
 	AIGenerate:    key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "AI generate")),
 	SchemaExplore: key.NewBinding(key.WithKeys("ctrl+e"), key.WithHelp("ctrl+e", "AI schema explore")),
+	Settings:      key.NewBinding(key.WithKeys(","), key.WithHelp(",", "settings")),
 }

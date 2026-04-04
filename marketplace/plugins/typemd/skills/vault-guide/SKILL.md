@@ -370,6 +370,7 @@ The right panel follows the sidebar cursor:
 | `w` | Toggle soft-wrap |
 | `-`/`=` | Shrink/grow panel |
 | `.` | Toggle focus mode (full-width body) |
+| `,` | Open config settings page |
 | `?` or `h` | Help |
 | `q` | Quit |
 
