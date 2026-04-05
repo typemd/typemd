@@ -114,7 +114,7 @@ With the structure in place, 0.9.0 will expand the type system — computed prop
 Upgrade:
 
 ```bash
-go install github.com/typemd/typemd/cmd/tmd@v0.8.0
+brew install typemd/tap/typemd-cli
 ```
 
 Or download pre-built binaries from [GitHub Releases](https://github.com/typemd/typemd/releases/tag/v0.8.0).
