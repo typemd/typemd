@@ -4,6 +4,31 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/).
 
+## [v0.8.0] - 2026-04-05
+
+### Breaking Changes
+
+- Move types/ and properties/ to Vault Root — type schemas and shared property files now live at `types/` and `properties/` in the vault root instead of inside `.typemd/`. Automatic migration on vault open. Update `.gitignore` if needed. (#362)
+
+### Added
+
+- Object Archival — soft-delete objects with `tmd object archive`; archived objects hide from default queries but files remain; restore with `tmd object unarchive` (#34)
+- Graph Export — `tmd graph` exports relations and wiki-links as DOT format for Graphviz visualization; supports `--type` filtering (#25)
+- Template CLI — `tmd template list/show/create/delete` commands for managing object templates without editing files (#248)
+- `tmd log` — show git commit history for a specific object (#24)
+- `tmd type validate --watch` — continuous validation that re-runs on file changes (#200)
+- Markdown Rendering — TUI body panel renders headings, bold, italic, code blocks, blockquotes, and lists with syntax highlighting (#103)
+- Config Settings Page — press `,` in TUI to open an interactive config editor (#355)
+- Per-Property Files — shared properties split from single `properties.yaml` into individual `properties/<name>.yaml` files; automatic migration (#363)
+- SQLite Fallback — graceful degradation to filesystem queries when the index is unavailable (#180)
+
+### Changed
+
+- Reconciler/Projector Split — internal refactor separating file normalization (Reconciler) from index writing (Projector) for clearer responsibilities (#339)
+- Validation Consolidation — deduplicated validation logic into a single `type_schema_validate.go` (#340)
+
+[v0.8.0]: https://github.com/typemd/typemd/releases/tag/v0.8.0
+
 ## [v0.7.0] - 2026-03-28
 
 ### Breaking Changes

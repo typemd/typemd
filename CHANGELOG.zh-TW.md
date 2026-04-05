@@ -4,6 +4,31 @@
 
 格式依循 [Keep a Changelog](https://keepachangelog.com/)。
 
+## [v0.8.0] - 2026-04-05
+
+### 破壞性變更
+
+- types/ 和 properties/ 搬到 Vault 根目錄 — type schema 和 shared property 檔案從 `.typemd/` 搬到 vault 根目錄的 `types/` 和 `properties/`。開啟 vault 時自動遷移。如有需要請更新 `.gitignore`。(#362)
+
+### 新增
+
+- 物件歸檔 — 使用 `tmd object archive` 軟刪除物件；歸檔的物件從預設查詢中隱藏但檔案保留；用 `tmd object unarchive` 恢復 (#34)
+- 圖形匯出 — `tmd graph` 將 relation 和 wiki-link 匯出為 DOT 格式，可用 Graphviz 視覺化；支援 `--type` 篩選 (#25)
+- Template CLI — `tmd template list/show/create/delete` 指令，不用手動開檔案即可管理模板 (#248)
+- `tmd log` — 顯示特定物件的 git commit 歷史 (#24)
+- `tmd type validate --watch` — 持續監控，檔案變更時自動重新驗證 (#200)
+- Markdown 渲染 — TUI body 面板渲染標題、粗體、斜體、程式碼區塊、引用和清單，支援語法高亮 (#103)
+- 設定頁面 — 在 TUI 中按 `,` 開啟互動式設定編輯器 (#355)
+- 獨立屬性檔案 — shared properties 從單一 `properties.yaml` 拆為個別的 `properties/<name>.yaml` 檔案；自動遷移 (#363)
+- SQLite Fallback — 索引不可用時自動退回檔案系統查詢，不中斷工作 (#180)
+
+### 變更
+
+- Reconciler/Projector 拆分 — 內部重構，將檔案正規化（Reconciler）與索引寫入（Projector）分離，職責更清楚 (#339)
+- 驗證邏輯整合 — 將重複的驗證邏輯整合至單一 `type_schema_validate.go` (#340)
+
+[v0.8.0]: https://github.com/typemd/typemd/releases/tag/v0.8.0
+
 ## [v0.7.0] - 2026-03-28
 
 ### 破壞性變更
