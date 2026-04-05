@@ -17,12 +17,12 @@ The system SHALL load shared property definitions by scanning the `properties/` 
 #### Scenario: Empty properties directory
 
 - **WHEN** `properties/` directory exists but contains no `.yaml` files
-- **THEN** `LoadSharedProperties()` returns nil (no properties)
+- **THEN** `LoadSharedProperties()` returns an empty list (no properties)
 
 #### Scenario: Properties directory does not exist
 
 - **WHEN** `properties/` directory does not exist
-- **THEN** `LoadSharedProperties()` returns nil (no error)
+- **THEN** `LoadSharedProperties()` returns an empty list (no error)
 
 #### Scenario: Non-YAML files are ignored
 

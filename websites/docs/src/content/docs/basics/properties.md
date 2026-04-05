@@ -13,7 +13,7 @@ Every Object supports seven system properties managed by TypeMD. These provide t
 
 | Property | Description | Mutability | Why |
 |----------|-------------|------------|-----|
-| `name` | Display name, auto-populated from the slug on creation | User-authored | Decouples display from filename — supports spaces, casing, and renaming without moving files |
+| `name` | Display name, auto-populated from the slug on creation. When missing or empty, falls back to the [Display ID](/concepts/glossary#display-id) derived from the filename. | User-authored | Decouples display from filename — supports spaces, casing, and renaming without moving files |
 | `description` | Optional single-line summary for list displays and search results | User-authored | Provides a consistent summary field across all types, used in list views, search results, and API responses |
 | `created_at` | Creation timestamp in RFC 3339 format (set once, never modified) | Auto-managed | Enables sorting by creation date and understanding the timeline of a vault |
 | `updated_at` | Last-modified timestamp in RFC 3339 format (updated on every save) | Auto-managed | Enables sorting by recency and tracking the evolution of Objects |

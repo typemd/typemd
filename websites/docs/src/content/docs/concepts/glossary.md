@@ -19,7 +19,7 @@ The basic unit of knowledge in TypeMD. Instead of thinking in "files" or "notes"
 
 ## Type
 
-Defines what kind of Object you're creating. Every Object belongs to exactly one Type (e.g. `book`, `person`, `note`). Types are defined by YAML schema files in `types/`.
+Defines what kind of Object you're creating. Every Object belongs to exactly one Type (e.g. `book`, `person`, `note`). Types are defined by YAML schema files in `types/`. Optional schema fields include `plural` (grammatically correct display name for collections), `emoji`, `color`, `description`, `version`, and `unique`.
 
 [Learn more →](/concepts/types)
 
@@ -94,6 +94,10 @@ A 26-character Universally Unique Lexicographically Sortable Identifier, automat
 ## Object ID
 
 The full identifier for an Object in `type/slug-ulid` format. For example: `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`. Used in Link targets and relation references.
+
+## Display ID
+
+The human-readable form of an Object ID with the ULID suffix stripped. For example: `book/golang-in-action` from `book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz`. Used when rendering wiki-links without display text.
 
 ## Frontmatter
 
