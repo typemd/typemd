@@ -27,13 +27,26 @@ func TestIsSystemProperty_CaseSensitive(t *testing.T) {
 
 func TestSystemPropertyNames_Order(t *testing.T) {
 	names := SystemPropertyNames()
-	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived"}
+	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived", "object_type", "links", "backlinks", "created_by", "updated_by"}
 	if len(names) != len(expected) {
 		t.Fatalf("SystemPropertyNames() returned %d names, want %d", len(names), len(expected))
 	}
 	for i, name := range expected {
 		if names[i] != name {
 			t.Errorf("SystemPropertyNames()[%d] = %q, want %q", i, names[i], name)
+		}
+	}
+}
+
+func TestStoredPropertyNames_Order(t *testing.T) {
+	names := StoredPropertyNames()
+	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived"}
+	if len(names) != len(expected) {
+		t.Fatalf("StoredPropertyNames() returned %d names, want %d", len(names), len(expected))
+	}
+	for i, name := range expected {
+		if names[i] != name {
+			t.Errorf("StoredPropertyNames()[%d] = %q, want %q", i, names[i], name)
 		}
 	}
 }
@@ -512,5 +525,116 @@ func TestSyncIndex_DoesNotAddTimestampsToExistingObjects(t *testing.T) {
 	}
 	if strings.Contains(string(data), "created_at") || strings.Contains(string(data), "updated_at") {
 		t.Errorf("SyncIndex added timestamps to existing object:\n%s", string(data))
+	}
+}
+
+// ── Computed system property tests ────────────────────────────────────────
+
+func TestIsComputedProperty(t *testing.T) {
+	computed := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
+	for _, name := range computed {
+		if !IsComputedProperty(name) {
+			t.Errorf("IsComputedProperty(%q) = false, want true", name)
+		}
+	}
+}
+
+func TestIsComputedProperty_RejectsStoredProperties(t *testing.T) {
+	stored := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived"}
+	for _, name := range stored {
+		if IsComputedProperty(name) {
+			t.Errorf("IsComputedProperty(%q) = true, want false", name)
+		}
+	}
+}
+
+func TestIsComputedProperty_RejectsNonSystemProperties(t *testing.T) {
+	if IsComputedProperty("title") {
+		t.Error("IsComputedProperty(\"title\") = true, want false")
+	}
+	if IsComputedProperty("") {
+		t.Error("IsComputedProperty(\"\") = true, want false")
+	}
+}
+
+func TestComputedProperties_AreSystemProperties(t *testing.T) {
+	computed := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
+	for _, name := range computed {
+		if !IsSystemProperty(name) {
+			t.Errorf("IsSystemProperty(%q) = false, want true (computed properties are system properties)", name)
+		}
+	}
+}
+
+func TestComputedProperties_AreImmutable(t *testing.T) {
+	computed := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
+	for _, name := range computed {
+		if !IsImmutableSystemProperty(name) {
+			t.Errorf("IsImmutableSystemProperty(%q) = false, want true (computed properties are read-only)", name)
+		}
+	}
+}
+
+func TestSetProperty_RejectsComputedProperty(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "test-computed", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	err = v.SetProperty(obj.ID, "object_type", "page")
+	if err == nil {
+		t.Fatal("expected error setting computed property, got nil")
+	}
+	if !strings.Contains(err.Error(), "computed system property") {
+		t.Errorf("error should mention 'computed system property', got %q", err.Error())
+	}
+}
+
+func TestOrderedPropKeys_ExcludesComputedProperties(t *testing.T) {
+	props := map[string]any{
+		"name":        "test",
+		"created_at":  "2026-01-01T00:00:00Z",
+		"object_type": "book",
+		"title":       "A Book",
+	}
+	keys := OrderedPropKeys(props, nil)
+	for _, key := range keys {
+		if IsComputedProperty(key) {
+			t.Errorf("OrderedPropKeys included computed property %q", key)
+		}
+	}
+	// Verify stored properties and non-system properties are present
+	found := make(map[string]bool)
+	for _, k := range keys {
+		found[k] = true
+	}
+	if !found["name"] {
+		t.Error("OrderedPropKeys missing stored system property 'name'")
+	}
+	if !found["title"] {
+		t.Error("OrderedPropKeys missing non-system property 'title'")
+	}
+}
+
+func TestWriteFrontmatter_ExcludesComputedProperties(t *testing.T) {
+	props := map[string]any{
+		"name":        "test",
+		"object_type": "book",
+		"title":       "A Book",
+	}
+	data, err := writeFrontmatter(props, "", OrderedPropKeys(props, nil))
+	if err != nil {
+		t.Fatalf("writeFrontmatter error = %v", err)
+	}
+	content := string(data)
+	if strings.Contains(content, "object_type") {
+		t.Errorf("frontmatter should not contain computed property 'object_type':\n%s", content)
+	}
+	if !strings.Contains(content, "name:") {
+		t.Error("frontmatter should contain stored property 'name'")
+	}
+	if !strings.Contains(content, "title:") {
+		t.Error("frontmatter should contain non-system property 'title'")
 	}
 }

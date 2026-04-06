@@ -2,8 +2,8 @@ Feature: System property registry
   typemd maintains a registry of system-managed properties that are
   automatically present on all objects regardless of type schema.
 
-  Scenario: Registry contains all system properties in order
-    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked, archived"
+  Scenario: Registry contains all stored system properties in order
+    Then the stored system property registry should contain "name, description, created_at, updated_at, tags, locked, archived"
 
   Scenario: IsSystemProperty recognizes system properties
     Then "name" should be a system property
@@ -149,3 +149,66 @@ Feature: System property registry
 
   Scenario: Non-system properties are not immutable
     Then "title" should not be an immutable system property
+
+  # ── Computed system properties ──────────────────────────────
+
+  Scenario: Registry contains both stored and computed system properties
+    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked, archived, object_type, links, backlinks, created_by, updated_by"
+
+  Scenario: IsComputedProperty recognizes computed properties
+    Then "object_type" should be a computed system property
+    And "links" should be a computed system property
+    And "backlinks" should be a computed system property
+    And "created_by" should be a computed system property
+    And "updated_by" should be a computed system property
+
+  Scenario: IsComputedProperty rejects stored system properties
+    Then "name" should not be a computed system property
+    And "created_at" should not be a computed system property
+    And "tags" should not be a computed system property
+
+  Scenario: IsComputedProperty rejects non-system properties
+    Then "title" should not be a computed system property
+    And "author" should not be a computed system property
+
+  Scenario: Computed properties are system properties
+    Then "object_type" should be a system property
+    And "links" should be a system property
+    And "backlinks" should be a system property
+
+  Scenario: Computed properties are immutable
+    Then "object_type" should be an immutable system property
+    And "links" should be an immutable system property
+    And "backlinks" should be an immutable system property
+    And "created_by" should be an immutable system property
+    And "updated_by" should be an immutable system property
+
+  Scenario: Schema validation rejects computed property object_type
+    Given a vault is ready
+    And a type schema "bad" with a system property "object_type"
+    When I validate all schemas
+    Then schema "bad" should have errors
+
+  Scenario: Schema validation rejects computed property links
+    Given a vault is ready
+    And a type schema "bad" with a system property "links"
+    When I validate all schemas
+    Then schema "bad" should have errors
+
+  Scenario: Shared property validation rejects computed property object_type
+    Given a vault is ready
+    And a shared properties file with a system property "object_type"
+    When I validate all schemas
+    Then shared properties should have errors
+
+  Scenario: SetProperty rejects computed properties
+    Given a vault is ready
+    And a "book" object named "computed-test-book" exists
+    When I set property "object_type" to "page" on the object
+    Then the last error should mention "computed system property"
+
+  Scenario: Frontmatter strips computed properties on save
+    Given a vault is ready
+    And a raw object file with a computed property exists
+    When I save the raw object
+    Then the raw object file should not contain "object_type"

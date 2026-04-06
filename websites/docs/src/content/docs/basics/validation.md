@@ -29,7 +29,7 @@ Scans all type schemas (`types/<name>/schema.yaml`) and shared property files (`
 - Each property must have a `name` and `type`
 - `select`/`multi_select` properties must define `options`
 - `relation` properties must define `target`
-- Property names `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, and `archived` are reserved for [system properties](/basics/properties#system-properties)
+- Property names `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, `archived`, `object_type`, `links`, `backlinks`, `created_by`, and `updated_by` are reserved for [system properties](/basics/properties#system-properties)
 - `name` in `properties` only allows a `template` field (for [name templates](/basics/templates#name-templates))
 
 ### Phase 2: Object Validation

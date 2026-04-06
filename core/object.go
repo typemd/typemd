@@ -138,6 +138,9 @@ func writeFrontmatter(props map[string]any, body string, keyOrder []string) ([]b
 		if len(keyOrder) > 0 {
 			written := make(map[string]bool)
 			for _, key := range keyOrder {
+				if IsComputedProperty(key) {
+					continue
+				}
 				if val, ok := props[key]; ok {
 					entry := map[string]any{key: val}
 					yamlData, err := yaml.Marshal(entry)
@@ -148,9 +151,9 @@ func writeFrontmatter(props map[string]any, body string, keyOrder []string) ([]b
 					written[key] = true
 				}
 			}
-			// Write remaining keys not in keyOrder
+			// Write remaining keys not in keyOrder (skip computed system properties)
 			for key, val := range props {
-				if !written[key] {
+				if !written[key] && !IsComputedProperty(key) {
 					entry := map[string]any{key: val}
 					yamlData, err := yaml.Marshal(entry)
 					if err != nil {
@@ -160,7 +163,13 @@ func writeFrontmatter(props map[string]any, body string, keyOrder []string) ([]b
 				}
 			}
 		} else {
-			yamlData, err := yaml.Marshal(props)
+			filtered := make(map[string]any, len(props))
+			for k, v := range props {
+				if !IsComputedProperty(k) {
+					filtered[k] = v
+				}
+			}
+			yamlData, err := yaml.Marshal(filtered)
 			if err != nil {
 				return nil, err
 			}

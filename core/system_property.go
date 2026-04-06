@@ -1,6 +1,6 @@
 package core
 
-// System property name constants.
+// System property name constants — stored (frontmatter).
 const (
 	DescriptionProperty = "description"
 	CreatedAtProperty   = "created_at"
@@ -8,6 +8,15 @@ const (
 	TagsProperty        = "tags"
 	LockedProperty      = "locked"
 	ArchivedProperty    = "archived"
+)
+
+// System property name constants — computed (runtime, not stored in frontmatter).
+const (
+	ObjectTypeProperty = "object_type"
+	LinksProperty      = "links"
+	BacklinksProperty  = "backlinks"
+	CreatedByProperty  = "created_by"
+	UpdatedByProperty  = "updated_by"
 )
 
 // Built-in type name constants.
@@ -24,11 +33,14 @@ type SystemProperty struct {
 	Target    string // only for relation type
 	Multiple  bool   // only for relation type
 	Immutable bool   // true for auto-managed properties (created_at, updated_at)
+	Computed  bool   // true for runtime-derived properties (not stored in frontmatter)
 }
 
 // systemProperties is the authoritative registry of all system properties.
-// Order matters: it determines frontmatter output ordering.
+// Stored properties come first (order determines frontmatter output ordering),
+// followed by computed properties (never written to frontmatter).
 var systemProperties = []SystemProperty{
+	// Stored (frontmatter)
 	{Name: NameProperty, Type: "text"},
 	{Name: DescriptionProperty, Type: "text"},
 	{Name: CreatedAtProperty, Type: "datetime", Immutable: true},
@@ -36,27 +48,24 @@ var systemProperties = []SystemProperty{
 	{Name: TagsProperty, Type: "relation", Target: TagTypeName, Multiple: true},
 	{Name: LockedProperty, Type: "checkbox"},
 	{Name: ArchivedProperty, Type: "checkbox"},
+	// Computed (runtime — not stored in frontmatter)
+	{Name: ObjectTypeProperty, Type: "text", Immutable: true, Computed: true},
+	{Name: LinksProperty, Type: "text", Immutable: true, Computed: true},
+	{Name: BacklinksProperty, Type: "text", Immutable: true, Computed: true},
+	{Name: CreatedByProperty, Type: "text", Immutable: true, Computed: true},
+	{Name: UpdatedByProperty, Type: "text", Immutable: true, Computed: true},
 }
 
 // IsSystemProperty returns true if the given name is a system property.
 func IsSystemProperty(name string) bool {
-	for _, sp := range systemProperties {
-		if sp.Name == name {
-			return true
-		}
-	}
-	return false
+	return lookupSystemProperty(name) != nil
 }
 
 // IsImmutableSystemProperty returns true if the given name is an immutable
 // (auto-managed) system property that cannot be overridden by templates.
 func IsImmutableSystemProperty(name string) bool {
-	for _, sp := range systemProperties {
-		if sp.Name == name {
-			return sp.Immutable
-		}
-	}
-	return false
+	sp := lookupSystemProperty(name)
+	return sp != nil && sp.Immutable
 }
 
 // lookupSystemProperty returns the SystemProperty for a given name, or nil if not found.
@@ -69,11 +78,28 @@ func lookupSystemProperty(name string) *SystemProperty {
 	return nil
 }
 
+// IsComputedProperty returns true if the given name is a computed system property.
+func IsComputedProperty(name string) bool {
+	sp := lookupSystemProperty(name)
+	return sp != nil && sp.Computed
+}
+
 // SystemPropertyNames returns all system property names in registry order.
 func SystemPropertyNames() []string {
 	names := make([]string, len(systemProperties))
 	for i, sp := range systemProperties {
 		names[i] = sp.Name
+	}
+	return names
+}
+
+// StoredPropertyNames returns only stored (non-computed) system property names in registry order.
+func StoredPropertyNames() []string {
+	names := make([]string, 0, len(systemProperties))
+	for _, sp := range systemProperties {
+		if !sp.Computed {
+			names = append(names, sp.Name)
+		}
 	}
 	return names
 }
