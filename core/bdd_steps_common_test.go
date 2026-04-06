@@ -75,6 +75,10 @@ type domainContext struct {
 
 	// sync result for wiki-link scenarios
 	syncResult *ReconcileResult
+
+	// GetProperty result
+	gotPropertyValue  any
+	gotPropertyExists bool
 }
 
 func newDomainContext() *domainContext {

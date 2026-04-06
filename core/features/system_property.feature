@@ -113,6 +113,36 @@ Feature: System property enforcement
     When I set property "description" to "A great book" on the object
     Then the object property "description" should be "A great book"
 
+  # ── Computed property resolution ─────────────────────────────
+
+  Scenario: GetProperty resolves object_type for a book
+    Given a vault is ready
+    And a "book" object named "get-prop-book" exists
+    When I get property "object_type" on the object
+    Then the property value should be "book"
+    And the property should exist
+
+  Scenario: GetProperty resolves object_type for a person
+    Given a vault is ready
+    And a "person" object named "get-prop-person" exists
+    When I get property "object_type" on the object
+    Then the property value should be "person"
+    And the property should exist
+
+  Scenario: GetProperty resolves a stored property
+    Given a vault is ready
+    And a "book" object named "get-prop-stored" exists
+    And I set property "title" to "Go in Action" on the object
+    When I get property "title" on the object
+    Then the property value should be "Go in Action"
+    And the property should exist
+
+  Scenario: GetProperty returns false for missing property
+    Given a vault is ready
+    And a "book" object named "get-prop-missing" exists
+    When I get property "nonexistent" on the object
+    Then the property should not exist
+
   # ── Computed property enforcement ────────────────────────────
 
   Scenario: SetProperty rejects computed properties

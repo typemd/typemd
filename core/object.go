@@ -61,6 +61,22 @@ func (o *Object) DisplayID() string {
 	return o.ParseID().DisplayID()
 }
 
+// GetProperty returns the value of a property by name, resolving computed
+// system properties (e.g. object_type) as well as stored frontmatter properties.
+// The second return value indicates whether the property exists.
+func (o *Object) GetProperty(name string) (any, bool) {
+	if IsComputedProperty(name) {
+		switch name {
+		case ObjectTypeProperty:
+			return o.Type, true
+		default:
+			return nil, false
+		}
+	}
+	val, ok := o.Properties[name]
+	return val, ok
+}
+
 // IsLocked returns true if the object has the locked property set to true.
 func (o *Object) IsLocked() bool {
 	v, ok := o.Properties[LockedProperty]

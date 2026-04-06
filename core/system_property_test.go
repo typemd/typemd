@@ -638,3 +638,70 @@ func TestWriteFrontmatter_ExcludesComputedProperties(t *testing.T) {
 		t.Error("frontmatter should contain non-system property 'title'")
 	}
 }
+
+// ── GetProperty tests ─────────────────────────────────────────────────────
+
+func TestGetProperty_ObjectType(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{"name": "test"}}
+	val, ok := obj.GetProperty("object_type")
+	if !ok {
+		t.Fatal("GetProperty(\"object_type\") should return true")
+	}
+	if val != "book" {
+		t.Errorf("GetProperty(\"object_type\") = %q, want %q", val, "book")
+	}
+}
+
+func TestGetProperty_ObjectType_EmptyType(t *testing.T) {
+	obj := &Object{Type: "", Properties: map[string]any{}}
+	val, ok := obj.GetProperty("object_type")
+	if !ok {
+		t.Fatal("GetProperty(\"object_type\") should return true even with empty type")
+	}
+	if val != "" {
+		t.Errorf("GetProperty(\"object_type\") = %q, want empty string", val)
+	}
+}
+
+func TestGetProperty_StoredProperty(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{"title": "Go in Action"}}
+	val, ok := obj.GetProperty("title")
+	if !ok {
+		t.Fatal("GetProperty(\"title\") should return true")
+	}
+	if val != "Go in Action" {
+		t.Errorf("GetProperty(\"title\") = %q, want %q", val, "Go in Action")
+	}
+}
+
+func TestGetProperty_MissingProperty(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{}}
+	val, ok := obj.GetProperty("nonexistent")
+	if ok {
+		t.Fatal("GetProperty(\"nonexistent\") should return false")
+	}
+	if val != nil {
+		t.Errorf("GetProperty(\"nonexistent\") value = %v, want nil", val)
+	}
+}
+
+func TestGetProperty_NilPropertiesMap(t *testing.T) {
+	obj := &Object{Type: "book", Properties: nil}
+	// Computed property should still work
+	val, ok := obj.GetProperty("object_type")
+	if !ok {
+		t.Fatal("GetProperty(\"object_type\") should work with nil Properties")
+	}
+	if val != "book" {
+		t.Errorf("GetProperty(\"object_type\") = %q, want %q", val, "book")
+	}
+}
+
+func TestGetProperty_UnimplementedComputedProperty(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{}}
+	// "links" is registered as computed but not yet implemented in getComputedProperty
+	val, ok := obj.GetProperty("links")
+	if ok {
+		t.Errorf("GetProperty(\"links\") should return false for unimplemented computed property, got value %v", val)
+	}
+}
