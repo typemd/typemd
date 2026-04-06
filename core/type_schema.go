@@ -13,14 +13,19 @@ var dateRegexp = regexp.MustCompile(`^\d{4}-\d{2}-\d{2}$`)
 // followed by schema-defined properties, then extras alphabetically.
 // If schema is nil, keys are sorted alphabetically (with system properties first).
 func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
-	// Collect system properties that are present, in registry order
-	sysNames := SystemPropertyNames()
+	// Collect stored system properties that are present, in registry order.
+	// All system property names (stored + computed) go into sysSet so they
+	// are excluded from the extra-keys section. Only stored properties
+	// appear in prefix (frontmatter output).
 	var prefix []string
-	sysSet := make(map[string]bool)
-	for _, name := range sysNames {
-		sysSet[name] = true
-		if _, ok := props[name]; ok {
-			prefix = append(prefix, name)
+	sysSet := make(map[string]bool, len(systemProperties))
+	for i := range systemProperties {
+		sp := &systemProperties[i]
+		sysSet[sp.Name] = true
+		if !sp.Computed {
+			if _, ok := props[sp.Name]; ok {
+				prefix = append(prefix, sp.Name)
+			}
 		}
 	}
 

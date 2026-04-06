@@ -13,21 +13,24 @@ import (
 
 // ── System property steps ────────────────────────────────────────────────
 
-func (dc *domainContext) theSystemPropertyRegistryShouldContain(nameList string) error {
+func assertRegistryContains(got []string, nameList, label string) error {
 	expected := strings.Split(nameList, ", ")
 	for i, s := range expected {
 		expected[i] = strings.TrimSpace(s)
 	}
-	got := SystemPropertyNames()
 	if len(got) != len(expected) {
-		return fmt.Errorf("registry has %d entries, want %d: %v", len(got), len(expected), got)
+		return fmt.Errorf("%s has %d entries, want %d: %v", label, len(got), len(expected), got)
 	}
 	for i, name := range expected {
 		if got[i] != name {
-			return fmt.Errorf("registry[%d] = %q, want %q", i, got[i], name)
+			return fmt.Errorf("%s[%d] = %q, want %q", label, i, got[i], name)
 		}
 	}
 	return nil
+}
+
+func (dc *domainContext) theSystemPropertyRegistryShouldContain(nameList string) error {
+	return assertRegistryContains(SystemPropertyNames(), nameList, "registry")
 }
 
 func (dc *domainContext) shouldBeASystemProperty(name string) error {
@@ -222,6 +225,38 @@ func (dc *domainContext) shouldNotBeAnImmutableSystemProperty(name string) error
 	return nil
 }
 
+func (dc *domainContext) shouldBeAComputedSystemProperty(name string) error {
+	if !IsComputedProperty(name) {
+		return fmt.Errorf("%q should be a computed system property", name)
+	}
+	return nil
+}
+
+func (dc *domainContext) shouldNotBeAComputedSystemProperty(name string) error {
+	if IsComputedProperty(name) {
+		return fmt.Errorf("%q should not be a computed system property", name)
+	}
+	return nil
+}
+
+func (dc *domainContext) theStoredSystemPropertyRegistryShouldContain(nameList string) error {
+	return assertRegistryContains(StoredPropertyNames(), nameList, "stored registry")
+}
+
+func (dc *domainContext) aRawObjectFileWithAComputedPropertyExists() {
+	dc.createRawObjectFile("computed-book-", "name: computed-book\nobject_type: book\ntitle: Computed Test\n")
+}
+
+func (dc *domainContext) iSaveTheRawObject() {
+	obj, err := dc.vault.GetObject(dc.currentObject.ID)
+	if err != nil {
+		dc.lastErr = err
+		return
+	}
+	dc.currentObject = obj
+	dc.lastErr = dc.vault.SaveObject(obj)
+}
+
 func initSystemSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the system property registry should contain "([^"]*)"$`, dc.theSystemPropertyRegistryShouldContain)
 	ctx.Step(`^"([^"]*)" should be a system property$`, dc.shouldBeASystemProperty)
@@ -241,4 +276,10 @@ func initSystemSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the frontmatter should have "([^"]*)" before "([^"]*)"$`, dc.theFrontmatterShouldHaveBefore)
 	ctx.Step(`^"([^"]*)" should be an immutable system property$`, dc.shouldBeAnImmutableSystemProperty)
 	ctx.Step(`^"([^"]*)" should not be an immutable system property$`, dc.shouldNotBeAnImmutableSystemProperty)
+	ctx.Step(`^"([^"]*)" should be a computed system property$`, dc.shouldBeAComputedSystemProperty)
+	ctx.Step(`^"([^"]*)" should not be a computed system property$`, dc.shouldNotBeAComputedSystemProperty)
+	ctx.Step(`^the stored system property registry should contain "([^"]*)"$`, dc.theStoredSystemPropertyRegistryShouldContain)
+	ctx.Step(`^a raw object file with a computed property exists$`, dc.aRawObjectFileWithAComputedPropertyExists)
+	ctx.Step(`^the raw object file should not contain "([^"]*)"$`, dc.rawObjectFileShouldNotContain)
+	ctx.Step(`^I save the raw object$`, dc.iSaveTheRawObject)
 }

@@ -2,7 +2,7 @@ Feature: Object locking
   Users can lock individual objects to prevent accidental editing.
 
   Scenario: Registry contains locked as a system property
-    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked, archived"
+    Then the stored system property registry should contain "name, description, created_at, updated_at, tags, locked, archived"
 
   Scenario: locked is a system property
     Then "locked" should be a system property

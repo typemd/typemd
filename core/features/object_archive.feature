@@ -2,7 +2,7 @@ Feature: Object archive (soft delete)
   Users can archive objects to hide them from default queries without deleting files.
 
   Scenario: Registry contains archived as a system property
-    Then the system property registry should contain "name, description, created_at, updated_at, tags, locked, archived"
+    Then the stored system property registry should contain "name, description, created_at, updated_at, tags, locked, archived"
 
   Scenario: archived is a system property
     Then "archived" should be a system property
