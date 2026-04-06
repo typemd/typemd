@@ -1,8 +1,9 @@
 Feature: System property enforcement
-  typemd manages system properties (name, description, created_at, updated_at,
-  tags, locked, archived) and computed properties (object_type, links, backlinks,
-  created_by, updated_by) automatically. Users cannot redefine them in schemas
-  or set computed properties directly.
+  typemd manages stored system properties (name, description, created_at,
+  updated_at, tags, locked, archived), derived properties (object_type,
+  created_by), and computed properties (links, backlinks, updated_by)
+  automatically. Users cannot redefine them in schemas or set non-stored
+  properties directly.
 
   # ── Schema validation ────────────────────────────────────────
 
@@ -143,15 +144,15 @@ Feature: System property enforcement
     When I get property "nonexistent" on the object
     Then the property should not exist
 
-  # ── Computed property enforcement ────────────────────────────
+  # ── Non-stored property enforcement ──────────────────────────
 
-  Scenario: SetProperty rejects computed properties
+  Scenario: SetProperty rejects non-stored properties
     Given a vault is ready
     And a "book" object named "computed-test-book" exists
     When I set property "object_type" to "page" on the object
-    Then the last error should mention "computed system property"
+    Then the last error should mention "non-stored system property"
 
-  Scenario: Frontmatter strips computed properties on save
+  Scenario: Frontmatter strips non-stored properties on save
     Given a vault is ready
     And a raw object file with a computed property exists
     When I save the raw object

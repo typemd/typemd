@@ -61,11 +61,11 @@ func (o *Object) DisplayID() string {
 	return o.ParseID().DisplayID()
 }
 
-// GetProperty returns the value of a property by name, resolving computed
-// system properties (e.g. object_type) as well as stored frontmatter properties.
+// GetProperty returns the value of a property by name, resolving derived and
+// computed system properties as well as stored frontmatter properties.
 // The second return value indicates whether the property exists.
 func (o *Object) GetProperty(name string) (any, bool) {
-	if IsComputedProperty(name) {
+	if IsNonStoredProperty(name) {
 		switch name {
 		case ObjectTypeProperty:
 			return o.Type, true
@@ -154,7 +154,7 @@ func writeFrontmatter(props map[string]any, body string, keyOrder []string) ([]b
 		if len(keyOrder) > 0 {
 			written := make(map[string]bool)
 			for _, key := range keyOrder {
-				if IsComputedProperty(key) {
+				if IsNonStoredProperty(key) {
 					continue
 				}
 				if val, ok := props[key]; ok {
@@ -169,7 +169,7 @@ func writeFrontmatter(props map[string]any, body string, keyOrder []string) ([]b
 			}
 			// Write remaining keys not in keyOrder (skip computed system properties)
 			for key, val := range props {
-				if !written[key] && !IsComputedProperty(key) {
+				if !written[key] && !IsNonStoredProperty(key) {
 					entry := map[string]any{key: val}
 					yamlData, err := yaml.Marshal(entry)
 					if err != nil {
@@ -181,7 +181,7 @@ func writeFrontmatter(props map[string]any, body string, keyOrder []string) ([]b
 		} else {
 			filtered := make(map[string]any, len(props))
 			for k, v := range props {
-				if !IsComputedProperty(k) {
+				if !IsNonStoredProperty(k) {
 					filtered[k] = v
 				}
 			}

@@ -22,7 +22,7 @@ func OrderedPropKeys(props map[string]any, schema *TypeSchema) []string {
 	for i := range systemProperties {
 		sp := &systemProperties[i]
 		sysSet[sp.Name] = true
-		if !sp.Computed {
+		if !sp.Derived && !sp.Computed {
 			if _, ok := props[sp.Name]; ok {
 				prefix = append(prefix, sp.Name)
 			}
