@@ -158,36 +158,4 @@ View mode 的表格列使用 `FormatValue()` 來格式化屬性欄位和預覽�
 
 ## Domain events
 
-Reconciler 和 Projector 透過 domain events 溝通。Reconciler 產出描述變更的事件；Projector 消費事件來更新 SQLite 索引。
-
-### Reconciler → Projector 事件
-
-| 事件 | 用途 | Payload |
-|------|------|---------|
-| `ObjectUpserted` | 物件需要寫入索引 | `ID`、`Type`、`Filename`、`PropsJSON`、`Body` |
-| `ObjectDeleted` | 物件從磁碟移除（stale 清理） | `ID` |
-| `RelationsCleared` | 在重建前清除 relations | `ObjectID`（單一物件）、`NonTagOnly`（完整同步）或 `TagsOnly`（tag 同步） |
-| `RelationIndexed` | 單一 relation 需要建立索引 | `Name`、`FromID`、`ToID` |
-| `WikiLinksSynced` | 物件的 wiki-links 已解析完成 | `ObjectID`、`Links []WikiLinkEntry` |
-
-### ObjectService 事件
-
-這些事件由 `ObjectService` 在使用者發起的操作中產出：
-
-| 事件 | 用途 | Payload |
-|------|------|---------|
-| `ObjectCreated` | 新物件被建立 | `Object` |
-| `ObjectSaved` | 既有物件被儲存 | `Object` |
-| `PropertyChanged` | 單一屬性值變更 | `ObjectID`、`Key`、`Old`、`New` |
-| `ObjectLinked` | 兩個物件之間建立 relation | `FromID`、`ToID`、`RelName` |
-| `ObjectUnlinked` | 兩個物件之間移除 relation | `FromID`、`ToID`、`RelName` |
-| `TagAutoCreated` | 同步期間自動建立 tag 物件 | `Tag`、`ReferencedBy` |
-
-### Vault type 事件
-
-這些事件由 `Vault.SaveType()` 和 `Vault.DeleteType()` 在 type schema 操作時產出：
-
-| 事件 | 用途 | Payload |
-|------|------|---------|
-| `TypeSaved` | Type schema 被建立或更新 | `Schema` |
-| `TypeDeleted` | Type schema 被刪除 | `Name` |
+Reconciler 和 Projector 透過 domain events 溝通。完整事件參考請見[領域事件](/zh-tw/developers/domain-events/)，包含同步模式與設計原則。
