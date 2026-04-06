@@ -182,3 +182,12 @@ Reconciler 和 Projector 透過 domain events 溝通。Reconciler 產出描述�
 | `ObjectLinked` | 兩個物件之間建立 relation | `FromID`、`ToID`、`RelName` |
 | `ObjectUnlinked` | 兩個物件之間移除 relation | `FromID`、`ToID`、`RelName` |
 | `TagAutoCreated` | 同步期間自動建立 tag 物件 | `Tag`、`ReferencedBy` |
+
+### Vault type 事件
+
+這些事件由 `Vault.SaveType()` 和 `Vault.DeleteType()` 在 type schema 操作時產出：
+
+| 事件 | 用途 | Payload |
+|------|------|---------|
+| `TypeSaved` | Type schema 被建立或更新 | `Schema` |
+| `TypeDeleted` | Type schema 被刪除 | `Name` |

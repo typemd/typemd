@@ -89,7 +89,7 @@ Domain entities carry both data and behavior. They are the core of the system an
 - **Object** — the aggregate root. Has methods like `Validate()`, `SetProperty()`, `LinkTo()`, `Unlink()`, `ApplyTemplate()`, and `MarkUpdated()`. Entity methods return `DomainEvent` values to signal what happened.
 - **TypeSchema** — defines the structure of a type. Has `FindProperty()`, `FindRelation()`, `Validate()`.
 - **ObjectID** — a value object representing `type/filename`. Provides `DisplayName()`, `DisplayID()`, `Slug()`.
-- **DomainEvent** — marker interface for events like `ObjectCreated`, `PropertyChanged`, `ObjectLinked`.
+- **DomainEvent** — marker interface for events like `ObjectCreated`, `PropertyChanged`, `ObjectLinked`, `TypeSaved`.
 
 ### Infrastructure
 
@@ -146,7 +146,7 @@ vault.Events.Subscribe(func(e core.DomainEvent) {
 })
 ```
 
-Available event types: `ObjectCreated`, `ObjectSaved`, `PropertyChanged`, `ObjectLinked`, `ObjectUnlinked`, `TagAutoCreated`.
+Available event types: `ObjectCreated`, `ObjectSaved`, `PropertyChanged`, `ObjectLinked`, `ObjectUnlinked`, `TagAutoCreated`, `TypeSaved`, `TypeDeleted`.
 
 ## Multi-Platform Support
 

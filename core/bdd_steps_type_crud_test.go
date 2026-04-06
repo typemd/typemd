@@ -300,6 +300,59 @@ func (tc *typeCrudContext) comparingVersionWithShouldReturn(a, b string, expecte
 	return nil
 }
 
+// ── Domain Event steps ─────────────────────────────────────────────────────
+
+func (tc *typeCrudContext) iSubscribeToDomainEvents() {
+	tc.dc.capturedEvents = nil
+	tc.dc.vault.Events.Subscribe(func(e DomainEvent) {
+		tc.dc.capturedEvents = append(tc.dc.capturedEvents, e)
+	})
+}
+
+func (tc *typeCrudContext) anEventShouldHaveBeenEmitted(eventName string) error {
+	for _, e := range tc.dc.capturedEvents {
+		if e.eventName() == eventName {
+			return nil
+		}
+	}
+	return fmt.Errorf("expected event %q, got %v", eventName, tc.dc.capturedEvents)
+}
+
+func (tc *typeCrudContext) noDomainEventsShouldHaveBeenEmitted() error {
+	if len(tc.dc.capturedEvents) > 0 {
+		names := make([]string, len(tc.dc.capturedEvents))
+		for i, e := range tc.dc.capturedEvents {
+			names[i] = e.eventName()
+		}
+		return fmt.Errorf("expected no events, got %v", names)
+	}
+	return nil
+}
+
+func (tc *typeCrudContext) theTypeSavedEventSchemaNameShouldBe(expected string) error {
+	for _, e := range tc.dc.capturedEvents {
+		if ts, ok := e.(TypeSaved); ok {
+			if ts.Schema.Name != expected {
+				return fmt.Errorf("expected TypeSaved schema name %q, got %q", expected, ts.Schema.Name)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("no TypeSaved event found")
+}
+
+func (tc *typeCrudContext) theTypeDeletedEventNameShouldBe(expected string) error {
+	for _, e := range tc.dc.capturedEvents {
+		if td, ok := e.(TypeDeleted); ok {
+			if td.Name != expected {
+				return fmt.Errorf("expected TypeDeleted name %q, got %q", expected, td.Name)
+			}
+			return nil
+		}
+	}
+	return fmt.Errorf("no TypeDeleted event found")
+}
+
 // ── Init ────────────────────────────────────────────────────────────────────
 
 func initTypeCrudSteps(ctx *godog.ScenarioContext, dc *domainContext) {
@@ -337,6 +390,13 @@ func initTypeCrudSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^loading type "([^"]*)" should return a schema with (\d+) propert(?:y|ies)$`, tc.loadingTypeShouldReturnASchemaWithNProperties)
 	ctx.Step(`^the error message should contain "([^"]*)"$`, tc.theErrorMessageShouldContain)
 	ctx.Step(`^the count should be (\d+)$`, tc.theCountShouldBe)
+
+	// Domain Event steps
+	ctx.Step(`^I subscribe to domain events$`, tc.iSubscribeToDomainEvents)
+	ctx.Step(`^a "([^"]*)" event should have been emitted$`, tc.anEventShouldHaveBeenEmitted)
+	ctx.Step(`^no domain events should have been emitted$`, tc.noDomainEventsShouldHaveBeenEmitted)
+	ctx.Step(`^the TypeSaved event schema name should be "([^"]*)"$`, tc.theTypeSavedEventSchemaNameShouldBe)
+	ctx.Step(`^the TypeDeleted event name should be "([^"]*)"$`, tc.theTypeDeletedEventNameShouldBe)
 
 	// Version steps
 	ctx.Step(`^the schema has version "([^"]*)"$`, tc.theSchemaHasVersion)

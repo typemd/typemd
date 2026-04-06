@@ -9,6 +9,8 @@ func TestNewDomainEventNames(t *testing.T) {
 	}{
 		{ObjectDeleted{ID: "book/x"}, "object.deleted"},
 		{ObjectUpserted{ID: "book/x"}, "object.upserted"},
+		{TypeSaved{Schema: &TypeSchema{Name: "book"}}, "type.saved"},
+		{TypeDeleted{Name: "book"}, "type.deleted"},
 		{WikiLinksSynced{ObjectID: "book/x"}, "wikilinks.synced"},
 		{RelationIndexed{Name: "author"}, "relation.indexed"},
 		{RelationsCleared{NonTagOnly: true}, "relations.cleared"},

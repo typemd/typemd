@@ -87,7 +87,7 @@ vault.Events    // EventDispatcher（訂閱變更）
 - **Object** — 聚合根。擁有 `Validate()`、`SetProperty()`、`LinkTo()`、`Unlink()`、`ApplyTemplate()`、`MarkUpdated()` 等方法。實體方法回傳 `DomainEvent` 來表達發生了什麼。
 - **TypeSchema** — 定義型別的結構。擁有 `FindProperty()`、`FindRelation()`、`Validate()`。
 - **ObjectID** — 值物件，代表 `type/filename`。提供 `DisplayName()`、`DisplayID()`、`Slug()`。
-- **DomainEvent** — 事件的標記介面，如 `ObjectCreated`、`PropertyChanged`、`ObjectLinked`。
+- **DomainEvent** — 事件的標記介面，如 `ObjectCreated`、`PropertyChanged`、`ObjectLinked`、`TypeSaved`。
 
 ### 基礎設施
 
@@ -144,7 +144,7 @@ vault.Events.Subscribe(func(e core.DomainEvent) {
 })
 ```
 
-可用的事件類型：`ObjectCreated`、`ObjectSaved`、`PropertyChanged`、`ObjectLinked`、`ObjectUnlinked`、`TagAutoCreated`。
+可用的事件類型：`ObjectCreated`、`ObjectSaved`、`PropertyChanged`、`ObjectLinked`、`ObjectUnlinked`、`TagAutoCreated`、`TypeSaved`、`TypeDeleted`。
 
 ## 多平台支援
 

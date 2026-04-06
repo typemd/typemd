@@ -182,3 +182,12 @@ These events are emitted by `ObjectService` during user-initiated operations:
 | `ObjectLinked` | Relation created between objects | `FromID`, `ToID`, `RelName` |
 | `ObjectUnlinked` | Relation removed between objects | `FromID`, `ToID`, `RelName` |
 | `TagAutoCreated` | Tag object auto-created during sync | `Tag`, `ReferencedBy` |
+
+### Vault type events
+
+These events are emitted by `Vault.SaveType()` and `Vault.DeleteType()` during type schema operations:
+
+| Event | Purpose | Payload |
+|-------|---------|---------|
+| `TypeSaved` | Type schema created or updated | `Schema` |
+| `TypeDeleted` | Type schema deleted | `Name` |
