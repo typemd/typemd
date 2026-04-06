@@ -101,6 +101,8 @@ Reverse check: does BDD contain behaviors not recorded in OpenSpec?
 - BDD scenarios whose behavior has no matching OpenSpec requirement
 - This may indicate: feature was implemented before spec was written, or it's an edge-case test that doesn't need a spec
 
+> **Tip:** If many untraced BDD scenarios look like implementation details rather than user behaviors, suggest running `/bdd-audit` to clean up the test layer.
+
 #### 3c. Docs → Behavioral Accuracy
 
 Do documentation descriptions match BDD/OpenSpec?

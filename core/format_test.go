@@ -178,3 +178,32 @@ func TestFormatAll_CombinesResults(t *testing.T) {
 		t.Fatalf("expected at least 1 changed, got %d", len(result.Changed))
 	}
 }
+
+func TestFormatObjects_DoesNotModifyUpdatedAt(t *testing.T) {
+	v := setupFormatVault(t)
+
+	v.SaveType(&TypeSchema{
+		Name:       "book",
+		Properties: []Property{{Name: "author", Type: "string"}},
+	})
+
+	// Write object with wrong order but a specific updated_at
+	originalUpdatedAt := "2025-06-15T12:00:00Z"
+	content := "---\nauthor: Alice\nname: Test\ncreated_at: \"2025-01-01T00:00:00Z\"\nupdated_at: \"" + originalUpdatedAt + "\"\n---\n"
+	id := writeRawObject(t, v, "book", "test", content)
+
+	_, err := v.FormatObjects("", false)
+	if err != nil {
+		t.Fatalf("FormatObjects: %v", err)
+	}
+
+	// Read back and verify updated_at was not changed
+	parts := strings.SplitN(id, "/", 2)
+	data, err := os.ReadFile(v.ObjectPath(parts[0], parts[1]))
+	if err != nil {
+		t.Fatalf("ReadFile: %v", err)
+	}
+	if !strings.Contains(string(data), originalUpdatedAt) {
+		t.Fatalf("updated_at was modified during format:\n%s", string(data))
+	}
+}

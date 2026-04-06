@@ -7,6 +7,40 @@ import (
 	"testing"
 )
 
+// errorIndex is an ObjectIndex that always returns errors for read operations.
+// Used to simulate SQLite unavailability in fallback tests.
+type errorIndex struct{}
+
+func (e *errorIndex) Query([]FilterRule, ...SortRule) ([]*ObjectResult, error) {
+	return nil, fmt.Errorf("database is unavailable")
+}
+func (e *errorIndex) Search(string) ([]*ObjectResult, error) {
+	return nil, fmt.Errorf("database is unavailable")
+}
+func (e *errorIndex) FindRelations(string) ([]Relation, error) {
+	return nil, fmt.Errorf("database is unavailable")
+}
+func (e *errorIndex) FindBacklinks(string) ([]StoredWikiLink, error) {
+	return nil, fmt.Errorf("database is unavailable")
+}
+func (e *errorIndex) ListWikiLinks(string) ([]StoredWikiLink, error) {
+	return nil, fmt.Errorf("database is unavailable")
+}
+func (e *errorIndex) Upsert(string, string, string, string, string) error { return nil }
+func (e *errorIndex) Remove(string) error                                 { return nil }
+func (e *errorIndex) ListIDs() ([]string, error)                          { return nil, nil }
+func (e *errorIndex) InsertRelation(string, string, string) error         { return nil }
+func (e *errorIndex) DeleteRelation(string, string, string) error         { return nil }
+func (e *errorIndex) DeleteRelationsByName(string) error                  { return nil }
+func (e *errorIndex) DeleteNonTagRelations() error                        { return nil }
+func (e *errorIndex) DeleteRelationsByObject(string) error                { return nil }
+func (e *errorIndex) FindOrphanedRelations() ([]OrphanedRelation, error)  { return nil, nil }
+func (e *errorIndex) CleanOrphanedRelations() ([]OrphanedRelation, error) { return nil, nil }
+func (e *errorIndex) SyncWikiLinks(string, []WikiLinkEntry) error         { return nil }
+func (e *errorIndex) DeleteWikiLinks(string) error                        { return nil }
+func (e *errorIndex) Rebuild() error                                      { return nil }
+func (e *errorIndex) EnsureSchema() error                                 { return nil }
+
 // setupFallbackQueryService creates a QueryService with an error-returning index
 // and the given objects on disk. Returns the QueryService and a cleanup function.
 func setupFallbackQueryService(t *testing.T, objects map[string]string) *QueryService {
@@ -99,6 +133,19 @@ func TestSearchFallback_SpecialCharacters(t *testing.T) {
 	}
 	if len(results) != 1 {
 		t.Errorf("expected 1 result, got %d", len(results))
+	}
+}
+
+func TestSearchFallback_CaseInsensitive(t *testing.T) {
+	qs := setupFallbackQueryService(t, map[string]string{
+		"book/a-01jtest00000000000000001.md": "---\nname: Alpha Book\n---\n",
+	})
+	results, err := qs.Search("alpha")
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	if len(results) != 1 {
+		t.Errorf("expected 1 result for case-insensitive search, got %d", len(results))
 	}
 }
 
