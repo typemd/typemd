@@ -2,7 +2,7 @@
 title: tmd template delete
 description: Delete a template file.
 sidebar:
-  order: 9.9
+  order: 15
 ---
 
 Deletes a template file from the vault.

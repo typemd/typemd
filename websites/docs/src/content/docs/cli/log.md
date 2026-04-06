@@ -2,7 +2,7 @@
 title: tmd log
 description: Show git commit history for a specific object.
 sidebar:
-  order: 11.6
+  order: 21
 ---
 
 Displays the git commit history for a specific object file. Wraps `git log --follow` to track history across renames.

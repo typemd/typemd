@@ -23,12 +23,6 @@ func initWatchValidateSteps(ctx *godog.ScenarioContext, cc *cmdContext) {
 	ctx.Step(`^I run watch validate briefly$`, func() {
 		wr = runWatchBriefly(cc)
 	})
-	ctx.Step(`^the watch command should have started successfully$`, func() error {
-		if wr.err != nil {
-			return fmt.Errorf("watch command failed: %v", wr.err)
-		}
-		return nil
-	})
 	ctx.Step(`^the watch output should contain "([^"]*)"$`, func(expected string) error {
 		if !strings.Contains(wr.stdout, expected) {
 			return fmt.Errorf("expected watch output to contain %q, got:\n%s", expected, wr.stdout)

@@ -2,7 +2,7 @@
 title: tmd template create
 description: 建立新的 template 檔案。
 sidebar:
-  order: 9.8
+  order: 14
 ---
 
 建立新的 template 檔案並在編輯器中開啟。

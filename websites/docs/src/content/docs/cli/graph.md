@@ -2,7 +2,7 @@
 title: tmd graph
 description: Export the object relation graph in DOT format for visualization.
 sidebar:
-  order: 11.7
+  order: 22
 ---
 
 Exports the vault's object relation graph in [DOT format](https://graphviz.org/doc/info/lang.html). Nodes represent objects, edges represent relations and wiki-links. Output goes to stdout for piping to Graphviz or other visualization tools.

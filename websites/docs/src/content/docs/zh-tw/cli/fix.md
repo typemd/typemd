@@ -2,7 +2,7 @@
 title: tmd fix
 description: 修正 vault 中的常見問題。
 sidebar:
-  order: 10.7
+  order: 18
 ---
 
 `fix` 指令提供子指令來自動修正 vault 中的常見問題。

@@ -2,7 +2,7 @@
 title: tmd template delete
 description: 刪除 template 檔案。
 sidebar:
-  order: 9.9
+  order: 15
 ---
 
 從 vault 中刪除 template 檔案。

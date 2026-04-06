@@ -2,7 +2,7 @@
 title: tmd type show
 description: 顯示 Type schema 的詳細資訊。
 sidebar:
-  order: 9
+  order: 10
 ---
 
 顯示指定 Type schema 的詳細資訊，包含名稱、複數形式（若有定義）和所有屬性定義。

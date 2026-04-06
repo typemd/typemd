@@ -2,7 +2,7 @@
 title: tmd object create
 description: 從 Type schema 建立新 Object。
 sidebar:
-  order: 2.5
+  order: 2
 ---
 
 根據 Type schema 建立新的 Object 檔案（Markdown + YAML frontmatter）。

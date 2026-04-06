@@ -2,7 +2,7 @@
 title: tmd template create
 description: Create a new template file.
 sidebar:
-  order: 9.8
+  order: 14
 ---
 
 Creates a new template file and opens it in your editor.

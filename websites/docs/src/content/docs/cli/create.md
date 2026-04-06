@@ -2,7 +2,7 @@
 title: tmd object create
 description: Create a new object from a type schema.
 sidebar:
-  order: 2.5
+  order: 2
 ---
 
 Creates a new object file (Markdown + YAML frontmatter) based on the type schema.

@@ -2,7 +2,7 @@
 title: tmd migrate
 description: 遷移 type schemas 和物件。
 sidebar:
-  order: 8.5
+  order: 9
 ---
 
 遷移 type schemas 和物件。根據是否提供 type 參數，指令有兩種模式。

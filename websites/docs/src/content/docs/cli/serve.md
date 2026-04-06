@@ -2,7 +2,7 @@
 title: tmd serve
 description: Start the web UI server for browser-based vault access.
 sidebar:
-  order: 12
+  order: 25
 ---
 
 Starts an HTTP server that provides a browser-based UI and REST API for your vault.

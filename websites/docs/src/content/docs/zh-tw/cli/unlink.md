@@ -2,7 +2,7 @@
 title: tmd relation unlink
 description: 移除兩個 Object 之間的 Relation。
 sidebar:
-  order: 7
+  order: 8
 ---
 
 從來源 Object 的 frontmatter 移除 Relation。

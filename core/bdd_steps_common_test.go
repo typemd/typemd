@@ -75,9 +75,6 @@ type domainContext struct {
 
 	// sync result for wiki-link scenarios
 	syncResult *ReconcileResult
-
-	// domain event capture
-	capturedEvents []DomainEvent
 }
 
 func newDomainContext() *domainContext {

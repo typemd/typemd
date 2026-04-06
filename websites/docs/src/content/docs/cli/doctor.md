@@ -2,7 +2,7 @@
 title: tmd doctor
 description: Comprehensive vault health check with diagnostics and auto-fix.
 sidebar:
-  order: 11
+  order: 19
 ---
 
 Performs a comprehensive vault health check across 8 categories. A superset of [`tmd type validate`](/cli/validate/) with additional structural integrity checks.

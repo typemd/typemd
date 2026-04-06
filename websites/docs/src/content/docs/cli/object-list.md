@@ -2,7 +2,7 @@
 title: tmd object list
 description: List all objects in the vault.
 sidebar:
-  order: 3.5
+  order: 4
 ---
 
 Lists all objects in the vault.

@@ -2,7 +2,7 @@
 title: tmd type validate
 description: Validate type schemas, objects, relations, and wiki-links.
 sidebar:
-  order: 10
+  order: 16
 ---
 
 Validates the vault's type schemas, objects, relations, wiki-links, and name uniqueness. Runs five phases in order:

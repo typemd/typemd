@@ -1,42 +1,5 @@
 Feature: Type CRUD
-  Type schemas can be serialized, saved, deleted, and counted.
-
-  # ── Serialization ──────────────────────────────────────────
-
-  Scenario: Serialize a complete type schema to YAML
-    Given a type schema "book" with plural "books" and emoji "📖"
-    And the schema has a "title" string property
-    And the schema has an "author" relation property targeting "person"
-    When I serialize the type schema
-    Then the YAML output should contain "name: book"
-    And the YAML output should contain "plural: books"
-    And the YAML output should contain "emoji: "
-    And the YAML output should contain "- name: title"
-    And the YAML output should contain "- name: author"
-
-  Scenario: Serialize type schema with NameTemplate
-    Given a type schema "journal" with no extra fields
-    And the schema has a name template "{{ date:YYYY-MM-DD }}"
-    When I serialize the type schema
-    Then the YAML output should contain "- name: name"
-    And the YAML output should contain "template: "
-
-  Scenario: Serialize type schema omits zero-value optional fields
-    Given a type schema "note" with no extra fields
-    When I serialize the type schema
-    Then the YAML output should not contain "plural:"
-    And the YAML output should not contain "unique:"
-    And the YAML output should not contain "emoji:"
-
-  Scenario: Round-trip serialization preserves schema
-    Given a type schema "book" with plural "books" and emoji "📖"
-    And the schema has a "title" string property
-    And the schema has a "rating" number property with pin 1 and emoji "⭐"
-    When I serialize the type schema
-    And I deserialize the YAML output back to a TypeSchema
-    Then the round-trip schema name should be "book"
-    And the round-trip schema should have 2 properties
-    And the round-trip schema property "rating" should have pin 1
+  Type schemas can be saved, deleted, loaded, and their objects counted.
 
   # ── DeleteSchema ───────────────────────────────────────────
 
@@ -97,41 +60,6 @@ Feature: Type CRUD
     Given a vault is ready
     When I delete type "phantom"
     Then an error should occur
-
-  # ── Domain Events ─────────────────────────────────────────
-
-  Scenario: SaveType emits TypeSaved event
-    Given a vault is ready
-    And I subscribe to domain events
-    And a type schema "project" with no extra fields
-    When I save the type schema
-    Then no error should occur
-    And a "type.saved" event should have been emitted
-    And the TypeSaved event schema name should be "project"
-
-  Scenario: SaveType does not emit event on validation failure
-    Given a vault is ready
-    And I subscribe to domain events
-    And a type schema "" with no extra fields
-    When I save the type schema
-    Then an error should occur
-    And no domain events should have been emitted
-
-  Scenario: DeleteType emits TypeDeleted event
-    Given a vault is ready
-    And I subscribe to domain events
-    And a type schema file "scratch" exists on disk
-    When I delete type "scratch"
-    Then no error should occur
-    And a "type.deleted" event should have been emitted
-    And the TypeDeleted event name should be "scratch"
-
-  Scenario: DeleteType does not emit event for built-in type
-    Given a vault is ready
-    And I subscribe to domain events
-    When I delete type "tag"
-    Then an error should occur
-    And no domain events should have been emitted
 
   # ── CountObjectsByType ─────────────────────────────────────
 

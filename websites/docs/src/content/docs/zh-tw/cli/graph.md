@@ -2,7 +2,7 @@
 title: tmd graph
 description: 將物件關係圖匯出為 DOT 格式，供視覺化工具使用。
 sidebar:
-  order: 11.7
+  order: 22
 ---
 
 將 vault 的物件關係圖以 [DOT 格式](https://graphviz.org/doc/info/lang.html)匯出。節點代表物件，邊代表 relation 和 wiki-link。輸出至 stdout，可接管到 Graphviz 或其他視覺化工具。

@@ -165,11 +165,60 @@ func TestViewConfig_YAML_ColumnsOmittedWhenEmpty(t *testing.T) {
 	}
 }
 
-func TestViewLayoutTable_Constant(t *testing.T) {
-	if ViewLayoutTable != "table" {
-		t.Errorf("ViewLayoutTable = %q, want %q", ViewLayoutTable, "table")
+func TestViewConfig_YAML_LegacyStringGroupBy(t *testing.T) {
+	input := `
+name: by-genre
+layout: list
+group_by: genre
+`
+	var vc ViewConfig
+	if err := yaml.Unmarshal([]byte(input), &vc); err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
 	}
-	if ViewLayoutList != "list" {
-		t.Errorf("ViewLayoutList = %q, want %q", ViewLayoutList, "list")
+
+	if len(vc.GroupBy) != 1 {
+		t.Fatalf("len(GroupBy) = %d, want 1", len(vc.GroupBy))
+	}
+	if vc.GroupBy[0].Property != "genre" {
+		t.Errorf("GroupBy[0].Property = %q, want %q", vc.GroupBy[0].Property, "genre")
+	}
+}
+
+func TestViewConfig_YAML_MultipleGroupRules(t *testing.T) {
+	input := `
+name: by-genre-status
+layout: list
+group_by:
+  - property: genre
+  - property: status
+`
+	var vc ViewConfig
+	if err := yaml.Unmarshal([]byte(input), &vc); err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	if len(vc.GroupBy) != 2 {
+		t.Fatalf("len(GroupBy) = %d, want 2", len(vc.GroupBy))
+	}
+	if vc.GroupBy[0].Property != "genre" {
+		t.Errorf("GroupBy[0].Property = %q, want %q", vc.GroupBy[0].Property, "genre")
+	}
+	if vc.GroupBy[1].Property != "status" {
+		t.Errorf("GroupBy[1].Property = %q, want %q", vc.GroupBy[1].Property, "status")
+	}
+}
+
+func TestViewConfig_YAML_NoGroupBy(t *testing.T) {
+	input := `
+name: simple
+layout: list
+`
+	var vc ViewConfig
+	if err := yaml.Unmarshal([]byte(input), &vc); err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+
+	if len(vc.GroupBy) != 0 {
+		t.Errorf("len(GroupBy) = %d, want 0", len(vc.GroupBy))
 	}
 }

@@ -2,7 +2,7 @@
 title: tmd config
 description: 從 CLI 管理 vault 設定。
 sidebar:
-  order: 12
+  order: 23
 ---
 
 從命令列管理 `.typemd/config.yaml`。提供 `get`、`set`、`list` 子命令，讓你不需直接編輯檔案就能讀寫 vault 設定。

@@ -2,7 +2,7 @@
 title: tmd instructions
 description: Output embedded skill instructions enriched with vault context.
 sidebar:
-  order: 12
+  order: 24
 ---
 
 Output skill instructions enriched with vault context. Skills are embedded in the `tmd` binary and can be overridden per-vault.

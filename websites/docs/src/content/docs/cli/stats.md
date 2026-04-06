@@ -2,7 +2,7 @@
 title: tmd stats
 description: Vault-wide summary and per-type property aggregate statistics.
 sidebar:
-  order: 11.5
+  order: 20
 ---
 
 Displays statistics about your vault. Without flags, shows a vault-wide summary. With `--type`, shows per-property aggregate statistics for a specific type.

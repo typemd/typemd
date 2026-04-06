@@ -2,7 +2,7 @@
 title: tmd format
 description: 正規化 object frontmatter 和 schema YAML 格式。
 sidebar:
-  order: 10.5
+  order: 17
 ---
 
 格式化所有 object 和 schema 檔案，統一 property 排序和 YAML 風格。類似 `gofmt`，強制使用一致的檔案格式。

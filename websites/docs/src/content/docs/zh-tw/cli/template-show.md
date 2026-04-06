@@ -2,7 +2,7 @@
 title: tmd template show
 description: 顯示 template 的內容。
 sidebar:
-  order: 9.7
+  order: 13
 ---
 
 顯示 template 的 frontmatter 屬性和正文內容。

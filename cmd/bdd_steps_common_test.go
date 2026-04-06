@@ -165,7 +165,6 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	})
 
 	initCommonSteps(sc, cc)
-	initDebugSteps(sc, cc)
 	initInitSteps(sc, cc)
 	initObjectSteps(sc, cc)
 	initSearchSteps(sc, cc)

@@ -2,7 +2,7 @@
 title: tmd search
 description: Full-text search across your vault.
 sidebar:
-  order: 5
+  order: 6
 ---
 
 Full-text search across filenames, properties, and body content. Powered by SQLite FTS5, with automatic fallback to substring matching when the index is unavailable.

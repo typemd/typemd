@@ -1,6 +1,7 @@
 package core
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -64,32 +65,78 @@ func TestValidateFilterOperator_UnknownType(t *testing.T) {
 	}
 }
 
-func TestFilterRuleToSQL_UnknownOperator(t *testing.T) {
-	rule := FilterRule{Property: "x", Operator: "nope", Value: "y"}
-	_, _, err := FilterRuleToSQL(rule)
-	if err == nil {
-		t.Error("unknown operator should fail")
+func TestFilterRuleToSQL(t *testing.T) {
+	tests := []struct {
+		name       string
+		rule       FilterRule
+		wantErr    bool
+		wantClause []string // substrings the clause must contain
+		wantArgs   int
+		checkArg0  any // if non-nil, assert args[0] equals this
+	}{
+		{
+			name:    "unknown operator",
+			rule:    FilterRule{Property: "x", Operator: "nope", Value: "y"},
+			wantErr: true,
+		},
+		{
+			name:       "is_empty generates null check",
+			rule:       FilterRule{Property: "author", Operator: "is_empty"},
+			wantClause: []string{"IS NULL"},
+			wantArgs:   0,
+		},
+		{
+			name:       "contains wraps value with percent",
+			rule:       FilterRule{Property: "title", Operator: "contains", Value: "Go"},
+			wantClause: []string{"LIKE ?"},
+			wantArgs:   1,
+			checkArg0:  "%Go%",
+		},
+		{
+			name:       "is generates equality",
+			rule:       FilterRule{Property: "status", Operator: "is", Value: "active"},
+			wantClause: []string{"= ?"},
+			wantArgs:   1,
+			checkArg0:  "active",
+		},
+		{
+			name:       "gt generates CAST comparison",
+			rule:       FilterRule{Property: "rating", Operator: "gt", Value: "4"},
+			wantClause: []string{"CAST(", "> ?"},
+			wantArgs:   1,
+		},
+		{
+			name:       "after generates date comparison",
+			rule:       FilterRule{Property: "published", Operator: "after", Value: "2025-01-01"},
+			wantClause: []string{"> ?"},
+			wantArgs:   1,
+			checkArg0:  "2025-01-01",
+		},
 	}
-}
 
-func TestFilterRuleToSQL_IsEmpty_NoArgs(t *testing.T) {
-	rule := FilterRule{Property: "author", Operator: "is_empty"}
-	_, args, err := FilterRuleToSQL(rule)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(args) != 0 {
-		t.Errorf("is_empty should have 0 args, got %d", len(args))
-	}
-}
-
-func TestFilterRuleToSQL_Contains_WrapsWithPercent(t *testing.T) {
-	rule := FilterRule{Property: "title", Operator: "contains", Value: "Go"}
-	_, args, err := FilterRuleToSQL(rule)
-	if err != nil {
-		t.Fatalf("unexpected error: %v", err)
-	}
-	if len(args) != 1 || args[0] != "%Go%" {
-		t.Errorf("contains should wrap value with %%, got %v", args)
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			clause, args, err := FilterRuleToSQL(tc.rule)
+			if tc.wantErr {
+				if err == nil {
+					t.Fatal("expected error, got nil")
+				}
+				return
+			}
+			if err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+			if len(args) != tc.wantArgs {
+				t.Fatalf("len(args) = %d, want %d", len(args), tc.wantArgs)
+			}
+			for _, substr := range tc.wantClause {
+				if !strings.Contains(clause, substr) {
+					t.Errorf("clause %q should contain %q", clause, substr)
+				}
+			}
+			if tc.checkArg0 != nil && len(args) > 0 && args[0] != tc.checkArg0 {
+				t.Errorf("args[0] = %v, want %v", args[0], tc.checkArg0)
+			}
+		})
 	}
 }

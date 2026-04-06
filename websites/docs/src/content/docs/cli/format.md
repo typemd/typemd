@@ -2,7 +2,7 @@
 title: tmd format
 description: Normalize object frontmatter and schema YAML formatting.
 sidebar:
-  order: 10.5
+  order: 17
 ---
 
 Formats all object and schema files with canonical property ordering and YAML style. Similar to `gofmt`, it enforces a consistent file format.

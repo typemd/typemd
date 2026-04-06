@@ -2,7 +2,7 @@
 title: tmd relation link
 description: Create a relation between two objects.
 sidebar:
-  order: 6
+  order: 7
 ---
 
 Creates a relation between two objects. If the schema defines `bidirectional: true`, the inverse property is automatically updated.

@@ -2,7 +2,7 @@
 title: tmd type validate
 description: 驗證 Type schema、Object、Relation 和 Wiki-link。
 sidebar:
-  order: 10
+  order: 16
 ---
 
 驗證 vault 的 Type schema、Object、Relation、Wiki-link 和 name 唯一性。依序執行五個階段：

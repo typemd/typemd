@@ -64,11 +64,7 @@ Identify which concept areas to check. Use this mapping to locate corresponding 
 | Shared Properties | `shared_properties.feature` | `shared-properties/spec.md` | `basics/properties.md` (partial) |
 | Tags | `tag_type.feature`, `tag_resolution.feature`, `tag_uniqueness.feature` | — (see changes/) | `basics/tags.md` |
 | Object Templates | `object_template.feature` | — (see changes/) | `basics/templates.md` (partial) |
-| Property Emoji | `property_emoji.feature` | `property-emoji/spec.md` | `basics/properties.md` (partial) |
-| Pinned Properties | `pinned_property.feature` | `pinned-properties/spec.md` | `basics/properties.md` (partial) |
 | Query / Search | `query.feature` | — | `basics/queries.md`, `basics/search.md` |
-| Plural Display Name | `plural_display_name.feature` | — (see changes/) | — |
-| Frontmatter | `frontmatter.feature` | — | `advanced/frontmatter.md` |
 
 If the user says "all", scan each area. If the user names an area not in the table, use Glob and Grep to find related files.
 

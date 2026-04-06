@@ -2,7 +2,7 @@
 title: tmd config
 description: Manage vault configuration from the CLI.
 sidebar:
-  order: 12
+  order: 23
 ---
 
 Manage `.typemd/config.yaml` from the command line. Provides `get`, `set`, and `list` subcommands for reading and writing vault configuration without editing files directly.

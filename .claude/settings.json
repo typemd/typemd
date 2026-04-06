@@ -15,12 +15,14 @@
       "Bash(gh run list *)",
       "Bash(gh run view *)",
       "Bash(git check-ignore:*)",
+      "Bash(git log:*)",
       "Bash(go build *)",
       "Bash(go fmt *)",
       "Bash(go run *)",
       "Bash(go test *)",
       "Bash(go vet *)",
       "Bash(grep:*)",
+      "Bash(make build-frontend:*)",
       "Bash(make test)",
       "Bash(openspec instructions:*)",
       "Bash(openspec list:*)",
@@ -31,7 +33,9 @@
       "Skill(create-milestone)",
       "Skill(resolve-issue)",
       "Skill(update-doc)",
-      "WebFetch(domain:goreleaser.com)"
+      "WebFetch(domain:goreleaser.com)",
+      "WebFetch(domain:v3alpha.wails.io)",
+      "WebFetch(domain:wails.io)"
     ],
     "deny": [
       "Bash(bash *)"

@@ -2,7 +2,7 @@
 title: tmd relation unlink
 description: Remove a relation between two objects.
 sidebar:
-  order: 7
+  order: 8
 ---
 
 Removes a relation from the source object's frontmatter.

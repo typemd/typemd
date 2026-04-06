@@ -2,7 +2,7 @@
 title: tmd serve
 description: 啟動 Web UI 伺服器，透過瀏覽器存取 vault。
 sidebar:
-  order: 12
+  order: 25
 ---
 
 啟動 HTTP 伺服器，提供瀏覽器介面和 REST API 來存取你的 vault。

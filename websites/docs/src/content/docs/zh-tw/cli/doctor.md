@@ -2,7 +2,7 @@
 title: tmd doctor
 description: 全面的 vault 健康檢查，提供診斷與自動修復。
 sidebar:
-  order: 11
+  order: 19
 ---
 
 對 vault 進行全面的健康檢查，涵蓋 8 個類別。是 [`tmd type validate`](/zh-tw/cli/validate/) 的超集，額外包含結構完整性檢查。

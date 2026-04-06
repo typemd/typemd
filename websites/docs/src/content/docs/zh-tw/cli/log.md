@@ -2,7 +2,7 @@
 title: tmd log
 description: 顯示特定 Object 的 git 提交歷史。
 sidebar:
-  order: 11.6
+  order: 21
 ---
 
 顯示特定 Object 檔案的 git 提交歷史。使用 `git log --follow` 來追蹤跨重新命名的歷史紀錄。

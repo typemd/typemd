@@ -2,7 +2,7 @@
 title: tmd instructions
 description: 輸出嵌入的 skill 指令並附帶 vault context。
 sidebar:
-  order: 12
+  order: 24
 ---
 
 輸出嵌入的 skill 指令並附帶 vault context。Skill 嵌入在 `tmd` binary 中，可透過 vault 層級檔案覆寫。

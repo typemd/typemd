@@ -2,7 +2,7 @@
 title: tmd init
 description: Initialize a new vault.
 sidebar:
-  order: 2
+  order: 1
 ---
 
 Initializes a new vault. Creates `.typemd/` directory structure, SQLite database, and a `.typemd/.gitignore` that excludes `index.db`.

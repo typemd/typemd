@@ -2,7 +2,7 @@
 title: tmd fix
 description: Fix common issues in your vault.
 sidebar:
-  order: 10.7
+  order: 18
 ---
 
 The `fix` command provides subcommands to automatically correct common issues in your vault.

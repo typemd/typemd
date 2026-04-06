@@ -2,7 +2,7 @@
 title: tmd object archive / unarchive
 description: Archive or unarchive objects (soft delete).
 sidebar:
-  order: 3.6
+  order: 5
 ---
 
 Archive an object to hide it from default queries without deleting the file. The object remains on disk and can be unarchived at any time.

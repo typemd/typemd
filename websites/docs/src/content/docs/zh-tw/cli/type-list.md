@@ -2,7 +2,7 @@
 title: tmd type list
 description: 列出所有可用的 Type。
 sidebar:
-  order: 9.5
+  order: 11
 ---
 
 列出 vault 中所有已定義的 Type schema。

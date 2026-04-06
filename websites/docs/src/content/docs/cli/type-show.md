@@ -2,7 +2,7 @@
 title: tmd type show
 description: Show details of a type schema.
 sidebar:
-  order: 9
+  order: 10
 ---
 
 Displays the details of a type schema, including its name, plural form (if defined), and all properties and their configurations.

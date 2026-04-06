@@ -2,7 +2,7 @@
 title: tmd relation link
 description: 在兩個 Object 之間建立 Relation。
 sidebar:
-  order: 6
+  order: 7
 ---
 
 在兩個 Object 之間建立 Relation。如果 schema 定義了 `bidirectional: true`，反向屬性會自動更新。

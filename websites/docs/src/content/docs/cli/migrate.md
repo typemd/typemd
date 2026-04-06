@@ -2,7 +2,7 @@
 title: tmd migrate
 description: Migrate type schemas and objects.
 sidebar:
-  order: 8.5
+  order: 9
 ---
 
 Migrates type schemas and objects. The command has two modes depending on whether a type argument is provided.

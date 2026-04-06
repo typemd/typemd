@@ -149,7 +149,6 @@ func TestDeleteSchema_NonExistent(t *testing.T) {
 
 func TestSaveType_EmptyName(t *testing.T) {
 	v := setupTestVault(t)
-	defer v.Close()
 
 	err := v.SaveType(&TypeSchema{Name: ""})
 	if err == nil {
@@ -159,7 +158,6 @@ func TestSaveType_EmptyName(t *testing.T) {
 
 func TestDeleteType_BuiltInTag(t *testing.T) {
 	v := setupTestVault(t)
-	defer v.Close()
 
 	err := v.DeleteType("tag")
 	if err == nil {
@@ -172,7 +170,6 @@ func TestDeleteType_BuiltInTag(t *testing.T) {
 
 func TestCountObjectsByType_EmptyIndex(t *testing.T) {
 	v := setupTestVault(t)
-	defer v.Close()
 
 	count, err := v.CountObjectsByType("nonexistent")
 	if err != nil {
@@ -183,4 +180,100 @@ func TestCountObjectsByType_EmptyIndex(t *testing.T) {
 	}
 }
 
-// Note: setupTestVault is defined in vault_test.go
+// ── MarshalTypeSchema: zero-value omission ─────────────────────────────────
+
+func TestMarshalTypeSchema_OmitsZeroValueFields(t *testing.T) {
+	schema := &TypeSchema{Name: "note"}
+	data, err := MarshalTypeSchema(schema)
+	if err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+	s := string(data)
+	for _, field := range []string{"plural:", "unique:", "emoji:"} {
+		if strings.Contains(s, field) {
+			t.Errorf("expected YAML to omit %q, got:\n%s", field, s)
+		}
+	}
+}
+
+// ── Domain event tests ──────────────────────────────────────────────────────
+
+// captureEvents subscribes to vault events and returns a pointer to the captured slice.
+func captureEvents(v *Vault) *[]DomainEvent {
+	var captured []DomainEvent
+	v.Events.Subscribe(func(e DomainEvent) {
+		captured = append(captured, e)
+	})
+	return &captured
+}
+
+func TestSaveType_EmitsTypeSavedEvent(t *testing.T) {
+	v := setupTestVault(t)
+	captured := captureEvents(v)
+
+	if err := v.SaveType(&TypeSchema{Name: "project"}); err != nil {
+		t.Fatalf("SaveType() error = %v", err)
+	}
+
+	found := false
+	for _, e := range *captured {
+		if ts, ok := e.(TypeSaved); ok {
+			if ts.Schema.Name != "project" {
+				t.Errorf("TypeSaved.Schema.Name = %q, want %q", ts.Schema.Name, "project")
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected TypeSaved event to be emitted")
+	}
+}
+
+func TestSaveType_NoEventOnValidationFailure(t *testing.T) {
+	v := setupTestVault(t)
+	captured := captureEvents(v)
+
+	err := v.SaveType(&TypeSchema{Name: ""})
+	if err == nil {
+		t.Fatal("expected error for empty name")
+	}
+	if len(*captured) != 0 {
+		t.Errorf("expected no events, got %d", len(*captured))
+	}
+}
+
+func TestDeleteType_EmitsTypeDeletedEvent(t *testing.T) {
+	v := setupTestVault(t)
+	mustWriteTypeSchema(v, "scratch", []byte("name: scratch\nproperties: []\n"))
+	captured := captureEvents(v)
+
+	if err := v.DeleteType("scratch"); err != nil {
+		t.Fatalf("DeleteType() error = %v", err)
+	}
+
+	found := false
+	for _, e := range *captured {
+		if td, ok := e.(TypeDeleted); ok {
+			if td.Name != "scratch" {
+				t.Errorf("TypeDeleted.Name = %q, want %q", td.Name, "scratch")
+			}
+			found = true
+		}
+	}
+	if !found {
+		t.Error("expected TypeDeleted event to be emitted")
+	}
+}
+
+func TestDeleteType_NoEventForBuiltInType(t *testing.T) {
+	v := setupTestVault(t)
+	captured := captureEvents(v)
+
+	err := v.DeleteType("tag")
+	if err == nil {
+		t.Fatal("expected error for built-in type")
+	}
+	if len(*captured) != 0 {
+		t.Errorf("expected no events, got %d", len(*captured))
+	}
+}

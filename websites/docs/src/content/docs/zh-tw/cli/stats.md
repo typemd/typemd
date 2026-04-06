@@ -2,7 +2,7 @@
 title: tmd stats
 description: Vault 整體摘要與指定 Type 的屬性彙總統計。
 sidebar:
-  order: 11.5
+  order: 20
 ---
 
 顯示 vault 的統計資訊。不帶參數時顯示整體摘要，搭配 `--type` 時顯示指定 Type 的屬性彙總統計。

@@ -1,7 +1,6 @@
 package core
 
 import (
-	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -29,20 +28,9 @@ func assertRegistryContains(got []string, nameList, label string) error {
 	return nil
 }
 
-func (dc *domainContext) theSystemPropertyRegistryShouldContain(nameList string) error {
-	return assertRegistryContains(SystemPropertyNames(), nameList, "registry")
-}
-
 func (dc *domainContext) shouldBeASystemProperty(name string) error {
 	if !IsSystemProperty(name) {
 		return fmt.Errorf("%q should be a system property", name)
-	}
-	return nil
-}
-
-func (dc *domainContext) shouldNotBeASystemProperty(name string) error {
-	if IsSystemProperty(name) {
-		return fmt.Errorf("%q should not be a system property", name)
 	}
 	return nil
 }
@@ -110,68 +98,6 @@ func (dc *domainContext) theObjectTimestampShouldBeRecent(propName string) error
 	return nil
 }
 
-func (dc *domainContext) theFrontmatterShouldHaveSystemPropertiesBeforeSchemaProperties() error {
-	pairs := [][2]string{{"name", "created_at"}, {"created_at", "updated_at"}, {"updated_at", "title"}}
-	for _, p := range pairs {
-		if err := dc.theFrontmatterShouldHaveBefore(p[0], p[1]); err != nil {
-			return err
-		}
-	}
-	return nil
-}
-
-func (dc *domainContext) theIndexedPropertiesForTheObjectShouldContain(propName string) error {
-	var propsJSON string
-	err := dc.vault.db.QueryRow("SELECT properties FROM objects WHERE id = ?", dc.currentObject.ID).Scan(&propsJSON)
-	if err != nil {
-		return fmt.Errorf("query error: %v", err)
-	}
-	var props map[string]any
-	if err := json.Unmarshal([]byte(propsJSON), &props); err != nil {
-		return fmt.Errorf("unmarshal error: %v", err)
-	}
-	if _, ok := props[propName]; !ok {
-		return fmt.Errorf("indexed properties do not contain %q: %v", propName, props)
-	}
-	return nil
-}
-
-func (dc *domainContext) createRawObjectFile(prefix, frontmatter string) {
-	typeName := "book"
-	filename := prefix + mustULID()
-	objPath := dc.vault.ObjectPath(typeName, filename)
-	os.MkdirAll(filepath.Dir(objPath), 0755)
-	os.WriteFile(objPath, []byte("---\n"+frontmatter+"---\n"), 0644)
-	dc.currentObject = &Object{
-		ID:       typeName + "/" + filename,
-		Type:     typeName,
-		Filename: filename,
-	}
-}
-
-func (dc *domainContext) aRawObjectFileWithoutTimestampsExists() {
-	dc.createRawObjectFile("legacy-book-", "name: legacy-book\ntitle: Legacy\n")
-}
-
-func (dc *domainContext) rawObjectFileShouldNotContain(propName string) error {
-	data, err := os.ReadFile(dc.vault.ObjectPath(dc.currentObject.Type, dc.currentObject.Filename))
-	if err != nil {
-		return fmt.Errorf("ReadFile error: %v", err)
-	}
-	content := string(data)
-	if strings.Contains(content, propName+":") {
-		return fmt.Errorf("%s was added to existing object:\n%s", propName, content)
-	}
-	return nil
-}
-
-func (dc *domainContext) theRawObjectFileShouldNotHaveTimestampsAdded() error {
-	if err := dc.rawObjectFileShouldNotContain("created_at"); err != nil {
-		return err
-	}
-	return dc.rawObjectFileShouldNotContain("updated_at")
-}
-
 func (dc *domainContext) theObjectShouldNotHaveProperty(propName string) error {
 	got, err := dc.vault.GetObject(dc.currentObject.ID)
 	if err != nil {
@@ -181,14 +107,6 @@ func (dc *domainContext) theObjectShouldNotHaveProperty(propName string) error {
 		return fmt.Errorf("expected object to not have property %q, but it does", propName)
 	}
 	return nil
-}
-
-func (dc *domainContext) aRawObjectFileWithDescriptionExists() {
-	dc.createRawObjectFile("desc-raw-book-", "name: desc-raw-book\ndescription: A raw book with description\ntitle: Raw Book\n")
-}
-
-func (dc *domainContext) theRawObjectFileShouldNotHaveDescriptionAdded() error {
-	return dc.rawObjectFileShouldNotContain("description")
 }
 
 func (dc *domainContext) theFrontmatterShouldHaveBefore(first, second string) error {
@@ -211,30 +129,9 @@ func (dc *domainContext) theFrontmatterShouldHaveBefore(first, second string) er
 	return nil
 }
 
-func (dc *domainContext) shouldBeAnImmutableSystemProperty(name string) error {
-	if !IsImmutableSystemProperty(name) {
-		return fmt.Errorf("%q should be an immutable system property", name)
-	}
-	return nil
-}
-
 func (dc *domainContext) shouldNotBeAnImmutableSystemProperty(name string) error {
 	if IsImmutableSystemProperty(name) {
 		return fmt.Errorf("%q should not be an immutable system property", name)
-	}
-	return nil
-}
-
-func (dc *domainContext) shouldBeAComputedSystemProperty(name string) error {
-	if !IsComputedProperty(name) {
-		return fmt.Errorf("%q should be a computed system property", name)
-	}
-	return nil
-}
-
-func (dc *domainContext) shouldNotBeAComputedSystemProperty(name string) error {
-	if IsComputedProperty(name) {
-		return fmt.Errorf("%q should not be a computed system property", name)
 	}
 	return nil
 }
@@ -243,8 +140,33 @@ func (dc *domainContext) theStoredSystemPropertyRegistryShouldContain(nameList s
 	return assertRegistryContains(StoredPropertyNames(), nameList, "stored registry")
 }
 
+func (dc *domainContext) createRawObjectFile(prefix, frontmatter string) {
+	typeName := "book"
+	filename := prefix + mustULID()
+	objPath := dc.vault.ObjectPath(typeName, filename)
+	os.MkdirAll(filepath.Dir(objPath), 0755)
+	os.WriteFile(objPath, []byte("---\n"+frontmatter+"---\n"), 0644)
+	dc.currentObject = &Object{
+		ID:       typeName + "/" + filename,
+		Type:     typeName,
+		Filename: filename,
+	}
+}
+
 func (dc *domainContext) aRawObjectFileWithAComputedPropertyExists() {
 	dc.createRawObjectFile("computed-book-", "name: computed-book\nobject_type: book\ntitle: Computed Test\n")
+}
+
+func (dc *domainContext) rawObjectFileShouldNotContain(propName string) error {
+	data, err := os.ReadFile(dc.vault.ObjectPath(dc.currentObject.Type, dc.currentObject.Filename))
+	if err != nil {
+		return fmt.Errorf("ReadFile error: %v", err)
+	}
+	content := string(data)
+	if strings.Contains(content, propName+":") {
+		return fmt.Errorf("%s was added to existing object:\n%s", propName, content)
+	}
+	return nil
 }
 
 func (dc *domainContext) iSaveTheRawObject() {
@@ -258,28 +180,17 @@ func (dc *domainContext) iSaveTheRawObject() {
 }
 
 func initSystemSteps(ctx *godog.ScenarioContext, dc *domainContext) {
-	ctx.Step(`^the system property registry should contain "([^"]*)"$`, dc.theSystemPropertyRegistryShouldContain)
 	ctx.Step(`^"([^"]*)" should be a system property$`, dc.shouldBeASystemProperty)
-	ctx.Step(`^"([^"]*)" should not be a system property$`, dc.shouldNotBeASystemProperty)
 	ctx.Step(`^a type schema "([^"]*)" with a system property "([^"]*)"$`, dc.aTypeSchemaWithASystemProperty)
 	ctx.Step(`^a shared properties file with a system property "([^"]*)"$`, dc.aSharedPropertiesFileWithASystemProperty)
 	ctx.Step(`^the object should have an? "([^"]*)" timestamp$`, dc.theObjectShouldHaveATimestamp)
 	ctx.Step(`^the object "([^"]*)" should not have changed$`, dc.theObjectTimestampShouldNotHaveChanged)
 	ctx.Step(`^the object "([^"]*)" should be recent$`, dc.theObjectTimestampShouldBeRecent)
-	ctx.Step(`^the frontmatter should have system properties before schema properties$`, dc.theFrontmatterShouldHaveSystemPropertiesBeforeSchemaProperties)
-	ctx.Step(`^the indexed properties for the object should contain "([^"]*)"$`, dc.theIndexedPropertiesForTheObjectShouldContain)
-	ctx.Step(`^a raw object file without timestamps exists$`, dc.aRawObjectFileWithoutTimestampsExists)
-	ctx.Step(`^the raw object file should not have timestamps added$`, dc.theRawObjectFileShouldNotHaveTimestampsAdded)
 	ctx.Step(`^the object should not have property "([^"]*)"$`, dc.theObjectShouldNotHaveProperty)
-	ctx.Step(`^a raw object file with description exists$`, dc.aRawObjectFileWithDescriptionExists)
-	ctx.Step(`^the raw object file should not have description added$`, dc.theRawObjectFileShouldNotHaveDescriptionAdded)
 	ctx.Step(`^the frontmatter should have "([^"]*)" before "([^"]*)"$`, dc.theFrontmatterShouldHaveBefore)
-	ctx.Step(`^"([^"]*)" should be an immutable system property$`, dc.shouldBeAnImmutableSystemProperty)
-	ctx.Step(`^"([^"]*)" should not be an immutable system property$`, dc.shouldNotBeAnImmutableSystemProperty)
-	ctx.Step(`^"([^"]*)" should be a computed system property$`, dc.shouldBeAComputedSystemProperty)
-	ctx.Step(`^"([^"]*)" should not be a computed system property$`, dc.shouldNotBeAComputedSystemProperty)
 	ctx.Step(`^the stored system property registry should contain "([^"]*)"$`, dc.theStoredSystemPropertyRegistryShouldContain)
 	ctx.Step(`^a raw object file with a computed property exists$`, dc.aRawObjectFileWithAComputedPropertyExists)
 	ctx.Step(`^the raw object file should not contain "([^"]*)"$`, dc.rawObjectFileShouldNotContain)
+	ctx.Step(`^"([^"]*)" should not be an immutable system property$`, dc.shouldNotBeAnImmutableSystemProperty)
 	ctx.Step(`^I save the raw object$`, dc.iSaveTheRawObject)
 }

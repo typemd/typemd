@@ -2,7 +2,7 @@
 title: tmd template list
 description: 列出可用的 template。
 sidebar:
-  order: 9.6
+  order: 12
 ---
 
 列出 vault 中所有可用的 template，可選擇依 type 篩選。

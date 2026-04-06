@@ -2,7 +2,7 @@
 title: tmd template show
 description: Display a template's content.
 sidebar:
-  order: 9.7
+  order: 13
 ---
 
 Displays a template's frontmatter properties and body content.

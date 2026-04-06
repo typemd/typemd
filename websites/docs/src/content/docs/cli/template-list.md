@@ -2,7 +2,7 @@
 title: tmd template list
 description: List available templates.
 sidebar:
-  order: 9.6
+  order: 12
 ---
 
 Lists all available templates in the vault, optionally filtered by type.
