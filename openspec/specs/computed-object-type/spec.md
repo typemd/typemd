@@ -12,7 +12,7 @@ The `Object.GetProperty("object_type")` method SHALL return the object's type, d
 - **THEN** `GetProperty("object_type")` SHALL return `"person"` and `true`
 
 ### Requirement: GetProperty resolves stored properties
-The `Object.GetProperty(name)` method SHALL return stored frontmatter properties when the property is not computed.
+The `Object.GetProperty(name)` method SHALL return stored frontmatter properties when the property is not derived or computed.
 
 #### Scenario: GetProperty returns a stored property value
 - **WHEN** an object has property "title" set to "Go in Action"
@@ -23,11 +23,11 @@ The `Object.GetProperty(name)` method SHALL return stored frontmatter properties
 - **THEN** `GetProperty("rating")` SHALL return `nil` and `false`
 
 ### Requirement: object_type is read-only
-Setting `object_type` via `SetProperty` SHALL be rejected with an error mentioning "computed system property".
+Setting `object_type` via `SetProperty` SHALL be rejected with an error mentioning "non-stored system property".
 
 #### Scenario: SetProperty rejects object_type
 - **WHEN** a user calls `SetProperty("object_type", "page", schema)`
-- **THEN** the operation SHALL return an error containing "computed system property"
+- **THEN** the operation SHALL return an error containing "non-stored system property"
 
 ### Requirement: object_type is not stored in frontmatter
 When an object file contains `object_type` in its YAML frontmatter, the reconciler SHALL strip it on save.
