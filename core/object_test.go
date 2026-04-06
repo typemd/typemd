@@ -481,6 +481,37 @@ func TestVault_SetProperty_DBNotOpen(t *testing.T) {
 }
 
 
+func TestObject_Validate_Valid(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+			{Name: "rating", Type: "number"},
+		},
+	}
+	obj := &Object{
+		Properties: map[string]any{"title": "Clean Code", "rating": float64(5)},
+	}
+	if errs := obj.Validate(schema); len(errs) != 0 {
+		t.Errorf("expected no errors, got %v", errs)
+	}
+}
+
+func TestObject_Validate_InvalidType(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "rating", Type: "number"},
+		},
+	}
+	obj := &Object{
+		Properties: map[string]any{"rating": "not-a-number"},
+	}
+	if errs := obj.Validate(schema); len(errs) == 0 {
+		t.Error("expected validation errors for string in number field")
+	}
+}
+
 func TestVault_SaveObject_WritesFileAndUpdatesDB(t *testing.T) {
 	v := setupTestVault(t)
 	obj, err := v.NewObject("book", "test-book", "")

@@ -1397,3 +1397,30 @@ func TestMarshalTypeSchema_PropertyDescriptionOmittedWhenEmpty(t *testing.T) {
 	}
 }
 
+func TestFindProperty_Found(t *testing.T) {
+	schema := &TypeSchema{
+		Name: "book",
+		Properties: []Property{
+			{Name: "title", Type: "string"},
+			{Name: "author", Type: "relation", Target: "person"},
+		},
+	}
+	p := schema.FindProperty("author")
+	if p == nil {
+		t.Fatal("expected to find 'author' property")
+	}
+	if p.Type != "relation" {
+		t.Errorf("Type = %q, want %q", p.Type, "relation")
+	}
+}
+
+func TestFindProperty_NotFound(t *testing.T) {
+	schema := &TypeSchema{
+		Name:       "book",
+		Properties: []Property{{Name: "title", Type: "string"}},
+	}
+	if p := schema.FindProperty("missing"); p != nil {
+		t.Errorf("expected nil for missing property, got %v", p)
+	}
+}
+

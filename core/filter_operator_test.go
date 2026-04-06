@@ -65,6 +65,34 @@ func TestValidateFilterOperator_UnknownType(t *testing.T) {
 	}
 }
 
+func TestOperatorsForType_String(t *testing.T) {
+	ops := OperatorsForType("string")
+	if len(ops) == 0 {
+		t.Fatal("expected operators for string type")
+	}
+	// Verify canonical order: is before contains before is_empty
+	isIdx, containsIdx, emptyIdx := -1, -1, -1
+	for i, op := range ops {
+		switch op {
+		case "is":
+			isIdx = i
+		case "contains":
+			containsIdx = i
+		case "is_empty":
+			emptyIdx = i
+		}
+	}
+	if isIdx >= containsIdx || containsIdx >= emptyIdx {
+		t.Errorf("unexpected order: is=%d contains=%d is_empty=%d", isIdx, containsIdx, emptyIdx)
+	}
+}
+
+func TestOperatorsForType_Unknown(t *testing.T) {
+	if ops := OperatorsForType("unknown"); ops != nil {
+		t.Errorf("expected nil for unknown type, got %v", ops)
+	}
+}
+
 func TestFilterRuleToSQL(t *testing.T) {
 	tests := []struct {
 		name       string
@@ -80,17 +108,9 @@ func TestFilterRuleToSQL(t *testing.T) {
 			wantErr: true,
 		},
 		{
-			name:       "is_empty generates null check",
-			rule:       FilterRule{Property: "author", Operator: "is_empty"},
-			wantClause: []string{"IS NULL"},
-			wantArgs:   0,
-		},
-		{
-			name:       "contains wraps value with percent",
-			rule:       FilterRule{Property: "title", Operator: "contains", Value: "Go"},
-			wantClause: []string{"LIKE ?"},
-			wantArgs:   1,
-			checkArg0:  "%Go%",
+			name:    "unsafe property name",
+			rule:    FilterRule{Property: "x; DROP TABLE", Operator: "is", Value: "y"},
+			wantErr: true,
 		},
 		{
 			name:       "is generates equality",
@@ -100,10 +120,82 @@ func TestFilterRuleToSQL(t *testing.T) {
 			checkArg0:  "active",
 		},
 		{
+			name:       "is_not generates inequality with NULL check",
+			rule:       FilterRule{Property: "status", Operator: "is_not", Value: "done"},
+			wantClause: []string{"IS NULL", "!= ?"},
+			wantArgs:   1,
+			checkArg0:  "done",
+		},
+		{
+			name:       "contains wraps value with percent",
+			rule:       FilterRule{Property: "title", Operator: "contains", Value: "Go"},
+			wantClause: []string{"LIKE ?"},
+			wantArgs:   1,
+			checkArg0:  "%Go%",
+		},
+		{
+			name:       "does_not_contain with NULL check",
+			rule:       FilterRule{Property: "title", Operator: "does_not_contain", Value: "Go"},
+			wantClause: []string{"IS NULL", "NOT LIKE ?"},
+			wantArgs:   1,
+			checkArg0:  "%Go%",
+		},
+		{
+			name:       "starts_with appends percent",
+			rule:       FilterRule{Property: "name", Operator: "starts_with", Value: "Go"},
+			wantClause: []string{"LIKE ?"},
+			wantArgs:   1,
+			checkArg0:  "Go%",
+		},
+		{
+			name:       "ends_with prepends percent",
+			rule:       FilterRule{Property: "name", Operator: "ends_with", Value: "lang"},
+			wantClause: []string{"LIKE ?"},
+			wantArgs:   1,
+			checkArg0:  "%lang",
+		},
+		{
+			name:       "eq generates equality",
+			rule:       FilterRule{Property: "rating", Operator: "eq", Value: "5"},
+			wantClause: []string{"= ?"},
+			wantArgs:   1,
+		},
+		{
+			name:       "neq generates inequality with NULL check",
+			rule:       FilterRule{Property: "rating", Operator: "neq", Value: "5"},
+			wantClause: []string{"IS NULL", "!= ?"},
+			wantArgs:   1,
+		},
+		{
 			name:       "gt generates CAST comparison",
 			rule:       FilterRule{Property: "rating", Operator: "gt", Value: "4"},
 			wantClause: []string{"CAST(", "> ?"},
 			wantArgs:   1,
+		},
+		{
+			name:       "gte generates CAST comparison",
+			rule:       FilterRule{Property: "rating", Operator: "gte", Value: "4"},
+			wantClause: []string{"CAST(", ">= ?"},
+			wantArgs:   1,
+		},
+		{
+			name:       "lt generates CAST comparison",
+			rule:       FilterRule{Property: "rating", Operator: "lt", Value: "4"},
+			wantClause: []string{"CAST(", "< ?"},
+			wantArgs:   1,
+		},
+		{
+			name:       "lte generates CAST comparison",
+			rule:       FilterRule{Property: "rating", Operator: "lte", Value: "4"},
+			wantClause: []string{"CAST(", "<= ?"},
+			wantArgs:   1,
+		},
+		{
+			name:       "before generates date comparison",
+			rule:       FilterRule{Property: "published", Operator: "before", Value: "2025-01-01"},
+			wantClause: []string{"< ?"},
+			wantArgs:   1,
+			checkArg0:  "2025-01-01",
 		},
 		{
 			name:       "after generates date comparison",
@@ -111,6 +203,44 @@ func TestFilterRuleToSQL(t *testing.T) {
 			wantClause: []string{"> ?"},
 			wantArgs:   1,
 			checkArg0:  "2025-01-01",
+		},
+		{
+			name:       "on_or_before generates date comparison",
+			rule:       FilterRule{Property: "published", Operator: "on_or_before", Value: "2025-12-31"},
+			wantClause: []string{"<= ?"},
+			wantArgs:   1,
+		},
+		{
+			name:       "on_or_after generates date comparison",
+			rule:       FilterRule{Property: "published", Operator: "on_or_after", Value: "2025-01-01"},
+			wantClause: []string{">= ?"},
+			wantArgs:   1,
+		},
+		{
+			name:       "is_empty generates null check",
+			rule:       FilterRule{Property: "author", Operator: "is_empty"},
+			wantClause: []string{"IS NULL"},
+			wantArgs:   0,
+		},
+		{
+			name:       "is_not_empty generates not-null check",
+			rule:       FilterRule{Property: "author", Operator: "is_not_empty"},
+			wantClause: []string{"IS NOT NULL"},
+			wantArgs:   0,
+		},
+		{
+			name:       "is with true converts to integer",
+			rule:       FilterRule{Property: "done", Operator: "is", Value: "true"},
+			wantClause: []string{"= ?"},
+			wantArgs:   1,
+			checkArg0:  1,
+		},
+		{
+			name:       "is with false converts to integer",
+			rule:       FilterRule{Property: "done", Operator: "is", Value: "false"},
+			wantClause: []string{"= ?"},
+			wantArgs:   1,
+			checkArg0:  0,
 		},
 	}
 
