@@ -6,6 +6,11 @@ import (
 	"github.com/cucumber/godog"
 )
 
+func (dc *domainContext) aTypeSchemaWithADateProperty(typeName string) {
+	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: date\n    type: date\n", typeName)
+	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
+}
+
 func (dc *domainContext) aTypeSchemaWithADatetimeProperty(typeName string) {
 	schema := fmt.Sprintf("name: %s\nproperties:\n  - name: due_at\n    type: datetime\n", typeName)
 	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
@@ -28,6 +33,7 @@ func (dc *domainContext) theDisplayPropertyShouldHaveFormattedValue(key, expecte
 }
 
 func initDateDisplayFormatSteps(ctx *godog.ScenarioContext, dc *domainContext) {
+	ctx.Step(`^a type schema "([^"]*)" with a date property$`, dc.aTypeSchemaWithADateProperty)
 	ctx.Step(`^a type schema "([^"]*)" with a datetime property$`, dc.aTypeSchemaWithADatetimeProperty)
 	ctx.Step(`^the display property "([^"]*)" should have formatted value "([^"]*)"$`, dc.theDisplayPropertyShouldHaveFormattedValue)
 }

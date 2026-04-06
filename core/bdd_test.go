@@ -31,7 +31,6 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initValidateSteps(ctx, dc)
 	initWikiLinkSteps(ctx, dc)
 	initResolveSteps(ctx, dc)
-	initPropertyTypeSteps(ctx, dc)
 	initNameSteps(ctx, dc)
 	initSharedSteps(ctx, dc)
 	initSystemSteps(ctx, dc)

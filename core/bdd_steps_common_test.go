@@ -40,10 +40,6 @@ type domainContext struct {
 	// resolve results
 	resolvedID string
 
-	// property type validation results
-	objectValidationErrors []error
-	schemaMigrateResult    *SchemaMigrateResult
-
 	// shared properties results
 	sharedProperties []Property
 	loadedSchema     *TypeSchema
