@@ -1,0 +1,1 @@
+No spec changes required. The existing `object-lock` spec already defines the `SetPropertyMultiple` behavior (scenario: "SetPropertyMultiple on locked object returns error"). This change implements the existing requirement.

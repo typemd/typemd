@@ -193,6 +193,50 @@ func (s *ObjectService) SetProperty(id, key string, value any) error {
 	return nil
 }
 
+// SetPropertyMultiple updates multiple properties on an object in a single operation.
+// The batch is all-or-nothing: if any property fails validation, no changes are applied.
+func (s *ObjectService) SetPropertyMultiple(id string, props map[string]any) error {
+	if len(props) == 0 {
+		return nil
+	}
+
+	obj, err := s.repo.Get(id)
+	if err != nil {
+		return fmt.Errorf("get object: %w", err)
+	}
+
+	if obj.IsLocked() {
+		return ErrObjectLocked
+	}
+
+	for key := range props {
+		if IsComputedProperty(key) {
+			return fmt.Errorf("cannot set %q: computed system property is read-only", key)
+		}
+	}
+
+	schema, err := s.repo.GetSchema(obj.Type)
+	if err != nil {
+		return fmt.Errorf("load type: %w", err)
+	}
+
+	var events []DomainEvent
+	for key, value := range props {
+		event, err := obj.SetProperty(key, value, schema)
+		if err != nil {
+			return err
+		}
+		events = append(events, event)
+	}
+
+	if err := s.saveInternal(obj); err != nil {
+		return err
+	}
+
+	s.dispatcher.Dispatch(events)
+	return nil
+}
+
 // Link creates a relation between two objects.
 func (s *ObjectService) Link(fromID, relName, toID string) error {
 	fromObj, fromSchema, err := s.loadObjectAndSchema(fromID)

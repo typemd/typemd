@@ -481,6 +481,118 @@ func TestVault_SetProperty_DBNotOpen(t *testing.T) {
 }
 
 
+func TestVault_SetPropertyMultiple(t *testing.T) {
+	v := setupTestVault(t)
+
+	created, err := v.NewObject("book", "test", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	props := map[string]any{
+		"title":  "Go in Action",
+		"author": "William Kennedy",
+	}
+	if err := v.SetPropertyMultiple(created.ID, props); err != nil {
+		t.Fatalf("SetPropertyMultiple() error = %v", err)
+	}
+
+	obj, err := v.GetObject(created.ID)
+	if err != nil {
+		t.Fatalf("GetObject() error = %v", err)
+	}
+	if obj.Properties["title"] != "Go in Action" {
+		t.Errorf("title = %v, want %q", obj.Properties["title"], "Go in Action")
+	}
+	if obj.Properties["author"] != "William Kennedy" {
+		t.Errorf("author = %v, want %q", obj.Properties["author"], "William Kennedy")
+	}
+}
+
+func TestVault_SetPropertyMultiple_EmptyMap(t *testing.T) {
+	v := setupTestVault(t)
+
+	created, err := v.NewObject("book", "test", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	if err := v.SetPropertyMultiple(created.ID, map[string]any{}); err != nil {
+		t.Fatalf("SetPropertyMultiple() with empty map should be no-op, got error = %v", err)
+	}
+}
+
+func TestVault_SetPropertyMultiple_RejectsComputedProperty(t *testing.T) {
+	v := setupTestVault(t)
+
+	created, err := v.NewObject("book", "test", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	props := map[string]any{
+		"title":       "Valid",
+		"object_type": "page",
+	}
+	err = v.SetPropertyMultiple(created.ID, props)
+	if err == nil {
+		t.Fatal("expected error for computed property, got nil")
+	}
+	if !strings.Contains(err.Error(), "computed system property") {
+		t.Errorf("error should mention 'computed system property', got %q", err.Error())
+	}
+}
+
+func TestVault_SetPropertyMultiple_LockedObject(t *testing.T) {
+	v := setupTestVault(t)
+
+	created, err := v.NewObject("book", "test", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	if err := v.SetLocked(created.ID, true); err != nil {
+		t.Fatalf("SetLocked() error = %v", err)
+	}
+
+	err = v.SetPropertyMultiple(created.ID, map[string]any{"title": "New"})
+	if err != ErrObjectLocked {
+		t.Fatalf("expected ErrObjectLocked, got %v", err)
+	}
+}
+
+func TestVault_SetPropertyMultiple_ValidationError(t *testing.T) {
+	v := setupTestVault(t)
+
+	created, err := v.NewObject("book", "test", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	// rating is a number property; giving a string should fail
+	props := map[string]any{
+		"title":  "Valid Title",
+		"rating": "not-a-number",
+	}
+	err = v.SetPropertyMultiple(created.ID, props)
+	if err == nil {
+		t.Fatal("expected validation error, got nil")
+	}
+}
+
+func TestVault_SetPropertyMultiple_DBNotOpen(t *testing.T) {
+	dir := t.TempDir()
+	v := NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("Init() error = %v", err)
+	}
+
+	err := v.SetPropertyMultiple("book/test", map[string]any{"title": "test"})
+	if err == nil {
+		t.Fatal("expected error when DB not opened, got nil")
+	}
+}
+
 func TestObject_Validate_Valid(t *testing.T) {
 	schema := &TypeSchema{
 		Name: "book",
