@@ -25,6 +25,22 @@ sidebar:
 
 這些名稱是保留的，不能在 type schema 或[共用屬性](#共用屬性)中使用。唯一的例外是 `name`，可以出現在 `properties` 中並搭配 `template` 欄位來設定 [name template](/zh-tw/basics/templates#name-template)。
 
+## 衍生屬性與計算屬性
+
+除了上述七個儲存的系統屬性外，TypeMD 還提供在執行時期解析的非儲存屬性——它們不會出現在 YAML frontmatter 中。
+
+| 屬性 | 類別 | 來源 | 說明 |
+|------|------|------|------|
+| `object_type` | 衍生 | 檔案路徑 `objects/<type>/` | Object 的型別名稱 |
+| `created_by` | 衍生 | Git 歷史紀錄 | 初次 commit 的作者 |
+| `links` | 計算 | Markdown 內文 | 對外的 wiki-link 參照 |
+| `backlinks` | 計算 | 索引 | 來自其他 Object 的 wiki-link 反向參照 |
+| `updated_by` | 計算 | Git 歷史紀錄 | 最近一次 commit 的作者 |
+
+**衍生**（derived）屬性的值從結構或中繼資料推導而來，具有穩定性——一旦 Object 建立後，這些值幾乎不會改變。**計算**（computed）屬性的值是動態的，可能隨著 Object 的內容或 vault 狀態的變化而改變。
+
+所有非儲存屬性都是唯讀的。嘗試透過 `SetProperty` 設定會回傳錯誤，而 frontmatter 中出現的值會在儲存時被移除。這些名稱同樣是保留的，不能在 type schema 中使用。
+
 ## 屬性型別
 
 Type schema 中的每個屬性都有一個 `type`，決定它接受什麼值以及如何驗證。
