@@ -98,6 +98,41 @@ Feature: Type CRUD
     When I delete type "phantom"
     Then an error should occur
 
+  # ── Domain Events ─────────────────────────────────────────
+
+  Scenario: SaveType emits TypeSaved event
+    Given a vault is ready
+    And I subscribe to domain events
+    And a type schema "project" with no extra fields
+    When I save the type schema
+    Then no error should occur
+    And a "type.saved" event should have been emitted
+    And the TypeSaved event schema name should be "project"
+
+  Scenario: SaveType does not emit event on validation failure
+    Given a vault is ready
+    And I subscribe to domain events
+    And a type schema "" with no extra fields
+    When I save the type schema
+    Then an error should occur
+    And no domain events should have been emitted
+
+  Scenario: DeleteType emits TypeDeleted event
+    Given a vault is ready
+    And I subscribe to domain events
+    And a type schema file "scratch" exists on disk
+    When I delete type "scratch"
+    Then no error should occur
+    And a "type.deleted" event should have been emitted
+    And the TypeDeleted event name should be "scratch"
+
+  Scenario: DeleteType does not emit event for built-in type
+    Given a vault is ready
+    And I subscribe to domain events
+    When I delete type "tag"
+    Then an error should occur
+    And no domain events should have been emitted
+
   # ── CountObjectsByType ─────────────────────────────────────
 
   Scenario: Count objects for type with objects

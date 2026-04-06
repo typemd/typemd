@@ -94,6 +94,16 @@ type RelationsCleared struct {
 
 func (e RelationsCleared) eventName() string { return "relations.cleared" }
 
+// TypeSaved is emitted when a type schema is created or updated.
+type TypeSaved struct{ Schema *TypeSchema }
+
+func (e TypeSaved) eventName() string { return "type.saved" }
+
+// TypeDeleted is emitted when a type schema is deleted.
+type TypeDeleted struct{ Name string }
+
+func (e TypeDeleted) eventName() string { return "type.deleted" }
+
 // EventDispatcher collects and dispatches domain events to subscribers.
 type EventDispatcher struct {
 	handlers []EventHandler

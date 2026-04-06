@@ -222,6 +222,7 @@ func (v *Vault) SaveType(schema *TypeSchema) error {
 		return err
 	}
 	delete(v.schemaCache, schema.Name)
+	v.Events.Dispatch([]DomainEvent{TypeSaved{Schema: schema}})
 	return nil
 }
 
@@ -234,6 +235,7 @@ func (v *Vault) DeleteType(name string) error {
 		return err
 	}
 	delete(v.schemaCache, name)
+	v.Events.Dispatch([]DomainEvent{TypeDeleted{Name: name}})
 	return nil
 }
 

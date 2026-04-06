@@ -158,27 +158,4 @@ View mode table rows use `FormatValue()` for property columns and preview panels
 
 ## Domain events
 
-The Reconciler and Projector communicate through domain events. The Reconciler emits events describing what changed; the Projector consumes them to update the SQLite index.
-
-### Reconciler → Projector events
-
-| Event | Purpose | Payload |
-|-------|---------|---------|
-| `ObjectUpserted` | Object needs to be written to index | `ID`, `Type`, `Filename`, `PropsJSON`, `Body` |
-| `ObjectDeleted` | Object removed from disk (stale cleanup) | `ID` |
-| `RelationsCleared` | Clear relations before rebuilding | `ObjectID` (per-object), `NonTagOnly` (full sync), or `TagsOnly` (tag sync) |
-| `RelationIndexed` | A single relation needs to be indexed | `Name`, `FromID`, `ToID` |
-| `WikiLinksSynced` | Wiki-links resolved for an object | `ObjectID`, `Links []WikiLinkEntry` |
-
-### ObjectService events
-
-These events are emitted by `ObjectService` during user-initiated operations:
-
-| Event | Purpose | Payload |
-|-------|---------|---------|
-| `ObjectCreated` | New object created | `Object` |
-| `ObjectSaved` | Existing object saved | `Object` |
-| `PropertyChanged` | Single property value changed | `ObjectID`, `Key`, `Old`, `New` |
-| `ObjectLinked` | Relation created between objects | `FromID`, `ToID`, `RelName` |
-| `ObjectUnlinked` | Relation removed between objects | `FromID`, `ToID`, `RelName` |
-| `TagAutoCreated` | Tag object auto-created during sync | `Tag`, `ReferencedBy` |
+The Reconciler and Projector communicate through domain events. See [Domain Events](/developers/domain-events/) for the full event reference, including sync modes and design principles.

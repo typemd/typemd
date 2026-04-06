@@ -89,7 +89,7 @@ Domain entities carry both data and behavior. They are the core of the system an
 - **Object** — the aggregate root. Has methods like `Validate()`, `SetProperty()`, `LinkTo()`, `Unlink()`, `ApplyTemplate()`, and `MarkUpdated()`. Entity methods return `DomainEvent` values to signal what happened.
 - **TypeSchema** — defines the structure of a type. Has `FindProperty()`, `FindRelation()`, `Validate()`.
 - **ObjectID** — a value object representing `type/filename`. Provides `DisplayName()`, `DisplayID()`, `Slug()`.
-- **DomainEvent** — marker interface for events like `ObjectCreated`, `PropertyChanged`, `ObjectLinked`.
+- **DomainEvent** — marker interface for all [domain events](/developers/domain-events/).
 
 ### Infrastructure
 
@@ -126,27 +126,9 @@ graph LR
 
 ## Domain Events
 
-Entity methods return domain events to signal what happened:
+Entity methods return domain events to signal what happened; the use case layer dispatches them after successful operations. Consumers subscribe via `vault.Events.Subscribe()`.
 
-```go
-event, err := obj.SetProperty("title", "New Title", schema)
-// event is PropertyChanged{ObjectID: "book/x", Key: "title", Old: "Old", New: "New Title"}
-```
-
-The use case layer collects events and dispatches them after the operation succeeds:
-
-```go
-vault.Events.Subscribe(func(e core.DomainEvent) {
-    switch e := e.(type) {
-    case core.ObjectCreated:
-        // handle new object
-    case core.PropertyChanged:
-        // handle property update
-    }
-})
-```
-
-Available event types: `ObjectCreated`, `ObjectSaved`, `PropertyChanged`, `ObjectLinked`, `ObjectUnlinked`, `TagAutoCreated`.
+See [Domain Events](/developers/domain-events/) for the full event reference.
 
 ## Multi-Platform Support
 

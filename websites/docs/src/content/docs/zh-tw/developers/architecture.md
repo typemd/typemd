@@ -87,7 +87,7 @@ vault.Events    // EventDispatcher（訂閱變更）
 - **Object** — 聚合根。擁有 `Validate()`、`SetProperty()`、`LinkTo()`、`Unlink()`、`ApplyTemplate()`、`MarkUpdated()` 等方法。實體方法回傳 `DomainEvent` 來表達發生了什麼。
 - **TypeSchema** — 定義型別的結構。擁有 `FindProperty()`、`FindRelation()`、`Validate()`。
 - **ObjectID** — 值物件，代表 `type/filename`。提供 `DisplayName()`、`DisplayID()`、`Slug()`。
-- **DomainEvent** — 事件的標記介面，如 `ObjectCreated`、`PropertyChanged`、`ObjectLinked`。
+- **DomainEvent** — 所有[領域事件](/zh-tw/developers/domain-events/)的標記介面。
 
 ### 基礎設施
 
@@ -124,27 +124,9 @@ graph LR
 
 ## 領域事件
 
-實體方法回傳領域事件來表達發生了什麼：
+實體方法回傳領域事件來表達發生了什麼；用例層在操作成功後派發事件。消費者透過 `vault.Events.Subscribe()` 訂閱。
 
-```go
-event, err := obj.SetProperty("title", "New Title", schema)
-// event 是 PropertyChanged{ObjectID: "book/x", Key: "title", Old: "Old", New: "New Title"}
-```
-
-用例層收集事件並在操作成功後派發：
-
-```go
-vault.Events.Subscribe(func(e core.DomainEvent) {
-    switch e := e.(type) {
-    case core.ObjectCreated:
-        // 處理新物件
-    case core.PropertyChanged:
-        // 處理屬性更新
-    }
-})
-```
-
-可用的事件類型：`ObjectCreated`、`ObjectSaved`、`PropertyChanged`、`ObjectLinked`、`ObjectUnlinked`、`TagAutoCreated`。
+完整事件參考請見[領域事件](/zh-tw/developers/domain-events/)。
 
 ## 多平台支援
 
