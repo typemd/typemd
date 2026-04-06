@@ -1,10 +1,10 @@
 ---
 name: resolve-discussion
-description: Use when resolving a GitHub issue labeled `discussion` — facilitates decision-making on open questions, documents conclusions as an issue comment, creates follow-up issues if needed, and closes the discussion. Triggered by resolve-issue when it detects a discussion-labeled issue, or directly when user asks to "resolve discussion #N", "close discussion", "wrap up discussion". Can also accept a version number (e.g., "0.5.0") to select from that release's discussion sub-issues, or auto-select the best discussion issue when no argument is specified.
+description: Use when resolving a GitHub issue labeled `discussion` — facilitates decision-making on open questions, documents conclusions as an issue comment, creates follow-up issues if needed, and removes the discussion label. Triggered by resolve-issue when it detects a discussion-labeled issue, or directly when user asks to "resolve discussion #N", "close discussion", "wrap up discussion". Can also accept a version number (e.g., "0.5.0") to select from that release's discussion sub-issues, or auto-select the best discussion issue when no argument is specified.
 allowed-tools:
   - Bash(gh issue view:*)
   - Bash(gh issue comment:*)
-  - Bash(gh issue close:*)
+  - Bash(gh issue edit:*)
   - Bash(gh issue list:*)
   - Bash(./scripts/find-release-issues:*)
   - Bash(./scripts/get-issue-details:*)
@@ -12,9 +12,11 @@ allowed-tools:
 
 # Resolve Discussion
 
-Facilitate decision-making for discussion issues, document conclusions, and close.
+Facilitate decision-making for discussion issues, document conclusions, and remove the discussion label.
 
 Discussion issues don't produce code — they produce **decisions**. The goal is to reach conclusions on open questions, document them, and create actionable follow-up issues if needed.
+
+**Important:** This skill does NOT invoke `superpowers:brainstorming`. Brainstorming produces specs and implementation plans — discussions produce decisions. Keep the process lightweight: research the codebase, ask clarifying questions, propose approaches, capture decisions, and document them in the issue.
 
 ## Preflight
 
@@ -96,16 +98,17 @@ Read the full issue context:
 gh issue view <number> --json title,body,labels,assignees
 ```
 
-## Phase 1: Brainstorm
+## Phase 1: Research and Explore
 
-Use the `superpowers:brainstorming` skill to explore the discussion topic with the user:
+Explore the discussion topic directly (do NOT invoke `superpowers:brainstorming`):
 
-- Ground the brainstorm in the issue's open questions and context
 - Research relevant codebase areas, prior art, and constraints
 - Check status of any sub-issues referenced in the issue body
-- Explore trade-offs and surface hidden considerations
+- Summarize the issue's open questions and current state to the user
+- Ask clarifying questions one at a time to understand the user's direction
+- Propose 2-3 approaches with trade-offs when applicable
 
-The brainstorming skill will interactively work through ideas with the user until a clear direction emerges.
+Keep it lightweight — the goal is to reach decisions, not to produce a spec or design document.
 
 ## Phase 2: Facilitate Decisions
 
@@ -118,7 +121,7 @@ Once brainstorming converges, formalize decisions on each open question:
    - Recommendation if evidence supports one
 3. **Capture decisions** — record the user's choice for each question
 
-## Phase 3: Document and Close
+## Phase 3: Document and Resolve
 
 Once all questions are resolved:
 
@@ -149,10 +152,12 @@ If the discussion concluded with a large feature or multiple work streams, use t
 
 For simpler follow-ups (individual tasks or bugs), use the `create-issue` skill for each.
 
-### 3. Close the issue
+### 3. Remove the discussion label
+
+Do NOT close the issue — the issue itself may still need implementation. Only remove the `💬 discussion` label to indicate the discussion is resolved:
 
 ```bash
-gh issue close <number>
+gh issue edit <number> --remove-label "💬 discussion"
 ```
 
 Present the summary to the user. Done.
