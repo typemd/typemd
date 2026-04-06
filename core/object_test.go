@@ -277,6 +277,25 @@ func TestVault_NewObject(t *testing.T) {
 	}
 }
 
+func TestVault_NewObject_NaturalLanguageName(t *testing.T) {
+	v := setupTestVault(t)
+
+	obj, err := v.NewObject("book", "Go in Action", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	// ID should contain the slugified version
+	if !strings.Contains(obj.ID, "go-in-action") {
+		t.Errorf("ID %q should contain slug 'go-in-action'", obj.ID)
+	}
+
+	// name property should preserve the original input
+	if obj.Properties["name"] != "Go in Action" {
+		t.Errorf("name = %v, want %q", obj.Properties["name"], "Go in Action")
+	}
+}
+
 func TestVault_NewObject_SameNameDifferentULID(t *testing.T) {
 	v := setupTestVault(t)
 

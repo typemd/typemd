@@ -467,6 +467,34 @@ func TestNewObject_DoesNotIncludeDescription(t *testing.T) {
 	}
 }
 
+// ── Description persistence (6.3) ──────────────────────────────────────────
+
+func TestSetProperty_DescriptionPersists(t *testing.T) {
+	v := setupTestVault(t)
+
+	obj, err := v.NewObject("book", "desc-test", "")
+	if err != nil {
+		t.Fatalf("NewObject() error = %v", err)
+	}
+
+	if err := v.SetProperty(obj.ID, "description", "A great book"); err != nil {
+		t.Fatalf("SetProperty() error = %v", err)
+	}
+
+	got, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject() error = %v", err)
+	}
+
+	desc, ok := got.Properties["description"].(string)
+	if !ok {
+		t.Fatalf("description should be string, got %T", got.Properties["description"])
+	}
+	if desc != "A great book" {
+		t.Errorf("description = %q, want %q", desc, "A great book")
+	}
+}
+
 // ── Graceful absence tests (6.4) ───────────────────────────────────────────
 
 func TestGetObject_WithoutTimestamps(t *testing.T) {

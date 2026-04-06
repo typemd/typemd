@@ -106,6 +106,26 @@ ai:
 	}
 }
 
+func TestInitAI_EnabledWithoutProviders(t *testing.T) {
+	dir := t.TempDir()
+	metaDir := filepath.Join(dir, ".typemd")
+	os.MkdirAll(metaDir, 0755)
+	os.WriteFile(filepath.Join(metaDir, "config.yaml"), []byte(`
+ai:
+  enabled: true
+`), 0644)
+
+	v := NewVault(dir)
+	if err := v.Open(); err != nil {
+		t.Fatalf("Open: %v", err)
+	}
+	defer v.Close()
+
+	if v.AIService() != nil {
+		t.Error("expected nil AI service when enabled without providers")
+	}
+}
+
 func TestInitAI_Disabled(t *testing.T) {
 	dir := t.TempDir()
 	metaDir := filepath.Join(dir, ".typemd")

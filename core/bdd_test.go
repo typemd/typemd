@@ -43,7 +43,7 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initDoctorSteps(ctx, dc)
 	initStarterSteps(ctx, dc)
 	initVaultConfigSteps(ctx, dc)
-	initSlugIntegrationSteps(ctx, dc)
+
 	initConfigMgmtSteps(ctx, dc)
 	initPageSteps(ctx, dc)
 	initTypeDirectorySteps(ctx, dc)
@@ -53,14 +53,13 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 	initStatsSteps(ctx, dc)
 	initRelationSyncSteps(ctx, dc)
 	initFormatSteps(ctx, dc)
-	initInstructionsSteps(ctx, dc)
 	initAIConfigSteps(ctx, dc)
 	initAIAvailabilitySteps(ctx, dc)
 	initAIMultiProviderSteps(ctx, dc)
 	initLockSteps(ctx, dc)
 	initArchiveSteps(ctx, dc)
 	initDateDisplayFormatSteps(ctx, dc)
-	initQueryFallbackSteps(ctx, dc)
+
 	initGraphSteps(ctx, dc)
 	initMigrationSteps(ctx, dc)
 }
