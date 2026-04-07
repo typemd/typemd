@@ -173,6 +173,16 @@ var defaultTypes = map[string]TypeSchema{
 		Plural: "pages",
 		Emoji:  "📄",
 	},
+	SourceTypeName: {
+		Name:   SourceTypeName,
+		Plural: "sources",
+		Emoji:  "📥",
+		Properties: []Property{
+			{Name: "url", Type: "string", Emoji: "🔗"},
+			{Name: "author", Type: "string", Emoji: "✍️"},
+			{Name: "ingested_at", Type: "date", Emoji: "📅"},
+		},
+	},
 }
 
 // ValidPropertyTypeNames returns the list of allowed property type names in display order.

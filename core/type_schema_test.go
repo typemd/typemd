@@ -86,9 +86,9 @@ properties:
 }
 
 func TestDefaultTypes_BuiltInTypes(t *testing.T) {
-	// tag and page should be built-in types
-	if len(defaultTypes) != 2 {
-		t.Errorf("len(defaultTypes) = %d, want 2 (tag + page)", len(defaultTypes))
+	// tag, page, and source should be built-in types
+	if len(defaultTypes) != 3 {
+		t.Errorf("len(defaultTypes) = %d, want 3 (tag + page + source)", len(defaultTypes))
 	}
 
 	// Verify tag
@@ -122,6 +122,27 @@ func TestDefaultTypes_BuiltInTypes(t *testing.T) {
 	}
 	if len(page.Properties) != 0 {
 		t.Errorf("page schema Properties = %d, want 0", len(page.Properties))
+	}
+
+	// Verify source
+	source, ok := defaultTypes[SourceTypeName]
+	if !ok {
+		t.Fatal("defaultTypes missing source")
+	}
+	if source.Name != SourceTypeName {
+		t.Errorf("source schema Name = %q, want %q", source.Name, SourceTypeName)
+	}
+	if source.Emoji != "📥" {
+		t.Errorf("source schema Emoji = %q, want %q", source.Emoji, "📥")
+	}
+	if source.Plural != "sources" {
+		t.Errorf("source schema Plural = %q, want %q", source.Plural, "sources")
+	}
+	if source.Unique {
+		t.Errorf("source schema Unique = true, want false")
+	}
+	if len(source.Properties) != 3 {
+		t.Errorf("source schema Properties = %d, want 3", len(source.Properties))
 	}
 
 	// book, person, note should NOT be built-in
