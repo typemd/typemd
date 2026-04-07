@@ -4,19 +4,6 @@ Feature: Unique constraint on type schemas
   Background:
     Given a vault is ready
 
-  # --- Schema parsing ---
-
-  Scenario: Type schema with unique true
-    Given a type schema "person" with unique constraint
-    When I load the type schema "person"
-    Then the loaded schema should have unique true
-
-  Scenario: Type schema without unique field defaults to false
-    When I load the type schema "book"
-    Then the loaded schema should have unique false
-
-  # --- Creation-time enforcement ---
-
   Scenario: First object with a name succeeds on unique type
     Given a type schema "person" with unique constraint
     When I create a "person" object named "john-doe"

@@ -29,7 +29,7 @@ tmd type validate --watch
 - 每個屬性必須有 `name` 和 `type`
 - `select`/`multi_select` 屬性必須定義 `options`
 - `relation` 屬性必須定義 `target`
-- 屬性名稱 `name`、`description`、`created_at`、`updated_at`、`tags`、`locked` 和 `archived` 為[系統屬性](/zh-tw/basics/properties#系統屬性)保留
+- 屬性名稱 `name`、`description`、`created_at`、`updated_at`、`tags`、`locked`、`archived`、`object_type`、`links`、`backlinks`、`created_by` 和 `updated_by` 為[系統屬性](/zh-tw/basics/properties#系統屬性)保留
 - `properties` 中的 `name` 只允許 `template` 欄位（用於 [name template](/zh-tw/basics/templates#name-template)）
 
 ### 階段 2：Object 驗證

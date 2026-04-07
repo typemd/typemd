@@ -86,7 +86,7 @@ Key behaviors:
 - **Scoped to type** — The constraint applies within a single type. Two objects of *different* types can share the same name (e.g., a `person` named "john-doe" and a `character` named "john-doe" can coexist).
 - **Case-sensitive** — Names are compared exactly. "Go" and "go" are treated as distinct names, so both are allowed even on a unique type.
 - **Built-in `tag` type** — The `tag` type has `unique: true` by default, ensuring tag names are always unique.
-- **Validation** — Running `tmd doctor` or vault-wide validation checks for duplicate names on unique types and reports any violations.
+- **Validation** — Running `tmd type validate` checks for duplicate names on unique types and reports any violations.
 
 ## Property types
 
@@ -120,7 +120,7 @@ TypeMD uses lenient validation:
 - `date` must be in YYYY-MM-DD format
 - `url` must start with http:// or https://
 - `relation` targets are checked for correct type
-- Property names `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, and `archived` are reserved for [system properties](/advanced/file-structure#system-properties) and cannot be used in type schemas. The only exception is `name`, which can appear in `properties` with a `template` field (for [name templates](/basics/templates#name-templates)).
+- Property names `name`, `description`, `created_at`, `updated_at`, `tags`, `locked`, `archived`, `object_type`, `links`, `backlinks`, `created_by`, and `updated_by` are reserved for [system properties](/basics/properties#system-properties) and cannot be used in type schemas. The only exception is `name`, which can appear in `properties` with a `template` field (for [name templates](/basics/templates#name-templates)).
 
 ## Views
 

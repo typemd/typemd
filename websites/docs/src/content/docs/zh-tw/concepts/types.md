@@ -86,7 +86,7 @@ properties:
 - **以類型為範圍** — 約束僅在單一類型內生效。不同類型的物件可以使用相同名稱（例如，一個名為「john-doe」的 `person` 和一個名為「john-doe」的 `character` 可以同時存在）。
 - **區分大小寫** — 名稱以完全比對的方式判斷。「Go」和「go」被視為不同的名稱，即使在具有唯一性約束的類型中也可以同時存在。
 - **內建 `tag` 類型** — `tag` 類型預設啟用 `unique: true`，確保標籤名稱始終唯一。
-- **驗證** — 執行 `tmd doctor` 或全域驗證時，會檢查具有唯一性約束的類型中是否有重複名稱，並回報違規項目。
+- **驗證** — 執行 `tmd type validate` 會檢查具有唯一性約束的類型中是否有重複名稱，並回報違規項目。
 
 ## 屬性型別
 
@@ -120,7 +120,7 @@ TypeMD 採用寬鬆驗證：
 - `date` 必須是 YYYY-MM-DD 格式
 - `url` 必須以 http:// 或 https:// 開頭
 - `relation` 的目標會檢查 Type 是否正確
-- 屬性名稱 `name`、`description`、`created_at`、`updated_at`、`tags`、`locked` 和 `archived` 為[系統屬性](/zh-tw/advanced/file-structure#系統屬性)保留，不能在 type schema 中使用。唯一的例外是 `name`，可以出現在 `properties` 中並搭配 `template` 欄位（用於 [name template](/zh-tw/basics/templates#name-template)）。
+- 屬性名稱 `name`、`description`、`created_at`、`updated_at`、`tags`、`locked`、`archived`、`object_type`、`links`、`backlinks`、`created_by` 和 `updated_by` 為[系統屬性](/zh-tw/basics/properties#系統屬性)保留，不能在 type schema 中使用。唯一的例外是 `name`，可以出現在 `properties` 中並搭配 `template` 欄位（用於 [name template](/zh-tw/basics/templates#name-template)）。
 
 ## View
 

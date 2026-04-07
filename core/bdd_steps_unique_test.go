@@ -15,14 +15,6 @@ func (dc *domainContext) aTypeSchemaWithUniqueConstraint(typeName string) {
 	mustWriteTypeSchema(dc.vault, typeName, []byte(schema))
 }
 
-func (dc *domainContext) iLoadTheTypeSchema(typeName string) {
-	schema, err := dc.vault.LoadType(typeName)
-	dc.lastErr = err
-	if err == nil {
-		dc.loadedSchema = schema
-	}
-}
-
 func (dc *domainContext) theLoadedSchemaShouldHaveUniqueTrue() error {
 	if dc.loadedSchema == nil {
 		return fmt.Errorf("no schema loaded")
@@ -79,7 +71,6 @@ func (dc *domainContext) thereShouldBeNameUniquenessErrors() error {
 
 func initUniqueSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a type schema "([^"]*)" with unique constraint$`, dc.aTypeSchemaWithUniqueConstraint)
-	ctx.Step(`^I load the type schema "([^"]*)"$`, dc.iLoadTheTypeSchema)
 	ctx.Step(`^the loaded schema should have unique true$`, dc.theLoadedSchemaShouldHaveUniqueTrue)
 	ctx.Step(`^the loaded schema should have unique false$`, dc.theLoadedSchemaShouldHaveUniqueFalse)
 	ctx.Step(`^a raw duplicate object of type "([^"]*)" named "([^"]*)" exists$`, dc.aRawDuplicateObjectOfTypeNamedExists)

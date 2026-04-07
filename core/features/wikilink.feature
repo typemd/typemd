@@ -159,6 +159,15 @@ Feature: Links and backlinks
     Then "my-note" should have 1 wiki-link
     And the wiki-link should have an empty resolved ID
 
+  Scenario: Type-qualified shorthand resolves by slugified name property
+    Given a vault is ready with note schemas
+    And a "book" object named "my-book" exists with property "name" set to "Clean Code"
+    And a "note" object named "source-note" exists
+    And "source-note" body contains a shorthand wiki-link "book/clean-code"
+    When I sync the index
+    Then "source-note" should have 1 wiki-link
+    And the wiki-link should resolve to "my-book"
+
   # ── Shorthand wiki-link write-back ─────────────────────────────────────────
 
   Scenario: Resolved shorthand is written back to source file
