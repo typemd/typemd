@@ -169,12 +169,17 @@ Relations are defined as `type: relation` properties. Use `bidirectional` and `i
 
 ## MCP Server
 
-Run `tmd mcp` to start a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio. AI clients (e.g. Claude Code) can query your vault through these tools:
+Run `tmd mcp` to start a [Model Context Protocol](https://modelcontextprotocol.io) server over stdio. AI clients (e.g. Claude Code) can read and write your vault through these tools:
 
 | Tool | Description |
 |------|-------------|
 | `search` | Full-text search objects, returns ID, type, and filename |
 | `get_object` | Get full object detail by ID, including properties and body |
+| `list_types` | List all available type schemas with metadata |
+| `create_object` | Create a new object with type, name, optional template, properties, and body |
+| `update_object` | Update an object's properties (merge) and/or body (replace) |
+| `link_objects` | Create a relation between two objects |
+| `unlink_objects` | Remove a relation between two objects |
 
 ## Architecture
 

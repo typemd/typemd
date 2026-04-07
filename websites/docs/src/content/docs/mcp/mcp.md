@@ -18,3 +18,8 @@ tmd mcp --vault /path/to/vault
 |------|-------------|
 | `search` | Full-text search objects; returns `id`, `type`, and `filename` |
 | `get_object` | Get full object detail by ID; returns `id`, `type`, `filename`, `properties`, and `body` |
+| `list_types` | List all available type schemas with metadata (name, plural, emoji, properties) |
+| `create_object` | Create a new object; params: `type`, `name`, optional `template`, `properties`, `body` |
+| `update_object` | Update an object's properties (merge) and/or body (replace); params: `id`, `properties`, `body` |
+| `link_objects` | Create a relation between two objects; params: `from_id`, `relation`, `to_id` |
+| `unlink_objects` | Remove a relation; params: `from_id`, `relation`, `to_id`, optional `both` |
