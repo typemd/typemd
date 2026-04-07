@@ -210,7 +210,7 @@ func (s *ObjectService) SetPropertyMultiple(id string, props map[string]any) err
 	}
 
 	for key := range props {
-		if IsComputedProperty(key) {
+		if IsNonStoredProperty(key) {
 			return fmt.Errorf("cannot set %q: computed system property is read-only", key)
 		}
 	}

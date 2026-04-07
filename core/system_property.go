@@ -93,6 +93,12 @@ func IsDerivedProperty(name string) bool {
 	return sp != nil && sp.Derived
 }
 
+// IsComputedProperty returns true if the given name is a computed system property.
+func IsComputedProperty(name string) bool {
+	sp := lookupSystemProperty(name)
+	return sp != nil && sp.Computed
+}
+
 // SystemPropertyNames returns all system property names in registry order.
 func SystemPropertyNames() []string {
 	names := make([]string, len(systemProperties))
