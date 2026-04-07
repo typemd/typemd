@@ -141,6 +141,7 @@ func resetAllFlags() {
 	graphNoRelations = false
 	graphNoWikiLinks = false
 	logOneline = false
+	importOutputFlag = ""
 
 	// Reset Cobra local flags that use cmd.Flags().GetBool() instead of
 	// package-level vars. Without this, flags set in one scenario leak
@@ -180,6 +181,7 @@ func initializeScenario(sc *godog.ScenarioContext) {
 	initWatchValidateSteps(sc, cc)
 	initGraphSteps(sc, cc)
 	initLogSteps(sc, cc)
+	initImportSteps(sc, cc)
 }
 
 func initCommonSteps(ctx *godog.ScenarioContext, cc *cmdContext) {

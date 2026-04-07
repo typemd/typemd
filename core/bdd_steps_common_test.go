@@ -72,6 +72,12 @@ type domainContext struct {
 	// sync result for wiki-link scenarios
 	syncResult *ReconcileResult
 
+	// import scan/plan/execute results
+	scanResult            *ScanResult
+	importPlan            *ImportPlan
+	importReport          *ImportReport
+	importClassifications []ObjectPlan
+
 	// GetProperty result
 	gotPropertyValue  any
 	gotPropertyExists bool

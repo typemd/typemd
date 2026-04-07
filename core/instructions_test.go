@@ -90,8 +90,8 @@ func TestGetSkillRaw_Unknown(t *testing.T) {
 
 func TestListSkills_Count(t *testing.T) {
 	skills := ListSkills()
-	if len(skills) != 2 {
-		t.Errorf("expected 2 skills, got %d", len(skills))
+	if len(skills) != 3 {
+		t.Errorf("expected 3 skills, got %d", len(skills))
 	}
 }
 
