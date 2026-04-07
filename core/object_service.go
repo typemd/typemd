@@ -171,8 +171,8 @@ func (s *ObjectService) SetProperty(id, key string, value any) error {
 		return ErrObjectLocked
 	}
 
-	if IsComputedProperty(key) {
-		return fmt.Errorf("cannot set %q: computed system property is read-only", key)
+	if IsNonStoredProperty(key) {
+		return fmt.Errorf("cannot set %q: non-stored system property is read-only", key)
 	}
 
 	schema, err := s.repo.GetSchema(obj.Type)

@@ -10,7 +10,7 @@ const (
 	ArchivedProperty    = "archived"
 )
 
-// System property name constants — computed (runtime, not stored in frontmatter).
+// System property name constants — non-stored (runtime, not in frontmatter).
 const (
 	ObjectTypeProperty = "object_type"
 	LinksProperty      = "links"
@@ -32,8 +32,9 @@ type SystemProperty struct {
 	Type      string
 	Target    string // only for relation type
 	Multiple  bool   // only for relation type
-	Immutable bool   // true for auto-managed properties (created_at, updated_at)
-	Computed  bool   // true for runtime-derived properties (not stored in frontmatter)
+	Immutable bool
+	Derived   bool
+	Computed  bool
 }
 
 // systemProperties is the authoritative registry of all system properties.
@@ -48,11 +49,12 @@ var systemProperties = []SystemProperty{
 	{Name: TagsProperty, Type: "relation", Target: TagTypeName, Multiple: true},
 	{Name: LockedProperty, Type: "checkbox"},
 	{Name: ArchivedProperty, Type: "checkbox"},
-	// Computed (runtime — not stored in frontmatter)
-	{Name: ObjectTypeProperty, Type: "text", Immutable: true, Computed: true},
+	// Derived (not stored in frontmatter)
+	{Name: ObjectTypeProperty, Type: "text", Immutable: true, Derived: true},
+	{Name: CreatedByProperty, Type: "text", Immutable: true, Derived: true},
+	// Computed (not stored in frontmatter)
 	{Name: LinksProperty, Type: "text", Immutable: true, Computed: true},
 	{Name: BacklinksProperty, Type: "text", Immutable: true, Computed: true},
-	{Name: CreatedByProperty, Type: "text", Immutable: true, Computed: true},
 	{Name: UpdatedByProperty, Type: "text", Immutable: true, Computed: true},
 }
 
@@ -78,10 +80,17 @@ func lookupSystemProperty(name string) *SystemProperty {
 	return nil
 }
 
-// IsComputedProperty returns true if the given name is a computed system property.
-func IsComputedProperty(name string) bool {
+// IsNonStoredProperty returns true if the given name is a derived or computed
+// system property (not stored in frontmatter).
+func IsNonStoredProperty(name string) bool {
 	sp := lookupSystemProperty(name)
-	return sp != nil && sp.Computed
+	return sp != nil && (sp.Derived || sp.Computed)
+}
+
+// IsDerivedProperty returns true if the given name is a derived system property.
+func IsDerivedProperty(name string) bool {
+	sp := lookupSystemProperty(name)
+	return sp != nil && sp.Derived
 }
 
 // SystemPropertyNames returns all system property names in registry order.
@@ -93,11 +102,11 @@ func SystemPropertyNames() []string {
 	return names
 }
 
-// StoredPropertyNames returns only stored (non-computed) system property names in registry order.
+// StoredPropertyNames returns only stored (non-derived, non-computed) system property names in registry order.
 func StoredPropertyNames() []string {
 	names := make([]string, 0, len(systemProperties))
 	for _, sp := range systemProperties {
-		if !sp.Computed {
+		if !sp.Derived && !sp.Computed {
 			names = append(names, sp.Name)
 		}
 	}

@@ -179,6 +179,37 @@ func (dc *domainContext) iSaveTheRawObject() {
 	dc.lastErr = dc.vault.SaveObject(obj)
 }
 
+func (dc *domainContext) iGetPropertyOnTheObject(name string) {
+	got, err := dc.vault.GetObject(dc.currentObject.ID)
+	if err != nil {
+		dc.lastErr = err
+		return
+	}
+	dc.gotPropertyValue, dc.gotPropertyExists = got.GetProperty(name)
+}
+
+func (dc *domainContext) thePropertyValueShouldBe(expected string) error {
+	val := fmt.Sprintf("%v", dc.gotPropertyValue)
+	if val != expected {
+		return fmt.Errorf("property value = %q, want %q", val, expected)
+	}
+	return nil
+}
+
+func (dc *domainContext) thePropertyShouldExist() error {
+	if !dc.gotPropertyExists {
+		return fmt.Errorf("expected property to exist, but it does not")
+	}
+	return nil
+}
+
+func (dc *domainContext) thePropertyShouldNotExist() error {
+	if dc.gotPropertyExists {
+		return fmt.Errorf("expected property to not exist, but it does (value: %v)", dc.gotPropertyValue)
+	}
+	return nil
+}
+
 func initSystemSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^"([^"]*)" should be a system property$`, dc.shouldBeASystemProperty)
 	ctx.Step(`^a type schema "([^"]*)" with a system property "([^"]*)"$`, dc.aTypeSchemaWithASystemProperty)
@@ -193,4 +224,8 @@ func initSystemSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the raw object file should not contain "([^"]*)"$`, dc.rawObjectFileShouldNotContain)
 	ctx.Step(`^"([^"]*)" should not be an immutable system property$`, dc.shouldNotBeAnImmutableSystemProperty)
 	ctx.Step(`^I save the raw object$`, dc.iSaveTheRawObject)
+	ctx.Step(`^I get property "([^"]*)" on the object$`, dc.iGetPropertyOnTheObject)
+	ctx.Step(`^the property value should be "([^"]*)"$`, dc.thePropertyValueShouldBe)
+	ctx.Step(`^the property should exist$`, dc.thePropertyShouldExist)
+	ctx.Step(`^the property should not exist$`, dc.thePropertyShouldNotExist)
 }

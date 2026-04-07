@@ -66,7 +66,7 @@ When you create an Object via the CLI (`tmd object create`), a ULID is automatic
 
 ### System properties
 
-All Objects have seven system properties managed by TypeMD. These always appear first in the frontmatter in the following fixed order:
+All Objects have seven stored system properties managed by TypeMD. These always appear first in the frontmatter in the following fixed order:
 
 | Property | Description | Mutable |
 |----------|-------------|---------|
@@ -78,9 +78,13 @@ All Objects have seven system properties managed by TypeMD. These always appear 
 | `locked` | Boolean that prevents editing when `true` | User-authored |
 | `archived` | Soft-delete flag — hides object from default queries | User-authored |
 
-System properties are followed by schema-defined properties. These names are reserved and cannot be used in type schemas or shared properties.
+Stored system properties are followed by schema-defined properties.
 
 **User-authored** properties (`name`, `description`, `tags`, `locked`, `archived`) can be overridden by object templates. **Auto-managed** properties (`created_at`, `updated_at`) cannot be overridden — they always reflect the actual creation and modification times.
+
+Additionally, five non-stored properties are resolved at runtime and never written to frontmatter: **derived** properties (`object_type`, `created_by`) have stable values inferred from structure or metadata, while **computed** properties (`links`, `backlinks`, `updated_by`) have dynamic values from content parsing or index queries. All non-stored properties are read-only. See [Properties](/basics/properties#derived-and-computed-properties) for details.
+
+All twelve system property names are reserved and cannot be used in type schemas or shared properties.
 
 For details on the frontmatter format and how to edit it manually, see [Frontmatter](/advanced/frontmatter).
 

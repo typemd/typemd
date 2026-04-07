@@ -27,7 +27,7 @@ func TestIsSystemProperty_CaseSensitive(t *testing.T) {
 
 func TestSystemPropertyNames_Order(t *testing.T) {
 	names := SystemPropertyNames()
-	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived", "object_type", "links", "backlinks", "created_by", "updated_by"}
+	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived", "object_type", "created_by", "links", "backlinks", "updated_by"}
 	if len(names) != len(expected) {
 		t.Fatalf("SystemPropertyNames() returned %d names, want %d", len(names), len(expected))
 	}
@@ -556,54 +556,69 @@ func TestSyncIndex_DoesNotAddTimestampsToExistingObjects(t *testing.T) {
 	}
 }
 
-// ── Computed system property tests ────────────────────────────────────────
+// ── Non-stored system property tests ──────────────────────────────────────
 
-func TestIsComputedProperty(t *testing.T) {
-	computed := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
-	for _, name := range computed {
-		if !IsComputedProperty(name) {
-			t.Errorf("IsComputedProperty(%q) = false, want true", name)
+func TestIsNonStoredProperty(t *testing.T) {
+	nonStored := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
+	for _, name := range nonStored {
+		if !IsNonStoredProperty(name) {
+			t.Errorf("IsNonStoredProperty(%q) = false, want true", name)
 		}
 	}
 }
 
-func TestIsComputedProperty_RejectsStoredProperties(t *testing.T) {
+func TestIsDerivedProperty(t *testing.T) {
+	derived := []string{"object_type", "created_by"}
+	for _, name := range derived {
+		if !IsDerivedProperty(name) {
+			t.Errorf("IsDerivedProperty(%q) = false, want true", name)
+		}
+	}
+	notDerived := []string{"links", "backlinks", "updated_by"}
+	for _, name := range notDerived {
+		if IsDerivedProperty(name) {
+			t.Errorf("IsDerivedProperty(%q) = true, want false", name)
+		}
+	}
+}
+
+func TestIsNonStoredProperty_RejectsStoredProperties(t *testing.T) {
 	stored := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived"}
 	for _, name := range stored {
-		if IsComputedProperty(name) {
-			t.Errorf("IsComputedProperty(%q) = true, want false", name)
+		if IsNonStoredProperty(name) {
+			t.Errorf("IsNonStoredProperty(%q) = true, want false", name)
 		}
 	}
 }
 
-func TestIsComputedProperty_RejectsNonSystemProperties(t *testing.T) {
-	if IsComputedProperty("title") {
-		t.Error("IsComputedProperty(\"title\") = true, want false")
+func TestIsNonStoredProperty_RejectsNonSystemProperties(t *testing.T) {
+	if IsNonStoredProperty("title") {
+		t.Error("IsNonStoredProperty(\"title\") = true, want false")
 	}
-	if IsComputedProperty("") {
-		t.Error("IsComputedProperty(\"\") = true, want false")
+	if IsNonStoredProperty("") {
+		t.Error("IsNonStoredProperty(\"\") = true, want false")
 	}
 }
 
-func TestComputedProperties_AreSystemProperties(t *testing.T) {
-	computed := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
-	for _, name := range computed {
+func TestNonStoredProperties_AreSystemProperties(t *testing.T) {
+	nonStored := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
+	for _, name := range nonStored {
 		if !IsSystemProperty(name) {
-			t.Errorf("IsSystemProperty(%q) = false, want true (computed properties are system properties)", name)
+			t.Errorf("IsSystemProperty(%q) = false, want true", name)
 		}
 	}
 }
 
-func TestComputedProperties_AreImmutable(t *testing.T) {
-	computed := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
-	for _, name := range computed {
+func TestNonStoredProperties_AreImmutable(t *testing.T) {
+	nonStored := []string{"object_type", "links", "backlinks", "created_by", "updated_by"}
+	for _, name := range nonStored {
 		if !IsImmutableSystemProperty(name) {
-			t.Errorf("IsImmutableSystemProperty(%q) = false, want true (computed properties are read-only)", name)
+			t.Errorf("IsImmutableSystemProperty(%q) = false, want true", name)
 		}
 	}
 }
 
-func TestSetProperty_RejectsComputedProperty(t *testing.T) {
+func TestSetProperty_RejectsNonStoredProperty(t *testing.T) {
 	v := setupTestVault(t)
 	obj, err := v.NewObject("book", "test-computed", "")
 	if err != nil {
@@ -612,14 +627,14 @@ func TestSetProperty_RejectsComputedProperty(t *testing.T) {
 
 	err = v.SetProperty(obj.ID, "object_type", "page")
 	if err == nil {
-		t.Fatal("expected error setting computed property, got nil")
+		t.Fatal("expected error setting non-stored property, got nil")
 	}
-	if !strings.Contains(err.Error(), "computed system property") {
-		t.Errorf("error should mention 'computed system property', got %q", err.Error())
+	if !strings.Contains(err.Error(), "non-stored system property") {
+		t.Errorf("error should mention 'non-stored system property', got %q", err.Error())
 	}
 }
 
-func TestOrderedPropKeys_ExcludesComputedProperties(t *testing.T) {
+func TestOrderedPropKeys_ExcludesNonStoredProperties(t *testing.T) {
 	props := map[string]any{
 		"name":        "test",
 		"created_at":  "2026-01-01T00:00:00Z",
@@ -628,8 +643,8 @@ func TestOrderedPropKeys_ExcludesComputedProperties(t *testing.T) {
 	}
 	keys := OrderedPropKeys(props, nil)
 	for _, key := range keys {
-		if IsComputedProperty(key) {
-			t.Errorf("OrderedPropKeys included computed property %q", key)
+		if IsNonStoredProperty(key) {
+			t.Errorf("OrderedPropKeys included non-stored property %q", key)
 		}
 	}
 	// Verify stored properties and non-system properties are present
@@ -645,7 +660,7 @@ func TestOrderedPropKeys_ExcludesComputedProperties(t *testing.T) {
 	}
 }
 
-func TestWriteFrontmatter_ExcludesComputedProperties(t *testing.T) {
+func TestWriteFrontmatter_ExcludesNonStoredProperties(t *testing.T) {
 	props := map[string]any{
 		"name":        "test",
 		"object_type": "book",
@@ -657,12 +672,79 @@ func TestWriteFrontmatter_ExcludesComputedProperties(t *testing.T) {
 	}
 	content := string(data)
 	if strings.Contains(content, "object_type") {
-		t.Errorf("frontmatter should not contain computed property 'object_type':\n%s", content)
+		t.Errorf("frontmatter should not contain non-stored property 'object_type':\n%s", content)
 	}
 	if !strings.Contains(content, "name:") {
 		t.Error("frontmatter should contain stored property 'name'")
 	}
 	if !strings.Contains(content, "title:") {
 		t.Error("frontmatter should contain non-system property 'title'")
+	}
+}
+
+// ── GetProperty tests ─────────────────────────────────────────────────────
+
+func TestGetProperty_ObjectType(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{"name": "test"}}
+	val, ok := obj.GetProperty("object_type")
+	if !ok {
+		t.Fatal("GetProperty(\"object_type\") should return true")
+	}
+	if val != "book" {
+		t.Errorf("GetProperty(\"object_type\") = %q, want %q", val, "book")
+	}
+}
+
+func TestGetProperty_ObjectType_EmptyType(t *testing.T) {
+	obj := &Object{Type: "", Properties: map[string]any{}}
+	val, ok := obj.GetProperty("object_type")
+	if !ok {
+		t.Fatal("GetProperty(\"object_type\") should return true even with empty type")
+	}
+	if val != "" {
+		t.Errorf("GetProperty(\"object_type\") = %q, want empty string", val)
+	}
+}
+
+func TestGetProperty_StoredProperty(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{"title": "Go in Action"}}
+	val, ok := obj.GetProperty("title")
+	if !ok {
+		t.Fatal("GetProperty(\"title\") should return true")
+	}
+	if val != "Go in Action" {
+		t.Errorf("GetProperty(\"title\") = %q, want %q", val, "Go in Action")
+	}
+}
+
+func TestGetProperty_MissingProperty(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{}}
+	val, ok := obj.GetProperty("nonexistent")
+	if ok {
+		t.Fatal("GetProperty(\"nonexistent\") should return false")
+	}
+	if val != nil {
+		t.Errorf("GetProperty(\"nonexistent\") value = %v, want nil", val)
+	}
+}
+
+func TestGetProperty_NilPropertiesMap(t *testing.T) {
+	obj := &Object{Type: "book", Properties: nil}
+	// Derived property should still work
+	val, ok := obj.GetProperty("object_type")
+	if !ok {
+		t.Fatal("GetProperty(\"object_type\") should work with nil Properties")
+	}
+	if val != "book" {
+		t.Errorf("GetProperty(\"object_type\") = %q, want %q", val, "book")
+	}
+}
+
+func TestGetProperty_UnimplementedComputedProperty(t *testing.T) {
+	obj := &Object{Type: "book", Properties: map[string]any{}}
+	// "links" is registered as computed but not yet implemented in getComputedProperty
+	val, ok := obj.GetProperty("links")
+	if ok {
+		t.Errorf("GetProperty(\"links\") should return false for unimplemented computed property, got value %v", val)
 	}
 }

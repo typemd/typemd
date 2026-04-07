@@ -25,6 +25,22 @@ Every Object supports seven system properties managed by TypeMD. These provide t
 
 These names are reserved and cannot be used in type schemas or [shared properties](#shared-properties). The only exception is `name`, which can appear in `properties` with a `template` field for [name templates](/basics/templates#name-templates).
 
+## Derived and Computed Properties
+
+In addition to the seven stored system properties above, TypeMD provides non-stored properties that are resolved at runtime — they never appear in the YAML frontmatter.
+
+| Property | Category | Source | Description |
+|----------|----------|--------|-------------|
+| `object_type` | Derived | File path `objects/<type>/` | The object's type name |
+| `created_by` | Derived | Git history | Author of the initial commit |
+| `links` | Computed | Markdown body | Outgoing wiki-link references |
+| `backlinks` | Computed | Index | Incoming wiki-link references from other objects |
+| `updated_by` | Computed | Git history | Author of the most recent commit |
+
+**Derived** properties have stable values inferred from structure or metadata — once an object exists, these values rarely change. **Computed** properties have dynamic values that may change whenever the object's content or the vault's state changes.
+
+All non-stored properties are read-only. Attempting to set them via `SetProperty` returns an error, and any values found in frontmatter are stripped on save. These names are also reserved and cannot be used in type schemas.
+
 ## Property Types
 
 Each property in a type schema has a `type` that determines what values it accepts and how they are validated.
