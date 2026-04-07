@@ -78,6 +78,32 @@ Feature: Links and backlinks
     And I sync the index
     Then "destination" should have a "backlinks" display property from "origin"
 
+  Scenario: Links appear in display properties
+    Given a vault is ready with note schemas
+    And a "note" object named "source" exists
+    And a "note" object named "target-a" exists
+    And a "note" object named "target-b" exists
+    And "source" body contains wiki-links to "target-a" and "target-b"
+    And I sync the index
+    Then "source" should have 2 "links" display properties
+    And the "links" display properties should reference "target-a" and "target-b"
+
+  Scenario: Links appear before backlinks in display order
+    Given a vault is ready with note schemas
+    And a "note" object named "alpha" exists
+    And a "note" object named "beta" exists
+    And "alpha" body contains a wiki-link to "beta"
+    And "beta" body contains a wiki-link to "alpha"
+    And I sync the index
+    Then "alpha" display properties should list "links" before "backlinks"
+
+  Scenario: Broken links are excluded from display properties
+    Given a vault is ready with note schemas
+    And a "note" object named "source" exists
+    And "source" body contains a wiki-link to "note/nobody-01jjjjjjjjjjjjjjjjjjjjjjjj"
+    And I sync the index
+    Then "source" should have 0 "links" display properties
+
   Scenario: Links without display text render with stripped ULID
     Given a vault is ready with note schemas
     And a "note" object named "my-note" exists

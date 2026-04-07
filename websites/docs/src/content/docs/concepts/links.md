@@ -68,6 +68,17 @@ backlinks: ⟵ A
 
 You don't need to maintain backlinks manually. TypeMD computes them from the wiki-link syntax in your Markdown body. When a link is removed from the source Object's body, the corresponding backlink is automatically cleaned up during the next sync.
 
+## Outgoing links
+
+When viewing an Object, its outgoing links also appear as a built-in property — showing which other Objects it references:
+
+```
+links: → B
+links: → C
+```
+
+Only resolved links are shown. Broken links (targets that don't exist) are excluded from the display.
+
 ## Links vs. Relations
 
 TypeMD has two ways to connect Objects. They serve different purposes:

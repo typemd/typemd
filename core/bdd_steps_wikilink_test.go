@@ -235,6 +235,118 @@ func (dc *domainContext) theRenderedBodyShouldNotContain(unexpected string) erro
 	return nil
 }
 
+// ── Links display property steps ────────────────────────────────────────────
+
+func (dc *domainContext) bodyContainsWikiLinksToAnd(sourceName, targetA, targetB string) {
+	source := dc.objects[sourceName]
+	objA := dc.objects[targetA]
+	objB := dc.objects[targetB]
+	if source == nil || objA == nil || objB == nil {
+		panic(fmt.Sprintf("object %q, %q, or %q not found", sourceName, targetA, targetB))
+	}
+	body := fmt.Sprintf("---\nname: %s\n---\n\nSee [[%s]] and [[%s]].\n", sourceName, objA.ID, objB.ID)
+	os.WriteFile(dc.vault.ObjectPath(source.Type, source.Filename), []byte(body), 0644)
+}
+
+func (dc *domainContext) shouldHaveNLinksDisplayProperties(name string, expected int, propKey string) error {
+	obj := dc.objects[name]
+	if obj == nil {
+		return fmt.Errorf("object %q not found", name)
+	}
+	obj, err := dc.vault.GetObject(obj.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
+	}
+	props, err := dc.vault.BuildDisplayProperties(obj)
+	if err != nil {
+		return fmt.Errorf("BuildDisplayProperties error: %v", err)
+	}
+	count := 0
+	for _, p := range props {
+		if p.Key == propKey && p.IsLink {
+			count++
+		}
+	}
+	if count != expected {
+		return fmt.Errorf("%q display properties = %d, want %d (all props: %+v)", propKey, count, expected, props)
+	}
+	return nil
+}
+
+func (dc *domainContext) theLinksDisplayPropertiesShouldReferenceAnd(propKey, targetA, targetB string) error {
+	objA := dc.objects[targetA]
+	objB := dc.objects[targetB]
+	if objA == nil || objB == nil {
+		return fmt.Errorf("object %q or %q not found", targetA, targetB)
+	}
+
+	source := dc.objects["source"]
+	if source == nil {
+		return fmt.Errorf("object %q not found", "source")
+	}
+	source, err := dc.vault.GetObject(source.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
+	}
+	props, err := dc.vault.BuildDisplayProperties(source)
+	if err != nil {
+		return fmt.Errorf("BuildDisplayProperties error: %v", err)
+	}
+
+	foundA, foundB := false, false
+	for _, p := range props {
+		if p.Key == propKey && p.IsLink {
+			if p.FromID == objA.ID {
+				foundA = true
+			}
+			if p.FromID == objB.ID {
+				foundB = true
+			}
+		}
+	}
+	if !foundA {
+		return fmt.Errorf("no %q display property referencing %q found", propKey, targetA)
+	}
+	if !foundB {
+		return fmt.Errorf("no %q display property referencing %q found", propKey, targetB)
+	}
+	return nil
+}
+
+func (dc *domainContext) displayPropertiesShouldListBefore(name, firstKey, secondKey string) error {
+	obj := dc.objects[name]
+	if obj == nil {
+		return fmt.Errorf("object %q not found", name)
+	}
+	obj, err := dc.vault.GetObject(obj.ID)
+	if err != nil {
+		return fmt.Errorf("GetObject error: %v", err)
+	}
+	props, err := dc.vault.BuildDisplayProperties(obj)
+	if err != nil {
+		return fmt.Errorf("BuildDisplayProperties error: %v", err)
+	}
+	firstIdx, secondIdx := -1, -1
+	for i, p := range props {
+		if p.Key == firstKey && firstIdx == -1 {
+			firstIdx = i
+		}
+		if p.Key == secondKey && secondIdx == -1 {
+			secondIdx = i
+		}
+	}
+	if firstIdx == -1 {
+		return fmt.Errorf("no %q display property found", firstKey)
+	}
+	if secondIdx == -1 {
+		return fmt.Errorf("no %q display property found", secondKey)
+	}
+	if firstIdx >= secondIdx {
+		return fmt.Errorf("%q (index %d) should appear before %q (index %d)", firstKey, firstIdx, secondKey, secondIdx)
+	}
+	return nil
+}
+
 // ── Shorthand wiki-link steps ───────────────────────────────────────────────
 
 func (dc *domainContext) anotherObjectNamedExists(typeName, name string) {
@@ -387,6 +499,12 @@ func initWikiLinkSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^I render the body of "([^"]*)"$`, dc.iRenderTheBodyOf)
 	ctx.Step(`^the rendered body should contain "([^"]*)"$`, dc.theRenderedBodyShouldContain)
 	ctx.Step(`^the rendered body should not contain "([^"]*)"$`, dc.theRenderedBodyShouldNotContain)
+
+	// Links display property steps
+	ctx.Step(`^"([^"]*)" body contains wiki-links to "([^"]*)" and "([^"]*)"$`, dc.bodyContainsWikiLinksToAnd)
+	ctx.Step(`^"([^"]*)" should have (\d+) "([^"]*)" display properties$`, dc.shouldHaveNLinksDisplayProperties)
+	ctx.Step(`^the "([^"]*)" display properties should reference "([^"]*)" and "([^"]*)"$`, dc.theLinksDisplayPropertiesShouldReferenceAnd)
+	ctx.Step(`^"([^"]*)" display properties should list "([^"]*)" before "([^"]*)"$`, dc.displayPropertiesShouldListBefore)
 
 	// Shorthand wiki-link steps
 	ctx.Step(`^another "([^"]*)" object named "([^"]*)" exists$`, dc.anotherObjectNamedExists)

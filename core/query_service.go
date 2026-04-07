@@ -214,6 +214,22 @@ func (s *QueryService) BuildDisplayProperties(obj *Object) ([]DisplayProperty, e
 		}
 	}
 
+	// Append outgoing links
+	wikiLinks, err := s.index.ListWikiLinks(obj.ID)
+	if err != nil {
+		return nil, fmt.Errorf("list wiki-links: %w", err)
+	}
+	for _, wl := range wikiLinks {
+		if wl.ToID == "" {
+			continue // skip broken links
+		}
+		result = append(result, DisplayProperty{
+			Key:    LinksDisplayKey,
+			IsLink: true,
+			FromID: wl.ToID,
+		})
+	}
+
 	// Append backlinks
 	backlinks, err := s.index.FindBacklinks(obj.ID)
 	if err != nil {
