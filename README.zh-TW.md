@@ -161,12 +161,17 @@ Relation 定義為 `type: relation` 屬性，使用 `bidirectional` 和 `inverse
 
 ## MCP Server
 
-執行 `tmd mcp` 啟動透過 stdio 的 [Model Context Protocol](https://modelcontextprotocol.io) server。AI 客戶端（例如 Claude Code）可以透過以下工具查詢你的 vault：
+執行 `tmd mcp` 啟動透過 stdio 的 [Model Context Protocol](https://modelcontextprotocol.io) server。AI 客戶端（例如 Claude Code）可以透過以下工具讀寫你的 vault：
 
 | 工具 | 說明 |
 |------|------|
 | `search` | 全文搜尋 Object，回傳 ID、Type 和檔名 |
 | `get_object` | 依 ID 取得完整 Object 詳情，包含屬性和內文 |
+| `list_types` | 列出所有可用的 Type Schema 及中繼資料 |
+| `create_object` | 建立新 Object，參數：`type`、`name`，可選 `template`、`properties`、`body` |
+| `update_object` | 更新 Object 的屬性（合併）和/或內文（取代） |
+| `link_objects` | 建立兩個 Object 之間的 Relation |
+| `unlink_objects` | 移除兩個 Object 之間的 Relation |
 
 ## 架構
 
@@ -174,14 +179,14 @@ TypeMD 是一個 monorepo，共用 Go 核心程式庫並提供多種介面：
 
 ```
 typemd/
-├── core/       # 核心程式庫——Object、Type、Relation、索引
-├── cmd/        # CLI 指令（Cobra）
-├── tui/        # 終端 UI（Bubble Tea）
-├── mcp/        # MCP server，用於 AI 整合
-├── web/        # Web UI — Go HTTP server + React 前端
-├── site/       # 官方網站（Astro）→ typemd.io
-├── docs/       # 文件（Starlight）→ docs.typemd.io
-└── app/        # 桌面應用程式（規劃中）
+├── core/           # 核心程式庫——Object、Type、Relation、索引
+├── cmd/            # CLI 指令（Cobra）
+├── tui/            # 終端 UI（Bubble Tea）
+├── mcp/            # MCP server，用於 AI 整合
+├── web/            # Web UI — Go HTTP server + Vue 3 前端
+├── marketplace/    # Claude Code marketplace 插件
+├── websites/       # 網站（site、docs、blog）
+└── app/            # 桌面應用程式（規劃中）
 ```
 
 所有介面共用相同的 `core` 程式庫。
@@ -190,7 +195,7 @@ typemd/
 
 - **語言**：Go
 - **TUI**：[Bubble Tea](https://github.com/charmbracelet/bubbletea) + [Lip Gloss](https://github.com/charmbracelet/lipgloss)
-- **Web UI**：React + [Tailwind CSS](https://tailwindcss.com) + [Vite](https://vite.dev)（嵌入 Go binary）
+- **Web UI**：[Vue 3](https://vuejs.org) + [Tailwind CSS](https://tailwindcss.com) + [Vite](https://vite.dev)（嵌入 Go binary）
 - **MCP**：[mcp-go](https://github.com/mark3labs/mcp-go) — Model Context Protocol server
 - **索引**：SQLite 搭配 FTS5 全文搜尋
 - **儲存**：Markdown + YAML frontmatter

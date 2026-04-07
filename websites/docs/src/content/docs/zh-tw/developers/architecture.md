@@ -17,6 +17,7 @@ graph TB
         CMD["cmd/ — CLI (Cobra)"]
         TUI["tui/ — 終端 UI (Bubble Tea)"]
         MCP["mcp/ — MCP 伺服器"]
+        WEB["web/ — Web UI"]
     end
 
     subgraph 門面
@@ -47,6 +48,7 @@ graph TB
     CMD --> V
     TUI --> V
     MCP --> V
+    WEB --> V
     V --> OS
     V --> QS
     V --> PJ
