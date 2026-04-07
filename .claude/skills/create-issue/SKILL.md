@@ -36,9 +36,16 @@ Use the `superpowers:brainstorming` skill to explore the user's idea. The brains
 - **Approach** — high-level technical direction (which packages, what patterns, key design decisions)
 - **Edge Cases** — tricky scenarios, conflicts with existing behavior, or open questions
 
-If any of these cannot be determined during brainstorming (e.g., the user wants to defer a decision), add the `discussion` label so that `resolve-issue` knows to pause and clarify before implementing.
+**Discussion detection:** After brainstorming, proactively assess whether any open questions remain — even if the user didn't explicitly flag them. Add the `discussion` label if:
 
-Once brainstorming concludes with a clear direction, proceed to the next step.
+- Any of the three sections above (Scope, Approach, Edge Cases) cannot be fully determined
+- There are multiple viable approaches with non-obvious trade-offs that weren't resolved
+- Edge cases were identified but no clear resolution was reached
+- The user explicitly wants to defer a decision
+
+When adding `discussion`, include an **Open Questions** section in the issue body listing each unresolved question. This ensures the next session (via `resolve-issue`) knows exactly what needs to be clarified before implementation.
+
+Once brainstorming concludes, proceed to the next step.
 
 ### Step 2: Check for duplicates
 
@@ -103,7 +110,7 @@ After setting the issue type, assign labels based on the feature's **impact area
 | Label | When to use |
 |---|---|
 | `💥 breaking-change` | Introduces breaking changes to public API or CLI |
-| `💬 discussion` | Needs discussion before implementation |
+| `💬 discussion` | Has open questions that need resolution before implementation (see Open Questions section in body) |
 | `📝 documentation` | Docs changes |
 | `🔩 tech-only` | Pure technical change — refactoring, dependency updates, CI fixes, internal restructuring — no user-facing spec changes |
 

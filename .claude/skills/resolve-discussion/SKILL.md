@@ -112,11 +112,19 @@ Keep it lightweight — the goal is to reach decisions, not to produce a spec or
 
 ## Phase 2: Facilitate Decisions
 
-Once brainstorming converges, formalize decisions on each open question:
+Before formalizing decisions, **critically assess whether the listed open questions are complete**. The questions recorded in the issue body were identified at creation time — new questions may have emerged since then, or the original analysis may have missed something. Specifically:
 
-1. **List open questions** extracted from the issue body
+- Review codebase findings from Phase 1 — do they reveal edge cases or constraints not covered by the listed questions?
+- Consider interactions with other features or recent changes that weren't anticipated when the issue was created
+- Think about failure modes, migration paths, backwards compatibility, or performance implications that may not have been called out
+
+If you identify additional open questions, add them to the list. All questions — whether from the issue body or newly discovered — are simply open questions that need decisions.
+
+Then formalize decisions on all open questions:
+
+1. **List all open questions**
 2. **For each question**, present:
-   - Summary of what was explored during brainstorming
+   - Summary of what was explored during Phase 1
    - Options with trade-offs (use AskUserQuestion)
    - Recommendation if evidence supports one
 3. **Capture decisions** — record the user's choice for each question
