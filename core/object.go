@@ -230,6 +230,14 @@ func (v *Vault) SetProperty(id, key string, value any) error {
 	return v.Objects.SetProperty(id, key, value)
 }
 
+// SetPropertyMultiple updates multiple properties in a single operation. Delegates to ObjectService.
+func (v *Vault) SetPropertyMultiple(id string, props map[string]any) error {
+	if v.Objects == nil {
+		return fmt.Errorf("vault not opened")
+	}
+	return v.Objects.SetPropertyMultiple(id, props)
+}
+
 // GetObject reads an object by ID. Delegates to QueryService.
 func (v *Vault) GetObject(id string) (*Object, error) {
 	return v.Queries.Get(id)

@@ -92,6 +92,17 @@ func (dc *domainContext) iLockTheSourceObject() {
 	}
 }
 
+func (dc *domainContext) iSetMultiplePropertiesOnTheObject(table *godog.Table) {
+	props := make(map[string]any)
+	for i, row := range table.Rows {
+		if i == 0 {
+			continue // skip header
+		}
+		props[row.Cells[0].Value] = row.Cells[1].Value
+	}
+	dc.lastErr = dc.vault.SetPropertyMultiple(dc.currentObject.ID, props)
+}
+
 func initLockSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^I lock the object$`, dc.iLockTheObject)
 	ctx.Step(`^I unlock the object$`, dc.iUnlockTheObject)
@@ -100,4 +111,5 @@ func initLockSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the object frontmatter should contain "([^"]*)"$`, dc.theObjectFrontmatterShouldContain)
 	ctx.Step(`^the object frontmatter should not contain "([^"]*)"$`, dc.theObjectFrontmatterShouldNotContain)
 	ctx.Step(`^I lock the source object$`, dc.iLockTheSourceObject)
+	ctx.Step(`^I set multiple properties on the object:$`, dc.iSetMultiplePropertiesOnTheObject)
 }

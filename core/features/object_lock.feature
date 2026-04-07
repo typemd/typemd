@@ -41,6 +41,15 @@ Feature: Object locking
     When I set property "title" to "New Title" on the object
     Then an error should occur
 
+  Scenario: SetPropertyMultiple on locked object returns error
+    Given a vault is ready
+    And a "book" object named "lock-setmultiple-test" exists
+    And I lock the object
+    When I set multiple properties on the object:
+      | key   | value     |
+      | title | New Title |
+    Then an error should occur
+
   Scenario: Unlocked object can be modified normally
     Given a vault is ready
     And a "book" object named "normal-book" exists
