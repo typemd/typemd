@@ -459,6 +459,18 @@ func TestRelationPicker_HelpBarShowsPick(t *testing.T) {
 	}
 }
 
+// Test: Links are not editable
+func TestRelationPicker_LinksNotEditable(t *testing.T) {
+	dp := core.DisplayProperty{
+		Key:    "links",
+		IsLink: true,
+		FromID: "person/alice-01abc",
+	}
+	if isPropertyEditable(dp) {
+		t.Error("links should not be editable")
+	}
+}
+
 // Test: Backlinks are not editable
 func TestRelationPicker_BacklinksNotEditable(t *testing.T) {
 	dp := core.DisplayProperty{

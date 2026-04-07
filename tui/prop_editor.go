@@ -114,8 +114,8 @@ func isPropertyEditable(dp core.DisplayProperty) bool {
 	if core.IsImmutableSystemProperty(dp.Key) {
 		return false
 	}
-	// Reverse relations and backlinks are always read-only
-	if dp.IsReverse || dp.IsBacklink {
+	// Links, reverse relations, and backlinks are always read-only
+	if dp.IsLink || dp.IsReverse || dp.IsBacklink {
 		return false
 	}
 	// Local properties (not in schema, not system) are read-only

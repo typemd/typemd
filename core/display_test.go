@@ -236,6 +236,11 @@ func TestFormatValue(t *testing.T) {
 			expected: "→ person/robert-martin",
 		},
 		{
+			name:     "link",
+			prop:     DisplayProperty{Key: LinksDisplayKey, IsLink: true, FromID: "person/alice-01kk39c30y47xb1dvbs8ywqv50"},
+			expected: "→ person/alice",
+		},
+		{
 			name:     "backlink",
 			prop:     DisplayProperty{Key: BacklinksDisplayKey, IsBacklink: true, FromID: "note/my-note-01kk39c30y47xb1dvbs8ywqv50"},
 			expected: "⟵ note/my-note",
@@ -395,6 +400,19 @@ func TestFormat_RelationDisplayID(t *testing.T) {
 	}
 	got := p.Format()
 	expected := "author: → person/robert-martin"
+	if got != expected {
+		t.Errorf("Format() = %q, want %q", got, expected)
+	}
+}
+
+func TestFormat_LinkDisplayID(t *testing.T) {
+	p := DisplayProperty{
+		Key:    LinksDisplayKey,
+		IsLink: true,
+		FromID: "person/alice-01kk39c30y47xb1dvbs8ywqv50",
+	}
+	got := p.Format()
+	expected := "links: → person/alice"
 	if got != expected {
 		t.Errorf("Format() = %q, want %q", got, expected)
 	}

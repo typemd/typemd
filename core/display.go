@@ -6,6 +6,9 @@ import (
 	"time"
 )
 
+// LinksDisplayKey is the property key used for outgoing wiki-links.
+const LinksDisplayKey = "links"
+
 // BacklinksDisplayKey is the property key used for wiki-link backlinks.
 const BacklinksDisplayKey = "backlinks"
 
@@ -24,6 +27,7 @@ type DisplayProperty struct {
 	Pin            int    // pin order (0 = not pinned, positive = pinned with order)
 	IsRelation     bool
 	IsReverse      bool
+	IsLink         bool
 	IsBacklink     bool
 	IsLocal        bool   // true when property exists in object but not in type schema or system properties
 	FromID         string // populated for reverse relations and backlinks
@@ -59,6 +63,9 @@ func (p DisplayProperty) asTime(layouts ...string) (time.Time, bool) {
 // FormatValue returns the formatted value without the key prefix.
 // Use this for contexts where the key is displayed separately (e.g. table columns).
 func (p DisplayProperty) FormatValue() string {
+	if p.IsLink {
+		return "→ " + displayObjectID(p.FromID)
+	}
 	if p.IsBacklink {
 		return "⟵ " + displayObjectID(p.FromID)
 	}

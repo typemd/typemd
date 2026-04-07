@@ -22,7 +22,7 @@ The TUI uses a multi-panel layout:
 | **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). All defined types appear even if they have no objects. A `+ New Type` row appears at the bottom. |
 | **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). When a type header is selected, shows the type name instead. Hidden when nothing is selected. |
 | **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content with markdown rendering (syntax markers hidden, styled text displayed). When a type header is selected, replaced by the **type editor**. |
-| **Properties** (right) | Shows schema properties, relations, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor or template editor is active. |
+| **Properties** (right) | Shows schema properties, relations, outgoing wiki-links, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor or template editor is active. |
 
 The title panel spans the full width of the right side (body + properties area).
 

@@ -61,6 +61,25 @@ The system SHALL provide a way to query all objects that link to a given object 
 - **WHEN** objects A and C both contain links to object B
 - **THEN** querying backlinks for object B returns both A and C
 
+### Requirement: Outgoing links are displayed as a built-in property
+
+The system SHALL display outgoing wiki-links as a system-level `links` property in object detail views. Only resolved links (non-empty `to_id`) SHALL be included. This property SHALL appear after reverse relations and before backlinks.
+
+#### Scenario: Object with outgoing links shows them in display properties
+
+- **WHEN** object A has resolved outgoing links to objects B and C
+- **THEN** object A's display properties include `links` entries for B and C
+
+#### Scenario: Object without outgoing links omits the property
+
+- **WHEN** object A has no wiki-links in its body
+- **THEN** object A's display properties do not include `links` entries
+
+#### Scenario: Broken links are excluded from display
+
+- **WHEN** object A has an outgoing link with empty resolved ID
+- **THEN** object A's display properties do not include a `links` entry for that target
+
 ### Requirement: Backlinks are displayed as a built-in property
 
 The system SHALL display backlinks as a system-level `backlinks` property in object detail views. This property SHALL appear after schema-defined properties and reverse relations.
