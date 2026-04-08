@@ -38,7 +38,7 @@ tags:
 
 ## 標籤參照解析
 
-同步時，TypeMD 會將名稱參照解析為完整的 Object ID。如果參照的標籤不存在，TypeMD 會自動建立它。這表示你可以在 frontmatter 中自由加入標籤，不需要先建立 tag Object——TypeMD 會幫你處理。
+同步時，TypeMD 會將名稱參照解析為完整的 Object ID。如果參照的標籤不存在，TypeMD 會自動建立一個空內文的標籤。這表示你可以在 frontmatter 中自由加入標籤，不需要先建立 tag Object——TypeMD 會幫你處理。
 
 ## 標籤 vs. Type
 

@@ -72,6 +72,8 @@ tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 使用 `--both` 來同時移除反向端。這只在 schema 中定義了 `bidirectional: true` 和 `inverse` 欄位時才有效。
 
+不加 `--both` 時，只會移除指定的那一端。目標 Object 的 inverse 屬性仍會保留參照。
+
 ## 顯示指示符
 
 檢視 Object 的屬性時，Relation 使用方向指示符來表示關聯方向：

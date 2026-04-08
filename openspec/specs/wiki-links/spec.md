@@ -65,6 +65,8 @@ The system SHALL provide a way to query all objects that link to a given object 
 
 The system SHALL display outgoing wiki-links as a system-level `links` property in object detail views. Only resolved links (non-empty `to_id`) SHALL be included. This property SHALL appear after reverse relations and before backlinks.
 
+> **Note:** The relative order between `links` and reverse relations is defined by the display property builder. BDD coverage currently verifies only that `links` appears before `backlinks`.
+
 #### Scenario: Object with outgoing links shows them in display properties
 
 - **WHEN** object A has resolved outgoing links to objects B and C
@@ -178,6 +180,11 @@ The system SHALL continue to resolve wiki-links in `[[type/name-ulid]]` format u
 
 - **WHEN** an object body contains `[[book/clean-code-01abc]]` and that exact object ID exists
 - **THEN** the link resolves with `to_id` set to `book/clean-code-01abc`
+
+#### Scenario: Full ID link is not modified in source file
+
+- **WHEN** an object body contains `[[type/name-ulid]]` (a full ID link) and sync runs
+- **THEN** the source file body retains the full ID unchanged — no write-back occurs
 
 ### Requirement: Resolved shorthand links are written back to source files
 

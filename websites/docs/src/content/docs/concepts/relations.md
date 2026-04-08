@@ -72,6 +72,8 @@ tmd relation unlink book/golang-in-action author person/alan-donovan --both
 
 Use `--both` to remove the inverse side as well. This only takes effect when the relation property has `bidirectional: true` and an `inverse` field defined in the schema.
 
+Without `--both`, only the specified side is unlinked. The inverse property on the target Object retains its reference.
+
 ## Display indicators
 
 When viewing an Object's properties, Relations use directional indicators to show the link direction:

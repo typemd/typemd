@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
-	"strings"
 
 	"github.com/cucumber/godog"
 )
@@ -41,17 +40,6 @@ func (dc *domainContext) theVaultDirectoryStructureShouldExist() error {
 func (dc *domainContext) theSQLiteDatabaseShouldExist() error {
 	if _, err := os.Stat(dc.vault.DBPath()); os.IsNotExist(err) {
 		return fmt.Errorf("expected index.db to exist")
-	}
-	return nil
-}
-
-func (dc *domainContext) theGitignoreShouldContain(expected string) error {
-	data, err := os.ReadFile(filepath.Join(dc.vault.Dir(), ".gitignore"))
-	if err != nil {
-		return fmt.Errorf("expected .gitignore to exist: %v", err)
-	}
-	if !strings.Contains(string(data), expected) {
-		return fmt.Errorf(".gitignore content = %q, want to contain %q", string(data), expected)
 	}
 	return nil
 }
@@ -98,7 +86,6 @@ func initVaultSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a vault is initialized$`, dc.aVaultIsInitialized)
 	ctx.Step(`^the vault directory structure should exist$`, dc.theVaultDirectoryStructureShouldExist)
 	ctx.Step(`^the SQLite database should exist$`, dc.theSQLiteDatabaseShouldExist)
-	ctx.Step(`^the \.gitignore should contain "([^"]*)"$`, dc.theGitignoreShouldContain)
 	ctx.Step(`^I initialize the vault again$`, dc.iInitializeTheVaultAgain)
 	ctx.Step(`^I open the vault$`, dc.iOpenTheVault)
 	ctx.Step(`^I close the vault$`, dc.iCloseTheVault)

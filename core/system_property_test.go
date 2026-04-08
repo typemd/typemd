@@ -98,6 +98,30 @@ func TestIsImmutableSystemProperty_Tags(t *testing.T) {
 	}
 }
 
+func TestIsImmutableSystemProperty_Locked(t *testing.T) {
+	if IsImmutableSystemProperty("locked") {
+		t.Error("locked should not be immutable")
+	}
+}
+
+func TestIsImmutableSystemProperty_Archived(t *testing.T) {
+	if IsImmutableSystemProperty("archived") {
+		t.Error("archived should not be immutable")
+	}
+}
+
+func TestIsSystemProperty_Locked(t *testing.T) {
+	if !IsSystemProperty("locked") {
+		t.Error("locked should be a system property")
+	}
+}
+
+func TestIsSystemProperty_Archived(t *testing.T) {
+	if !IsSystemProperty("archived") {
+		t.Error("archived should be a system property")
+	}
+}
+
 func TestIsImmutableSystemProperty_NonSystemProperty(t *testing.T) {
 	if IsImmutableSystemProperty("title") {
 		t.Error("non-system property should not be immutable")
@@ -746,5 +770,181 @@ func TestGetProperty_UnimplementedComputedProperty(t *testing.T) {
 	val, ok := obj.GetProperty("links")
 	if ok {
 		t.Errorf("GetProperty(\"links\") should return false for unimplemented computed property, got value %v", val)
+	}
+}
+
+// ── locked/archived frontmatter ordering tests ────────────────────────────
+
+func TestOrderedPropKeys_LockedAfterTags(t *testing.T) {
+	props := map[string]any{
+		"name":       "test",
+		"created_at": "2026-01-01T00:00:00Z",
+		"updated_at": "2026-01-01T00:00:00Z",
+		"tags":       []any{"tag/go"},
+		"locked":     true,
+	}
+	keys := OrderedPropKeys(props, nil)
+	tagsIdx, lockedIdx := -1, -1
+	for i, k := range keys {
+		if k == "tags" {
+			tagsIdx = i
+		}
+		if k == "locked" {
+			lockedIdx = i
+		}
+	}
+	if tagsIdx == -1 || lockedIdx == -1 {
+		t.Fatalf("tags or locked missing from keys: %v", keys)
+	}
+	if lockedIdx <= tagsIdx {
+		t.Errorf("locked (index %d) should come after tags (index %d) in frontmatter", lockedIdx, tagsIdx)
+	}
+}
+
+func TestOrderedPropKeys_ArchivedAfterLocked(t *testing.T) {
+	props := map[string]any{
+		"name":       "test",
+		"created_at": "2026-01-01T00:00:00Z",
+		"updated_at": "2026-01-01T00:00:00Z",
+		"locked":     true,
+		"archived":   true,
+	}
+	keys := OrderedPropKeys(props, nil)
+	lockedIdx, archivedIdx := -1, -1
+	for i, k := range keys {
+		if k == "locked" {
+			lockedIdx = i
+		}
+		if k == "archived" {
+			archivedIdx = i
+		}
+	}
+	if lockedIdx == -1 || archivedIdx == -1 {
+		t.Fatalf("locked or archived missing from keys: %v", keys)
+	}
+	if archivedIdx <= lockedIdx {
+		t.Errorf("archived (index %d) should come after locked (index %d) in frontmatter", archivedIdx, lockedIdx)
+	}
+}
+
+func TestSetLocked_OmitsLockedFromFrontmatterWhenUnlocked(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "omit-locked-test", "")
+	if err != nil {
+		t.Fatalf("NewObject error = %v", err)
+	}
+	if err := v.SetLocked(obj.ID, true); err != nil {
+		t.Fatalf("SetLocked(true) error = %v", err)
+	}
+	if err := v.SetLocked(obj.ID, false); err != nil {
+		t.Fatalf("SetLocked(false) error = %v", err)
+	}
+	got, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject error = %v", err)
+	}
+	if _, hasProp := got.Properties[LockedProperty]; hasProp {
+		t.Error("unlocked object should not have 'locked' property in frontmatter")
+	}
+}
+
+func TestSetArchived_OmitsArchivedFromFrontmatterWhenUnarchived(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "omit-archived-test", "")
+	if err != nil {
+		t.Fatalf("NewObject error = %v", err)
+	}
+	if err := v.SetArchived(obj.ID, true); err != nil {
+		t.Fatalf("SetArchived(true) error = %v", err)
+	}
+	if err := v.SetArchived(obj.ID, false); err != nil {
+		t.Fatalf("SetArchived(false) error = %v", err)
+	}
+	got, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject error = %v", err)
+	}
+	if _, hasProp := got.Properties[ArchivedProperty]; hasProp {
+		t.Error("unarchived object should not have 'archived' property in frontmatter")
+	}
+}
+
+// ── SetArchived / SetLocked idempotency tests ─────────────────────────────
+
+func TestSetArchived_Idempotent(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "idempotent-archive", "")
+	if err != nil {
+		t.Fatalf("NewObject error = %v", err)
+	}
+	if err := v.SetArchived(obj.ID, true); err != nil {
+		t.Fatalf("first SetArchived(true) error = %v", err)
+	}
+	if err := v.SetArchived(obj.ID, true); err != nil {
+		t.Fatalf("second SetArchived(true) error = %v", err)
+	}
+	got, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject error = %v", err)
+	}
+	if !got.IsArchived() {
+		t.Error("object should still be archived after double-archive")
+	}
+}
+
+func TestSetArchived_UnarchiveNonArchived(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "unarchive-noop", "")
+	if err != nil {
+		t.Fatalf("NewObject error = %v", err)
+	}
+	if err := v.SetArchived(obj.ID, false); err != nil {
+		t.Fatalf("SetArchived(false) on non-archived object error = %v", err)
+	}
+	got, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject error = %v", err)
+	}
+	if got.IsArchived() {
+		t.Error("object should not be archived")
+	}
+}
+
+func TestSetLocked_Idempotent(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "idempotent-lock", "")
+	if err != nil {
+		t.Fatalf("NewObject error = %v", err)
+	}
+	if err := v.SetLocked(obj.ID, true); err != nil {
+		t.Fatalf("first SetLocked(true) error = %v", err)
+	}
+	if err := v.SetLocked(obj.ID, true); err != nil {
+		t.Fatalf("second SetLocked(true) error = %v", err)
+	}
+	got, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject error = %v", err)
+	}
+	if !got.IsLocked() {
+		t.Error("object should still be locked after double-lock")
+	}
+}
+
+func TestSetLocked_UnlockAlreadyUnlocked(t *testing.T) {
+	v := setupTestVault(t)
+	obj, err := v.NewObject("book", "unlock-noop", "")
+	if err != nil {
+		t.Fatalf("NewObject error = %v", err)
+	}
+	if err := v.SetLocked(obj.ID, false); err != nil {
+		t.Fatalf("SetLocked(false) on unlocked object error = %v", err)
+	}
+	got, err := v.GetObject(obj.ID)
+	if err != nil {
+		t.Fatalf("GetObject error = %v", err)
+	}
+	if got.IsLocked() {
+		t.Error("object should not be locked")
 	}
 }

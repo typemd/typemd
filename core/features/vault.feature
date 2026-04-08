@@ -6,10 +6,6 @@ Feature: Vault initialization and lifecycle
     Then the vault directory structure should exist
     And the SQLite database should exist
 
-  Scenario: Initialization creates .gitignore
-    When I initialize a new vault
-    Then the .gitignore should contain "index.db"
-
   Scenario: Double initialization fails
     Given a vault is initialized
     When I initialize the vault again

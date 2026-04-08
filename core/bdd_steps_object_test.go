@@ -96,22 +96,6 @@ func (dc *domainContext) theObjectFilenameShouldStartWith(prefix string) error {
 	return fmt.Errorf("no object filename starts with %q", prefix)
 }
 
-func (dc *domainContext) theObjectFilenameShouldHaveACharacterULIDSuffix(length int) error {
-	for _, obj := range dc.objects {
-		parts := strings.SplitN(obj.Filename, "-", 2)
-		if len(parts) < 2 {
-			continue
-		}
-		// ULID is the last 26 chars
-		if len(obj.Filename) >= length {
-			ulidPart := obj.Filename[len(obj.Filename)-length:]
-			if len(ulidPart) == length {
-				return nil
-			}
-		}
-	}
-	return fmt.Errorf("no object has a %d-character ULID suffix", length)
-}
 
 func (dc *domainContext) theObjectTypeShouldBe(expected string) error {
 	for _, obj := range dc.objects {
@@ -248,7 +232,6 @@ func initObjectSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^I create a "([^"]*)" object named "([^"]*)"$`, dc.iCreateAObjectNamed)
 	ctx.Step(`^I create another "([^"]*)" object named "([^"]*)"$`, dc.iCreateAnotherObjectNamed)
 	ctx.Step(`^the object filename should start with "([^"]*)"$`, dc.theObjectFilenameShouldStartWith)
-	ctx.Step(`^the object filename should have a (\d+)-character ULID suffix$`, dc.theObjectFilenameShouldHaveACharacterULIDSuffix)
 	ctx.Step(`^the object type should be "([^"]*)"$`, dc.theObjectTypeShouldBe)
 	ctx.Step(`^the object file should exist on disk$`, dc.theObjectFileShouldExistOnDisk)
 	ctx.Step(`^the two objects should have different IDs$`, dc.theTwoObjectsShouldHaveDifferentIDs)

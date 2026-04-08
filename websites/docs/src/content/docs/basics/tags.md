@@ -38,7 +38,7 @@ Both forms are valid. Name-based references (like `tag/go`) are resolved to thei
 
 ## Tag reference resolution
 
-During sync, TypeMD resolves name-based tag references to their full Object IDs. If a referenced tag does not exist, TypeMD auto-creates it. This means you can freely add tags to your frontmatter without having to create the tag Object first — TypeMD handles it for you.
+During sync, TypeMD resolves name-based tag references to their full Object IDs. If a referenced tag does not exist, TypeMD auto-creates it with an empty body. This means you can freely add tags to your frontmatter without having to create the tag Object first — TypeMD handles it for you.
 
 ## Tags vs. Types
 

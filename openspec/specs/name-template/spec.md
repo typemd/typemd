@@ -28,6 +28,8 @@ A type schema MAY include a `name` entry in its `properties` array with a `templ
 - **WHEN** a type schema YAML contains `- name: name` with `template: "{{ date:YYYY-MM-DD }}"` and `emoji: 📝`
 - **THEN** schema validation SHALL return an error indicating only `template` is allowed on the `name` system property entry
 
+> **BDD coverage note:** The BDD scenario covers disallowed `type` field only. The case of `template` combined with other disallowed fields is specified here but lacks a BDD scenario.
+
 ### Requirement: Template evaluation at object creation time
 
 When `NewObject()` is called without an explicit name (empty string) and the type schema has a NameTemplate, the template SHALL be evaluated and the result used as the object's `name` property value and slug.

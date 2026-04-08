@@ -63,6 +63,8 @@ The `tmd type validate` command SHALL check all types with `unique: true` for du
 - **AND** two person objects have name "john-doe"
 - **THEN** validation SHALL report a uniqueness violation for "john-doe" in type "person" with both object IDs
 
+> **BDD coverage note:** The BDD scenario asserts that uniqueness errors are reported but does not assert the specific content (both object IDs). Consider strengthening the BDD assertion.
+
 #### Scenario: Validation skips non-unique types
 
 - **WHEN** type "book" does not have `unique: true`

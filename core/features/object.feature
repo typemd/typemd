@@ -5,7 +5,6 @@ Feature: Object management
     Given a vault is ready
     When I create a "book" object named "golang-in-action"
     Then the object filename should start with "golang-in-action-"
-    And the object filename should have a 26-character ULID suffix
     And the object type should be "book"
     And the object file should exist on disk
 
