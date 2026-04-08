@@ -54,7 +54,7 @@ Types give your knowledge base **consistency** and **queryability**:
 
 ## Built-in Types
 
-TypeMD has three built-in Types:
+TypeMD has the following built-in Types:
 
 | Type | Properties | Purpose |
 |------|------------|---------|
