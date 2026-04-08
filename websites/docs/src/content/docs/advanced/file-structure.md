@@ -111,7 +111,7 @@ properties:
     target: person
 ```
 
-Two types are built-in: `tag` (backs the `tags` system property, plural "tags", `unique: true`) and `page` (general-purpose content container, plural "pages", emoji 📄). Built-in types cannot be deleted but can be overridden by custom type schemas.
+The following types are built-in: `tag` (backs the `tags` system property, plural "tags", `unique: true`), `page` (general-purpose content container, plural "pages", emoji 📄), and `source` (tracks ingested raw materials, plural "sources", emoji 📥, with `url`, `author`, and `ingested_at` properties). Built-in types cannot be deleted but can be overridden by custom type schemas.
 
 ## Views
 

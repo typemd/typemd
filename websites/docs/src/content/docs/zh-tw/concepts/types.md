@@ -54,12 +54,13 @@ Type 為你的知識庫帶來**一致性**和**可查詢性**：
 
 ## 內建 Type
 
-TypeMD 有兩個內建 Type：
+TypeMD 有以下內建 Type：
 
 | Type | 屬性 | 用途 |
-|------|------|------|
+|------|-----|------|
+| 📄 `page` | （無） | 通用內容容器，用於自由形式的寫作 |
 | 🏷️ `tag` | color (string)、icon (string) | 支援 `tags` 系統屬性；具有 `unique: true` 以強制 name 唯一性 |
-| 📄 `page` | _（無）_ | 通用內容容器，用於自由形式的寫作 |
+| 📥 `source` | url (string)、author (string)、ingested_at (date) | 追蹤已匯入的原始素材（書籍、文章、影片） |
 
 內建 type 存在於每個 vault 中，無法刪除。你可以透過建立自訂的 `types/<name>/schema.yaml` 檔案來覆蓋它們並新增屬性。TypeMD 刻意不預設附帶 `book` 或 `note` 等帶有主觀用途的 type——你可以設計符合自己領域的 type。
 

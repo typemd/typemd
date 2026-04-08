@@ -111,7 +111,7 @@ properties:
     target: person
 ```
 
-有兩個內建 type：`tag`（支援 `tags` 系統屬性，複數形式「tags」，`unique: true`）和 `page`（通用內容容器，複數形式「pages」，emoji 📄）。內建 type 無法刪除，但可以透過自訂 type schema 覆蓋。
+內建 type 包括：`tag`（支援 `tags` 系統屬性，複數形式「tags」，`unique: true`）、`page`（通用內容容器，複數形式「pages」，emoji 📄）和 `source`（追蹤已匯入的原始素材，複數形式「sources」，emoji 📥，具有 `url`、`author` 和 `ingested_at` 屬性）。內建 type 無法刪除，但可以透過自訂 type schema 覆蓋。
 
 完整的 type schema 格式請參閱 [Type](/zh-tw/concepts/types)。
 

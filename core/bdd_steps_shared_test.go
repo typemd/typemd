@@ -242,6 +242,16 @@ properties:
 	mustWriteTypeSchema(dc.vault, typeName, []byte(content))
 }
 
+func (dc *domainContext) theLoadedSchemaPluralShouldBe(expected string) error {
+	if dc.loadedSchema == nil {
+		return fmt.Errorf("no schema loaded")
+	}
+	if dc.loadedSchema.Plural != expected {
+		return fmt.Errorf("expected plural %q, got %q", expected, dc.loadedSchema.Plural)
+	}
+	return nil
+}
+
 func (dc *domainContext) theLoadedSchemaShouldHaveEmoji(expected string) error {
 	if dc.loadedSchema == nil {
 		return fmt.Errorf("no schema loaded")
@@ -294,5 +304,6 @@ func initSharedSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^a type schema "([^"]*)" with use "([^"]*)" and description "([^"]*)"$`, dc.aTypeSchemaWithUseAndDescription)
 	ctx.Step(`^a type schema "([^"]*)" with mixed use and name properties$`, dc.aTypeSchemaWithMixedUseAndNameProperties)
 	ctx.Step(`^the loaded schema should have emoji "([^"]*)"$`, dc.theLoadedSchemaShouldHaveEmoji)
+	ctx.Step(`^the loaded schema plural should be "([^"]*)"$`, dc.theLoadedSchemaPluralShouldBe)
 	ctx.Step(`^the loaded property at index (\d+) should be "([^"]*)"$`, dc.theLoadedPropertyAtIndexShouldBe)
 }

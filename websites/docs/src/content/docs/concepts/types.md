@@ -54,12 +54,13 @@ Types give your knowledge base **consistency** and **queryability**:
 
 ## Built-in Types
 
-TypeMD has two built-in Types:
+TypeMD has the following built-in Types:
 
 | Type | Properties | Purpose |
 |------|------------|---------|
 | 🏷️ `tag` | color (string), icon (string) | Backs the `tags` system property; has `unique: true` to enforce name uniqueness |
 | 📄 `page` | _(none)_ | General-purpose content container for free-form writing |
+| 📥 `source` | url (string), author (string), ingested_at (date) | Tracks ingested raw materials (books, articles, videos) |
 
 Built-in types exist in every vault automatically and cannot be deleted. You can override them by creating a custom `types/<name>/schema.yaml` file with additional properties. TypeMD deliberately avoids shipping opinionated types like `book` or `note` — you design the types that fit your domain.
 

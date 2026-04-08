@@ -156,15 +156,18 @@ func TestSaveType_EmptyName(t *testing.T) {
 	}
 }
 
-func TestDeleteType_BuiltInTag(t *testing.T) {
-	v := setupTestVault(t)
-
-	err := v.DeleteType("tag")
-	if err == nil {
-		t.Error("expected error for built-in type")
-	}
-	if !strings.Contains(err.Error(), "cannot delete built-in type") {
-		t.Errorf("unexpected error message: %v", err)
+func TestDeleteType_BuiltInTypes(t *testing.T) {
+	for _, name := range []string{"tag", "page", "source"} {
+		t.Run(name, func(t *testing.T) {
+			v := setupTestVault(t)
+			err := v.DeleteType(name)
+			if err == nil {
+				t.Error("expected error for built-in type")
+			}
+			if !strings.Contains(err.Error(), "cannot delete built-in type") {
+				t.Errorf("unexpected error message: %v", err)
+			}
+		})
 	}
 }
 
@@ -265,15 +268,18 @@ func TestDeleteType_EmitsTypeDeletedEvent(t *testing.T) {
 	}
 }
 
-func TestDeleteType_NoEventForBuiltInType(t *testing.T) {
-	v := setupTestVault(t)
-	captured := captureEvents(v)
-
-	err := v.DeleteType("tag")
-	if err == nil {
-		t.Fatal("expected error for built-in type")
-	}
-	if len(*captured) != 0 {
-		t.Errorf("expected no events, got %d", len(*captured))
+func TestDeleteType_NoEventForBuiltInTypes(t *testing.T) {
+	for _, name := range []string{"tag", "page", "source"} {
+		t.Run(name, func(t *testing.T) {
+			v := setupTestVault(t)
+			captured := captureEvents(v)
+			err := v.DeleteType(name)
+			if err == nil {
+				t.Fatal("expected error for built-in type")
+			}
+			if len(*captured) != 0 {
+				t.Errorf("expected no events, got %d", len(*captured))
+			}
+		})
 	}
 }
