@@ -37,7 +37,7 @@ A named, typed link between two Objects. Unlike a simple hyperlink, Relations ar
 
 ## Link
 
-An inline reference to another Object using `[[type/slug-ulid]]` syntax in the Markdown body. TypeMD tracks these links and their reverse connections (backlinks).
+An inline reference to another Object written using wiki-link syntax (`[[...]]`) in the Markdown body. TypeMD tracks these links and their reverse connections (backlinks). Also called a **wiki-link**.
 
 [Learn more →](/concepts/links)
 

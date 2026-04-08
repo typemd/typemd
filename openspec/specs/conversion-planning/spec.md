@@ -1,7 +1,9 @@
 # conversion-planning Specification
 
 ## Purpose
-TBD - created by archiving change issue-381-onboarding-skill. Update Purpose after archive.
+
+Defines how `tmd import plan` generates a JSON conversion plan from scan data, determining type mappings, import order (dependency-first), and conflict status for each source file.
+
 ## Requirements
 ### Requirement: Generate a conversion plan from scan data
 The system SHALL produce a JSON plan file that maps each source file to a target type, property mapping, and import order. The plan SHALL be written to a file for user review before execution.

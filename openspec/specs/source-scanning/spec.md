@@ -1,7 +1,9 @@
 # source-scanning Specification
 
 ## Purpose
-TBD - created by archiving change issue-381-onboarding-skill. Update Purpose after archive.
+
+Defines how `tmd import scan` collects source markdown files and extracts frontmatter patterns to feed into the AI-assisted import workflow. The scan output provides the raw material for conversion planning.
+
 ## Requirements
 ### Requirement: Scan source directories for markdown files
 The system SHALL accept one or more source paths (directories or files) and scan them for markdown files. The scan SHALL collect file count, directory structure, and size distribution.

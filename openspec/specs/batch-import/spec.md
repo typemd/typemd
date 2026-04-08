@@ -1,7 +1,9 @@
 # batch-import Specification
 
 ## Purpose
-TBD - created by archiving change issue-381-onboarding-skill. Update Purpose after archive.
+
+Defines how `tmd import execute` runs a confirmed conversion plan: creating type schemas, importing objects in dependency order, and triggering a reconciliation pass to resolve wiki-links.
+
 ## Requirements
 ### Requirement: Execute a conversion plan
 The system SHALL execute a confirmed plan file: create type schemas, then create objects in dependency order, then resolve wiki-links.

@@ -1,7 +1,9 @@
 # import-verification Specification
 
 ## Purpose
-TBD - created by archiving change issue-381-onboarding-skill. Update Purpose after archive.
+
+Defines the post-execution import report: counts of created/skipped/failed items, unresolved wiki-link or relation references, and actionable follow-up suggestions.
+
 ## Requirements
 ### Requirement: Report import results
 The system SHALL produce a summary report after plan execution with counts of created, failed, and skipped items.
