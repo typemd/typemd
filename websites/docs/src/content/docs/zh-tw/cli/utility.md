@@ -14,3 +14,4 @@ description: 初始化、統計、設定等工具指令。
 | [`tmd instructions`](/zh-tw/cli/instructions/) | 輸出嵌入的 skill 指令並附帶 vault context |
 | [`tmd log`](/zh-tw/cli/log/) | 顯示特定 Object 的 git 提交歷史 |
 | [`tmd serve`](/zh-tw/cli/serve/) | 啟動 Web UI 伺服器 |
+| [`tmd import`](/zh-tw/cli/import/) | 將外部 markdown 檔案匯入 vault |

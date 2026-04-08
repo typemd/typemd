@@ -61,6 +61,9 @@ func InitializeScenario(ctx *godog.ScenarioContext) {
 
 	initGraphSteps(ctx, dc)
 	initMigrationSteps(ctx, dc)
+	initImportScanSteps(ctx, dc)
+	initImportPlanSteps(ctx, dc)
+	initImportExecuteSteps(ctx, dc)
 }
 
 func TestFeatures(t *testing.T) {

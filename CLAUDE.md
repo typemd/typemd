@@ -16,7 +16,7 @@ typemd is a local-first CLI knowledge management tool. Objects (books, people, i
   - **web/frontend/** — Vue 3 SPA with vault adapter pattern for API abstraction
 - **app/** — Desktop app via Wails + shared Vue 3 frontend (future)
 - **websites/** — Non-Go websites (site, docs, blog)
-- **marketplace/** — Claude Code marketplace plugins (typemd plugin with vault-guide, instructions-guide, explore, and importer skills)
+- **marketplace/** — Claude Code marketplace plugins (typemd plugin with vault-guide, instructions-guide, explore, importer, and onboarding skills)
 
 ## Core Package Architecture
 
