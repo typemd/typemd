@@ -5,7 +5,7 @@ date: 2026-04-07
 tags: [philosophy, architecture]
 ---
 
-Recently, Tobi Lütke shared a concept called [LLM Wiki](https://github.com/tobi/llm-wiki). The core idea: instead of having AI search through your documents from scratch every time you ask a question, have it **continuously maintain a structured knowledge base**. Every time you add a new source, the AI updates summaries, adds cross-references, and flags contradictions. Knowledge accumulates — it's not re-derived on every query.
+Recently, Tobi Lütke shared a concept called [LLM Wiki](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f). The core idea: instead of having AI search through your documents from scratch every time you ask a question, have it **continuously maintain a structured knowledge base**. Every time you add a new source, the AI updates summaries, adds cross-references, and flags contradictions. Knowledge accumulates — it's not re-derived on every query.
 
 Reading it felt like looking in a mirror. This is exactly what we've been building toward with typemd. LLM Wiki articulated what we'd been thinking more clearly than we had ourselves, and showed us angles we hadn't considered. In this post, we'll break down the concept, see where typemd stands today, and map out where we're heading next.
 
