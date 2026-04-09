@@ -1,5 +1,5 @@
 ---
-title: Relations
+title: 關聯
 description: Object 之間如何透過結構化的關聯互相連接。
 sidebar:
   order: 4

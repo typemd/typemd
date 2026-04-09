@@ -63,7 +63,7 @@ tmd object create book clean-code
 
 ### 系統屬性處理
 
-Template 可以覆蓋**使用者撰寫**的系統屬性（`name`、`description`、`tags`）。**自動管理**的系統屬性（`created_at`、`updated_at`）在 template 中會被忽略——它們永遠反映實際的建立時間。
+Template 可以覆蓋**使用者撰寫**的系統屬性（`name`、`description`、`tags`）。**自動管理**的系統屬性（`created_at`、`updated_at`）在 template 中會被忽略——它們永遠反映實際的建立時間。Template 中不屬於 type schema 定義的屬性會靜默忽略。
 
 ## Name Template
 

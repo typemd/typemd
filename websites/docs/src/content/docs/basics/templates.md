@@ -63,7 +63,7 @@ tmd object create book clean-code
 
 ### System property handling
 
-Templates can override **user-authored** system properties (`name`, `description`, `tags`). **Auto-managed** system properties (`created_at`, `updated_at`) in templates are ignored — they always reflect the actual creation time.
+Templates can override **user-authored** system properties (`name`, `description`, `tags`). **Auto-managed** system properties (`created_at`, `updated_at`) in templates are ignored — they always reflect the actual creation time. Properties in the template that are not defined in the type schema are silently ignored.
 
 ## Name Templates
 
