@@ -835,3 +835,59 @@ func TestSetPropertyLockedObjectReturnsError(t *testing.T) {
 		t.Errorf("SetProperty() error = %v, want ErrObjectLocked", err)
 	}
 }
+
+// ── Aliases frontmatter round-trip tests ───────────────────────────────────
+
+func TestWriteFrontmatter_AliasesPresent(t *testing.T) {
+	props := map[string]any{
+		"name":    "Go in Action",
+		"aliases": []string{"Go 語言", "Golang"},
+	}
+	data, err := writeFrontmatter(props, "", []string{"name", "aliases"})
+	if err != nil {
+		t.Fatalf("writeFrontmatter() error = %v", err)
+	}
+	content := string(data)
+	if !strings.Contains(content, "aliases:") {
+		t.Errorf("expected aliases key in frontmatter, got:\n%s", content)
+	}
+	if !strings.Contains(content, "Go 語言") {
+		t.Errorf("expected alias value in frontmatter, got:\n%s", content)
+	}
+}
+
+func TestWriteFrontmatter_AliasesAbsent(t *testing.T) {
+	props := map[string]any{
+		"name": "Go in Action",
+	}
+	data, err := writeFrontmatter(props, "", []string{"name", "aliases"})
+	if err != nil {
+		t.Fatalf("writeFrontmatter() error = %v", err)
+	}
+	content := string(data)
+	if strings.Contains(content, "aliases:") {
+		t.Errorf("expected no aliases key in frontmatter, got:\n%s", content)
+	}
+}
+
+func TestParseFrontmatter_AliasesRoundTrip(t *testing.T) {
+	input := "---\nname: Go in Action\naliases:\n  - Go 語言\n  - Golang\n---\n"
+	props, _, err := parseFrontmatter([]byte(input))
+	if err != nil {
+		t.Fatalf("parseFrontmatter() error = %v", err)
+	}
+	raw, ok := props["aliases"]
+	if !ok {
+		t.Fatal("aliases not found in parsed props")
+	}
+	aliases, ok := raw.([]any)
+	if !ok {
+		t.Fatalf("aliases type = %T, want []any", raw)
+	}
+	if len(aliases) != 2 {
+		t.Fatalf("aliases len = %d, want 2", len(aliases))
+	}
+	if aliases[0].(string) != "Go 語言" {
+		t.Errorf("aliases[0] = %v, want Go 語言", aliases[0])
+	}
+}

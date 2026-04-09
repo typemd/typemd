@@ -66,7 +66,7 @@ book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 
 ### 系統屬性
 
-所有 Object 都有七個由 TypeMD 管理的儲存系統屬性。這些屬性在 frontmatter 中永遠依以下固定順序排在最前面：
+所有 Object 都有八個由 TypeMD 管理的儲存系統屬性。這些屬性在 frontmatter 中永遠依以下固定順序排在最前面：
 
 | 屬性 | 說明 | 可變性 |
 |------|------|--------|
@@ -75,16 +75,17 @@ book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9txyz
 | `created_at` | 建立時間戳記，RFC 3339 格式（僅設定一次，不會修改） | 自動管理 |
 | `updated_at` | 最後修改時間戳記，RFC 3339 格式（每次儲存時更新） | 自動管理 |
 | `tags` | 標籤參照的陣列（關聯到內建 `tag` 型別，支援多值） | 使用者撰寫 |
+| `aliases` | 選填的替代名稱列表，用於 wiki-link 解析 | 使用者撰寫 |
 | `locked` | 鎖定物件，防止編輯 | 使用者撰寫 |
 | `archived` | 軟刪除標記——從預設查詢中隱藏物件 | 使用者撰寫 |
 
 儲存的系統屬性之後才是 schema 定義的屬性。
 
-**使用者撰寫**的屬性（`name`、`description`、`tags`、`locked`、`archived`）可以被 object template 覆蓋。**自動管理**的屬性（`created_at`、`updated_at`）無法被覆蓋——它們永遠反映實際的建立和修改時間。
+**使用者撰寫**的屬性（`name`、`description`、`tags`、`aliases`、`locked`、`archived`）可以被 object template 覆蓋。**自動管理**的屬性（`created_at`、`updated_at`）無法被覆蓋——它們永遠反映實際的建立和修改時間。
 
 此外，五個非儲存屬性會在執行時期解析，不會寫入 frontmatter：**衍生**屬性（`object_type`、`created_by`）的值從結構或中繼資料推導而來且穩定不變，**計算**屬性（`links`、`backlinks`、`updated_by`）的值是動態的，來自內容解析或索引查詢。所有非儲存屬性都是唯讀的。詳見[屬性](/zh-tw/basics/properties#衍生屬性與計算屬性)。
 
-全部十二個系統屬性名稱都是保留的，不能在 type schema 或 shared properties 中使用。
+全部十三個系統屬性名稱都是保留的，不能在 type schema 或 shared properties 中使用。
 
 關於 frontmatter 格式和手動編輯的詳細說明，請參閱 [Frontmatter](/zh-tw/advanced/frontmatter)。
 

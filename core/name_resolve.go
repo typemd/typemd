@@ -6,8 +6,8 @@ import (
 )
 
 // buildNameIndex populates ctx.nameIndex from walked objects.
-// For each object, it indexes both the name property value and the slug
-// (derived from the filename by stripping the ULID suffix).
+// For each object, it indexes the slug (filename without ULID), the name
+// property value, and each alias in the aliases system property.
 // nameIndex[type][key] = []objectID — multiple IDs indicate ambiguity.
 func buildNameIndex(ctx *syncContext) {
 	for _, obj := range ctx.diskObjects {
@@ -27,7 +27,37 @@ func buildNameIndex(ctx *syncContext) {
 				typeIdx[nameSlug] = append(typeIdx[nameSlug], obj.ID)
 			}
 		}
+
+		// Index by each alias
+		for _, alias := range extractAliases(obj.Properties) {
+			aliasSlug := Slugify(alias)
+			if aliasSlug != "" {
+				typeIdx[aliasSlug] = append(typeIdx[aliasSlug], obj.ID)
+			}
+		}
 	}
+}
+
+// extractAliases returns the aliases from object properties as a []string.
+// Handles both []string (in-memory) and []interface{} (from YAML parse).
+func extractAliases(props map[string]any) []string {
+	raw, ok := props[AliasesProperty]
+	if !ok || raw == nil {
+		return nil
+	}
+	switch v := raw.(type) {
+	case []string:
+		return v
+	case []any:
+		result := make([]string, 0, len(v))
+		for _, item := range v {
+			if s, ok := item.(string); ok && s != "" {
+				result = append(result, s)
+			}
+		}
+		return result
+	}
+	return nil
 }
 
 // resolveByName looks up a name within a type using the name index.

@@ -167,3 +167,99 @@ func TestResolveRelationValue_TypeOnly(t *testing.T) {
 		t.Fatal("expected error for type-only value")
 	}
 }
+
+// ── Alias index tests ──────────────────────────────────────────────────────
+
+func TestBuildNameIndex_SingleAlias(t *testing.T) {
+	ctx := &syncContext{
+		diskObjects: map[string]*Object{
+			"book/golang-in-action-01abc": {
+				ID: "book/golang-in-action-01abc", Type: "book", Filename: "golang-in-action-01abc",
+				Properties: map[string]any{
+					NameProperty:    "Go in Action",
+					AliasesProperty: []string{"Go 語言"},
+				},
+			},
+		},
+		nameIndex: make(map[string]map[string][]string),
+	}
+
+	buildNameIndex(ctx)
+
+	aliasSlug := Slugify("Go 語言")
+	ids := ctx.nameIndex["book"][aliasSlug]
+	if len(ids) != 1 || ids[0] != "book/golang-in-action-01abc" {
+		t.Errorf("expected alias %q → [book/golang-in-action-01abc], got %v", aliasSlug, ids)
+	}
+}
+
+func TestBuildNameIndex_MultipleAliases(t *testing.T) {
+	ctx := &syncContext{
+		diskObjects: map[string]*Object{
+			"book/golang-in-action-01abc": {
+				ID: "book/golang-in-action-01abc", Type: "book", Filename: "golang-in-action-01abc",
+				Properties: map[string]any{
+					NameProperty:    "Go in Action",
+					AliasesProperty: []string{"Go 語言", "Golang"},
+				},
+			},
+		},
+		nameIndex: make(map[string]map[string][]string),
+	}
+
+	buildNameIndex(ctx)
+
+	for _, alias := range []string{"Go 語言", "Golang"} {
+		aliasSlug := Slugify(alias)
+		ids := ctx.nameIndex["book"][aliasSlug]
+		if len(ids) != 1 || ids[0] != "book/golang-in-action-01abc" {
+			t.Errorf("expected alias %q (%s) → [book/golang-in-action-01abc], got %v", alias, aliasSlug, ids)
+		}
+	}
+}
+
+func TestBuildNameIndex_DuplicateAlias_Ambiguous(t *testing.T) {
+	ctx := &syncContext{
+		diskObjects: map[string]*Object{
+			"book/book-a-01abc": {
+				ID: "book/book-a-01abc", Type: "book", Filename: "book-a-01abc",
+				Properties: map[string]any{AliasesProperty: []string{"Golang"}},
+			},
+			"book/book-b-01xyz": {
+				ID: "book/book-b-01xyz", Type: "book", Filename: "book-b-01xyz",
+				Properties: map[string]any{AliasesProperty: []string{"Golang"}},
+			},
+		},
+		nameIndex: make(map[string]map[string][]string),
+	}
+
+	buildNameIndex(ctx)
+
+	aliasSlug := Slugify("Golang")
+	ids := ctx.nameIndex["book"][aliasSlug]
+	if len(ids) != 2 {
+		t.Errorf("expected 2 entries for ambiguous alias, got %d: %v", len(ids), ids)
+	}
+}
+
+func TestBuildNameIndex_AliasFromYAMLParse(t *testing.T) {
+	ctx := &syncContext{
+		diskObjects: map[string]*Object{
+			"book/go-01abc": {
+				ID: "book/go-01abc", Type: "book", Filename: "go-01abc",
+				Properties: map[string]any{
+					AliasesProperty: []any{"Golang"},
+				},
+			},
+		},
+		nameIndex: make(map[string]map[string][]string),
+	}
+
+	buildNameIndex(ctx)
+
+	aliasSlug := Slugify("Golang")
+	ids := ctx.nameIndex["book"][aliasSlug]
+	if len(ids) != 1 || ids[0] != "book/go-01abc" {
+		t.Errorf("expected alias %q → [book/go-01abc], got %v", aliasSlug, ids)
+	}
+}

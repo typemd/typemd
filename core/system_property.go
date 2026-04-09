@@ -6,6 +6,7 @@ const (
 	CreatedAtProperty   = "created_at"
 	UpdatedAtProperty   = "updated_at"
 	TagsProperty        = "tags"
+	AliasesProperty     = "aliases"
 	LockedProperty      = "locked"
 	ArchivedProperty    = "archived"
 )
@@ -28,6 +29,8 @@ const (
 
 // SystemProperty defines a system-managed property that is automatically
 // present on all objects, regardless of type schema.
+// Type uses internal type names (text, datetime, checkbox, relation, list[text])
+// which are distinct from user-facing schema property types in validPropertyTypes.
 type SystemProperty struct {
 	Name      string
 	Type      string
@@ -48,6 +51,7 @@ var systemProperties = []SystemProperty{
 	{Name: CreatedAtProperty, Type: "datetime", Immutable: true},
 	{Name: UpdatedAtProperty, Type: "datetime", Immutable: true},
 	{Name: TagsProperty, Type: "relation", Target: TagTypeName, Multiple: true},
+	{Name: AliasesProperty, Type: "list[text]"},
 	{Name: LockedProperty, Type: "checkbox"},
 	{Name: ArchivedProperty, Type: "checkbox"},
 	// Derived (not stored in frontmatter)
