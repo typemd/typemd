@@ -404,7 +404,7 @@ func updateCreate(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 			m.displayProps, _ = m.vault.BuildDisplayProperties(m.selected)
 			m.updateDetail()
 		} else {
-			m.bodyViewport.SetContent(renderBody(nil, m.bodyViewport.Width(), nil))
+			m.bodyViewport.SetContent(renderBody(nil, m.bodyViewport.Width()))
 			m.propsViewport.SetContent("")
 		}
 		return m, nil

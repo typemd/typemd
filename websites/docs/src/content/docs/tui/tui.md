@@ -21,7 +21,7 @@ The TUI uses a multi-panel layout:
 |-------|-------------|
 | **Object list** (left) | Groups objects by type. Each group header shows type emoji (if defined), type plural name, and object count (e.g. `▼ 📚 books (3)`). All defined types appear even if they have no objects. A `+ New Type` row appears at the bottom. |
 | **Title** (top-right) | Shows the selected object's type emoji, type name, and display name (e.g. `📖 book · Clean Code`). When a type header is selected, shows the type name instead. Hidden when nothing is selected. |
-| **Body** (middle-right) | Displays pinned properties (if any) at the top, followed by the object's markdown body content with markdown rendering (syntax markers hidden, styled text displayed). When a type header is selected, replaced by the **type editor**. |
+| **Body** (middle-right) | Displays the object's markdown body content with markdown rendering (syntax markers hidden, styled text displayed). When a type header is selected, replaced by the **type editor**. |
 | **Properties** (right) | Shows schema properties, relations, outgoing wiki-links, and wiki-link backlinks. Hidden by default; toggle with `p`. Auto-hides on narrow terminals (< 56 columns). Hidden when the type editor or template editor is active. |
 
 The title panel spans the full width of the right side (body + properties area).
@@ -52,9 +52,7 @@ Changes are saved immediately on each operation (no explicit save step).
 
 ## Pinned Properties
 
-Type schemas can mark properties with a `pin` value (positive integer) to highlight them at the top of the body panel. Pinned properties are sorted by pin value (lower = higher priority) and displayed as key-value lines with a separator before the body content. Properties with an emoji show the emoji alongside the value.
-
-Pinned properties are **excluded** from the Properties panel to avoid duplication.
+Type schemas can mark properties with a `pin` value (positive integer) to highlight them at the top of the Properties panel. Pinned properties are sorted by pin value (lower = higher priority) and displayed before unpinned properties, separated by a horizontal divider. Properties with an emoji show the emoji alongside the value. Pinned properties are fully editable via cursor navigation just like regular properties.
 
 ```yaml
 # types/book/schema.yaml
@@ -62,7 +60,7 @@ properties:
   - name: status
     type: select
     emoji: 📋
-    pin: 1        # displayed first in body panel
+    pin: 1        # displayed first in Properties panel
   - name: rating
     type: number
     emoji: ⭐

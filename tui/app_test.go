@@ -8,7 +8,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/charmbracelet/x/ansi"
 
 	"github.com/typemd/typemd/core"
 	tea "charm.land/bubbletea/v2"
@@ -151,7 +150,7 @@ func TestRenderBody_WithContent(t *testing.T) {
 		Properties: map[string]any{"title": "Test"},
 		Body:       "# Hello\nWorld",
 	}
-	result := renderBody(obj, 80, nil)
+	result := renderBody(obj, 80)
 	if strings.Contains(result, "book/test") {
 		t.Error("renderBody should NOT contain object ID (title moved to title panel)")
 	}
@@ -167,7 +166,7 @@ func TestRenderBody_WithContent(t *testing.T) {
 }
 
 func TestRenderBody_Nil(t *testing.T) {
-	result := renderBody(nil, 80, nil)
+	result := renderBody(nil, 80)
 	if !strings.Contains(result, "Select an object") {
 		t.Error("renderBody(nil, 80) should show placeholder")
 	}
@@ -175,37 +174,12 @@ func TestRenderBody_Nil(t *testing.T) {
 
 func TestRenderBody_EmptyBody(t *testing.T) {
 	obj := &core.Object{ID: "book/test", Body: ""}
-	result := renderBody(obj, 80, nil)
+	result := renderBody(obj, 80)
 	if !strings.Contains(result, "(empty)") {
 		t.Error("renderBody with empty body should show (empty)")
 	}
 }
 
-func TestRenderBody_PinnedPropertyNotStyled(t *testing.T) {
-	resetThemeDefaults()
-	t.Cleanup(resetThemeDefaults)
-	obj := &core.Object{
-		ID:   "book/test",
-		Body: "Some text",
-	}
-	props := []core.DisplayProperty{
-		{Key: "status", Value: "**bold value**", Pin: 1},
-	}
-	result := renderBody(obj, 80, props)
-	// The pinned property line should not have markdown styling applied.
-	// Find the line with "**bold value**".
-	for _, line := range strings.Split(result, "\n") {
-		plainLine := ansi.Strip(line)
-		if strings.Contains(plainLine, "**bold value**") {
-			// The line should NOT contain ANSI escapes (markdown styling).
-			if line != plainLine {
-				t.Error("pinned property should not have markdown styling applied")
-			}
-			return
-		}
-	}
-	t.Error("pinned property line not found in output")
-}
 
 func TestRenderProperties_WithSchema(t *testing.T) {
 	obj := &core.Object{
@@ -1110,5 +1084,26 @@ func TestModel_ReadOnly_HelpShowsEditKeyNormally(t *testing.T) {
 	}
 	if !found {
 		t.Error("helpEntries(readOnly=false) should contain edit keybinding")
+	}
+}
+
+func TestRenderProperties_PinnedFirst(t *testing.T) {
+	obj := &core.Object{ID: "book/test"}
+	props := []core.DisplayProperty{
+		{Key: "description", Value: "A book"},
+		{Key: "status", Value: "reading", Pin: 1},
+		{Key: "rating", Value: 4, Pin: 2},
+		{Key: "title", Value: "Clean Code"},
+	}
+	result := renderProperties(obj, props)
+	statusIdx := strings.Index(result, "status:")
+	ratingIdx := strings.Index(result, "rating:")
+	descIdx := strings.Index(result, "description:")
+	titleIdx := strings.Index(result, "title:")
+	if statusIdx > descIdx || statusIdx > titleIdx {
+		t.Errorf("pinned 'status' should appear before unpinned props\nresult:\n%s", result)
+	}
+	if ratingIdx > descIdx || ratingIdx > titleIdx {
+		t.Errorf("pinned 'rating' should appear before unpinned props\nresult:\n%s", result)
 	}
 }

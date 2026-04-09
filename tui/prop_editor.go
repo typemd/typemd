@@ -2,6 +2,7 @@ package tui
 
 import (
 	"fmt"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -77,23 +78,28 @@ func newPropEditor(displayProps []core.DisplayProperty, schema *core.TypeSchema)
 
 // updateItems rebuilds the item list from display properties.
 func (pe *propEditor) updateItems(displayProps []core.DisplayProperty, schema *core.TypeSchema) {
-	pe.items = nil
+	// Single pass: split into pinned and unpinned (skipping name shown in title)
+	var pinned, unpinned []core.DisplayProperty
 	for _, dp := range displayProps {
-		// Skip pinned (displayed in body) and name (displayed in title)
-		if dp.Pin > 0 || dp.Key == core.NameProperty {
+		if dp.Key == core.NameProperty {
 			continue
 		}
+		if dp.Pin > 0 {
+			pinned = append(pinned, dp)
+		} else {
+			unpinned = append(unpinned, dp)
+		}
+	}
+	// Sort pinned by Pin value, then combine
+	sort.Slice(pinned, func(i, j int) bool { return pinned[i].Pin < pinned[j].Pin })
+	ordered := append(pinned, unpinned...)
 
-		item := propItem{dp: dp}
-
-		// Determine editability
-		item.editable = isPropertyEditable(dp)
-
-		// Find schema property for type info and options
+	pe.items = make([]propItem, 0, len(ordered))
+	for _, dp := range ordered {
+		item := propItem{dp: dp, editable: isPropertyEditable(dp)}
 		if schema != nil {
 			item.schema = schema.FindProperty(dp.Key)
 		}
-
 		pe.items = append(pe.items, item)
 	}
 
@@ -125,6 +131,14 @@ func isPropertyEditable(dp core.DisplayProperty) bool {
 	// Forward relations and tags are editable via relation picker
 	// All other property types are editable via their respective editors
 	return true
+}
+
+// propLabel returns "emoji key: " or "key: " for use as an inline edit prefix.
+func propLabel(dp core.DisplayProperty) string {
+	if dp.Emoji != "" {
+		return padEmoji(dp.Emoji) + " " + dp.Key + ": "
+	}
+	return dp.Key + ": "
 }
 
 // snapToEditable moves the cursor to the nearest editable item in the given direction.
@@ -367,9 +381,15 @@ func (pe *propEditor) Render(focused bool) string {
 	b.WriteString(" Properties\n")
 	b.WriteString(" ──────────\n")
 
+	pinnedSepRendered := false
 	localSepRendered := false
 	for i, item := range pe.items {
-		// Render separator before the first local property
+		// Separator after last pinned property
+		if !pinnedSepRendered && item.dp.Pin == 0 && i > 0 && pe.items[i-1].dp.Pin > 0 {
+			b.WriteString(" ──────────\n")
+			pinnedSepRendered = true
+		}
+		// Separator before first local property
 		if item.dp.IsLocal && !localSepRendered {
 			b.WriteString(dimStyle.Render(" ── Local Properties ──") + "\n")
 			localSepRendered = true
@@ -377,38 +397,34 @@ func (pe *propEditor) Render(focused bool) string {
 
 		isCursor := focused && i == pe.cursor && item.editable
 
-		// If this item is being edited with a textinput
 		if pe.mode == propModeTextInput && i == pe.editIndex {
-			b.WriteString(fmt.Sprintf(" %s: %s\n", item.dp.Key, pe.textInput.View()))
+			b.WriteString(" " + propLabel(item.dp) + pe.textInput.View() + "\n")
 			continue
 		}
 
-		// If this item has a date picker open
 		if (pe.mode == propModeDateSegment || pe.mode == propModeDateCalendar) && i == pe.editIndex && pe.datePicker != nil {
-			b.WriteString(fmt.Sprintf(" %s: %s\n", item.dp.Key, pe.datePicker.View()))
+			b.WriteString(" " + propLabel(item.dp) + pe.datePicker.View() + "\n")
 			continue
 		}
 
-		// If this item has a select/multi-select picker open
 		if (pe.mode == propModeSelectPick || pe.mode == propModeMultiPick) && i == pe.editIndex {
 			b.WriteString(pe.renderPickerItem(item, isCursor))
 			continue
 		}
 
-		// If this item has a relation picker open
 		if (pe.mode == propModeRelationPick || pe.mode == propModeRelationMultiPick) && i == pe.editIndex {
 			b.WriteString(pe.renderRelationPicker(item, isCursor))
 			continue
 		}
 
-		// Normal display
-		formatted := item.dp.Format()
+		label := propLabel(item.dp) + item.dp.FormatValue()
+		var formatted string
 		if isCursor {
-			formatted = highlightStyle.Render("▸" + formatted)
+			formatted = highlightStyle.Render("▸" + label)
 		} else if !item.editable {
-			formatted = dimStyle.Render(" " + formatted)
+			formatted = dimStyle.Render(" " + label)
 		} else {
-			formatted = " " + formatted
+			formatted = " " + label
 		}
 
 		b.WriteString(formatted + "\n")

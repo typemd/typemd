@@ -50,12 +50,12 @@ The cursor SHALL skip read-only properties during navigation. Read-only properti
 - **WHEN** the user navigates with j/k in the properties panel
 - **THEN** local properties (IsLocal=true) SHALL be skipped
 
-### Requirement: Pinned properties excluded from cursor
-Pinned properties (Pin > 0) are displayed in the body panel, not the properties panel. They SHALL NOT appear in cursor navigation.
+### Requirement: Pinned properties appear first in cursor navigation
+Pinned properties (Pin > 0) are displayed at the top of the Properties panel (sorted by pin value ascending). They SHALL appear in cursor navigation like any other property — editable pinned properties SHALL be navigable and editable.
 
-#### Scenario: Pinned properties not in cursor list
+#### Scenario: Pinned properties in cursor list
 - **WHEN** a property has Pin > 0
-- **THEN** it SHALL NOT appear in the properties panel cursor navigation
+- **THEN** it SHALL appear at the top of the properties panel cursor navigation, sorted by pin value
 
 ### Requirement: Name property excluded from cursor
 The `name` property is displayed in the title panel and edited via rename. It SHALL NOT appear in cursor navigation.

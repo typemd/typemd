@@ -25,7 +25,7 @@ func (m model) selectedTypeEmoji() string {
 
 // updateDetail refreshes viewport contents with current selected object.
 func (m *model) updateDetail() {
-	bodyContent := renderBody(m.selected, m.bodyViewport.Width(), m.displayProps)
+	bodyContent := renderBody(m.selected, m.bodyViewport.Width())
 	if m.softWrap && m.bodyViewport.Width() > 0 {
 		bodyContent = softWrapLines(bodyContent, m.bodyViewport.Width())
 	}
@@ -86,7 +86,7 @@ func (m model) View() tea.View {
 			// Object detail within view mode — full-width body only
 			m.bodyViewport.SetWidth(m.width - bdr - 2)
 			m.bodyViewport.SetHeight(bodyH - bdr)
-			m.bodyViewport.SetContent(renderBody(m.selected, m.width-bdr-2, m.displayProps))
+			m.bodyViewport.SetContent(renderBody(m.selected, m.width-bdr-2))
 
 			bodyStyle := lipgloss.NewStyle().
 				Border(lipgloss.RoundedBorder()).

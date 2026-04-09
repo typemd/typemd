@@ -47,8 +47,8 @@ func renderTitleContent(obj *core.Object, typeName, emoji string, width int) str
 	return title + badge
 }
 
-// renderBody builds the body panel content: pinned properties at top, then markdown body.
-func renderBody(obj *core.Object, width int, displayProps []core.DisplayProperty) string {
+// renderBody builds the body panel content: markdown body only.
+func renderBody(obj *core.Object, width int) string {
 	if obj == nil {
 		return "  Select an object to view details."
 	}
@@ -56,26 +56,9 @@ func renderBody(obj *core.Object, width int, displayProps []core.DisplayProperty
 	var b strings.Builder
 	body := strings.TrimSpace(obj.Body)
 
-	// Pinned properties section
-	pinned := pinnedProperties(displayProps)
-	if len(pinned) > 0 {
-		for _, p := range pinned {
-			if p.Emoji != "" {
-				b.WriteString(fmt.Sprintf(" %s %s\n", padEmoji(p.Emoji), p.Format()))
-			} else {
-				b.WriteString(fmt.Sprintf(" %s\n", p.Format()))
-			}
-		}
-		// Separator only if there is body content
-		if body != "" {
-			b.WriteString(" ────────────────────\n")
-		}
-	}
-
-	// Body section
-	if body == "" && len(pinned) == 0 {
+	if body == "" {
 		b.WriteString(" (empty)\n")
-	} else if body != "" {
+	} else {
 		body = renderMarkdown(body)
 		body = core.RenderWikiLinksStyled(body, wikiLinkStyle)
 		for _, line := range strings.Split(body, "\n") {
@@ -113,17 +96,25 @@ func renderProperties(obj *core.Object, displayProps []core.DisplayProperty) str
 	b.WriteString(" Properties\n")
 	b.WriteString(" ──────────\n")
 
-	// Filter out pinned properties and name (shown in title panel)
+	// Pinned properties first (sorted by Pin), then unpinned; name shown in title panel
+	pinned := pinnedProperties(displayProps)
 	var unpinned []core.DisplayProperty
 	for _, p := range displayProps {
-		if p.Pin == 0 && p.Key != core.NameProperty {
-			unpinned = append(unpinned, p)
+		if p.Key == core.NameProperty || p.Pin > 0 {
+			continue
 		}
+		unpinned = append(unpinned, p)
 	}
 
-	if len(unpinned) == 0 {
+	if len(pinned)+len(unpinned) == 0 {
 		b.WriteString(" (none)\n")
 	} else {
+		for _, p := range pinned {
+			b.WriteString(fmt.Sprintf(" %s\n", p.Format()))
+		}
+		if len(pinned) > 0 && len(unpinned) > 0 {
+			b.WriteString(" ──────────\n")
+		}
 		for _, p := range unpinned {
 			b.WriteString(fmt.Sprintf(" %s\n", p.Format()))
 		}

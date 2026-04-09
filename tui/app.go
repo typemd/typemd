@@ -910,7 +910,7 @@ func Start(vaultPath string, readOnly bool) error {
 	}
 
 	bodyVP := viewport.New()
-	bodyVP.SetContent(renderBody(selected, 0, displayProps))
+	bodyVP.SetContent(renderBody(selected, 0))
 	propsVP := viewport.New()
 	propsVP.SetContent(renderProperties(selected, displayProps))
 

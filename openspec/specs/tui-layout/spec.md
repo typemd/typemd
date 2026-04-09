@@ -83,33 +83,29 @@ Within a single type schema, no two properties SHALL have the same non-zero pin 
 - **WHEN** a type schema has three properties where two have no pin and one has `pin: 1`
 - **THEN** schema validation SHALL accept it without error
 
-### Requirement: Pinned properties displayed at top of body panel
+### Requirement: Pinned properties displayed at top of Properties panel
 
-Properties with a non-zero `pin` value SHALL be rendered at the top of the body panel, above the markdown body content. Pinned properties SHALL be sorted by pin value ascending (lower number first). When a property has an emoji defined, it SHALL be displayed alongside the pinned value.
+Properties with a non-zero `pin` value SHALL be rendered at the top of the Properties panel, sorted by pin value ascending (lower number first). A horizontal separator SHALL appear between the pinned group and the remaining properties. The body panel SHALL display only the markdown body content — pinned properties are NOT shown in the body panel.
 
-#### Scenario: Pinned property rendered in body panel
+#### Scenario: Pinned property rendered at top of Properties panel
 - **WHEN** a type schema has property "status" with `pin: 1` and `emoji: 📋`
 - **AND** the object has `status: reading`
-- **THEN** the body panel SHALL display `📋 status: reading` at the top, before the markdown body
+- **THEN** the Properties panel SHALL display `📋 status: reading` at the top, before other properties
 
-#### Scenario: Separator between pinned properties and body
-- **WHEN** an object has pinned properties and non-empty body content
-- **THEN** a horizontal separator SHALL appear between the pinned properties and the body content
+#### Scenario: Separator between pinned and unpinned properties
+- **WHEN** an object has both pinned and unpinned properties
+- **THEN** a horizontal separator SHALL appear between the pinned group and the unpinned group
 
-#### Scenario: No separator when no body content
-- **WHEN** an object has pinned properties but empty body content
-- **THEN** the pinned properties SHALL be displayed without a trailing separator
+#### Scenario: No separator when no unpinned properties
+- **WHEN** an object has only pinned properties (or only unpinned properties)
+- **THEN** no separator SHALL appear
 
-### Requirement: Pinned properties excluded from Properties panel
-
-Properties with a non-zero `pin` value SHALL NOT appear in the Properties panel. Only unpinned properties (pin = 0) SHALL be displayed in the Properties panel.
-
-#### Scenario: Pinned property absent from Properties panel
-- **WHEN** a type schema has property "status" with `pin: 1`
-- **THEN** "status" SHALL NOT appear in the Properties panel
+#### Scenario: Body panel contains only markdown
+- **WHEN** an object with pinned properties is selected
+- **THEN** the body panel SHALL display only the markdown body content, without any pinned property lines
 
 ### Requirement: Properties panel displays property values
-The properties panel SHALL display unpinned, non-name properties. When the properties panel is focused, properties SHALL display with a cursor indicator on the currently selected property. Editable properties SHALL be visually distinguished from read-only properties.
+The properties panel SHALL display all non-name properties, with pinned properties sorted first. When the properties panel is focused, properties SHALL display with a cursor indicator on the currently selected property. Editable properties SHALL be visually distinguished from read-only properties.
 
 #### Scenario: Cursor indicator on focused panel
 - **WHEN** the properties panel gains focus via Tab

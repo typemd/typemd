@@ -104,12 +104,12 @@ Beyond `name` and `type`, properties support optional attributes:
 |-----------|------|-------------|
 | `emoji` | string | Visual icon for compact display (must be unique within the type) |
 | `description` | string | Free-text documentation of the property's purpose |
-| `pin` | integer | Positive integer for prominent display at the top of the TUI body panel. Lower values appear first. Pinned properties are excluded from the Properties panel. |
+| `pin` | integer | Positive integer for prominent display at the top of the TUI Properties panel. Lower values appear first. Pinned properties are sorted before unpinned ones and separated by a horizontal divider. |
 | `default` | any | Default value assigned when creating a new object |
 
 **Why emoji?** In compact UI contexts (TUI properties panel, table columns), property names consume significant horizontal space. Emojis provide a space-efficient visual identifier that is instantly recognizable.
 
-**Why pin?** Without pinning, all properties are displayed equally in the Properties panel. Users must scan the full list to find key metadata like status or rating. Pinning lets type authors mark specific properties for prominent display at the top of the body panel.
+**Why pin?** Without pinning, all properties are displayed equally in the Properties panel. Users must scan the full list to find key metadata like status or rating. Pinning lets type authors mark specific properties for prominent display at the top of the Properties panel, separated from the rest by a divider.
 
 ### Pin example
 

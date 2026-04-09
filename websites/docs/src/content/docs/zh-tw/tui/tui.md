@@ -21,7 +21,7 @@ TUI 使用多面板版面配置：
 |------|------|
 | **Object 列表**（左側） | 依 type 分群顯示 object。群組標題會顯示 type emoji（若有定義）、type 複數名稱和 object 數量（如 `▼ 📚 books (3)`）。所有已定義的 type 都會顯示，即使沒有 object。底部有 `+ New Type` 項目。 |
 | **標題**（右上方） | 顯示所選 object 的 type emoji、type 名稱和顯示名稱（如 `📖 book · Clean Code`）。選取 type 標題時顯示 type 名稱。無選取時隱藏。 |
-| **內文**（右中） | 頂部顯示釘選屬性（若有），接著顯示 object 的 markdown 內文內容。選取 type 標題時會替換為 **type 編輯器**。 |
+| **內文**（右中） | 顯示 object 的 markdown 內文內容。選取 type 標題時會替換為 **type 編輯器**。 |
 | **屬性**（右側） | 顯示 schema 屬性、Relation 和 wiki-link 反向連結。預設隱藏，可用 `p` 切換。在窄終端（< 56 欄）上會自動隱藏。Type 編輯器或樣板編輯器啟用時隱藏。 |
 
 標題面板橫跨整個右側寬度（內文 + 屬性區域）。
@@ -52,9 +52,7 @@ TUI 使用多面板版面配置：
 
 ## 釘選屬性
 
-Type schema 可以為屬性設定 `pin` 值（正整數），將其顯示在內文面板的頂部。釘選屬性會依 pin 值排序（數值越小優先順序越高），以 key-value 的形式顯示，並在內文內容前加上分隔線。設有 emoji 的屬性會在值旁邊顯示 emoji。
-
-釘選屬性會從屬性面板中**排除**，以避免重複顯示。
+Type schema 可以為屬性設定 `pin` 值（正整數），將其顯示在屬性面板的頂部。釘選屬性會依 pin 值排序（數值越小優先順序越高），顯示在未釘選屬性之前，並以水平分隔線區隔。設有 emoji 的屬性會在值旁邊顯示 emoji。釘選屬性可透過游標導覽正常編輯。
 
 ```yaml
 # types/book/schema.yaml
@@ -62,7 +60,7 @@ properties:
   - name: status
     type: select
     emoji: 📋
-    pin: 1        # 在內文面板中最先顯示
+    pin: 1        # 在屬性面板中最先顯示
   - name: rating
     type: number
     emoji: ⭐
