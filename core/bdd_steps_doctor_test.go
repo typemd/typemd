@@ -93,6 +93,19 @@ func (dc *domainContext) anOrphanObjectDirectoryExists(dirName string) {
 	os.MkdirAll(orphanDir, 0755)
 }
 
+// anOutOfBandObjectExists writes a valid object file directly under
+// ObjectsDir without going through ObjectService, so the SQLite index
+// has no record of it. This simulates the "index is out of sync" state
+// that the Index doctor category should detect and auto-fix.
+func (dc *domainContext) anOutOfBandObjectExists(relPath string) {
+	fullPath := filepath.Join(dc.vault.ObjectsDir(), relPath)
+	os.MkdirAll(filepath.Dir(fullPath), 0755)
+	base := filepath.Base(relPath)
+	name := base[:len(base)-len(filepath.Ext(base))]
+	content := fmt.Sprintf("---\nname: %s\n---\n", name)
+	os.WriteFile(fullPath, []byte(content), 0644)
+}
+
 func initDoctorSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^I run doctor$`, dc.iRunDoctor)
 	ctx.Step(`^the doctor report should have (\d+) categories$`, dc.theDoctorReportShouldHaveNCategories)
@@ -102,4 +115,5 @@ func initDoctorSteps(ctx *godog.ScenarioContext, dc *domainContext) {
 	ctx.Step(`^the doctor report should have (\d+) auto-fixed$`, dc.theDoctorReportShouldHaveNAutoFixed)
 	ctx.Step(`^a corrupted object file exists at "([^"]*)"$`, dc.aCorruptedObjectFileExistsAt)
 	ctx.Step(`^an orphan object directory "([^"]*)" exists$`, dc.anOrphanObjectDirectoryExists)
+	ctx.Step(`^an out-of-band object "([^"]*)" exists$`, dc.anOutOfBandObjectExists)
 }

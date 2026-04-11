@@ -77,7 +77,7 @@ func ScanCorruptedFiles(v *Vault) []CorruptedFile {
 	return corrupted
 }
 
-// RunDoctor performs a comprehensive vault health check across 7 categories.
+// RunDoctor performs a comprehensive vault health check across 8 categories.
 func RunDoctor(v *Vault) *DoctorReport {
 	report := &DoctorReport{}
 
@@ -90,6 +90,7 @@ func RunDoctor(v *Vault) *DoctorReport {
 
 	// Structural integrity checks
 	report.Categories = append(report.Categories, checkCorruptedFiles(v))
+	report.Categories = append(report.Categories, checkIndexSync(v))
 	report.Categories = append(report.Categories, checkOrphans(v))
 
 	return report
@@ -129,6 +130,35 @@ func checkCorruptedFiles(v *Vault) DoctorCategory {
 			Message:  fmt.Sprintf("%s: %s", cf.Path, cf.Error),
 		})
 	}
+	return cat
+}
+
+// checkIndexSync verifies the SQLite index matches files on disk. If out of
+// sync, it reconciles and projects the deltas, reporting the number of
+// object-level fixes (synced + deleted) as AutoFixed so that the result does
+// not count toward the exit code.
+func checkIndexSync(v *Vault) DoctorCategory {
+	cat := DoctorCategory{Name: "Index"}
+	events, result, err := v.Reconcile()
+	if err != nil {
+		cat.Issues = append(cat.Issues, DoctorIssue{
+			Severity: SeverityError,
+			Message:  fmt.Sprintf("reconcile failed: %s", err),
+		})
+		return cat
+	}
+	fixed := result.Synced + result.Deleted
+	if fixed == 0 {
+		return cat
+	}
+	if err := v.Project(events); err != nil {
+		cat.Issues = append(cat.Issues, DoctorIssue{
+			Severity: SeverityError,
+			Message:  fmt.Sprintf("project failed: %s", err),
+		})
+		return cat
+	}
+	cat.AutoFixed = fixed
 	return cat
 }
 
