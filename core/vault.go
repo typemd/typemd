@@ -31,6 +31,7 @@ type Vault struct {
 	sharedProperties  []Property
 	sharedPropsMap    map[string]Property
 	sharedPropsLoaded bool
+	openReconcile     *ReconcileResult // result of the Open-time reconcile, for consumers that need it after Open
 }
 
 // NewVault creates a Vault rooted at the given directory.
@@ -153,17 +154,28 @@ func (v *Vault) Open() error {
 		return fmt.Errorf("ensure schema: %w", err)
 	}
 
-	events, _, err := v.Reconcile()
+	events, result, err := v.Reconcile()
 	if err != nil {
 		v.closeInternal()
 		return fmt.Errorf("reconcile: %w", err)
 	}
+	v.openReconcile = result
 	if err := v.Project(events); err != nil {
 		v.closeInternal()
 		return fmt.Errorf("project: %w", err)
 	}
 
 	return nil
+}
+
+// TakeOpenReconcileResult returns the ReconcileResult produced during Open()
+// and clears it. Consumers (e.g. the TUI) call this once after Open() to
+// surface unresolved references as warnings without re-running the reconcile.
+// Returns nil on subsequent calls or if Open() was never called.
+func (v *Vault) TakeOpenReconcileResult() *ReconcileResult {
+	r := v.openReconcile
+	v.openReconcile = nil
+	return r
 }
 
 // initAI initializes the AI service based on the configured provider.

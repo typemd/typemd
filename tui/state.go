@@ -27,7 +27,11 @@ type SessionState struct {
 	ViewScroll        int      `yaml:"view_scroll,omitempty"`
 	ViewExpandedGroups []string `yaml:"view_expanded_groups,omitempty"`
 
-	// Stats mode state (present only when TUI was in stats mode on exit)
+	// Stats mode state (present only when TUI was in stats mode on exit).
+	// StatsActive is the canonical marker of "TUI was in stats mode on exit";
+	// the cursor/scroll fields default to 0 and would otherwise be stripped by
+	// `omitempty`, making the presence-of-stats-mode signal ambiguous.
+	StatsActive   bool   `yaml:"stats_active,omitempty"`
 	StatsCursor   int    `yaml:"stats_cursor,omitempty"`
 	StatsScroll   int    `yaml:"stats_scroll,omitempty"`
 	StatsTypeName string `yaml:"stats_type_name,omitempty"`
@@ -97,6 +101,7 @@ func (m model) captureState() SessionState {
 
 	// Capture stats mode state when active
 	if m.rightPanel == panelStats && m.statsMode != nil {
+		state.StatsActive = true
 		state.StatsCursor = m.statsMode.cursor
 		state.StatsScroll = m.statsMode.scroll
 		if m.statsMode.screen == statsDetail {
@@ -180,6 +185,11 @@ func applySessionState(state SessionState, groups []typeGroup) (cursor int, sele
 
 // restoreViewMode attempts to restore view mode from saved session state.
 // Returns a non-nil *viewMode if restoration succeeds, nil otherwise (fallback to sidebar).
+//
+// Fallback chain (tui-session-state spec R10):
+//   - Saved viewName resolves → use it with saved cursor/scroll/expanded groups.
+//   - Saved viewName missing but "default" exists → fall back to default view, reset cursor/scroll.
+//   - Neither saved nor default resolve → return nil (sidebar mode).
 func restoreViewMode(state SessionState, v *core.Vault) *viewMode {
 	if state.ViewTypeName == "" || state.ViewName == "" {
 		return nil
@@ -190,7 +200,17 @@ func restoreViewMode(state SessionState, v *core.Vault) *viewMode {
 		return nil
 	}
 
-	// Reuse newViewMode which handles view loading, querying, and group building
+	// When the saved view is gone, fall back to "default" so the user lands
+	// on a valid view rather than seeing the stale name in the title
+	// (tui-session-state spec R10 S1). The implicit default view is always
+	// available, so no further fallback is needed. Also skip the cursor /
+	// scroll / expanded-groups restore below — they reference the old view
+	// and would be misleading when applied against the default.
+	_, saveErr := v.LoadView(state.ViewTypeName, state.ViewName)
+	if saveErr != nil && state.ViewName != "default" {
+		return newViewMode(state.ViewTypeName, "default", v)
+	}
+
 	vm := newViewMode(state.ViewTypeName, state.ViewName, v)
 
 	// Apply expanded groups from state
@@ -220,7 +240,13 @@ func restoreViewMode(state SessionState, v *core.Vault) *viewMode {
 // Returns a non-nil *statsMode if restoration succeeds, nil otherwise.
 // Stats state takes precedence over view state when both are present.
 func restoreStatsMode(state SessionState, v *core.Vault) *statsMode {
-	hasStatsState := state.StatsTypeName != "" || state.StatsCursor > 0 || state.StatsScroll > 0
+	// Presence of stats_active is the canonical marker. For backwards
+	// compatibility with state files written before stats_active existed,
+	// still restore when any of the other stats_* fields are non-zero.
+	hasStatsState := state.StatsActive ||
+		state.StatsTypeName != "" ||
+		state.StatsCursor > 0 ||
+		state.StatsScroll > 0
 
 	if !hasStatsState {
 		return nil

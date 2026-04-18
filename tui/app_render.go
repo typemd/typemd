@@ -618,6 +618,11 @@ func (m model) View() tea.View {
 		helpKey := m.keys.Help.Help().Key
 		if m.searchResults != nil {
 			helpBar = fmt.Sprintf("  [%s]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  %s: quit", modeLabel, quitKey)
+		} else if m.focus == focusLeft && !m.readOnly {
+			// Sidebar focused in normal mode: include creation hints.
+			newKey := m.keys.NewObject.Help().Key
+			quickKey := m.keys.QuickCreate.Help().Key
+			helpBar = fmt.Sprintf("  [%s]  %s: help  |  %s: new  |  %s: quick create  |  %s: search  |  %s: quit", modeLabel, helpKey, newKey, quickKey, searchKey, quitKey)
 		} else {
 			helpBar = fmt.Sprintf("  [%s]  %s: help  |  %s: search  |  %s: quit", modeLabel, helpKey, searchKey, quitKey)
 		}

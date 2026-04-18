@@ -140,8 +140,17 @@ func (m model) Init() tea.Cmd {
 	if len(m.keybindingIssues) > 0 {
 		cmds = append(cmds, func() tea.Msg { return keybindingIssuesMsg{} })
 	}
+	// Surface any unresolved references captured during `vault.Open()` as a
+	// toast. See the startupSyncMsg handler in Update for the dispatch path —
+	// doing it via a message ensures the toast model is initialised before
+	// Show() is called.
+	cmds = append(cmds, func() tea.Msg { return startupSyncMsg{} })
 	return tea.Batch(cmds...)
 }
+
+// startupSyncMsg is dispatched once at startup to surface unresolved-reference
+// warnings captured by `vault.Open()` as a toast.
+type startupSyncMsg struct{}
 
 // keybindingIssuesMsg is dispatched once at startup to flush
 // m.keybindingIssues as toast warnings.
@@ -394,6 +403,24 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			items = append(items, widget.ToastItem{Message: iss.Message()})
 		}
 		m.keybindingIssues = nil
+		return m, m.toast.Show(widget.ToastWarning, items)
+
+	case startupSyncMsg:
+		// Surface unresolved references captured by `vault.Open()` — no
+		// second reconcile needed.
+		if m.vault == nil {
+			return m, nil
+		}
+		result := m.vault.TakeOpenReconcileResult()
+		if result == nil {
+			return m, nil
+		}
+		var items []widget.ToastItem
+		items = append(items, unresolvedToToastItems(result.Unresolved)...)
+		items = append(items, unresolvedWikiLinksToToastItems(result.UnresolvedWikiLinks)...)
+		if len(items) == 0 {
+			return m, nil
+		}
 		return m, m.toast.Show(widget.ToastWarning, items)
 
 	case tea.KeyPressMsg:
@@ -659,6 +686,13 @@ func (m *model) refreshData(paths []string) tea.Cmd {
 			m.viewMode.cancelCellEdit()
 		}
 		m.viewMode.reloadObjects()
+		return toastCmd
+	}
+
+	// In stats mode, skip sidebar cursor/selection restore — selectCurrentRow
+	// would otherwise clobber rightPanel back to panelObject/panelTypeEditor
+	// and drop the user out of the stats screen.
+	if m.rightPanel == panelStats && m.statsMode != nil {
 		return toastCmd
 	}
 
