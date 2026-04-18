@@ -258,6 +258,20 @@ func buildKeyMap(cfg *core.VaultConfig) (keyMap, []KeybindingIssue) {
 		}
 	}
 
+	// A default key that has been rebound away must NOT fall through to its
+	// original `case` in update.go — otherwise rebinds act as an add rather
+	// than a replace (issue #396). Collect every compile-time default key
+	// that is no longer bound to any action and mark it as "unbound" so
+	// translate() returns a sentinel that matches no dispatch case.
+	for _, action := range rebindableActions() {
+		for _, defKey := range defaultKeybindings[action].Keys {
+			if _, stillBound := keyToActions[defKey]; stillBound {
+				continue
+			}
+			keyToPrimary[defKey] = unboundSentinel
+		}
+	}
+
 	dupKeys := make([]string, 0)
 	for k, acts := range keyToActions {
 		if len(acts) > 1 {
@@ -341,12 +355,24 @@ func init() {
 	}
 }
 
+// unboundSentinel is returned by translate() for keys that were compile-time
+// defaults but have been rebound away by the user. It's a deliberate non-match
+// for every `case` in update.go's dispatch switch, so the old default key no
+// longer triggers the action it used to own.
+const unboundSentinel = "\x00unbound\x00"
+
 // translate maps an incoming key string (e.g. msg.String()) to the primary
-// default key string for whichever action currently owns that key. If the key
-// is not bound to any rebindable action, translate returns the input unchanged.
+// default key string for whichever action currently owns that key.
 //
-// This is the dispatch bridge: update.go keeps writing `case "ctrl+s"` (stats)
-// and translate makes a user-configured `ctrl+d` route through that same case.
+// Return rules:
+//   - If the key is still bound to an action, return its primary default
+//     (so update.go's `case "<primary>"` matches).
+//   - If the key is a compile-time default that has been rebound away,
+//     return unboundSentinel (so no case matches — this prevents rebinds
+//     from acting as an add rather than a replace).
+//   - Otherwise return the input unchanged (preserves `tab`, `esc`, arrows,
+//     and character input inside edit modes).
+//
 // O(1) lookup against keyToPrimary, populated once by buildKeyMap.
 func (k keyMap) translate(s string) string {
 	if p, ok := k.keyToPrimary[s]; ok {
