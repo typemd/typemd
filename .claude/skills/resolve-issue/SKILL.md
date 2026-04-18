@@ -149,7 +149,7 @@ Review the issue body for completeness. The issue is ready if the Scope, Approac
 
 ## Workspace Setup
 
-Always use a **git worktree** for isolated development. Invoke the `superpowers:using-git-worktrees` skill.
+Create a new branch from the current base branch for this issue.
 
 Branch naming convention:
 
