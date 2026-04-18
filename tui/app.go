@@ -118,18 +118,34 @@ type model struct {
 	width     int
 	height    int
 	focusMode bool // body panel takes full width, sidebar and props hidden
+
+	// Keybindings
+	keys             keyMap            // resolved keybindings (defaults + user overrides from tui.keybindings)
+	keybindingIssues []KeybindingIssue // startup validation issues — drained to toasts on first frame
 }
 
 func (m model) Init() tea.Cmd {
-	if m.vault != nil {
-		debounce := m.debounceMs()
-		return tea.Batch(
-			watchObjects(m.vault.ObjectsDir(), debounce),
-			watchTypes(m.vault.TypesDir(), debounce),
-		)
+	if m.vault == nil {
+		return nil
 	}
-	return nil
+	debounce := m.debounceMs()
+	cmds := []tea.Cmd{
+		watchObjects(m.vault.ObjectsDir(), debounce),
+		watchTypes(m.vault.TypesDir(), debounce),
+	}
+	// Surface keybinding validation warnings once at startup. We dispatch a
+	// keybindingIssuesMsg which the Update loop turns into toasts — doing it
+	// here keeps Init as a pure Cmd producer and ensures the toast model has
+	// been initialised by the time the message is handled.
+	if len(m.keybindingIssues) > 0 {
+		cmds = append(cmds, func() tea.Msg { return keybindingIssuesMsg{} })
+	}
+	return tea.Batch(cmds...)
 }
+
+// keybindingIssuesMsg is dispatched once at startup to flush
+// m.keybindingIssues as toast warnings.
+type keybindingIssuesMsg struct{}
 
 // debounceMs returns the configured debounce interval, defaulting to 200ms.
 func (m model) debounceMs() int {
@@ -368,6 +384,17 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 
 		m.updateDetail()
 		return m, nil
+
+	case keybindingIssuesMsg:
+		if len(m.keybindingIssues) == 0 {
+			return m, nil
+		}
+		items := make([]widget.ToastItem, 0, len(m.keybindingIssues))
+		for _, iss := range m.keybindingIssues {
+			items = append(items, widget.ToastItem{Message: iss.Message()})
+		}
+		m.keybindingIssues = nil
+		return m, m.toast.Show(widget.ToastWarning, items)
 
 	case tea.KeyPressMsg:
 		// Mode priority: help > search > conflict > typeEditor > edit > normal
@@ -955,8 +982,12 @@ func Start(vaultPath string, readOnly bool) error {
 
 	toast := newToastFromConfig(v)
 
+	resolvedKeys, keyIssues := buildKeyMap(v.Config())
+
 	m := model{
-		vault:         v,
+		vault:            v,
+		keys:             resolvedKeys,
+		keybindingIssues: keyIssues,
 		focus:         initialFocus,
 		rightPanel:    initialRightPanel,
 		typeEditor:    initialTypeEditor,

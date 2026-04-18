@@ -31,6 +31,7 @@ func setupTestModel(t *testing.T) model {
 		searchInput:  initSearchInput(),
 		width:        120,
 		height:       24,
+		keys:         defaultKeyMap(),
 	}
 }
 
@@ -128,6 +129,7 @@ func TestScrollOffset_CursorFollows(t *testing.T) {
 		searchInput: initSearchInput(),
 		width:       80,
 		height:      10,
+		keys:        defaultKeyMap(),
 	}
 
 	for i := 0; i < 8; i++ {
@@ -658,7 +660,7 @@ func TestModel_HelpView(t *testing.T) {
 }
 
 func TestHelpEntries_NotEmpty(t *testing.T) {
-	entries := helpEntries(false)
+	entries := helpEntries(defaultKeyMap(), false)
 	if len(entries) == 0 {
 		t.Error("helpEntries should return at least one entry")
 	}
@@ -718,6 +720,7 @@ func setupTestModelWithVault(t *testing.T) (model, *core.Object) {
 		width:         120,
 		height:        24,
 		loadedModTime: loadedMod,
+		keys:          defaultKeyMap(),
 	}
 	return m, obj
 }
@@ -1014,7 +1017,7 @@ func TestModel_ReadOnly_StatusBarIndicator(t *testing.T) {
 }
 
 func TestModel_ReadOnly_HelpHidesEditKey(t *testing.T) {
-	entries := helpEntries(true)
+	entries := helpEntries(defaultKeyMap(), true)
 	for _, e := range entries {
 		if e.Key == keys.EnterEdit.Help().Key {
 			t.Error("helpEntries(readOnly=true) should NOT contain edit keybinding")
@@ -1074,7 +1077,7 @@ func TestModel_SelectedTypeEmoji_NoMatch(t *testing.T) {
 }
 
 func TestModel_ReadOnly_HelpShowsEditKeyNormally(t *testing.T) {
-	entries := helpEntries(false)
+	entries := helpEntries(defaultKeyMap(), false)
 	found := false
 	for _, e := range entries {
 		if e.Key == keys.EnterEdit.Help().Key {

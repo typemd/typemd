@@ -251,7 +251,7 @@ func TestE2E_ReadOnly_CreationDisabled(t *testing.T) {
 		t.Error("N ignored in readonly")
 	}
 
-	entries := helpEntries(true)
+	entries := helpEntries(defaultKeyMap(), true)
 	for _, e := range entries {
 		if e.Key == "n" || e.Key == "N" {
 			t.Errorf("help should not show %q in readonly", e.Key)

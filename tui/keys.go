@@ -2,6 +2,13 @@ package tui
 
 import "charm.land/bubbles/v2/key"
 
+// keyMap holds the resolved set of global TUI keybindings. Each field is a
+// bubbles key.Binding; the resolved map mirrors the same information keyed by
+// action name and is used by keyMap.translate to route user-customised keys
+// to the correct dispatch case in update.go.
+//
+// See defaultKeybindings in keybindings.go for the single source of truth, and
+// buildKeyMap to construct a keyMap with user overrides applied.
 type keyMap struct {
 	Up            key.Binding
 	Down          key.Binding
@@ -24,28 +31,15 @@ type keyMap struct {
 	AIGenerate    key.Binding
 	SchemaExplore key.Binding
 	Settings      key.Binding
+
+	// keyToPrimary maps every bound key string to the primary default key for
+	// whichever action currently owns it. Populated once by buildKeyMap so
+	// translate() is an O(1) lookup on the dispatch hot path.
+	keyToPrimary map[string]string
 }
 
-var keys = keyMap{
-	Up:          key.NewBinding(key.WithKeys("up", "k"), key.WithHelp("↑/k", "up")),
-	Down:        key.NewBinding(key.WithKeys("down", "j"), key.WithHelp("↓/j", "down")),
-	Enter:       key.NewBinding(key.WithKeys("enter", " "), key.WithHelp("enter", "select")),
-	Tab:         key.NewBinding(key.WithKeys("tab"), key.WithHelp("tab", "switch panel")),
-	Search:      key.NewBinding(key.WithKeys("/"), key.WithHelp("/", "search")),
-	Quit:        key.NewBinding(key.WithKeys("q", "ctrl+c"), key.WithHelp("q", "quit")),
-	GrowPanel:   key.NewBinding(key.WithKeys("="), key.WithHelp("=", "grow panel")),
-	ShrinkPanel: key.NewBinding(key.WithKeys("-"), key.WithHelp("-", "shrink panel")),
-	FocusMode:   key.NewBinding(key.WithKeys("."), key.WithHelp(".", "focus mode")),
-	ToggleProps: key.NewBinding(key.WithKeys("p"), key.WithHelp("p", "toggle properties")),
-	ToggleWrap:  key.NewBinding(key.WithKeys("w"), key.WithHelp("w", "toggle wrap")),
-	Help:        key.NewBinding(key.WithKeys("?", "h"), key.WithHelp("?/h", "help")),
-	EnterEdit:   key.NewBinding(key.WithKeys("e"), key.WithHelp("e", "edit")),
-	ExitEdit:    key.NewBinding(key.WithKeys("esc"), key.WithHelp("esc", "exit edit")),
-	NewObject:   key.NewBinding(key.WithKeys("n"), key.WithHelp("n", "new object")),
-	QuickCreate: key.NewBinding(key.WithKeys("N"), key.WithHelp("N", "quick create (batch)")),
-	Rename:      key.NewBinding(key.WithKeys("r"), key.WithHelp("r", "rename")),
-	Stats:         key.NewBinding(key.WithKeys("ctrl+s"), key.WithHelp("ctrl+s", "stats")),
-	AIGenerate:    key.NewBinding(key.WithKeys("g"), key.WithHelp("g", "AI generate")),
-	SchemaExplore: key.NewBinding(key.WithKeys("ctrl+e"), key.WithHelp("ctrl+e", "AI schema explore")),
-	Settings:      key.NewBinding(key.WithKeys(","), key.WithHelp(",", "settings")),
-}
+// keys is the package-level keyMap used by tests that pre-date the
+// configurable-keybindings refactor. It always reflects the compile-time
+// defaults. Production code paths read from the model's resolved keyMap
+// (model.keys), not this variable.
+var keys = defaultKeyMap()

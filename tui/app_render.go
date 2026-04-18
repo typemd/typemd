@@ -228,7 +228,7 @@ func (m model) View() tea.View {
 			screen := renderOverlayPopup(background, popupContent, m.width, m.height, popupW)
 
 			if m.showHelp {
-				screen = renderStatsHelp(screen, m.width, m.height, stm.screen)
+				screen = renderStatsHelp(m.keys, screen, m.width, m.height, stm.screen)
 			}
 
 			screen = m.toast.Overlay(screen, m.width, m.height)
@@ -256,7 +256,7 @@ func (m model) View() tea.View {
 		screen := panels + "\n" + helpBar
 
 		if m.showHelp {
-			screen = renderStatsHelp(screen, m.width, m.height, stm.screen)
+			screen = renderStatsHelp(m.keys, screen, m.width, m.height, stm.screen)
 		}
 
 		screen = m.toast.Overlay(screen, m.width, m.height)
@@ -285,7 +285,7 @@ func (m model) View() tea.View {
 		screen := content + "\n" + helpBar
 
 		if m.showHelp {
-			screen = renderHelp(screen, m.width, m.height, m.readOnly)
+			screen = renderHelp(m.keys, screen, m.width, m.height, m.readOnly)
 		}
 
 		screen = m.toast.Overlay(screen, m.width, m.height)
@@ -334,7 +334,7 @@ func (m model) View() tea.View {
 		}
 
 		if m.showHelp {
-			screen = renderConfigHelp(screen, m.width, m.height)
+			screen = renderConfigHelp(m.keys, screen, m.width, m.height)
 		}
 
 		screen = m.toast.Overlay(screen, m.width, m.height)
@@ -611,10 +611,15 @@ func (m model) View() tea.View {
 		if m.readOnly {
 			modeLabel = "READONLY"
 		}
+		// Use the resolved keyMap so help-bar labels reflect any user
+		// overrides under tui.keybindings.
+		quitKey := m.keys.Quit.Help().Key
+		searchKey := m.keys.Search.Help().Key
+		helpKey := m.keys.Help.Help().Key
 		if m.searchResults != nil {
-			helpBar = fmt.Sprintf("  [%s]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  q: quit", modeLabel)
+			helpBar = fmt.Sprintf("  [%s]  Search results  |  esc: clear  |  ↑↓: navigate  |  tab: switch  |  %s: quit", modeLabel, quitKey)
 		} else {
-			helpBar = fmt.Sprintf("  [%s]  ?/h: help  |  /: search  |  q: quit", modeLabel)
+			helpBar = fmt.Sprintf("  [%s]  %s: help  |  %s: search  |  %s: quit", modeLabel, helpKey, searchKey, quitKey)
 		}
 	}
 
@@ -622,7 +627,7 @@ func (m model) View() tea.View {
 
 	// Help overlay using Layer/Compositor (background remains visible)
 	if m.showHelp {
-		screen = renderHelp(screen, m.width, m.height, m.readOnly)
+		screen = renderHelp(m.keys, screen, m.width, m.height, m.readOnly)
 	}
 
 	// Overlay popup if type editor has one active

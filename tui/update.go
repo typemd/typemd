@@ -73,7 +73,13 @@ func updateNormal(m model, msg tea.KeyPressMsg) (model, tea.Cmd) {
 		}
 	}
 
-	switch msg.String() {
+	// Translate the incoming key through the user's configured keybindings.
+	// If the user bound an action (e.g. stats) to a new key (e.g. ctrl+d),
+	// translate returns the primary default ("ctrl+s") so the case below
+	// still matches. Keys not associated with any rebindable action pass
+	// through unchanged, preserving behaviour for `tab`, `esc`, arrows, and
+	// character input inside edit modes.
+	switch m.keys.translate(msg.String()) {
 	case "q", "ctrl+c":
 		if m.vault != nil {
 			saveSessionState(m.vault.Root, m.captureState())

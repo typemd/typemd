@@ -67,10 +67,11 @@ type CLIConfig struct {
 
 // TUIConfig holds TUI-specific configuration.
 type TUIConfig struct {
-	DebounceMs      int         `yaml:"debounce_ms,omitempty"`
-	StatsTypeLayout string      `yaml:"stats_type_layout,omitempty"`
-	Toast           ToastConfig `yaml:"toast,omitempty"`
-	Theme           ThemeConfig `yaml:"theme,omitempty"`
+	DebounceMs      int               `yaml:"debounce_ms,omitempty"`
+	StatsTypeLayout string            `yaml:"stats_type_layout,omitempty"`
+	Toast           ToastConfig       `yaml:"toast,omitempty"`
+	Theme           ThemeConfig       `yaml:"theme,omitempty"`
+	Keybindings     map[string]string `yaml:"keybindings,omitempty"`
 }
 
 // ThemeConfig holds TUI color theme configuration.
@@ -341,6 +342,24 @@ var configKeyRegistry = map[string]configKeyEntry{
 		Default:     "warm",
 		Description: "Web UI theme (warm, dark, or light)",
 	},
+}
+
+// RegisterConfigKey adds an entry to the config key registry. Used by
+// downstream packages (e.g., tui) to register keys whose defaults or structure
+// live outside core, avoiding an import cycle. Overwrites any existing entry
+// with the same key.
+func RegisterConfigKey(
+	key string,
+	get func(*VaultConfig) string,
+	set func(*VaultConfig, string),
+	defaultValue, description string,
+) {
+	configKeyRegistry[key] = configKeyEntry{
+		Get:         get,
+		Set:         set,
+		Default:     defaultValue,
+		Description: description,
+	}
 }
 
 // ConfigKeyInfo holds metadata about a config key for display purposes.
