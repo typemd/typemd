@@ -972,6 +972,83 @@ func TestRestoreStatsMode_NoStatsState(t *testing.T) {
 	}
 }
 
+// Regression: tui-session-state spec R13/R14 require stats mode to round-trip
+// across quit/relaunch. Without an explicit marker, `omitempty` strips
+// StatsCursor=0 / empty StatsTypeName and both save AND restore break.
+func TestSessionState_StatsActiveFlagRoundTrip(t *testing.T) {
+	state := SessionState{StatsActive: true}
+	data, err := yaml.Marshal(&state)
+	if err != nil {
+		t.Fatalf("Marshal error: %v", err)
+	}
+	if !strings.Contains(string(data), "stats_active: true") {
+		t.Errorf("expected stats_active: true in YAML, got:\n%s", data)
+	}
+	var decoded SessionState
+	if err := yaml.Unmarshal(data, &decoded); err != nil {
+		t.Fatalf("Unmarshal error: %v", err)
+	}
+	if !decoded.StatsActive {
+		t.Errorf("StatsActive should round-trip as true, got %v", decoded.StatsActive)
+	}
+}
+
+func TestRestoreStatsMode_StatsActiveOnly(t *testing.T) {
+	// StatsActive=true is enough to trigger restore even when all other
+	// stats_* fields are zero — matches tui-session-state R14 S1.
+	dir := t.TempDir()
+	v := core.NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("vault Init() error = %v", err)
+	}
+	if err := v.Open(); err != nil {
+		t.Fatalf("vault Open() error = %v", err)
+	}
+	defer v.Close()
+
+	state := SessionState{StatsActive: true}
+	sm := restoreStatsMode(state, v)
+	if sm == nil {
+		t.Fatal("restoreStatsMode should return non-nil when StatsActive=true")
+	}
+}
+
+// Regression: tui-session-state spec R10 S1 — when the saved view name is
+// gone but the type still exists, fall back to the default view (not the
+// bogus name).
+func TestRestoreViewMode_DeletedViewFallsBackToDefault(t *testing.T) {
+	dir := t.TempDir()
+	v := core.NewVault(dir)
+	if err := v.Init(); err != nil {
+		t.Fatalf("vault Init() error = %v", err)
+	}
+	if err := v.Open(); err != nil {
+		t.Fatalf("vault Open() error = %v", err)
+	}
+	defer v.Close()
+
+	ts := &core.TypeSchema{Name: "book"}
+	if err := v.SaveType(ts); err != nil {
+		t.Fatalf("SaveType() error = %v", err)
+	}
+
+	state := SessionState{
+		ViewTypeName: "book",
+		ViewName:     "deleted-name-does-not-exist",
+		ViewCursor:   5,
+	}
+	vm := restoreViewMode(state, v)
+	if vm == nil {
+		t.Fatal("restoreViewMode should fall back to default view, not return nil")
+	}
+	if vm.viewName != "default" {
+		t.Errorf("viewName = %q, want %q (should fall back)", vm.viewName, "default")
+	}
+	if vm.cursor != 0 {
+		t.Errorf("cursor = %d, want 0 (should reset when falling back)", vm.cursor)
+	}
+}
+
 func TestRestoreStatsMode_StatsTakesPrecedenceOverView(t *testing.T) {
 	// When both stats and view state are present, stats should take precedence.
 	// restoreStatsMode detects stats state; the caller (Start) checks stats first.
