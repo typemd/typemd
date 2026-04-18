@@ -105,6 +105,7 @@ tmd object create "My Idea"
 | `tui.theme.link` | string | `33` | Markdown 連結顏色 |
 | `tui.theme.blockquote` | string | `8` | 引用區塊顏色 |
 | `tui.theme.hrule` | string | `8` | 水平分隔線顏色 |
+| `tui.keybindings.<action>` | string | *(各 action 的預設值)* | 以 action 名稱覆寫全域 TUI 鍵位。完整 action 清單與驗證規則請見 [TUI 自訂鍵位](/zh-tw/tui/tui#自訂鍵位)。 |
 
 檔案監聽器會監控 `objects/` 和 `types/` 的變更。debounce 間隔決定 TUI 對檔案修改的反應速度——較低的值讓更新感覺更即時，較高的值減少多餘的刷新。
 

@@ -55,6 +55,7 @@ tmd config list
 |-----|------|--------|------|
 | `tui.debounce_ms` | int | `200` | 檔案監聽的 debounce 間隔（毫秒） |
 | `tui.stats_type_layout` | string | `fullscreen` | 統計詳情佈局：`fullscreen` 或 `popup` |
+| `tui.keybindings.<action>` | string | *(各 action 的預設值)* | 以 action 名稱覆寫全域 TUI 鍵位。完整 action 清單請見 [TUI 自訂鍵位](/zh-tw/tui/tui#自訂鍵位)。 |
 
 ### AI
 
