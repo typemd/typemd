@@ -4,7 +4,7 @@
 - [x] 1.2 Implement `validateKeyString` in `tui/keys.go` (or new `tui/keybindings.go`) to make 1.1 pass
 - [x] 1.3 Add unit tests asserting `ConfigKeysInfo()` includes one entry per rebindable action under `tui.keybindings.` with non-empty `Description` and the compile-time default in `Default`
 - [x] 1.4 Introduce `defaultKeybindings` table (action name → default key + description) shared between `core/config.go` registration and `tui/keys.go` defaults
-- [ ] 1.5 Add `Keybindings map[string]string` field to `TUIConfig` in `core/config.go` with `yaml:"keybindings,omitempty"` and register `tui.keybindings.<action>` entries programmatically so 1.3 passes
+- [x] 1.5 Add `Keybindings map[string]string` field to `TUIConfig` in `core/config.go` with `yaml:"keybindings,omitempty"` and register `tui.keybindings.<action>` entries programmatically so 1.3 passes
 - [x] 1.6 Add unit tests for `tmd config set tui.keybindings.stats ctrl+d` end-to-end: writes `.typemd/config.yaml`, `GetConfigValue` returns `ctrl+d`, re-open vault sees the value
 
 ## 2. Keybinding merge layer
