@@ -448,6 +448,7 @@ tmd config get tui.keybindings.stats
 **Validation behaviour:**
 
 - An unset action — or one with an empty string value — keeps its compile-time default.
+- A rebind is a **replace**, not an add: after `stats: "ctrl+d"`, pressing `ctrl+s` no longer opens stats.
 - Unknown action names show a warning toast at startup and are otherwise ignored.
 - Invalid key strings (typos like `crtl+s`, missing segments like `ctrl+`) show a warning toast and the action falls back to its default.
 - If two actions resolve to the same key, both keep that key and a warning toast lists them — the user resolves the conflict.

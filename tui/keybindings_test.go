@@ -82,10 +82,11 @@ func TestBuildKeyMap_OverrideOneAction(t *testing.T) {
 	if got := km.translate("ctrl+d"); got != "ctrl+s" {
 		t.Errorf("translate(ctrl+d) = %q, want %q (should route to default)", got, "ctrl+s")
 	}
-	// The original default key "ctrl+s" no longer belongs to any action, so
-	// translate returns it unchanged (no action owns it anymore).
-	if got := km.translate("ctrl+s"); got != "ctrl+s" {
-		t.Errorf("translate(ctrl+s) after override = %q, want unchanged %q", got, "ctrl+s")
+	// The original default key "ctrl+s" was rebound away; translate must
+	// return the unbound sentinel so the dispatch switch no longer matches
+	// `case "ctrl+s"` and stats does not open (issue #396).
+	if got := km.translate("ctrl+s"); got != unboundSentinel {
+		t.Errorf("translate(ctrl+s) after override = %q, want unboundSentinel", got)
 	}
 	// And the resolved binding's keys list no longer contains the old default.
 	for _, k := range km.Stats.Keys() {
@@ -268,6 +269,58 @@ func TestKeyMap_TranslateNonActionPassthrough(t *testing.T) {
 		if got := km.translate(s); got != s {
 			t.Errorf("translate(%q) = %q, want unchanged", s, got)
 		}
+	}
+}
+
+// Regression: tui-keybindings spec R1 S1 negative — rebind must act as a
+// replace, not an add. After moving stats to ctrl+d, the old default ctrl+s
+// must not dispatch to the stats case (issue #396).
+func TestKeyMap_TranslateRebindUnbindsOldDefault(t *testing.T) {
+	cfg := &core.VaultConfig{
+		TUI: core.TUIConfig{
+			Keybindings: map[string]string{
+				ActionStats: "ctrl+d",
+			},
+		},
+	}
+	km, issues := buildKeyMap(cfg)
+	if len(issues) != 0 {
+		t.Fatalf("unexpected validation issues: %+v", issues)
+	}
+	if got := km.translate("ctrl+d"); got != "ctrl+s" {
+		t.Errorf("translate(ctrl+d) = %q, want ctrl+s (new key routes to primary)", got)
+	}
+	if got := km.translate("ctrl+s"); got == "ctrl+s" {
+		t.Errorf("translate(ctrl+s) = %q — old default must NOT dispatch to stats case after rebind", got)
+	}
+	if got := km.translate("ctrl+s"); got != unboundSentinel {
+		t.Errorf("translate(ctrl+s) = %q, want unboundSentinel — unbound default should be sentinel", got)
+	}
+}
+
+// Regression: alias keys (e.g. `h` for help, which has primary `?`) should
+// also unbind cleanly when the action is rebound. Every compile-time default
+// key — primary or alias — must be neutralised if it is no longer bound.
+func TestKeyMap_TranslateRebindUnbindsAliasDefaults(t *testing.T) {
+	cfg := &core.VaultConfig{
+		TUI: core.TUIConfig{
+			Keybindings: map[string]string{
+				ActionHelp: "f1",
+			},
+		},
+	}
+	km, issues := buildKeyMap(cfg)
+	if len(issues) != 0 {
+		t.Fatalf("unexpected validation issues: %+v", issues)
+	}
+	// Both `?` (primary) and `h` (alias) must no longer route to help.
+	for _, oldKey := range []string{"?", "h"} {
+		if got := km.translate(oldKey); got != unboundSentinel {
+			t.Errorf("translate(%q) = %q, want unboundSentinel", oldKey, got)
+		}
+	}
+	if got := km.translate("f1"); got != "?" {
+		t.Errorf("translate(f1) = %q, want ? (new key routes to primary)", got)
 	}
 }
 
