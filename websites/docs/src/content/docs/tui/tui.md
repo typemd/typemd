@@ -420,6 +420,42 @@ Search state is not persisted — each session starts with a fresh view.
 
 If the state file is missing or corrupt, the TUI silently falls back to default startup behavior.
 
+## Customizing keybindings
+
+The 19 rebindable global keybindings can be overridden via `tui.keybindings` in `.typemd/config.yaml`. This is useful when a default conflicts with your terminal — `ctrl+s`, for example, is XOFF (flow control) on many emulators and freezes the TUI.
+
+```yaml
+tui:
+  keybindings:
+    stats: "ctrl+d"        # default: ctrl+s
+    schema_explore: "ctrl+x" # default: ctrl+e
+    search: "ctrl+f"       # default: /
+```
+
+Or via the CLI:
+
+```bash
+tmd config set tui.keybindings.stats ctrl+d
+tmd config get tui.keybindings.stats
+```
+
+**Action names** (what you write under `tui.keybindings.`):
+
+`up`, `down`, `enter`, `search`, `quit`, `grow_panel`, `shrink_panel`, `focus_mode`, `toggle_props`, `toggle_wrap`, `help`, `enter_edit`, `new_object`, `quick_create`, `rename`, `stats`, `ai_generate`, `schema_explore`, `settings`.
+
+**Reserved keys** (cannot be rebound): `tab` (panel switching), `esc` (cancel/exit), arrow keys inside edit modes. These are used outside the global dispatch and rebinding them risks breaking modal flows.
+
+**Validation behaviour:**
+
+- An unset action — or one with an empty string value — keeps its compile-time default.
+- Unknown action names show a warning toast at startup and are otherwise ignored.
+- Invalid key strings (typos like `crtl+s`, missing segments like `ctrl+`) show a warning toast and the action falls back to its default.
+- If two actions resolve to the same key, both keep that key and a warning toast lists them — the user resolves the conflict.
+
+The TUI never crashes on bad input; it always falls back to defaults.
+
+The help popup (`?`/`h`) and the bottom help bar always show whichever key is currently bound, so you can verify your overrides took effect.
+
 ## Theme
 
 The TUI supports configurable colors via the `tui.theme` section in `.typemd/config.yaml`. Missing fields are silently ignored, keeping the defaults.

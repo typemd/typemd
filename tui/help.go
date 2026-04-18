@@ -17,43 +17,48 @@ type helpEntry struct {
 	Desc string
 }
 
-// helpEntries returns the list of keybindings to display in the help popup.
-// When readOnly is true, edit-related keybindings are hidden.
-func helpEntries(readOnly bool) []helpEntry {
+// helpEntries returns the list of keybindings to display in the help popup
+// using the caller-supplied keyMap. When readOnly is true, edit-related
+// keybindings are hidden.
+//
+// Callers pass the model's resolved keyMap so the help popup reflects user
+// overrides from `.typemd/config.yaml` under `tui.keybindings`.
+func helpEntries(km keyMap, readOnly bool) []helpEntry {
 	entries := []helpEntry{
-		{keys.Up.Help().Key, keys.Up.Help().Desc},
-		{keys.Down.Help().Key, keys.Down.Help().Desc},
-		{keys.Enter.Help().Key, keys.Enter.Help().Desc},
-		{keys.Tab.Help().Key, keys.Tab.Help().Desc},
+		{km.Up.Help().Key, km.Up.Help().Desc},
+		{km.Down.Help().Key, km.Down.Help().Desc},
+		{km.Enter.Help().Key, km.Enter.Help().Desc},
+		{km.Tab.Help().Key, km.Tab.Help().Desc},
 	}
 	if !readOnly {
-		entries = append(entries, helpEntry{keys.EnterEdit.Help().Key, keys.EnterEdit.Help().Desc})
-		entries = append(entries, helpEntry{keys.Rename.Help().Key, keys.Rename.Help().Desc})
-		entries = append(entries, helpEntry{keys.NewObject.Help().Key, keys.NewObject.Help().Desc})
-		entries = append(entries, helpEntry{keys.QuickCreate.Help().Key, keys.QuickCreate.Help().Desc})
-		entries = append(entries, helpEntry{keys.AIGenerate.Help().Key, keys.AIGenerate.Help().Desc})
-		entries = append(entries, helpEntry{keys.SchemaExplore.Help().Key, keys.SchemaExplore.Help().Desc})
+		entries = append(entries, helpEntry{km.EnterEdit.Help().Key, km.EnterEdit.Help().Desc})
+		entries = append(entries, helpEntry{km.Rename.Help().Key, km.Rename.Help().Desc})
+		entries = append(entries, helpEntry{km.NewObject.Help().Key, km.NewObject.Help().Desc})
+		entries = append(entries, helpEntry{km.QuickCreate.Help().Key, km.QuickCreate.Help().Desc})
+		entries = append(entries, helpEntry{km.AIGenerate.Help().Key, km.AIGenerate.Help().Desc})
+		entries = append(entries, helpEntry{km.SchemaExplore.Help().Key, km.SchemaExplore.Help().Desc})
 	}
 	entries = append(entries,
-		helpEntry{keys.Search.Help().Key, keys.Search.Help().Desc},
-		helpEntry{keys.Stats.Help().Key, keys.Stats.Help().Desc},
-		helpEntry{keys.Settings.Help().Key, keys.Settings.Help().Desc},
-		helpEntry{keys.GrowPanel.Help().Key, keys.GrowPanel.Help().Desc},
-		helpEntry{keys.ShrinkPanel.Help().Key, keys.ShrinkPanel.Help().Desc},
-		helpEntry{keys.FocusMode.Help().Key, keys.FocusMode.Help().Desc},
-		helpEntry{keys.ToggleProps.Help().Key, keys.ToggleProps.Help().Desc},
-		helpEntry{keys.ToggleWrap.Help().Key, keys.ToggleWrap.Help().Desc},
-		helpEntry{keys.Help.Help().Key, keys.Help.Help().Desc},
-		helpEntry{keys.Quit.Help().Key, keys.Quit.Help().Desc},
+		helpEntry{km.Search.Help().Key, km.Search.Help().Desc},
+		helpEntry{km.Stats.Help().Key, km.Stats.Help().Desc},
+		helpEntry{km.Settings.Help().Key, km.Settings.Help().Desc},
+		helpEntry{km.GrowPanel.Help().Key, km.GrowPanel.Help().Desc},
+		helpEntry{km.ShrinkPanel.Help().Key, km.ShrinkPanel.Help().Desc},
+		helpEntry{km.FocusMode.Help().Key, km.FocusMode.Help().Desc},
+		helpEntry{km.ToggleProps.Help().Key, km.ToggleProps.Help().Desc},
+		helpEntry{km.ToggleWrap.Help().Key, km.ToggleWrap.Help().Desc},
+		helpEntry{km.Help.Help().Key, km.Help.Help().Desc},
+		helpEntry{km.Quit.Help().Key, km.Quit.Help().Desc},
 	)
 	return entries
 }
 
-// statsHelpEntries returns keybindings specific to stats mode.
-func statsHelpEntries(screen statsScreen) []helpEntry {
+// statsHelpEntries returns keybindings specific to stats mode using the
+// caller-supplied keyMap.
+func statsHelpEntries(km keyMap, screen statsScreen) []helpEntry {
 	entries := []helpEntry{
-		{keys.Up.Help().Key, "up"},
-		{keys.Down.Help().Key, "down"},
+		{km.Up.Help().Key, "up"},
+		{km.Down.Help().Key, "down"},
 	}
 	switch screen {
 	case statsOverview:
@@ -70,8 +75,8 @@ func statsHelpEntries(screen statsScreen) []helpEntry {
 		)
 	}
 	entries = append(entries,
-		helpEntry{keys.Help.Help().Key, keys.Help.Help().Desc},
-		helpEntry{keys.Quit.Help().Key, keys.Quit.Help().Desc},
+		helpEntry{km.Help.Help().Key, km.Help.Help().Desc},
+		helpEntry{km.Quit.Help().Key, km.Quit.Help().Desc},
 	)
 	return entries
 }
@@ -107,32 +112,34 @@ func buildHelpPopup(title string, entries []helpEntry, width int) (content strin
 
 // renderHelp builds the help overlay on top of a background screen
 // using lipgloss Layer/Compositor. The background remains visible outside the popup.
-func renderHelp(background string, width, height int, readOnly bool) string {
-	content, popupW := buildHelpPopup("Keybindings", helpEntries(readOnly), width)
+// Uses the caller-supplied keyMap so the overlay reflects user overrides.
+func renderHelp(km keyMap, background string, width, height int, readOnly bool) string {
+	content, popupW := buildHelpPopup("Keybindings", helpEntries(km, readOnly), width)
 	return renderOverlayPopup(background, content, width, height, popupW)
 }
 
 // renderStatsHelp builds the help overlay for stats mode.
-func renderStatsHelp(background string, width, height int, screen statsScreen) string {
-	content, popupW := buildHelpPopup("Stats Keybindings", statsHelpEntries(screen), width)
+func renderStatsHelp(km keyMap, background string, width, height int, screen statsScreen) string {
+	content, popupW := buildHelpPopup("Stats Keybindings", statsHelpEntries(km, screen), width)
 	return renderOverlayPopup(background, content, width, height, popupW)
 }
 
-// configHelpEntries returns keybindings specific to config settings mode.
-func configHelpEntries() []helpEntry {
+// configHelpEntries returns keybindings specific to config settings mode
+// using the caller-supplied keyMap.
+func configHelpEntries(km keyMap) []helpEntry {
 	return []helpEntry{
-		{keys.Up.Help().Key, "up"},
-		{keys.Down.Help().Key, "down"},
+		{km.Up.Help().Key, "up"},
+		{km.Down.Help().Key, "down"},
 		{"tab", "switch column"},
 		{"enter", "edit setting"},
 		{"esc", "exit settings"},
-		{keys.Help.Help().Key, keys.Help.Help().Desc},
-		{keys.Quit.Help().Key, keys.Quit.Help().Desc},
+		{km.Help.Help().Key, km.Help.Help().Desc},
+		{km.Quit.Help().Key, km.Quit.Help().Desc},
 	}
 }
 
 // renderConfigHelp builds the help overlay for config settings mode.
-func renderConfigHelp(background string, width, height int) string {
-	content, popupW := buildHelpPopup("Settings Keybindings", configHelpEntries(), width)
+func renderConfigHelp(km keyMap, background string, width, height int) string {
+	content, popupW := buildHelpPopup("Settings Keybindings", configHelpEntries(km), width)
 	return renderOverlayPopup(background, content, width, height, popupW)
 }

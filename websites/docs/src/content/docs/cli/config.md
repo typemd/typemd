@@ -55,6 +55,7 @@ Use `--all` to show all known keys, including unset keys with their defaults.
 |-----|------|---------|-------------|
 | `tui.debounce_ms` | int | `200` | File watcher debounce interval in milliseconds |
 | `tui.stats_type_layout` | string | `fullscreen` | Stats type detail layout: `fullscreen` or `popup` |
+| `tui.keybindings.<action>` | string | *(per-action default)* | Override a global TUI keybinding by action name. See [TUI customization](/tui/tui/#customizing-keybindings) for the full action list. |
 
 ### AI
 

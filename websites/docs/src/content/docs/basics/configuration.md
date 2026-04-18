@@ -105,6 +105,7 @@ tmd object create "My Idea"
 | `tui.theme.link` | string | `33` | Markdown link color |
 | `tui.theme.blockquote` | string | `8` | Blockquote line color |
 | `tui.theme.hrule` | string | `8` | Horizontal rule color |
+| `tui.keybindings.<action>` | string | *(per-action default)* | Override a global TUI keybinding by action name. See [TUI customization](/tui/tui/#customizing-keybindings) for the full action list and validation rules. |
 
 The file watcher monitors `objects/` and `types/` for changes. The debounce interval controls how quickly the TUI reacts to file modifications — lower values make updates feel more instant, higher values reduce redundant refreshes.
 

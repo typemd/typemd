@@ -41,6 +41,7 @@ func setupCreateTestModel(t *testing.T) model {
 		searchInput:  initSearchInput(),
 		width:        120,
 		height:       24,
+		keys:         defaultKeyMap(),
 	}
 }
 

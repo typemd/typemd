@@ -338,6 +338,42 @@ Type 編輯器面板取得焦點時啟用。在 type 標題上按 `Tab` 或 `Ent
 
 變更會立即儲存到 `.typemd/config.yaml`。AI provider map 設定（`ai.providers.*`）不支援在此頁面編輯 — 請使用 `tmd config` CLI 或直接編輯 YAML。
 
+## 自訂鍵位
+
+19 個可重綁的全域鍵位能透過 `.typemd/config.yaml` 的 `tui.keybindings` 覆寫。當預設鍵位與你的終端衝突時特別有用 — 例如 `ctrl+s` 在許多終端是 XOFF（流量控制），會讓 TUI 卡住。
+
+```yaml
+tui:
+  keybindings:
+    stats: "ctrl+d"          # 預設：ctrl+s
+    schema_explore: "ctrl+x" # 預設：ctrl+e
+    search: "ctrl+f"         # 預設：/
+```
+
+或透過 CLI：
+
+```bash
+tmd config set tui.keybindings.stats ctrl+d
+tmd config get tui.keybindings.stats
+```
+
+**Action 名稱**（寫在 `tui.keybindings.` 底下的 key）：
+
+`up`、`down`、`enter`、`search`、`quit`、`grow_panel`、`shrink_panel`、`focus_mode`、`toggle_props`、`toggle_wrap`、`help`、`enter_edit`、`new_object`、`quick_create`、`rename`、`stats`、`ai_generate`、`schema_explore`、`settings`。
+
+**保留鍵位**（無法重綁）：`tab`（切換面板）、`esc`（取消/退出）、以及編輯模式中的方向鍵。這些鍵位在全域 dispatch 以外也被使用，重綁會破壞彈窗流程。
+
+**驗證行為：**
+
+- 未設定或空字串的 action 會沿用編譯期預設值。
+- 未知的 action 名稱會在啟動時以警告 toast 顯示，其餘行為不受影響。
+- 無效的鍵字串（例如 `crtl+s` 這類 typo、或 `ctrl+` 這種缺段的寫法）會顯示警告 toast，該 action 退回預設值。
+- 若兩個 action 解析後對應到同一個鍵，雙方都保留該鍵並在 toast 列出衝突的 action — 由使用者自行解決。
+
+TUI 永遠不會因為設定錯誤而崩潰，一律退回預設值。
+
+Help popup（`?`/`h`）與底部 help bar 都會顯示當前實際綁定的鍵位，方便確認 override 是否生效。
+
 ## 會話狀態
 
 TUI 在離開時會自動將會話狀態儲存到 `.typemd/tui-state.yaml`。下次啟動時會還原：
