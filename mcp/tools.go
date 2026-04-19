@@ -108,6 +108,61 @@ func registerTools(s *server.MCPServer, vault *core.Vault) {
 		),
 	)
 	s.AddTool(unlinkObjectsTool, unlinkObjectsHandler(vault))
+
+	vaultOverviewTool := mcplib.NewTool("vault_overview",
+		mcplib.WithDescription("Summarise the vault's structure in a single call. Returns every registered type with its plural, emoji, description, object count, and a short list of recent objects. Use this to orient yourself to an unfamiliar vault."),
+	)
+	s.AddTool(vaultOverviewTool, vaultOverviewHandler(vault))
+
+	listObjectsTool := mcplib.NewTool("list_objects",
+		mcplib.WithDescription("List object summaries with optional type filter and pagination. Returns id, type, name, and updated_at per object plus a total count. Archived objects are excluded."),
+		mcplib.WithString("type",
+			mcplib.Description("Optional type filter (e.g. book). Omit to list across all types."),
+		),
+		mcplib.WithNumber("limit",
+			mcplib.Description("Maximum number of summaries to return. Default 50, clamped to 500."),
+		),
+		mcplib.WithNumber("offset",
+			mcplib.Description("Number of summaries to skip. Default 0."),
+		),
+	)
+	s.AddTool(listObjectsTool, listObjectsHandler(vault))
+
+	queryObjectsTool := mcplib.NewTool("query_objects",
+		mcplib.WithDescription("Run a structured query using FilterRule semantics. Each filter is {property, operator, value}; operators follow the query index vocabulary (is, is_not, contains, before, after, etc.). Supports sort and pagination."),
+		mcplib.WithArray("filters",
+			mcplib.Required(),
+			mcplib.Description("Filter rules: array of {property, operator, value} objects."),
+		),
+		mcplib.WithArray("sort",
+			mcplib.Description("Optional sort rules: array of {property, direction} with direction 'asc' or 'desc'."),
+		),
+		mcplib.WithNumber("limit",
+			mcplib.Description("Maximum number of summaries to return. Default 50, clamped to 500."),
+		),
+		mcplib.WithNumber("offset",
+			mcplib.Description("Number of summaries to skip. Default 0."),
+		),
+	)
+	s.AddTool(queryObjectsTool, queryObjectsHandler(vault))
+
+	listBacklinksTool := mcplib.NewTool("list_backlinks",
+		mcplib.WithDescription("List all references that point to an object. Response splits wiki-link backlinks from typed relation backlinks."),
+		mcplib.WithString("id",
+			mcplib.Required(),
+			mcplib.Description("Target object ID or prefix (e.g. book/clean-code)."),
+		),
+	)
+	s.AddTool(listBacklinksTool, listBacklinksHandler(vault))
+
+	vaultStatsTool := mcplib.NewTool("vault_stats",
+		mcplib.WithDescription("Return per-property distribution statistics for a single type: fill counts, fill rates, and the existing per-type analytics (number/select/date distributions)."),
+		mcplib.WithString("type",
+			mcplib.Required(),
+			mcplib.Description("Type name (e.g. book)."),
+		),
+	)
+	s.AddTool(vaultStatsTool, vaultStatsHandler(vault))
 }
 
 type objectSummary struct {
