@@ -176,6 +176,11 @@ Run `tmd mcp` to start a [Model Context Protocol](https://modelcontextprotocol.i
 | `search` | Full-text search objects, returns ID, type, and filename |
 | `get_object` | Get full object detail by ID, including properties and body |
 | `list_types` | List all available type schemas with metadata |
+| `vault_overview` | One-call vault summary: per-type count, emoji, description, and recent objects |
+| `list_objects` | List object summaries with optional `type` filter and pagination |
+| `query_objects` | Structured query with `filters`, optional `sort`, and pagination |
+| `list_backlinks` | Return wiki-link and typed-relation backlinks for an object |
+| `vault_stats` | Per-property distribution stats for a single type (filled, fill rate) |
 | `create_object` | Create a new object with type, name, optional template, properties, and body |
 | `update_object` | Update an object's properties (merge) and/or body (replace) |
 | `link_objects` | Create a relation between two objects |
