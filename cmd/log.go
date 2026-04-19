@@ -3,6 +3,7 @@ package cmd
 import (
 	"bytes"
 	"fmt"
+	"os"
 	"os/exec"
 	"strings"
 
@@ -51,6 +52,7 @@ Examples:
 		gitArgs = append(gitArgs, "--", filePath)
 
 		gitCmd := exec.Command("git", gitArgs...)
+		gitCmd.Env = append(os.Environ(), "LC_ALL=C", "LANG=C", "LANGUAGE=C")
 		var stdout, stderr bytes.Buffer
 		gitCmd.Stdout = &stdout
 		gitCmd.Stderr = &stderr
