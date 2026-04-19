@@ -217,8 +217,8 @@ func setupDoctorVault(t *testing.T) *Vault {
 func TestRunDoctor_HealthyVault(t *testing.T) {
 	v := setupDoctorVault(t)
 	report := RunDoctor(v)
-	if len(report.Categories) != 7 {
-		t.Errorf("categories = %d, want 7", len(report.Categories))
+	if len(report.Categories) != 8 {
+		t.Errorf("categories = %d, want 8", len(report.Categories))
 	}
 	if report.TotalIssues() != 0 {
 		t.Errorf("total issues = %d, want 0", report.TotalIssues())
@@ -271,6 +271,56 @@ func TestRunDoctor_OrphanDir(t *testing.T) {
 	}
 	if orphanCat.Issues[0].Severity != SeverityWarning {
 		t.Error("orphan should be a warning, not an error")
+	}
+}
+
+func TestRunDoctor_IndexCategoryPosition(t *testing.T) {
+	v := setupDoctorVault(t)
+	report := RunDoctor(v)
+	want := []string{"Schemas", "Objects", "Relations", "Wiki-links", "Uniqueness", "Files", "Index", "Orphans"}
+	if len(report.Categories) != len(want) {
+		t.Fatalf("categories = %d, want %d", len(report.Categories), len(want))
+	}
+	for i, name := range want {
+		if report.Categories[i].Name != name {
+			t.Errorf("category[%d] = %q, want %q", i, report.Categories[i].Name, name)
+		}
+	}
+}
+
+func TestRunDoctor_OutOfBandFileAutoFixed(t *testing.T) {
+	v := setupDoctorVault(t)
+
+	// Write an object file directly to disk without going through ObjectService,
+	// so the SQLite index has no record of it.
+	objDir := filepath.Join(v.ObjectsDir(), "book")
+	if err := os.MkdirAll(objDir, 0755); err != nil {
+		t.Fatalf("mkdir: %v", err)
+	}
+	path := filepath.Join(objDir, "sneaky.md")
+	if err := os.WriteFile(path, []byte("---\nname: sneaky\n---\n"), 0644); err != nil {
+		t.Fatalf("write file: %v", err)
+	}
+
+	report := RunDoctor(v)
+	var idxCat *DoctorCategory
+	for i := range report.Categories {
+		if report.Categories[i].Name == "Index" {
+			idxCat = &report.Categories[i]
+			break
+		}
+	}
+	if idxCat == nil {
+		t.Fatal("Index category not found")
+	}
+	if len(idxCat.Issues) != 0 {
+		t.Errorf("Index issues = %d, want 0", len(idxCat.Issues))
+	}
+	if idxCat.AutoFixed < 1 {
+		t.Errorf("Index AutoFixed = %d, want >= 1", idxCat.AutoFixed)
+	}
+	if report.HasUnresolvedIssues() {
+		t.Error("expected HasUnresolvedIssues to be false after auto-fix")
 	}
 }
 

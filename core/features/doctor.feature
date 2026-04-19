@@ -5,15 +5,23 @@ Feature: Doctor
   Scenario: Healthy vault has all categories passing
     Given a vault is ready
     When I run doctor
-    Then the doctor report should have 7 categories
+    Then the doctor report should have 8 categories
     And the "Schemas" category should pass
     And the "Objects" category should pass
     And the "Relations" category should pass
     And the "Wiki-links" category should pass
     And the "Uniqueness" category should pass
     And the "Files" category should pass
+    And the "Index" category should pass
     And the "Orphans" category should pass
     And the doctor report should have 0 total issues
+
+  Scenario: Out-of-band object file triggers index auto-fix
+    Given a vault is ready
+    And an out-of-band object "book/sneaky.md" exists
+    When I run doctor
+    Then the "Index" category should have 0 issues
+    And the doctor report should have 1 auto-fixed
 
   Scenario: Corrupted object file is detected
     Given a vault is ready
