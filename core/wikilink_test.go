@@ -359,3 +359,48 @@ func TestExpandWikiLinksInBody(t *testing.T) {
 		})
 	}
 }
+
+// ── Wiki-link resolution via alias tests ───────────────────────────────────
+
+func TestResolveWikiLinkTarget_ByAlias(t *testing.T) {
+	const golangID = "book/golang-in-action-01jqr3k5mpbvn8e0f2g7h9tx00"
+	diskIDs := map[string]bool{golangID: true}
+
+	aliasSlug := Slugify("Go 語言")
+	nameIndex := map[string]map[string][]string{
+		"book": {
+			"golang-in-action": {golangID},
+			aliasSlug:          {golangID},
+		},
+	}
+
+	res := resolveWikiLinkTarget("book/"+aliasSlug, "note", diskIDs, nameIndex)
+	if res.resolvedID != golangID {
+		t.Errorf("resolvedID = %q, want %q", res.resolvedID, golangID)
+	}
+	if !res.changed {
+		t.Error("expected changed = true for alias resolution")
+	}
+}
+
+func TestResolveWikiLinkTarget_AliasLowerPriorityThanName(t *testing.T) {
+	const (
+		bookAID = "book/book-a-01jqr3k5mpbvn8e0f2g7h9tx01"
+		bookBID = "book/book-b-01jqr3k5mpbvn8e0f2g7h9tx02"
+	)
+	diskIDs := map[string]bool{bookAID: true, bookBID: true}
+
+	nameIndex := map[string]map[string][]string{
+		"book": {
+			"clean-code": {bookAID, bookBID},
+		},
+	}
+
+	res := resolveWikiLinkTarget("book/clean-code", "note", diskIDs, nameIndex)
+	if res.resolvedID != "" {
+		t.Errorf("resolvedID = %q, want empty (ambiguous)", res.resolvedID)
+	}
+	if res.err == nil {
+		t.Error("expected error for ambiguous alias/name collision")
+	}
+}

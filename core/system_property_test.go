@@ -27,7 +27,7 @@ func TestIsSystemProperty_CaseSensitive(t *testing.T) {
 
 func TestSystemPropertyNames_Order(t *testing.T) {
 	names := SystemPropertyNames()
-	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived", "object_type", "created_by", "links", "backlinks", "updated_by"}
+	expected := []string{"name", "description", "created_at", "updated_at", "tags", "aliases", "locked", "archived", "object_type", "created_by", "links", "backlinks", "updated_by"}
 	if len(names) != len(expected) {
 		t.Fatalf("SystemPropertyNames() returned %d names, want %d", len(names), len(expected))
 	}
@@ -40,7 +40,7 @@ func TestSystemPropertyNames_Order(t *testing.T) {
 
 func TestStoredPropertyNames_Order(t *testing.T) {
 	names := StoredPropertyNames()
-	expected := []string{"name", "description", "created_at", "updated_at", "tags", "locked", "archived"}
+	expected := []string{"name", "description", "created_at", "updated_at", "tags", "aliases", "locked", "archived"}
 	if len(names) != len(expected) {
 		t.Fatalf("StoredPropertyNames() returned %d names, want %d", len(names), len(expected))
 	}
@@ -946,5 +946,31 @@ func TestSetLocked_UnlockAlreadyUnlocked(t *testing.T) {
 	}
 	if got.IsLocked() {
 		t.Error("object should not be locked")
+	}
+}
+
+// ── Aliases system property unit tests ────────────────────────────────────
+
+func TestIsSystemProperty_Aliases(t *testing.T) {
+	if !IsSystemProperty("aliases") {
+		t.Error("aliases should be a system property")
+	}
+}
+
+func TestAliasesProperty_NotImmutable(t *testing.T) {
+	if IsImmutableSystemProperty("aliases") {
+		t.Error("aliases should not be immutable (user-authored)")
+	}
+}
+
+func TestAliasesProperty_NotDerived(t *testing.T) {
+	if IsDerivedProperty("aliases") {
+		t.Error("aliases should not be derived")
+	}
+}
+
+func TestAliasesProperty_NotComputed(t *testing.T) {
+	if IsComputedProperty("aliases") {
+		t.Error("aliases should not be computed")
 	}
 }

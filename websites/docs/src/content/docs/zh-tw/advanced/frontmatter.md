@@ -38,9 +38,10 @@ Frontmatter 中的屬性必須遵循特定順序。系統屬性永遠依固定�
 3. `created_at`
 4. `updated_at`
 5. `tags`
-6. `locked`
-7. `archived`
-8. *（schema 定義的屬性，依 schema 順序排列）*
+6. `aliases`
+7. `locked`
+8. `archived`
+9. *（schema 定義的屬性，依 schema 順序排列）*
 
 TypeMD 儲存檔案時會維持這個排序。如果你新增的屬性順序不對，下次透過 CLI 或 TUI 儲存時會自動重新排序。
 
